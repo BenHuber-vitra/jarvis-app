@@ -66,6 +66,11 @@
     border: 1px solid var(--line); border-radius: 6px; }
   #signin h2 { margin: 0 0 4px; font-family: "Orbitron", sans-serif; letter-spacing: 0.3em; font-size: 15px; color: var(--cyan); text-align: center; }
   #signin button { padding: 12px; font-size: 12px; }
+  #unpaired { position: fixed; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center; background: rgba(2,6,13,0.94); }
+  #unpaired.on { display: flex; }
+  #unpaired .box { width: min(340px, 88vw); padding: 24px; text-align: center; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+  #unpaired h2 { margin: 0 0 10px; font-family: "Orbitron", sans-serif; letter-spacing: 0.3em; font-size: 15px; color: var(--cyan); }
+  #unpaired p { margin: 8px 0; font-size: 17px; } #unpaired p.small { font-size: 14px; color: var(--muted); }
   #signin .err { color: var(--red); font-size: 14px; min-height: 18px; text-align: center; }
 </style>
 </head>
@@ -84,6 +89,11 @@
   <button id="talk" aria-label="Talk to Jarvis">TALK</button>
   <form id="f" autocomplete="off"><input id="in" placeholder="Or type to Jarvis…" aria-label="Message Jarvis"><button class="small" type="submit">Send</button></form>
 </div>
+<div id="unpaired"><div class="box">
+  <h2>J.A.R.V.I.S.</h2>
+  <p>This phone isn't paired with Jarvis.</p>
+  <p class="small">Ask Jarvis on the laptop for a pairing code, then scan it with this phone's camera.</p>
+</div></div>
 <div id="signin"><form id="sf">
   <h2>J.A.R.V.I.S.</h2>
   <input id="em" type="email" placeholder="Email" autocomplete="username" required>
@@ -98,6 +108,16 @@
   const SUPABASE_URL = "https://ruuqwbmomdmcqqqncegq.supabase.co";
   const PUBLISHABLE_KEY = "sb_publishable_A8l0I6fO-lC9g_ZQ2FrK-A_qJWwTq6X";   // the public key; the function checks who you are
   const FN = SUPABASE_URL + "/functions/v1/jarvis";
+  // Access: a paired phone (token from a one-time QR code, kept on this phone) or, if switched on,
+  // a sign-in per person. The sign-in screen is kept for later (e.g. a second user) but is off.
+  const LOGIN_ENABLED = false;
+  const DEVICE_KEY = "jarvis.deviceToken";
+  const store = { get: () => { try { return localStorage.getItem(DEVICE_KEY); } catch { return null; } },
+                  set: (v) => { try { v ? localStorage.setItem(DEVICE_KEY, v) : localStorage.removeItem(DEVICE_KEY); } catch {} } };
+  {  // pairing link: .../jarvis-app/#pair=<token>  (scanned once from the QR code)
+    const m = location.hash.match(/pair=([A-Za-z0-9_-]{20,})/);
+    if (m) { store.set(m[1]); history.replaceState(null, "", location.pathname); }
+  }
   const sb = supabase.createClient(SUPABASE_URL, PUBLISHABLE_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
   const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Denver";
 
@@ -132,20 +152,35 @@
     const { data } = await sb.auth.getSession();
     return data.session ? data.session.access_token : null;
   }
-  async function showSignin(on) { $("signin").classList.toggle("on", on); }
+  async function showSignin(on) {
+    if (LOGIN_ENABLED) $("signin").classList.toggle("on", on);
+    else $("unpaired").classList.toggle("on", on);
+  }
   $("sf").addEventListener("submit", async (e) => {
     e.preventDefault(); $("serr").textContent = "";
     const { error } = await sb.auth.signInWithPassword({ email: $("em").value.trim(), password: $("pw").value });
     if (error) { $("serr").textContent = "Sign-in failed. Check the email and password."; return; }
     $("pw").value = ""; showSignin(false); setLink(true, "Online");
   });
-  $("signout").onclick = async (e) => { e.preventDefault(); await sb.auth.signOut(); showSignin(true); setLink(false, "Signed out"); };
+  $("signout").onclick = async (e) => {
+    e.preventDefault();
+    if (!LOGIN_ENABLED) return;
+    await sb.auth.signOut(); showSignin(true); setLink(false, "Signed out");
+  };
+  if (!LOGIN_ENABLED) $("signout").style.display = "none";
 
-  async function call(path, init) {
+  async function authHeaders() {
+    const dev = store.get();
+    if (dev) return { "x-jarvis-token": dev };
+    if (!LOGIN_ENABLED) return null;
     const t = await token();
-    if (!t) { showSignin(true); throw new Error("signed out"); }
-    const r = await fetch(FN + path, { ...init, headers: { ...(init.headers || {}), Authorization: "Bearer " + t, apikey: PUBLISHABLE_KEY } });
-    if (r.status === 401) { showSignin(true); throw new Error("signed out"); }
+    return t ? { Authorization: "Bearer " + t } : null;
+  }
+  async function call(path, init) {
+    const auth = await authHeaders();
+    if (!auth) { showSignin(true); throw new Error("signed out"); }
+    const r = await fetch(FN + path, { ...init, headers: { ...(init.headers || {}), ...auth, apikey: PUBLISHABLE_KEY } });
+    if (r.status === 401) { if (store.get()) store.set(null); showSignin(true); setLink(false, "Not paired"); throw new Error("signed out"); }
     if (r.status === 429) throw new Error("Jarvis has reached today's limit.");
     if (!r.ok) throw new Error("Jarvis couldn't be reached (" + r.status + ").");
     return r;
@@ -308,7 +343,8 @@
   // ------------------------------------------------------------------ start
   (async () => {
     setState("idle");
-    if (await token()) setLink(true, "Online"); else { setLink(false, "Signed out"); showSignin(true); }
+    if (await authHeaders()) setLink(true, "Online");
+    else { setLink(false, LOGIN_ENABLED ? "Signed out" : "Not paired"); showSignin(true); }
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
   })();
 
