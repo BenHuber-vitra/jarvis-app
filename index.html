@@ -69,6 +69,12 @@
     border: 1px solid var(--line); border-radius: 6px; }
   #signin h2 { margin: 0 0 4px; font-family: "Orbitron", sans-serif; letter-spacing: 0.3em; font-size: 15px; color: var(--cyan); text-align: center; }
   #signin button { padding: 12px; font-size: 12px; }
+  #tapany { position: fixed; inset: 0; z-index: 8; display: none; align-items: flex-end; justify-content: center;
+    padding-bottom: 28vh; background: rgba(2,6,13,0.35); }
+  #tapany.on { display: flex; }
+  #tapany div { font-family: "Orbitron", sans-serif; letter-spacing: 0.3em; font-size: 13px; color: var(--cyan);
+    border: 1px solid var(--cyan-dim); border-radius: 30px; padding: 14px 22px; background: rgba(8,26,46,0.85);
+    box-shadow: 0 0 22px rgba(79,216,255,0.35); animation: recpulse 1.4s ease-in-out infinite; }
   #unpaired { position: fixed; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center; background: rgba(2,6,13,0.94); }
   #unpaired.on { display: flex; }
   #unpaired .box { width: min(340px, 88vw); padding: 24px; text-align: center; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
@@ -81,7 +87,7 @@
 <div id="grid"></div>
 <header>
   <div class="brand">J.A.R.V.I.S.</div>
-  <div class="hud"><span><span id="link" class="dot"></span><b id="linktxt">…</b></span><a href="#" id="bell" title="Timer and reminder alerts">Alerts off</a><a href="#" id="signout">Sign out</a></div>
+  <div class="hud"><span><span id="link" class="dot"></span><b id="linktxt">…</b></span><a href="#" id="auto" title="Start listening when the app opens">Auto</a><a href="#" id="bell" title="Timer and reminder alerts">Alerts off</a><a href="#" id="signout">Sign out</a></div>
 </header>
 <div id="stage">
   <canvas id="core"></canvas>
@@ -92,6 +98,7 @@
   <button id="talk" aria-label="Talk to Jarvis">TALK</button>
   <form id="f" autocomplete="off"><input id="in" placeholder="Or type to Jarvis…" aria-label="Message Jarvis"><button class="small" type="submit">Send</button></form>
 </div>
+<div id="tapany"><div>Tap anywhere to talk</div></div>
 <div id="unpaired"><div class="box">
   <h2>J.A.R.V.I.S.</h2>
   <p>This phone isn't paired with Jarvis.</p>
@@ -361,6 +368,7 @@
     } catch (e) { if (e.message !== "signed out") info(e.message); setState("idle"); }
   }
   talk.onclick = () => {
+    tapAny.classList.remove("on");
     audioCtx();
     if (S.state === "listening") stopListening();
     else if (S.state === "thinking" || S.state === "speaking") stopAll();
@@ -395,6 +403,38 @@
     });
   }
 
+  // ------------------------------------------------------------------ instant talk
+  // Listen as soon as the app opens or comes back to the front (Ben has no side button for a
+  // shortcut). Android may keep sound locked until the first tap; then the whole screen becomes a
+  // "tap anywhere to talk" button instead, which unlocks sound and starts listening in one go.
+  const AUTO_KEY = "jarvis.autoListen";
+  const autoOn = () => { try { return localStorage.getItem(AUTO_KEY) !== "off"; } catch { return true; } };
+  const autoBtn = $("auto");
+  const showAuto = () => { autoBtn.textContent = autoOn() ? "Auto on" : "Auto off"; autoBtn.classList.toggle("on", autoOn()); };
+  autoBtn.onclick = (e) => {
+    e.preventDefault();
+    try { localStorage.setItem(AUTO_KEY, autoOn() ? "off" : "on"); } catch {}
+    showAuto(); info(autoOn() ? "I'll start listening whenever you open the app." : "I'll wait for you to tap Talk.");
+  };
+  showAuto();
+  const tapAny = $("tapany");
+  tapAny.addEventListener("click", () => { tapAny.classList.remove("on"); audioCtx(); startListening(); });
+  let lastAuto = 0;
+  async function autoListen() {
+    if (!autoOn() || S.state !== "idle" || document.visibilityState !== "visible") return;
+    if (document.body.classList.contains("typing") || !(await authHeaders())) return;
+    if (Date.now() - lastAuto < 3000) return;
+    lastAuto = Date.now();
+    try { audioCtx(); await ac.resume(); } catch {}
+    await new Promise((r) => setTimeout(r, 200));
+    if (!ac || ac.state !== "running") { tapAny.classList.add("on"); return; }
+    startListening();
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") autoListen();
+    else if (S.state === "listening") stopListening();   // left the app mid-sentence: send what was said
+  });
+
   // ------------------------------------------------------------------ start
   (async () => {
     setState("idle");
@@ -408,6 +448,7 @@
       navigator.serviceWorker.addEventListener("controllerchange", () => { if (!reloaded) { reloaded = true; location.reload(); } });
     }
     if (await authHeaders()) subscribeAlerts(false).catch(() => {});   // keep this phone's alert sign-up fresh
+    autoListen();
   })();
 
   // ------------------------------------------------------------------ geometry
