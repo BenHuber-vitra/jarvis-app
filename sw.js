@@ -1,8 +1,26 @@
 // Caches only the app shell (so it opens instantly); answers and data always come from the network.
-const CACHE = "jarvis-shell-93860962";
+const CACHE = "jarvis-shell-28599670";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 self.addEventListener("install", (e) => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL))); });
 self.addEventListener("activate", (e) => e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())));
+// Timer / reminder alerts: show a notification (even with the app closed) and tell an open app to speak it.
+self.addEventListener("push", (e) => {
+  let d = {}; try { d = e.data.json(); } catch { d = { body: e.data ? e.data.text() : "" }; }
+  e.waitUntil((async () => {
+    await self.registration.showNotification("J.A.R.V.I.S. · " + (d.title || "Alert"), {
+      body: d.body || "", icon: "icons/icon-192.png", badge: "icons/icon-192.png", tag: d.tag || "jarvis",
+      vibrate: [250, 120, 250, 120, 400], requireInteraction: true, renotify: true });
+    for (const c of await self.clients.matchAll({ type: "window", includeUncontrolled: true })) c.postMessage({ type: "alarm", body: d.body });
+  })());
+});
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  e.waitUntil((async () => {
+    const all = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    if (all.length) return all[0].focus();
+    return self.clients.openWindow("./");
+  })());
+});
 self.addEventListener("fetch", (e) => {
   const u = new URL(e.request.url);
   if (e.request.method !== "GET" || u.origin !== location.origin) return;   // never touch API calls

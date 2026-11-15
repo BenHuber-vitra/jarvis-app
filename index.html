@@ -34,6 +34,7 @@
   .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); margin-right: 5px; }
   .dot.on { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); } .dot.off { background: var(--red); box-shadow: 0 0 8px var(--red); }
   .hud a { color: var(--muted); text-decoration: none; border: 1px solid var(--line); border-radius: 3px; padding: 2px 6px; }
+  .hud a.on { color: var(--cyan); border-color: var(--cyan-dim); }
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
   body.typing #stage { display: none; }
@@ -80,7 +81,7 @@
 <div id="grid"></div>
 <header>
   <div class="brand">J.A.R.V.I.S.</div>
-  <div class="hud"><span><span id="link" class="dot"></span><b id="linktxt">…</b></span><a href="#" id="signout">Sign out</a></div>
+  <div class="hud"><span><span id="link" class="dot"></span><b id="linktxt">…</b></span><a href="#" id="bell" title="Timer and reminder alerts">Alerts off</a><a href="#" id="signout">Sign out</a></div>
 </header>
 <div id="stage">
   <canvas id="core"></canvas>
@@ -110,6 +111,7 @@
   const SUPABASE_URL = "https://ruuqwbmomdmcqqqncegq.supabase.co";
   const PUBLISHABLE_KEY = "sb_publishable_A8l0I6fO-lC9g_ZQ2FrK-A_qJWwTq6X";   // the public key; the function checks who you are
   const FN = SUPABASE_URL + "/functions/v1/jarvis";
+  const VAPID_PUBLIC_KEY = "BPTWR4dA8R7Xlpu_XJDk6TXt-XgxkQU4yCUIc9O6jp-lBbPaGpN0iElKgMQJk8t2GH4UZztqlcfhHcb2_V76mWo";   // public half of the push signing key
   // Access: a paired phone (token from a one-time QR code, kept on this phone) or, if switched on,
   // a sign-in per person. The sign-in screen is kept for later (e.g. a second user) but is off.
   const LOGIN_ENABLED = false;
@@ -347,12 +349,41 @@
     else startListening();
   };
 
+  // ------------------------------------------------------------------ alerts (timers + reminders)
+  const bell = $("bell");
+  const b64ToBytes = (s) => { const p = "=".repeat((4 - s.length % 4) % 4); const r = atob((s + p).replace(/-/g, "+").replace(/_/g, "/"));
+    return Uint8Array.from(r, (c) => c.charCodeAt(0)); };
+  function setBell(on, txt) { bell.classList.toggle("on", on); bell.textContent = txt || (on ? "Alerts on" : "Alerts off"); }
+  async function subscribeAlerts(ask) {
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) { if (ask) info("This browser can't show alerts."); return; }
+    if (ask && Notification.permission === "default") await Notification.requestPermission();
+    if (Notification.permission !== "granted") { setBell(false, Notification.permission === "denied" ? "Alerts blocked" : "Alerts off");
+      if (ask && Notification.permission === "denied") info("Alerts are blocked. Allow notifications for Jarvis in Android's app settings."); return; }
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) { if (!ask) { setBell(false); return; }
+      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(VAPID_PUBLIC_KEY) }); }
+    await call("/push-subscribe", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ subscription: sub.toJSON() }) });
+    setBell(true);
+    if (ask) info("Alerts are on: timers and reminders will show up on this phone, even with the app closed.");
+  }
+  bell.onclick = (e) => { e.preventDefault(); audioCtx(); subscribeAlerts(true).catch((err) => info("Couldn't turn on alerts: " + err.message)); };
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.addEventListener("message", (e) => {
+      if (!e.data || e.data.type !== "alarm") return;
+      add("jarvis", "Jarvis", e.data.body);
+      if (document.visibilityState === "visible" && S.state === "idle") { const v = speaker(++generation); v.say(e.data.body); v.end();
+        v.finished.then(() => setState("idle")); }
+    });
+  }
+
   // ------------------------------------------------------------------ start
   (async () => {
     setState("idle");
     if (await authHeaders()) setLink(true, "Online");
     else { setLink(false, LOGIN_ENABLED ? "Signed out" : "Not paired"); showSignin(true); }
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+    if (await authHeaders()) subscribeAlerts(false).catch(() => {});   // keep this phone's alert sign-up fresh
   })();
 
   // ------------------------------------------------------------------ geometry
