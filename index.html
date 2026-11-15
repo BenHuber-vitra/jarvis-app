@@ -81,13 +81,110 @@
   #unpaired h2 { margin: 0 0 10px; font-family: "Orbitron", sans-serif; letter-spacing: 0.3em; font-size: 15px; color: var(--cyan); }
   #unpaired p { margin: 8px 0; font-size: 17px; } #unpaired p.small { font-size: 14px; color: var(--muted); }
   #signin .err { color: var(--red); font-size: 14px; min-height: 18px; text-align: center; }
+  /* ---------------------------------------------------------------- Money screen */
+  .hud a#moneyBtn { color: var(--cyan); border-color: var(--cyan-dim); }
+  @media (max-width: 440px) { #linktxt { display: none; } .hud { gap: 7px; letter-spacing: 0.1em; } .brand { letter-spacing: 0.26em; font-size: 14px; } }
+  #money { position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column; background: var(--bg0);
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    --surface: #08182b; --ink: #e6f7ff; --ink2: #9fbcd1; --ink3: #6f93ad; --grid: rgba(79,216,255,0.10);
+    --good: #0ca30c; --bad: #d03b3b; --other: #4a5d70; }
+  #money.on { display: flex; }
+  #money .mhead { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px 8px; }
+  #money .mhead a { color: var(--cyan); text-decoration: none; font-size: 15px; letter-spacing: 0.08em; }
+  #money .mhead h1 { margin: 0; font-family: "Orbitron", sans-serif; font-size: 14px; letter-spacing: 0.36em; color: var(--cyan);
+    text-shadow: 0 0 12px var(--cyan-dim); }
+  #mbody { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 4px 16px 24px; min-height: 0; }
+  #money nav { display: flex; border-top: 1px solid var(--line); background: rgba(8,24,43,0.96); }
+  #money nav button { flex: 1; background: none; border: 0; color: var(--ink3); font: inherit; font-size: 13px; letter-spacing: 0.06em;
+    padding: 10px 0 12px; border-top: 2px solid transparent; }
+  #money nav button.on { color: var(--cyan); border-top-color: var(--cyan); }
+  #money .card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px; margin: 0 0 14px; }
+  #money .label { font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink3); }
+  #money .hero { font-size: 40px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; line-height: 1.1; margin: 4px 0; }
+  #money .sub { font-size: 15px; color: var(--ink2); }
+  #money .delta { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; color: var(--ink2); }
+  #money .delta i { font-style: normal; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: inline-flex;
+    align-items: center; justify-content: center; font-size: 11px; color: #fff; }
+  #money .delta.good i { background: var(--good); } #money .delta.bad i { background: var(--bad); }
+  #money .row { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-top: 1px solid var(--grid); }
+  #money .row:first-child { border-top: 0; }
+  #money .row .grow { flex: 1; min-width: 0; }
+  #money .row .name { font-size: 17px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #money .row .meta { font-size: 13px; color: var(--ink3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #money .row .amt { font-size: 17px; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #money .row .amt.in { color: #3ddc84; }
+  #money .row.click { cursor: pointer; }
+  #money .row.sub2 { padding: 8px 0 8px 14px; }
+  #money .row.sub2 .name { font-size: 15px; color: var(--ink2); }
+  #money .row.sub2 .amt { font-size: 15px; color: var(--ink2); }
+  #money .chev { color: var(--ink3); font-size: 13px; width: 14px; text-align: center; }
+  #money .avatar { flex: none; width: 34px; height: 34px; border-radius: 50%; background: rgba(79,216,255,0.12); color: var(--cyan);
+    display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 15px; overflow: hidden; }
+  #money .avatar img { width: 100%; height: 100%; object-fit: cover; }
+  #money .sect { display: flex; align-items: center; justify-content: space-between; margin: 18px 2px 8px; }
+  #money .sect .label { font-size: 13px; }
+  #money .sect a, #money .linkish { color: var(--cyan); font-size: 14px; text-decoration: none; background: none; border: 0; font-family: inherit; padding: 0; }
+  #money .btns { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  #money .btn { flex: 1; min-width: 130px; padding: 11px 10px; border-radius: 6px; border: 1px solid var(--cyan-dim); background: rgba(79,216,255,0.08);
+    color: var(--cyan); font: inherit; font-size: 15px; }
+  #money .btn.quiet { border-color: var(--line); color: var(--ink2); background: transparent; }
+  #money .btn.danger { border-color: rgba(208,59,59,0.6); color: #ff8a8a; background: transparent; }
+  #money .seg { display: flex; gap: 6px; margin: 0 0 12px; }
+  #money .seg button { flex: 1; padding: 8px 0; border-radius: 18px; border: 1px solid var(--line); background: transparent; color: var(--ink2); font: inherit; font-size: 14px; }
+  #money .seg button.on { background: var(--cyan); color: #02060d; border-color: var(--cyan); font-weight: 600; }
+  #money .stats .row .name { font-size: 16px; }
+  #money .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 13px; color: var(--ink2); margin: 6px 0 2px; }
+  #money .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  #money .sw { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex: none; }
+  #money .sw.dash { height: 0; border-top: 2px dashed var(--ink3); border-radius: 0; width: 14px; }
+  #money table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
+  #money th { text-align: left; font-weight: 500; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink3); padding: 6px 4px; }
+  #money td { padding: 9px 4px; border-top: 1px solid var(--grid); color: var(--ink); }
+  #money td.r, #money th.r { text-align: right; }
+  #money td .sw { margin-right: 8px; }
+  #money td.up { color: #ff8a8a; } #money td.down { color: #3ddc84; } #money td.flat { color: var(--ink3); }
+  #money tr.click { cursor: pointer; }
+  #money .toggle { display: flex; align-items: center; justify-content: flex-end; gap: 8px; font-size: 14px; color: var(--ink2); }
+  #money .toggle input { width: 18px; height: 18px; accent-color: var(--cyan); }
+  #money .empty { text-align: center; color: var(--ink3); padding: 18px 8px; font-size: 15px; }
+  #money .note { font-size: 13px; color: var(--ink3); margin: 6px 2px; }
+  #money .note.err { color: #ff8a8a; }
+  #money .chip { display: inline-block; font-size: 12px; padding: 1px 7px; border-radius: 10px; border: 1px solid var(--line); color: var(--ink2); margin-left: 6px; }
+  #money .search { display: flex; gap: 8px; margin: 0 0 10px; }
+  #money .search input, #money .search select, #msheet input, #msheet select { background: rgba(2,10,20,0.7); border: 1px solid var(--line); color: var(--text);
+    font: inherit; font-size: 16px; padding: 10px; border-radius: 6px; outline: none; min-width: 0; }
+  #money .search input { flex: 1; }
+  #money .search select { flex: 0 0 40%; }
+  #money .day { font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink3); margin: 14px 2px 2px; }
+  #money svg { display: block; width: 100%; overflow: visible; touch-action: pan-y; }
+  #money svg text { fill: var(--ink3); font-size: 11px; font-family: "Rajdhani", system-ui, sans-serif; }
+  #mtip { position: fixed; z-index: 12; pointer-events: none; display: none; background: rgba(2,10,20,0.96); border: 1px solid var(--cyan-dim);
+    border-radius: 6px; padding: 7px 10px; font-size: 14px; color: var(--ink, #e6f7ff); line-height: 1.35; max-width: 240px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.5); font-variant-numeric: tabular-nums; }
+  #mtip b { font-weight: 600; } #mtip .sw { margin-right: 6px; }
+  #msheet { position: fixed; inset: 0; z-index: 11; display: none; align-items: flex-end; justify-content: center; background: rgba(2,6,13,0.7); }
+  #msheet.on { display: flex; }
+  #msheet .box { width: min(520px, 100%); max-height: 88dvh; overflow-y: auto; background: #08182b; border: 1px solid var(--line); border-radius: 14px 14px 0 0;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); }
+  #msheet h2 { margin: 0 0 4px; font-size: 20px; color: #e6f7ff; font-weight: 600; }
+  #msheet .meta { color: var(--muted); font-size: 14px; margin-bottom: 12px; }
+  #msheet label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; letter-spacing: 0.06em; }
+  #msheet input, #msheet select { width: 100%; }
+  #msheet .check { display: flex; align-items: center; gap: 8px; color: #cfeeff; font-size: 15px; margin-top: 12px; }
+  #msheet .check input, #money .toggle input { flex: none; width: 18px; height: 18px; padding: 0; margin: 0; accent-color: var(--cyan); }
+  #msheet .btns { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  #msheet .btn { flex: 1; padding: 12px; border-radius: 6px; border: 1px solid var(--cyan-dim); background: rgba(79,216,255,0.1); color: var(--cyan); font: inherit; font-size: 16px; }
+  #msheet .btn.quiet { border-color: var(--line); color: #9fbcd1; background: transparent; }
+  #msheet .btn.danger { border-color: rgba(208,59,59,0.6); color: #ff8a8a; background: transparent; }
+  #msheet .err { color: #ff8a8a; font-size: 14px; min-height: 18px; margin-top: 8px; }
+
 </style>
 </head>
 <body>
 <div id="grid"></div>
 <header>
   <div class="brand">J.A.R.V.I.S.</div>
-  <div class="hud"><span><span id="link" class="dot"></span><b id="linktxt">…</b></span><a href="#" id="auto" title="Start listening when the app opens">Auto</a><a href="#" id="bell" title="Timer and reminder alerts">Alerts off</a><a href="#" id="signout">Sign out</a></div>
+  <div class="hud"><span><span id="link" class="dot"></span><b id="linktxt">…</b></span><a href="#" id="moneyBtn" title="Accounts, spending and subscriptions">Money</a><a href="#" id="auto" title="Start listening when the app opens">Auto</a><a href="#" id="bell" title="Timer and reminder alerts">Alerts off</a><a href="#" id="signout">Sign out</a></div>
 </header>
 <div id="stage">
   <canvas id="core"></canvas>
@@ -104,6 +201,13 @@
   <p>This phone isn't paired with Jarvis.</p>
   <p class="small">Ask Jarvis on the laptop for a pairing code, then scan it with this phone's camera.</p>
 </div></div>
+<div id="money">
+  <div class="mhead"><a href="#" id="mback">‹ Jarvis</a><h1>MONEY</h1><span style="width:60px"></span></div>
+  <div id="mbody"></div>
+  <nav><button data-tab="dash">Dashboard</button><button data-tab="spend">Spending</button><button data-tab="recur">Recurring</button><button data-tab="tx">Transactions</button></nav>
+</div>
+<div id="msheet"></div>
+<div id="mtip"></div>
 <div id="signin"><form id="sf">
   <h2>J.A.R.V.I.S.</h2>
   <input id="em" type="email" placeholder="Email" autocomplete="username" required>
@@ -422,6 +526,7 @@
   let lastAuto = 0;
   async function autoListen() {
     if (!autoOn() || S.state !== "idle" || document.visibilityState !== "visible") return;
+    if ($("money").classList.contains("on")) return;   // looking at money, not talking
     if (document.body.classList.contains("typing") || !(await authHeaders())) return;
     if (Date.now() - lastAuto < 3000) return;
     lastAuto = Date.now();
@@ -434,6 +539,792 @@
     if (document.visibilityState === "visible") autoListen();
     else if (S.state === "listening") stopListening();   // left the app mid-sentence: send what was said
   });
+
+  // ------------------------------------------------------------------ Money screen
+  // Accounts (linked through Plaid, read-only, plus cash / business funds entered by hand),
+  // spending by category, recurring charges and transactions. The maths is MC (money_calc.js,
+  // shared with cloud Jarvis). Data comes from /jarvis/money/*; #money-demo shows sample data.
+  {
+    const MC = (() => { // Money maths shared by cloud Jarvis (imported by tools_m.ts) and the phone app (app/build.py
+// inlines this file into the Money screen), so what Jarvis says and what the screen shows always
+// agree. Plain JavaScript, no imports. Dates are "YYYY-MM-DD" strings.
+//
+// Amount sign follows Plaid: positive = money out, negative = money in.
+
+const CATEGORIES = [
+  "Income", "Groceries", "Dining & drinks", "Shopping", "Bills & utilities", "Rent", "Insurance",
+  "Auto & transport", "Travel", "Entertainment", "Health", "Personal care", "Home", "Services",
+  "Loans", "Fees", "Taxes & giving", "Business", "Uncategorized",
+  "Transfers", "Credit card payment", "Excluded",
+];
+// Not spending and not income: moving your own money around, or hidden on purpose.
+const NOT_SPEND = new Set(["Income", "Transfers", "Credit card payment", "Excluded"]);
+const BILLS = new Set(["Bills & utilities", "Rent", "Insurance", "Loans"]);
+
+const PLAID_MAP = [
+  ["INCOME", "Income"],
+  ["TRANSFER_IN", "Transfers"], ["TRANSFER_OUT", "Transfers"],
+  ["LOAN_PAYMENTS_CREDIT_CARD_PAYMENT", "Credit card payment"], ["LOAN_PAYMENTS", "Loans"],
+  ["FOOD_AND_DRINK_GROCERIES", "Groceries"], ["FOOD_AND_DRINK", "Dining & drinks"],
+  ["RENT_AND_UTILITIES_RENT", "Rent"], ["RENT_AND_UTILITIES", "Bills & utilities"],
+  ["GENERAL_SERVICES_INSURANCE", "Insurance"], ["GENERAL_SERVICES", "Services"],
+  ["GENERAL_MERCHANDISE", "Shopping"], ["ENTERTAINMENT", "Entertainment"],
+  ["TRANSPORTATION", "Auto & transport"], ["TRAVEL", "Travel"], ["MEDICAL", "Health"],
+  ["PERSONAL_CARE", "Personal care"], ["HOME_IMPROVEMENT", "Home"],
+  ["GOVERNMENT_AND_NON_PROFIT", "Taxes & giving"], ["BANK_FEES", "Fees"],
+];
+
+function fromPlaid(detailed) {
+  const d = String(detailed || "").toUpperCase();
+  for (const [prefix, cat] of PLAID_MAP) if (d.startsWith(prefix)) return cat;
+  return "Uncategorized";
+}
+
+// Same merchant under slightly different bank descriptions ("NETFLIX.COM 866-579" / "Netflix").
+const NOISE = /\b(pos|debit|credit|purchase|card|ach|recurring|payment|pmt|online|www|com|inc|llc|co|the|sq|tst|paypal|ppd|id|web)\b/g;
+function merchantKey(t) {
+  const s = String(t.merchant || t.name || "").toLowerCase()
+    .replace(/[^a-z ]+/g, " ").replace(NOISE, " ").replace(/\s+/g, " ").trim();
+  return s.split(" ").slice(0, 3).join(" ") || "unknown";
+}
+function merchantName(t) {
+  if (t.merchant) return t.merchant;
+  const s = String(t.name || "Unknown").replace(/\s+/g, " ").trim();
+  return s.length > 28 ? s.slice(0, 28) + "…" : s;
+}
+
+const PAY = /\b(payroll|direct dep(osit)?|salary|paycheck|wages)\b/i;
+function categoryOf(t, rules) {
+  if (t.user_category) return t.user_category;
+  const r = rules && rules[merchantKey(t)];
+  if (r && r.category) return r.category;
+  // Plaid files some paychecks under the employer's trade ("SWEETGREEN PAYROLL" -> restaurants).
+  if (+t.amount < 0 && PAY.test(`${t.name || ""} ${t.merchant || ""}`)) return "Income";
+  return fromPlaid(t.plaid_category);
+}
+
+// ---------------------------------------------------------------- dates
+
+const ms = (d) => Date.UTC(+d.slice(0, 4), +d.slice(5, 7) - 1, +d.slice(8, 10));
+const iso = (t) => new Date(t).toISOString().slice(0, 10);
+const addDays = (d, n) => iso(ms(d) + n * 86400000);
+const daysBetween = (a, b) => Math.round((ms(b) - ms(a)) / 86400000);
+function addMonths(d, n) {
+  const y = +d.slice(0, 4), m = +d.slice(5, 7) - 1 + n, day = +d.slice(8, 10);
+  const last = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  return iso(Date.UTC(y, m, Math.min(day, last)));
+}
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const shortDate = (d) => `${MONTHS[+d.slice(5, 7) - 1]} ${+d.slice(8, 10)}`;
+
+// kind: week | month | quarter | year; offset 0 = the one containing today, -1 = the one before...
+function periodRange(kind, offset, today) {
+  let start, end, label;
+  if (kind === "week") {
+    const dow = (new Date(ms(today)).getUTCDay() + 6) % 7;   // Monday = 0
+    start = addDays(today, -dow + offset * 7); end = addDays(start, 6); label = shortDate(start);
+  } else if (kind === "year") {
+    const y = +today.slice(0, 4) + offset;
+    start = `${y}-01-01`; end = `${y}-12-31`; label = String(y);
+  } else {
+    const step = kind === "quarter" ? 3 : 1;
+    const m0 = +today.slice(5, 7) - 1;
+    const first = `${today.slice(0, 4)}-${String(m0 - (m0 % step) + 1).padStart(2, "0")}-01`;
+    start = addMonths(first, offset * step); end = addDays(addMonths(start, step), -1);
+    const m = +start.slice(5, 7) - 1;
+    label = step === 3 ? `Q${m / 3 + 1} '${start.slice(2, 4)}` : MONTHS[m];
+  }
+  return { start, end, label };
+}
+
+// The period and the one before it. While the period is still running, both stop at the same
+// point ("this month so far" against "last month up to the same day"), so the comparison is fair.
+function comparePeriods(kind, offset, today) {
+  const cur = periodRange(kind, offset, today), prev = periodRange(kind, offset - 1, today);
+  const running = cur.end > today;
+  const curEnd = running ? today : cur.end;
+  const sameDay = addDays(prev.start, daysBetween(cur.start, curEnd));
+  const prevEnd = running && sameDay < prev.end ? sameDay : prev.end;
+  return { cur: { ...cur, end: curEnd, fullEnd: cur.end }, prev: { ...prev, end: prevEnd, fullEnd: prev.end }, running };
+}
+
+// Which transactions count toward spending, income and subscriptions. A loan or investment
+// account's side of a payment is the mirror of money already counted leaving checking (paying the
+// mortgage would otherwise count twice, once as negative spending), and hidden accounts are out
+// of the totals by Ben's choice. They still appear in the transaction list.
+const NOT_COUNTED = new Set(["loan", "investment"]);
+function countable(txns, accounts) {
+  const skip = new Set((accounts || []).filter((a) => a.hidden || NOT_COUNTED.has(a.kind)).map((a) => a.id));
+  return skip.size ? txns.filter((t) => !skip.has(t.account_id)) : txns;
+}
+
+// ---------------------------------------------------------------- totals
+
+function summarize(txns, rules, start, end, opts = {}) {
+  const byCat = {};
+  let income = 0, spend = 0, count = 0;
+  for (const t of txns) {
+    if (t.date < start || t.date > end) continue;
+    const c = categoryOf(t, rules);
+    if (c === "Income") { income -= +t.amount; count++; continue; }
+    if (NOT_SPEND.has(c)) continue;
+    if (opts.noBills && BILLS.has(c)) continue;
+    spend += +t.amount; byCat[c] = (byCat[c] || 0) + +t.amount; count++;
+  }
+  const categories = Object.entries(byCat).filter(([, v]) => Math.abs(v) >= 0.005)
+    .map(([name, amount]) => ({ name, amount })).sort((a, b) => b.amount - a.amount);
+  return { income, spend, net: income - spend, categories, count };
+}
+
+// Running total of spending by day, for the "spent this month" line.
+function cumulative(txns, rules, start, end, opts = {}) {
+  const days = daysBetween(start, end) + 1, out = new Array(days).fill(0);
+  for (const t of txns) {
+    if (t.date < start || t.date > end) continue;
+    const c = categoryOf(t, rules);
+    if (NOT_SPEND.has(c) || (opts.noBills && BILLS.has(c))) continue;
+    out[daysBetween(start, t.date)] += +t.amount;
+  }
+  for (let i = 1; i < days; i++) out[i] += out[i - 1];
+  return out;
+}
+
+// ---------------------------------------------------------------- recurring payments
+
+const FREQS = [
+  { name: "weekly", days: 7, tol: 1, perMonth: 52 / 12, min: 3 },
+  { name: "every 2 weeks", days: 14, tol: 2, perMonth: 26 / 12, min: 3 },
+  { name: "monthly", days: 30.4, tol: 4, perMonth: 1, min: 2 },
+  { name: "every 3 months", days: 91, tol: 7, perMonth: 1 / 3, min: 2 },
+  { name: "yearly", days: 365, tol: 15, perMonth: 1 / 12, min: 2 },
+];
+const median = (a) => { const s = [...a].sort((x, y) => x - y), n = s.length; return n % 2 ? s[(n - 1) / 2] : (s[n / 2 - 1] + s[n / 2]) / 2; };
+
+// Finds charges that repeat at a steady rhythm with a steady price (Netflix, rent, insurance...).
+// Rules: recurring "no" hides a merchant, "yes" keeps it even if the pattern is unclear.
+function recurring(txns, rules, today) {
+  const since = addDays(today, -400), groups = {};
+  for (const t of txns) {
+    if (t.pending || t.date < since || +t.amount <= 0) continue;
+    const c = categoryOf(t, rules);
+    if (NOT_SPEND.has(c)) continue;
+    (groups[merchantKey(t)] ||= []).push({ ...t, cat: c });
+  }
+  const out = [];
+  for (const [key, list] of Object.entries(groups)) {
+    const rule = (rules && rules[key]) || {};
+    if (rule.recurring === "no") continue;
+    list.sort((a, b) => (a.date < b.date ? -1 : 1));
+    // one charge per date (split charges on the same day count once)
+    const byDay = [];
+    for (const t of list) {
+      const last = byDay[byDay.length - 1];
+      if (last && last.date === t.date) last.amount = +last.amount + +t.amount; else byDay.push({ ...t });
+    }
+    const gaps = byDay.slice(1).map((t, i) => daysBetween(byDay[i].date, t.date));
+    let freq = null;
+    if (gaps.length) {
+      const g = median(gaps);
+      freq = FREQS.find((f) => Math.abs(g - f.days) <= f.tol) || null;
+      if (freq) {
+        const steady = gaps.filter((x) => Math.abs(x - freq.days) <= freq.tol * 2).length / gaps.length;
+        if (steady < 0.7 || byDay.length < freq.min) freq = null;
+      }
+    }
+    const amounts = byDay.map((t) => +t.amount);
+    const typical = median(amounts);
+    const steadyPrice = amounts.filter((a) => Math.abs(a - typical) <= Math.max(typical * 0.2, 1)).length / amounts.length;
+    // Two charges only count when the price is (almost) identical; otherwise wait for a third.
+    if (freq && byDay.length === 2 && Math.abs(amounts[0] - amounts[1]) > Math.max(amounts[0] * 0.02, 0.5)) freq = null;
+    if (freq && steadyPrice < 0.75) freq = null;
+    if (!freq && rule.recurring === "yes") freq = FREQS[2];
+    if (!freq) continue;
+    const last = byDay[byDay.length - 1];
+    const next = freq.name === "monthly" ? addMonths(last.date, 1)
+      : freq.name === "every 3 months" ? addMonths(last.date, 3)
+      : freq.name === "yearly" ? addMonths(last.date, 12) : addDays(last.date, Math.round(freq.days));
+    const active = daysBetween(last.date, today) <= freq.days * 1.6 + 5;
+    const prev = byDay.length > 1 ? +byDay[byDay.length - 2].amount : null;
+    out.push({
+      key, name: merchantName(last), category: last.cat, kind: BILLS.has(last.cat) ? "Bill" : "Subscription",
+      frequency: freq.name, amount: +last.amount, monthly: +last.amount * freq.perMonth,
+      last: last.date, next, active, count: byDay.length, account_id: last.account_id,
+      priceChange: prev !== null && Math.abs(prev - +last.amount) >= 0.01 ? +last.amount - prev : 0,
+      logo: last.logo || null,
+    });
+  }
+  return out.sort((a, b) => (b.active - a.active) || (b.monthly - a.monthly));
+}
+
+// ---------------------------------------------------------------- accounts
+
+const GROUPS = [
+  ["checking", "Checking"], ["savings", "Savings"], ["credit", "Card balance"], ["cash", "Cash"],
+  ["business", "Business funds"], ["investment", "Investments"], ["loan", "Loans"], ["other", "Other"],
+];
+function accountGroups(accounts) {
+  const groups = GROUPS.map(([kind, label]) => {
+    const items = accounts.filter((a) => !a.hidden && a.kind === kind);
+    return { kind, label, items, total: items.reduce((s, a) => s + +a.balance, 0) };
+  });
+  const tot = (k) => groups.find((g) => g.kind === k).total;
+  // Net cash: what's yours to spend right now (cards owed taken off; business funds kept apart).
+  const netCash = tot("checking") + tot("savings") + tot("cash") - tot("credit");
+  return { groups, netCash };
+}
+
+const money = (n, cents = true) => {
+  const v = Math.abs(n) < 0.005 ? 0 : n;
+  return (v < 0 ? "-$" : "$") + Math.abs(v).toLocaleString("en-US",
+    { minimumFractionDigits: cents ? 2 : 0, maximumFractionDigits: cents ? 2 : 0 });
+};
+
+return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, categoryOf, addDays, daysBetween, shortDate, periodRange, comparePeriods, countable, summarize, cumulative, recurring, GROUPS, accountGroups, money };
+ })();
+    const DEMO = /money-demo/.test(location.hash);
+    // Dark categorical palette, validated (dataviz validator) on the card surface #08182b.
+    // Fixed per category, so a colour always means the same category; the rest share "Other".
+    const SLOT = { "Groceries": "#3987e5", "Dining & drinks": "#d95926", "Shopping": "#199e70", "Bills & utilities": "#c98500",
+      "Auto & transport": "#d55181", "Entertainment": "#0ca30c", "Rent": "#9085e9", "Travel": "#e66767" };
+    const OTHER = "#4a5d70", CYAN = "#4fd8ff", MUTED = "#6f93ad", INCOME = "#199e70", SPEND = "#3987e5";
+    const colorOf = (c) => SLOT[c] || OTHER;
+    const f = MC.money, f0 = (n) => MC.money(n, false);
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    const el = $("money"), body = $("mbody"), tip = $("mtip"), sheet = $("msheet");
+    const M = { data: null, tab: "dash", period: "month", offset: 0, bills: true, recur: "Subscription", q: "", cat: "", shown: 120,
+      open: {}, busy: "", error: "" };
+    try { M.tab = localStorage.getItem("jarvis.moneyTab") || "dash"; } catch {}
+    let demoCache = null;   // sample data for #money-demo
+
+    // -------------------------------------------------------------- network
+    async function mcall(action, payload) {
+      if (DEMO) return demoAction(action, payload);
+      const auth = await authHeaders();
+      if (!auth) { showSignin(true); throw new Error("This phone isn't paired."); }
+      const r = await fetch(FN + "/money/" + action, { method: "POST",
+        headers: { ...auth, apikey: PUBLISHABLE_KEY, "content-type": "application/json" }, body: JSON.stringify(payload || {}) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || `Money service error (${r.status})`);
+      return j;
+    }
+    async function load(refresh) {
+      M.busy = refresh === "force" ? "Syncing with your bank…" : (refresh ? "Checking for new transactions…" : "Loading…");
+      M.error = ""; render();
+      try { M.data = DEMO ? demoData() : await mcall("data", { tz: TZ, refresh }); }
+      catch (e) { M.error = e.message; }
+      if (M.data && M.data.refreshed && M.data.refreshed.errors && M.data.refreshed.errors.length) M.error = M.data.refreshed.errors.join(" · ");
+      M.busy = ""; render();
+    }
+
+    // -------------------------------------------------------------- open / close / tabs
+    function openMoney() { el.classList.add("on"); if (!M.data) load(true); else { render(); load(true); } }
+    function closeMoney() { el.classList.remove("on"); hideTip(); }
+    $("moneyBtn").onclick = (e) => { e.preventDefault(); openMoney(); };
+    $("mback").onclick = (e) => { e.preventDefault(); closeMoney(); };
+    el.querySelectorAll("nav button").forEach((b) => (b.onclick = () => {
+      M.tab = b.dataset.tab; try { localStorage.setItem("jarvis.moneyTab", M.tab); } catch {}
+      body.scrollTop = 0; render();
+    }));
+    let lastW = innerWidth;   // redraw charts on rotation, not when the keyboard opens (that would close it)
+    window.addEventListener("resize", () => { if (el.classList.contains("on") && innerWidth !== lastW) { lastW = innerWidth; render(); } });
+
+    // -------------------------------------------------------------- tooltip
+    function showTip(html, x, y) {
+      tip.innerHTML = html; tip.style.display = "block";
+      const w = tip.offsetWidth, h = tip.offsetHeight;
+      tip.style.left = Math.max(8, Math.min(innerWidth - w - 8, x - w / 2)) + "px";
+      tip.style.top = Math.max(8, y - h - 14) + "px";
+    }
+    function hideTip() { tip.style.display = "none"; }
+    body.addEventListener("scroll", hideTip, { passive: true });
+
+    // -------------------------------------------------------------- charts (SVG, drawn by hand)
+    const NS = "http://www.w3.org/2000/svg";
+    const svg = (w, h) => { const s = document.createElementNS(NS, "svg"); s.setAttribute("viewBox", `0 0 ${w} ${h}`); s.setAttribute("height", h); return s; };
+    const node = (tag, attrs, parent) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); if (parent) parent.appendChild(n); return n; };
+    const niceMax = (v) => { if (v <= 0) return 100; const p = 10 ** Math.floor(Math.log10(v)); return Math.ceil(v / p / 0.5) * 0.5 * p; };
+    // bar with only its data end rounded (4px), anchored on the baseline
+    const barPath = (x, y, w, h, r = 4) => { r = Math.min(r, w / 2, h); return h <= 0 ? "" :
+      `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`; };
+
+    // Running total line: this month (solid) against last month (dashed), crosshair + tooltip.
+    function lineChart(host, series, startDate, todayIdx) {
+      const W = Math.max(260, host.clientWidth), H = 150, P = { l: 4, r: 44, t: 10, b: 20 };
+      const n = Math.max(...series.map((s) => s.values.length));
+      const top = niceMax(Math.max(1, ...series.flatMap((s) => s.values)));
+      const X = (i) => P.l + (i / Math.max(1, n - 1)) * (W - P.l - P.r), Y = (v) => P.t + (1 - v / top) * (H - P.t - P.b);
+      const s = svg(W, H);
+      for (const g of [0, 0.5, 1]) {
+        node("line", { x1: P.l, x2: W - P.r, y1: Y(top * g), y2: Y(top * g), stroke: g ? "rgba(79,216,255,0.10)" : "rgba(79,216,255,0.28)", "stroke-width": 1 }, s);
+        node("text", { x: W - P.r + 6, y: Y(top * g) + 4 }, s).textContent = f0(top * g);
+      }
+      for (const i of [0, Math.floor((n - 1) / 2), n - 1]) {
+        const t = node("text", { x: X(i), y: H - 4, "text-anchor": i === 0 ? "start" : i === n - 1 ? "end" : "middle" }, s);
+        t.textContent = MC.shortDate(MC.addDays(startDate, i));
+      }
+      for (const se of series) {
+        const pts = se.values.map((v, i) => `${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(" ");
+        if (se.fill) node("polygon", { points: `${X(0)},${Y(0)} ${pts} ${X(se.values.length - 1)},${Y(0)}`, fill: "rgba(79,216,255,0.08)" }, s);
+        node("polyline", { points: pts, fill: "none", stroke: se.color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round",
+          ...(se.dashed ? { "stroke-dasharray": "4 4" } : {}) }, s);
+        if (se.endDot) { const i = se.values.length - 1; node("circle", { cx: X(i), cy: Y(se.values[i]), r: 4.5, fill: se.color, stroke: "#08182b", "stroke-width": 2 }, s); }
+      }
+      const cross = node("line", { y1: P.t, y2: H - P.b, stroke: "rgba(207,238,255,0.4)", "stroke-width": 1, visibility: "hidden" }, s);
+      const dots = series.map((se) => node("circle", { r: 4, fill: se.color, stroke: "#08182b", "stroke-width": 2, visibility: "hidden" }, s));
+      const hit = node("rect", { x: 0, y: 0, width: W, height: H, fill: "transparent" }, s);
+      const move = (e) => {
+        const box = s.getBoundingClientRect(), x = (e.clientX - box.left) * (W / box.width);
+        const i = Math.max(0, Math.min(n - 1, Math.round(((x - P.l) / (W - P.l - P.r)) * (n - 1))));
+        cross.setAttribute("x1", X(i)); cross.setAttribute("x2", X(i)); cross.setAttribute("visibility", "visible");
+        let html = `<b>Day ${i + 1}</b>`;
+        series.forEach((se, k) => {
+          const v = se.values[i];
+          if (v === undefined) { dots[k].setAttribute("visibility", "hidden"); return; }
+          dots[k].setAttribute("cx", X(i)); dots[k].setAttribute("cy", Y(v)); dots[k].setAttribute("visibility", "visible");
+          html += `<br><span class="sw" style="background:${se.color}"></span>${esc(se.name)}: <b>${f(v)}</b>`;
+        });
+        showTip(html, e.clientX, box.top + Y(Math.max(...series.map((se) => se.values[i] ?? 0))) * (box.height / H));
+      };
+      const leave = () => { cross.setAttribute("visibility", "hidden"); dots.forEach((d) => d.setAttribute("visibility", "hidden")); hideTip(); };
+      hit.addEventListener("pointermove", move); hit.addEventListener("pointerdown", move); hit.addEventListener("pointerleave", leave);
+      host.innerHTML = ""; host.appendChild(s);
+    }
+
+    // Income vs spending per period, grouped bars; tap a group to pick that period.
+    function barChart(host, groups, onPick) {
+      const W = Math.max(260, host.clientWidth), H = 150, P = { l: 4, r: 44, t: 8, b: 22 };
+      const top = niceMax(Math.max(1, ...groups.flatMap((g) => [g.income, g.spend])));
+      const Y = (v) => P.t + (1 - Math.max(0, v) / top) * (H - P.t - P.b), base = Y(0);
+      const slot = (W - P.l - P.r) / groups.length, bw = Math.min(18, (slot - 14) / 2);
+      const s = svg(W, H);
+      for (const g of [0.5, 1]) {
+        node("line", { x1: P.l, x2: W - P.r, y1: Y(top * g), y2: Y(top * g), stroke: "rgba(79,216,255,0.10)", "stroke-width": 1 }, s);
+        node("text", { x: W - P.r + 6, y: Y(top * g) + 4 }, s).textContent = f0(top * g);
+      }
+      node("line", { x1: P.l, x2: W - P.r, y1: base, y2: base, stroke: "rgba(79,216,255,0.28)", "stroke-width": 1 }, s);
+      groups.forEach((g, i) => {
+        const cx = P.l + slot * i + slot / 2;
+        if (g.selected) node("rect", { x: cx - slot / 2 + 3, y: P.t - 4, width: slot - 6, height: H - P.t - P.b + 4, rx: 6, fill: "rgba(79,216,255,0.10)" }, s);
+        node("path", { d: barPath(cx - bw - 1, Y(g.income), bw, base - Y(g.income)), fill: INCOME }, s);   // 2px gap between the pair
+        node("path", { d: barPath(cx + 1, Y(g.spend), bw, base - Y(g.spend)), fill: SPEND }, s);
+        const t = node("text", { x: cx, y: H - 5, "text-anchor": "middle" }, s); t.textContent = g.label;
+        if (g.selected) t.setAttribute("style", "fill:#e6f7ff;font-weight:600");
+        const hit = node("rect", { x: cx - slot / 2, y: 0, width: slot, height: H, fill: "transparent", style: "cursor:pointer" }, s);
+        const show = (e) => { const box = s.getBoundingClientRect();
+          showTip(`<b>${esc(g.title)}</b><br><span class="sw" style="background:${INCOME}"></span>Income: <b>${f(g.income)}</b>` +
+            `<br><span class="sw" style="background:${SPEND}"></span>Spending: <b>${f(g.spend)}</b>`, box.left + cx * (box.width / W), box.top + Y(Math.max(g.income, g.spend)) * (box.height / H)); };
+        hit.addEventListener("pointermove", show); hit.addEventListener("pointerleave", hideTip);
+        hit.addEventListener("click", () => { hideTip(); onPick(g.offset); });
+      });
+      host.innerHTML = ""; host.appendChild(s);
+    }
+
+    // Spending by category as a ring; a 2px surface gap between slices; hover a slice for its figures.
+    function donut(host, slices, centre) {
+      const S = Math.min(260, Math.max(200, host.clientWidth * 0.7)), R = S / 2, r0 = R * 0.72;
+      const s = svg(S, S); s.style.width = S + "px"; s.style.margin = "0 auto";
+      const total = slices.reduce((a, x) => a + Math.max(0, x.value), 0);
+      if (total <= 0) node("circle", { cx: R, cy: R, r: (R + r0) / 2, fill: "none", stroke: "rgba(79,216,255,0.15)", "stroke-width": R - r0 }, s);
+      let a0 = -Math.PI / 2;
+      for (const sl of slices) {
+        if (sl.value <= 0 || total <= 0) continue;
+        const a1 = a0 + (sl.value / total) * Math.PI * 2, big = a1 - a0 > Math.PI ? 1 : 0;
+        const p = (r, a) => `${R + r * Math.cos(a)},${R + r * Math.sin(a)}`;
+        const d = a1 - a0 >= Math.PI * 2 - 1e-6
+          ? `M${p(R, a0)}A${R},${R} 0 1 1 ${p(R, a0 + Math.PI)}A${R},${R} 0 1 1 ${p(R, a0)}M${p(r0, a0)}A${r0},${r0} 0 1 0 ${p(r0, a0 + Math.PI)}A${r0},${r0} 0 1 0 ${p(r0, a0)}Z`
+          : `M${p(R, a0)}A${R},${R} 0 ${big} 1 ${p(R, a1)}L${p(r0, a1)}A${r0},${r0} 0 ${big} 0 ${p(r0, a0)}Z`;
+        const path = node("path", { d, fill: sl.color, stroke: "#08182b", "stroke-width": 2, "fill-rule": "evenodd", style: "cursor:pointer" }, s);
+        const show = (e) => showTip(`<span class="sw" style="background:${sl.color}"></span><b>${esc(sl.name)}</b><br>${f(sl.value)} · ${Math.round((sl.value / total) * 100)}% of spending`, e.clientX, e.clientY);
+        path.addEventListener("pointermove", show); path.addEventListener("pointerleave", hideTip);
+        if (sl.onClick) path.addEventListener("click", () => { hideTip(); sl.onClick(); });
+        a0 = a1;
+      }
+      const t1 = node("text", { x: R, y: R - 14, "text-anchor": "middle", style: "font-size:12px;letter-spacing:.14em" }, s); t1.textContent = centre.top.toUpperCase();
+      const t2 = node("text", { x: R, y: R + 14, "text-anchor": "middle", style: "font-size:26px;font-weight:600;fill:#e6f7ff" }, s); t2.textContent = centre.value;
+      if (centre.sub) { const t3 = node("text", { x: R, y: R + 34, "text-anchor": "middle", style: "font-size:13px" }, s); t3.textContent = centre.sub; }
+      host.innerHTML = ""; host.appendChild(s);
+    }
+
+    // -------------------------------------------------------------- shared bits
+    const d = () => M.data;
+    const allTxns = () => (d() ? d().transactions : []);
+    // for the maths: without loan/investment/hidden accounts (see MC.countable)
+    let cntSrc = null, cntOut = [];
+    const txns = () => { if (!d()) return []; if (cntSrc !== d().transactions || cntOut.acc !== d().accounts) {
+      cntSrc = d().transactions; cntOut = MC.countable(cntSrc, d().accounts); cntOut.acc = d().accounts; } return cntOut; };
+    const rules = () => (d() ? d().rules : {});
+    const today = () => (d() && d().today) || new Date().toISOString().slice(0, 10);
+    const accountName = (id) => { const a = d() && d().accounts.find((x) => x.id === id); return a ? a.name + (a.mask ? " ··" + a.mask : "") : ""; };
+    const initial = (t) => esc((MC.merchantName(t)[0] || "?").toUpperCase());
+    const avatar = (t) => t.logo ? `<div class="avatar"><img src="${esc(t.logo)}" alt="" referrerpolicy="no-referrer"></div>` : `<div class="avatar">${initial(t)}</div>`;
+    function ago(iso) {
+      if (!iso) return "never";
+      const m = Math.round((Date.now() - Date.parse(iso)) / 60000);
+      return m < 2 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `about ${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} days ago`;
+    }
+    const status = () => (M.busy ? `<div class="note">${esc(M.busy)}</div>` : "") + (M.error ? `<div class="note err">${esc(M.error)}</div>` : "");
+
+    // -------------------------------------------------------------- Dashboard
+    function renderDash() {
+      const t = today(), now = MC.periodRange("month", 0, t), prev = MC.periodRange("month", -1, t);
+      const day = MC.daysBetween(now.start, t);
+      const cur = MC.cumulative(txns(), rules(), now.start, t);
+      const last = MC.cumulative(txns(), rules(), prev.start, prev.end);
+      const spent = cur[cur.length - 1] || 0, sameDay = last[Math.min(day, last.length - 1)] || 0, diff = spent - sameDay;
+      const inc = MC.summarize(txns(), rules(), now.start, t).income;
+      const { groups, netCash } = MC.accountGroups(d().accounts);
+      const items = d().items || [];
+      const newest = items.map((i) => i.synced_at).filter(Boolean).sort().pop();
+      let h = status() + `<div class="card">
+        <div class="label">Spent this month</div>
+        <div class="hero">${f0(spent)}</div>
+        <div class="delta ${diff <= 0 ? "good" : "bad"}"><i>${diff <= 0 ? "✓" : "↑"}</i>${f0(Math.abs(diff))} ${diff <= 0 ? "less" : "more"} than this time last month</div>
+        <div id="mline" style="margin-top:12px"></div>
+        <div class="legend"><span><span class="sw" style="background:${CYAN}"></span>This month</span><span><span class="sw dash"></span>${esc(prev.label)}</span></div>
+        <div class="row" style="margin-top:8px"><div class="grow"><div class="name">Income this month</div></div><div class="amt in">${f(inc)}</div></div>
+      </div>`;
+      h += `<div class="sect"><span class="label">Accounts</span><span class="note" style="margin:0">${items.length ? "Synced " + esc(ago(newest)) + " · " : ""}<button class="linkish" id="msync">Sync now</button></span></div><div class="card">`;
+      const shown = groups.filter((g) => g.items.length || ["checking", "savings", "credit", "cash", "business"].includes(g.kind));
+      for (const g of shown) {
+        const isOpen = !!M.open[g.kind];
+        h += `<div class="row click" data-group="${g.kind}"><span class="chev">${g.items.length ? (isOpen ? "▾" : "▸") : ""}</span><div class="grow"><div class="name">${esc(g.label)}</div>` +
+          `${g.items.length ? "" : `<div class="meta">${g.kind === "cash" || g.kind === "business" ? "Tap to add" : "None linked"}</div>`}</div><div class="amt">${f(g.total)}</div></div>`;
+        if (isOpen) for (const a of g.items) {
+          h += `<div class="row sub2 click" data-acct="${esc(a.id)}"><div class="grow"><div class="name">${esc(a.name)}${a.mask ? " ··" + esc(a.mask) : ""}</div>` +
+            `<div class="meta">${esc(a.manual ? "Entered by hand · updated " + ago(a.updated_at) : a.institution || "")}${g.kind === "credit" && a.credit_limit ? " · limit " + f0(+a.credit_limit) : ""}</div></div><div class="amt">${f(+a.balance)}</div></div>`;
+        }
+        if (g.kind === "credit") h += `<div class="row"><span class="chev"></span><div class="grow"><div class="name">Net cash</div><div class="meta">Checking + savings + cash − cards</div></div><div class="amt ${netCash >= 0 ? "in" : ""}">${f(netCash)}</div></div>`;
+      }
+      h += `</div><div class="btns"><button class="btn" id="mlink">+ Link a bank</button><button class="btn quiet" id="mmanual">+ Cash or business funds</button></div>`;
+      if (!d().configured && !DEMO) h += `<div class="note">Bank linking needs Plaid keys in Supabase first. Cash and business funds work now.</div>`;
+      else if (d().env === "sandbox" && !DEMO) h += `<div class="note">Plaid is in Sandbox mode: only Plaid's test banks can be linked (user_good / pass_good).</div>`;
+      for (const it of items) if (it.error) h += `<div class="note err">${esc(it.institution)}: ${esc(it.error)}</div>`;
+      if (items.length) h += `<div class="sect"><span class="label">Linked banks</span></div><div class="card">` +
+        items.map((it) => `<div class="row"><div class="grow"><div class="name">${esc(it.institution)}</div><div class="meta">Read-only · synced ${esc(ago(it.synced_at))}</div></div>` +
+          `<button class="linkish" data-unlink="${esc(it.item_id)}" data-inst="${esc(it.institution)}">Unlink</button></div>`).join("") + `</div>`;
+      body.innerHTML = h;
+      lineChart($("mline"), [
+        { name: prev.label, values: last, color: MUTED, dashed: true },
+        { name: "This month", values: cur, color: CYAN, fill: true, endDot: true },
+      ], now.start, day);
+      body.querySelectorAll("[data-group]").forEach((r) => (r.onclick = () => {
+        const g = groups.find((x) => x.kind === r.dataset.group);
+        if (!g.items.length && (g.kind === "cash" || g.kind === "business")) return manualSheet(null, g.kind);
+        M.open[g.kind] = !M.open[g.kind]; render();
+      }));
+      body.querySelectorAll("[data-acct]").forEach((r) => (r.onclick = () => {
+        const a = d().accounts.find((x) => x.id === r.dataset.acct);
+        a.manual ? manualSheet(a) : accountSheet(a);
+      }));
+      body.querySelectorAll("[data-unlink]").forEach((b) => (b.onclick = async () => {
+        if (!confirm(`Unlink ${b.dataset.inst}? Its accounts and transactions are removed from Jarvis (your bank isn't affected).`)) return;
+        try { await mcall("unlink", { item_id: b.dataset.unlink }); load(false); } catch (e) { M.error = e.message; render(); }
+      }));
+      $("msync").onclick = () => load("force");
+      $("mlink").onclick = linkBank;
+      $("mmanual").onclick = () => manualSheet(null, "cash");
+    }
+
+    // -------------------------------------------------------------- Spending
+    function renderSpending() {
+      const t = today();
+      const cmp = MC.comparePeriods(M.period, M.offset, t), p = MC.periodRange(M.period, M.offset, t);
+      const opts = { noBills: !M.bills };
+      const end = cmp.cur.end;
+      // compared with the period before, up to the same point while this one is still running
+      const s = MC.summarize(txns(), rules(), p.start, end, opts), sb = MC.summarize(txns(), rules(), cmp.prev.start, cmp.prev.end, opts);
+      const groups = [];
+      for (let o = M.offset - 5; o <= M.offset; o++) {
+        const q = MC.periodRange(M.period, o, t), e2 = q.end > t ? t : q.end;
+        const x = q.start > t ? { income: 0, spend: 0 } : MC.summarize(txns(), rules(), q.start, e2, opts);
+        groups.push({ label: q.label, title: `${MC.shortDate(q.start)} – ${MC.shortDate(q.end)}`, income: x.income, spend: x.spend, offset: o, selected: o === M.offset });
+      }
+      const pct = s.income > 0 ? Math.round((s.net / s.income) * 100) : null;
+      const prevBy = Object.fromEntries(sb.categories.map((c) => [c.name, c.amount]));
+      const slices = Object.keys(SLOT).map((n) => ({ name: n, value: (s.categories.find((c) => c.name === n) || {}).amount || 0, color: SLOT[n],
+        onClick: () => { M.cat = n; M.tab = "tx"; render(); } }));
+      const otherAmt = s.categories.filter((c) => !SLOT[c.name]).reduce((a, c) => a + c.amount, 0);
+      slices.push({ name: "Other", value: otherAmt, color: OTHER });
+      const change = sb.spend ? Math.round(((s.spend - sb.spend) / Math.abs(sb.spend)) * 100) : null;
+      let h = status() + `<div class="seg">${["week", "month", "quarter", "year"].map((k) =>
+        `<button data-period="${k}" class="${M.period === k ? "on" : ""}">${k[0].toUpperCase() + k.slice(1)}</button>`).join("")}</div>
+        <div class="card"><div id="mbars"></div>
+          <div class="legend"><span><span class="sw" style="background:${INCOME}"></span>Income</span><span><span class="sw" style="background:${SPEND}"></span>Spending</span>
+          <span style="margin-left:auto">${M.offset < 0 ? `<button class="linkish" id="mnow">Back to now</button>` : ""}</span></div></div>
+        <div class="card stats">
+          <div class="label" style="margin-bottom:4px">${esc(MC.shortDate(p.start))} – ${esc(MC.shortDate(p.end))}${p.end > t ? " (so far)" : ""}</div>
+          <div class="row"><div class="grow"><div class="name">Earnings</div></div><div class="amt in">${f(s.income)}</div></div>
+          <div class="row"><div class="grow"><div class="name">Total spend</div></div><div class="amt">${f(s.spend)}</div></div>
+          <div class="row"><div class="grow"><div class="name">Net income</div>${pct !== null ? `<div class="meta">${pct >= 0 ? pct + "% left for savings and debt" : "spent " + Math.abs(pct) + "% more than earned"}</div>` : ""}</div>
+            <div class="amt ${s.net >= 0 ? "in" : ""}">${f(s.net)}</div></div>
+        </div>
+        <div class="sect"><span class="label">Breakdown</span><label class="toggle">Include bills <input type="checkbox" id="mbills" ${M.bills ? "checked" : ""}></label></div>
+        <div class="card"><div id="mdonut"></div>
+          ${change !== null ? `<div class="note" style="text-align:center">${change > 0 ? "↑ " + change + "% more" : change < 0 ? "↓ " + Math.abs(change) + "% less" : "Same"} than ${cmp.running ? "this point last " + M.period : "the " + M.period + " before"}</div>` : ""}
+          <table><thead><tr><th>Category</th><th class="r">%</th><th class="r">Change</th><th class="r">Amount</th></tr></thead><tbody>
+          ${s.categories.map((c) => { const ch = c.amount - (prevBy[c.name] || 0);
+            return `<tr class="click" data-cat="${esc(c.name)}"><td><span class="sw" style="background:${colorOf(c.name)}"></span>${esc(c.name)}</td>` +
+              `<td class="r">${s.spend > 0 ? Math.round((c.amount / s.spend) * 100) : 0}%</td>` +
+              `<td class="r ${Math.abs(ch) < 1 ? "flat" : ch > 0 ? "up" : "down"}">${Math.abs(ch) < 1 ? "–" : (ch > 0 ? "+" : "−") + f0(Math.abs(ch))}</td><td class="r">${f(c.amount)}</td></tr>`; }).join("")
+            || `<tr><td colspan="4" class="flat">No spending in this period.</td></tr>`}
+          </tbody></table></div>`;
+      body.innerHTML = h;
+      barChart($("mbars"), groups, (o) => { M.offset = o; render(); });
+      donut($("mdonut"), slices, { top: "Total spend", value: f0(s.spend), sub: p.label });
+      body.querySelectorAll("[data-period]").forEach((b) => (b.onclick = () => { M.period = b.dataset.period; M.offset = 0; render(); }));
+      body.querySelectorAll("[data-cat]").forEach((r) => (r.onclick = () => { M.cat = r.dataset.cat; M.q = ""; M.tab = "tx"; body.scrollTop = 0; render(); }));
+      $("mbills").onchange = (e) => { M.bills = e.target.checked; render(); };
+      const now = $("mnow"); if (now) now.onclick = () => { M.offset = 0; render(); };
+    }
+
+    // -------------------------------------------------------------- Recurring
+    function renderRecurring() {
+      const t = today(), all = MC.recurring(txns(), rules(), t);
+      const on = all.filter((r) => r.active), off = all.filter((r) => !r.active);
+      const monthly = (list) => list.reduce((a, r) => a + r.monthly, 0);
+      const list = on.filter((r) => r.kind === M.recur);
+      const soon = on.filter((r) => r.next >= t && r.next <= MC.addDays(t, 7));
+      const row = (r) => `<div class="row click" data-rec="${esc(r.key)}">${avatar({ merchant: r.name, logo: r.logo })}
+        <div class="grow"><div class="name">${esc(r.name)}</div><div class="meta">${esc(r.frequency)} · ${r.active ? "next " + esc(MC.shortDate(r.next)) : "last " + esc(MC.shortDate(r.last))}${r.priceChange ? ` · <span style="color:${r.priceChange > 0 ? "#ff8a8a" : "#3ddc84"}">${r.priceChange > 0 ? "price up" : "price down"} ${f(Math.abs(r.priceChange))}</span>` : ""}</div></div>
+        <div style="text-align:right"><div class="amt">${f(r.amount)}</div><div class="meta">${f0(r.monthly)}/mo</div></div></div>`;
+      let h = status() + `<div class="card"><div class="label">Recurring each month</div><div class="hero">${f0(monthly(on))}</div>
+        <div class="sub">${on.filter((r) => r.kind === "Subscription").length} subscriptions · ${f0(monthly(on.filter((r) => r.kind === "Subscription")))}/mo &nbsp;·&nbsp; ${on.filter((r) => r.kind === "Bill").length} bills · ${f0(monthly(on.filter((r) => r.kind === "Bill")))}/mo</div>
+        ${soon.length ? `<div class="note">Due in the next 7 days: ${soon.map((r) => esc(r.name) + " " + f(r.amount)).join(", ")}</div>` : ""}</div>
+        <div class="seg"><button data-recur="Subscription" class="${M.recur === "Subscription" ? "on" : ""}">Subscriptions</button><button data-recur="Bill" class="${M.recur === "Bill" ? "on" : ""}">Bills</button></div>
+        <div class="card">${list.map(row).join("") || `<div class="empty">None found yet. Recurring charges show up after they've repeated (two identical charges a month apart, or three similar ones).</div>`}</div>`;
+      if (off.length) h += `<div class="sect"><span class="label">Look stopped</span></div><div class="card">${off.map(row).join("")}</div>`;
+      h += `<div class="note">Tap one to see its charges or tell Jarvis it isn't recurring.</div>`;
+      body.innerHTML = h;
+      body.querySelectorAll("[data-recur]").forEach((b) => (b.onclick = () => { M.recur = b.dataset.recur; render(); }));
+      body.querySelectorAll("[data-rec]").forEach((r) => (r.onclick = () => recurSheet(all.find((x) => x.key === r.dataset.rec))));
+    }
+
+    // -------------------------------------------------------------- Transactions
+    function renderTx() {
+      body.innerHTML = status() + `<div class="search"><input id="mq" placeholder="Search" value="${esc(M.q)}" autocomplete="off" enterkeyhint="search">
+        <select id="mcat"><option value="">All categories</option>${MC.CATEGORIES.map((c) => `<option ${M.cat === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></div>
+        <div id="mtxlist"></div>`;
+      let timer = 0;
+      $("mq").oninput = (e) => { M.q = e.target.value; M.shown = 120; clearTimeout(timer); timer = setTimeout(fillTx, 150); };
+      $("mcat").onchange = (e) => { M.cat = e.target.value; M.shown = 120; fillTx(); };
+      fillTx();
+    }
+    function fillTx() {   // only the list, so typing in the search box keeps the keyboard open
+      const box = $("mtxlist"); if (!box) return;
+      const q = M.q.trim().toLowerCase();
+      const list = allTxns().filter((t) => (!M.cat || MC.categoryOf(t, rules()) === M.cat) &&
+        (!q || `${t.merchant || ""} ${t.name || ""}`.toLowerCase().includes(q)));
+      const total = list.reduce((a, t) => a + +t.amount, 0);
+      let h = "";
+      if (M.cat || q) h += `<div class="note">${list.length} transactions · ${total >= 0 ? f(total) + " out" : f(-total) + " in"} <button class="linkish" id="mclear" style="margin-left:8px">Clear</button></div>`;
+      let lastDay = "", rows = "";
+      for (const t of list.slice(0, M.shown)) {
+        if (t.date !== lastDay) { if (rows) rows += `</div>`; rows += `<div class="day">${esc(MC.shortDate(t.date))} ${t.date.slice(0, 4)}</div><div class="card" style="padding:4px 14px">`; lastDay = t.date; }
+        const c = MC.categoryOf(t, rules());
+        rows += `<div class="row click" data-tx="${esc(t.id)}">${avatar(t)}<div class="grow"><div class="name">${esc(MC.merchantName(t))}</div>
+          <div class="meta"><span class="sw" style="background:${colorOf(c)};margin-right:5px"></span>${esc(c)}${t.pending ? " · pending" : ""}</div></div>
+          <div class="amt ${+t.amount < 0 ? "in" : ""}">${+t.amount < 0 ? "+" + f(-t.amount) : f(+t.amount)}</div></div>`;
+      }
+      if (rows) rows += `</div>`;
+      h += rows || `<div class="empty">No transactions${M.cat || q ? " match" : " yet"}.</div>`;
+      if (list.length > M.shown) h += `<div class="btns"><button class="btn quiet" id="mmore">Show more (${list.length - M.shown} left)</button></div>`;
+      box.innerHTML = h;
+      const clr = $("mclear"); if (clr) clr.onclick = () => { M.cat = ""; M.q = ""; renderTx(); };
+      const more = $("mmore"); if (more) more.onclick = () => { M.shown += 200; fillTx(); };
+      box.querySelectorAll("[data-tx]").forEach((r) => (r.onclick = () => txSheet(allTxns().find((t) => t.id === r.dataset.tx))));
+    }
+
+    function render() {
+      el.querySelectorAll("nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === M.tab));
+      hideTip();
+      if (!d()) { body.innerHTML = status() + (M.busy ? "" : `<div class="empty">Couldn't load your money data.</div><div class="btns"><button class="btn" id="mretry">Try again</button></div>`);
+        const r = $("mretry"); if (r) r.onclick = () => load(true); return; }
+      try {
+        ({ dash: renderDash, spend: renderSpending, recur: renderRecurring, tx: renderTx }[M.tab] || renderDash)();
+      } catch (e) { console.error(e); body.innerHTML = `<div class="note err">Couldn't draw this screen: ${esc(e.message)}</div>`; }
+    }
+
+    // -------------------------------------------------------------- sheets (edit dialogs)
+    function openSheet(html, wire) {
+      sheet.innerHTML = `<div class="box">${html}</div>`; sheet.classList.add("on");
+      sheet.onclick = (e) => { if (e.target === sheet) closeSheet(); };
+      wire(sheet.querySelector(".box"));
+    }
+    function closeSheet() { sheet.classList.remove("on"); sheet.innerHTML = ""; }
+    const sheetErr = (msg) => { const e = sheet.querySelector(".err"); if (e) e.textContent = msg; };
+
+    function manualSheet(a, kind) {
+      const k = a ? a.kind : kind;
+      openSheet(`<h2>${a ? "Edit " + esc(a.name) : "Add cash or business funds"}</h2><div class="meta">Entered by hand. Update the amount whenever it changes.</div>
+        <label>Name</label><input id="sn" value="${esc(a ? a.name : k === "business" ? "Business funds" : "Cash")}" maxlength="60">
+        <label>Section</label><select id="sk">${[["cash", "Cash"], ["business", "Business funds"], ["savings", "Savings"], ["other", "Other"]].map(([v, l]) =>
+          `<option value="${v}" ${k === v ? "selected" : ""}>${l}</option>`).join("")}</select>
+        <label>Amount ($)</label><input id="sb" type="number" inputmode="decimal" step="0.01" value="${a ? +a.balance : ""}" placeholder="0.00">
+        <div class="btns"><button class="btn" id="ssave">Save</button>${a ? `<button class="btn danger" id="sdel">Remove</button>` : ""}<button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`,
+      (box) => {
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelector("#ssave").onclick = async () => {
+          const bal = parseFloat(box.querySelector("#sb").value);
+          if (!Number.isFinite(bal)) return sheetErr("Enter an amount.");
+          try { await mcall("manual", { id: a && a.id, name: box.querySelector("#sn").value, kind: box.querySelector("#sk").value, balance: bal });
+            closeSheet(); load(false); } catch (e) { sheetErr(e.message); }
+        };
+        const del = box.querySelector("#sdel");
+        if (del) del.onclick = async () => { if (!confirm(`Remove ${a.name}?`)) return;
+          try { await mcall("manual", { id: a.id, delete: true }); closeSheet(); load(false); } catch (e) { sheetErr(e.message); } };
+      });
+    }
+
+    function accountSheet(a) {
+      openSheet(`<h2>${esc(a.name)}${a.mask ? " ··" + esc(a.mask) : ""}</h2><div class="meta">${esc(a.institution || "")} · linked read-only · balance ${f(+a.balance)}</div>
+        <label>Show under</label><select id="sk">${MC.GROUPS.map(([v, l]) => `<option value="${v}" ${a.kind === v ? "selected" : ""}>${l}</option>`).join("")}</select>
+        <label class="check"><input type="checkbox" id="sh" ${a.hidden ? "checked" : ""}> Hide this account from the totals</label>
+        <div class="btns"><button class="btn" id="ssave">Save</button><button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`,
+      (box) => {
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelector("#ssave").onclick = async () => {
+          try { await mcall("account", { id: a.id, kind: box.querySelector("#sk").value, hidden: box.querySelector("#sh").checked }); closeSheet(); load(false); }
+          catch (e) { sheetErr(e.message); }
+        };
+      });
+    }
+
+    function txSheet(t) {
+      if (!t) return;
+      const c = MC.categoryOf(t, rules()), key = MC.merchantKey(t);
+      openSheet(`<h2>${esc(MC.merchantName(t))}</h2><div class="meta">${+t.amount < 0 ? "Money in " + f(-t.amount) : f(+t.amount)} · ${esc(MC.shortDate(t.date))} ${t.date.slice(0, 4)}${t.pending ? " · pending" : ""}<br>${esc(accountName(t.account_id))}<br>${esc(t.name || "")}</div>
+        <label>Category</label><select id="sc">${MC.CATEGORIES.map((x) => `<option ${x === c ? "selected" : ""}>${esc(x)}</option>`).join("")}</select>
+        <label class="check"><input type="checkbox" id="sa" checked> Always use this for ${esc(MC.merchantName(t))}</label>
+        <div class="note" style="color:#6f93ad;font-size:13px;margin-top:8px">Transfers, card payments and Excluded don't count as spending or income.</div>
+        <div class="btns"><button class="btn" id="ssave">Save</button><button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`,
+      (box) => {
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelector("#ssave").onclick = async () => {
+          const category = box.querySelector("#sc").value, all = box.querySelector("#sa").checked;
+          try {
+            await mcall("categorize", { id: t.id, category, all, merchant_key: key });
+            // show it straight away; the next load confirms
+            if (all) { (d().rules[key] = d().rules[key] || { merchant_key: key }).category = category; t.user_category = null; } else t.user_category = category;
+            closeSheet(); render();
+          } catch (e) { sheetErr(e.message); }
+        };
+      });
+    }
+
+    function recurSheet(r) {
+      if (!r) return;
+      const charges = txns().filter((t) => MC.merchantKey(t) === r.key && +t.amount > 0).slice(0, 12);
+      openSheet(`<h2>${esc(r.name)}</h2><div class="meta">${esc(r.kind)} · ${esc(r.category)} · ${f(r.amount)} ${esc(r.frequency)} · about ${f(r.monthly)} a month<br>
+        ${r.active ? "Next expected " + esc(MC.shortDate(r.next)) : "No charge since " + esc(MC.shortDate(r.last)) + ": it may have been cancelled"}</div>
+        <div class="card" style="background:transparent;padding:4px 0;border:0">${charges.map((t) => `<div class="row"><div class="grow"><div class="name" style="font-size:15px">${esc(MC.shortDate(t.date))} ${t.date.slice(0, 4)}</div><div class="meta">${esc(accountName(t.account_id))}</div></div><div class="amt">${f(+t.amount)}</div></div>`).join("")}</div>
+        <div class="btns"><button class="btn danger" id="sno">Not recurring</button><button class="btn quiet" id="sx">Close</button></div><div class="err"></div>`,
+      (box) => {
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelector("#sno").onclick = async () => {
+          try { await mcall("recurring", { merchant_key: r.key, recurring: "no" }); (d().rules[r.key] = d().rules[r.key] || { merchant_key: r.key }).recurring = "no"; closeSheet(); render(); }
+          catch (e) { sheetErr(e.message); }
+        };
+      });
+    }
+
+    // -------------------------------------------------------------- Plaid Link (connect a bank)
+    function plaidScript() {
+      if (window.Plaid) return Promise.resolve();
+      return new Promise((res, rej) => { const s = document.createElement("script");
+        s.src = "https://cdn.plaid.com/link/v2/stable/link-initialize.js"; s.onload = res; s.onerror = () => rej(new Error("Couldn't load Plaid."));
+        document.head.appendChild(s); });
+    }
+    function openLink(token, receivedRedirectUri) {
+      const handler = window.Plaid.create({
+        token, ...(receivedRedirectUri ? { receivedRedirectUri } : {}),
+        onSuccess: async (public_token, meta) => {
+          M.busy = `Connecting ${(meta.institution && meta.institution.name) || "your bank"}… the first sync can take a minute.`; render();
+          try {
+            const r = await mcall("exchange", { public_token, institution: meta.institution && meta.institution.name });
+            if (r.status && r.status.startsWith("error")) M.error = r.status;
+          } catch (e) { M.error = e.message; }
+          try { localStorage.removeItem("jarvis.plaidLink"); } catch {}
+          load(false);
+        },
+        onExit: (err) => { try { localStorage.removeItem("jarvis.plaidLink"); } catch {}
+          if (err) { M.error = err.display_message || err.error_message || "Linking stopped."; render(); } },
+      });
+      handler.open();
+    }
+    async function linkBank() {
+      if (DEMO) { M.error = "Demo mode: linking is off."; return render(); }
+      try {
+        M.busy = "Opening Plaid…"; render();
+        const [{ link_token }] = await Promise.all([mcall("link", {}), plaidScript()]);
+        try { localStorage.setItem("jarvis.plaidLink", link_token); } catch {}
+        M.busy = ""; render(); openLink(link_token);
+      } catch (e) { M.busy = ""; M.error = e.message; render(); }
+    }
+    // Banks that sign in on their own site send you back here with ?oauth_state_id=...: finish linking.
+    if (/[?&]oauth_state_id=/.test(location.search)) {
+      let tok = null; try { tok = localStorage.getItem("jarvis.plaidLink"); } catch {}
+      const back = location.href;
+      history.replaceState(null, "", location.pathname);
+      openMoney();
+      if (tok) plaidScript().then(() => openLink(tok, back)).catch((e) => { M.error = e.message; render(); });
+    } else if (DEMO || /#money\b/.test(location.hash)) openMoney();
+
+    // -------------------------------------------------------------- demo data (#money-demo; no network)
+    function demoData() {
+      if (demoCache) return demoCache;
+      let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+      const t = new Date().toISOString().slice(0, 10), tx = [];
+      const add = (date, name, amount, cat, acct, merchant) => { if (date <= t) tx.push({ id: "d" + tx.length, account_id: acct, date, name, merchant: merchant || null, amount: Math.round(amount * 100) / 100, plaid_category: cat, pending: false }); };
+      const start = MC.addDays(t, -420);
+      for (let i = 0; i <= 420; i++) {
+        const day = MC.addDays(start, i), dom = +day.slice(8, 10), dow = new Date(day + "T12:00:00Z").getUTCDay();
+        if (i % 14 === 3) add(day, "ACME CORP PAYROLL", -2400, "INCOME_WAGES", "chk", "Acme Corp");
+        if (dom === 1) add(day, "Rent payment - Oak Apartments", 1650, "RENT_AND_UTILITIES_RENT", "chk", "Oak Apartments");
+        if (dom === 3) add(day, "GEICO AUTO", 98.34, "GENERAL_SERVICES_INSURANCE", "chk", "GEICO");
+        if (dom === 8) add(day, "VERIZON FIOS", 79.99, "RENT_AND_UTILITIES_INTERNET_AND_CABLE", "card", "Verizon Fios");
+        if (dom === 12) add(day, "AT&T WIRELESS", 57, "RENT_AND_UTILITIES_TELEPHONE", "card", "AT&T");
+        if (dom === 2) add(day, "ARCADIA POWER", 38 + rnd() * 20, "RENT_AND_UTILITIES_GAS_AND_ELECTRICITY", "card", "Arcadia Power");
+        if (dom === 15) add(day, "NETFLIX.COM", i > 300 ? 17.99 : 15.49, "ENTERTAINMENT_TV_AND_MOVIES", "card", "Netflix");
+        if (dom === 20) add(day, "Spotify USA", 11.99, "ENTERTAINMENT_MUSIC_AND_AUDIO", "card", "Spotify");
+        if (dom === 5) add(day, "PLANET FITNESS", 24.99, "PERSONAL_CARE_GYMS_AND_FITNESS_CENTERS", "card", "Planet Fitness");
+        if (dom === 18 && i < 330) add(day, "HULU", 7.99, "ENTERTAINMENT_TV_AND_MOVIES", "card", "Hulu");
+        if (dom === 25) add(day, "CHASE CREDIT CRD AUTOPAY", 1200 + rnd() * 800, "LOAN_PAYMENTS_CREDIT_CARD_PAYMENT", "chk");
+        if (dom === 26) add(day, "Transfer to savings", 300, "TRANSFER_OUT_SAVINGS", "chk");
+        if (dow === 6) add(day, "STOP & SHOP 0123", 70 + rnd() * 110, "FOOD_AND_DRINK_GROCERIES", "card", "Stop & Shop");
+        if (rnd() < 0.3) add(day, ["CHIPOTLE", "STARBUCKS", "SWEETGREEN", "LOCAL TAVERN"][Math.floor(rnd() * 4)], 6 + rnd() * 45, "FOOD_AND_DRINK_RESTAURANT", "card");
+        if (rnd() < 0.12) add(day, "AMAZON MKTPLACE", 12 + rnd() * 140, "GENERAL_MERCHANDISE_ONLINE_MARKETPLACES", "card", "Amazon");
+        if (rnd() < 0.08) add(day, "SHELL OIL", 35 + rnd() * 30, "TRANSPORTATION_GAS", "card", "Shell");
+        if (rnd() < 0.03) add(day, "UBER TRIP", 14 + rnd() * 30, "TRANSPORTATION_TAXIS_AND_RIDE_SHARES", "card", "Uber");
+        if (rnd() < 0.02) add(day, "CVS PHARMACY", 8 + rnd() * 40, "MEDICAL_PHARMACIES_AND_SUPPLEMENTS", "card", "CVS");
+        if (rnd() < 0.01) add(day, "DELTA AIR LINES", 180 + rnd() * 300, "TRAVEL_FLIGHTS", "card", "Delta");
+      }
+      tx.sort((a, b) => (a.date < b.date ? 1 : -1));
+      const now = new Date().toISOString();
+      demoCache = { configured: true, env: "demo", today: t, rules: {}, transactions: tx,
+        items: [{ item_id: "demo", institution: "Demo Bank", synced_at: now, error: null }],
+        accounts: [
+          { id: "chk", name: "Everyday Checking", mask: "1234", kind: "checking", balance: 5848.12, institution: "Demo Bank", updated_at: now },
+          { id: "sav", name: "High-Yield Savings", mask: "9876", kind: "savings", balance: 267.4, institution: "Demo Bank", updated_at: now },
+          { id: "card", name: "Sapphire Card", mask: "4455", kind: "credit", balance: 2001.37, credit_limit: 10000, institution: "Demo Bank", updated_at: now },
+          { id: "manual-cash", name: "Wallet", kind: "cash", balance: 140, manual: true, updated_at: now },
+          { id: "manual-biz", name: "Business funds", kind: "business", balance: 12500, manual: true, updated_at: now },
+        ] };
+      return demoCache;
+    }
+    function demoAction(action, p) {
+      const D = demoData();
+      if (action === "manual") {
+        if (p.delete) D.accounts = D.accounts.filter((a) => a.id !== p.id);
+        else { const a = D.accounts.find((x) => x.id === p.id);
+          const row = { id: p.id || "manual-" + Math.random().toString(36).slice(2), name: p.name, kind: p.kind, balance: +p.balance, manual: true, updated_at: new Date().toISOString() };
+          a ? Object.assign(a, row) : D.accounts.push(row); }
+      } else if (action === "account") Object.assign(D.accounts.find((x) => x.id === p.id), { kind: p.kind, hidden: p.hidden });
+      else if (action === "categorize") { if (!p.all) D.transactions.find((t) => t.id === p.id).user_category = p.category; else (D.rules[p.merchant_key] ||= {}).category = p.category; }
+      else if (action === "recurring") (D.rules[p.merchant_key] ||= {}).recurring = p.recurring;
+      return Promise.resolve({ ok: true });
+    }
+  }
+
 
   // ------------------------------------------------------------------ start
   (async () => {
