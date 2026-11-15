@@ -33,8 +33,25 @@
   .hud { font-size: 11px; letter-spacing: 0.16em; color: var(--muted); text-transform: uppercase; display: flex; gap: 10px; align-items: center; }
   .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); margin-right: 5px; }
   .dot.on { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); } .dot.off { background: var(--red); box-shadow: 0 0 8px var(--red); }
-  .hud a { color: var(--muted); text-decoration: none; border: 1px solid var(--line); border-radius: 3px; padding: 2px 6px; }
-  .hud a.on { color: var(--cyan); border-color: var(--cyan-dim); }
+  header .left { display: flex; align-items: center; gap: 12px; }
+  #menuBtn { width: 34px; height: 30px; margin-left: -6px; padding: 6px; background: none; border: 0; display: flex; flex-direction: column;
+    justify-content: space-between; cursor: pointer; }
+  #menuBtn i { display: block; height: 2px; border-radius: 1px; background: var(--cyan); box-shadow: 0 0 6px var(--cyan-dim); }
+  /* menu drawer (slides in from the left) */
+  #scrim { position: fixed; inset: 0; z-index: 9; background: rgba(2,6,13,0.6); opacity: 0; pointer-events: none; transition: opacity .2s; }
+  #drawer { position: fixed; top: 0; bottom: 0; left: 0; z-index: 9; width: min(300px, 82vw); background: #06142a; border-right: 1px solid var(--line);
+    padding: calc(14px + env(safe-area-inset-top)) 0 calc(14px + env(safe-area-inset-bottom)); overflow-y: auto;
+    transform: translateX(-102%); transition: transform .22s ease-out; box-shadow: 8px 0 30px rgba(0,0,0,0.5); }
+  body.menu #scrim { opacity: 1; pointer-events: auto; } body.menu #drawer { transform: none; }
+  #drawer .dhead { font-family: "Orbitron", sans-serif; font-weight: 700; letter-spacing: 0.36em; font-size: 15px; color: var(--cyan);
+    padding: 4px 20px 14px; text-shadow: 0 0 12px var(--cyan-dim); border-bottom: 1px solid var(--line); }
+  #drawer .dsect { font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--muted); padding: 18px 20px 6px; }
+  #drawer .ditem { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #e6f7ff; text-decoration: none; font-size: 18px; }
+  #drawer .ditem:active { background: rgba(79,216,255,0.08); }
+  #drawer .ditem span { flex: 1; min-width: 0; }
+  #drawer .ditem small { display: block; font-size: 13px; color: var(--muted); margin-top: 1px; }
+  #drawer .ditem em { font-style: normal; font-size: 14px; color: var(--muted); letter-spacing: 0.06em; }
+  #drawer .ditem.on em { color: var(--cyan); }
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
   body.typing #stage { display: none; }
@@ -82,8 +99,6 @@
   #unpaired p { margin: 8px 0; font-size: 17px; } #unpaired p.small { font-size: 14px; color: var(--muted); }
   #signin .err { color: var(--red); font-size: 14px; min-height: 18px; text-align: center; }
   /* ---------------------------------------------------------------- Money screen */
-  .hud a#moneyBtn { color: var(--cyan); border-color: var(--cyan-dim); }
-  @media (max-width: 440px) { #linktxt { display: none; } .hud { gap: 7px; letter-spacing: 0.1em; } .brand { letter-spacing: 0.26em; font-size: 14px; } }
   #money { position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column; background: var(--bg0);
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     --surface: #08182b; --ink: #e6f7ff; --ink2: #9fbcd1; --ink3: #6f93ad; --grid: rgba(79,216,255,0.10);
@@ -183,9 +198,20 @@
 <body>
 <div id="grid"></div>
 <header>
-  <div class="brand">J.A.R.V.I.S.</div>
-  <div class="hud"><span><span id="link" class="dot"></span><b id="linktxt">…</b></span><a href="#" id="moneyBtn" title="Accounts, spending and subscriptions">Money</a><a href="#" id="auto" title="Start listening when the app opens">Auto</a><a href="#" id="bell" title="Timer and reminder alerts">Alerts off</a><a href="#" id="signout">Sign out</a></div>
+  <div class="left"><button id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="drawer"><i></i><i></i><i></i></button>
+    <div class="brand">J.A.R.V.I.S.</div></div>
+  <div class="hud"><span><span id="link" class="dot"></span><b id="linktxt">…</b></span></div>
 </header>
+<div id="scrim"></div>
+<nav id="drawer" aria-label="Menu" aria-hidden="true">
+  <div class="dhead">J.A.R.V.I.S.</div>
+  <div class="dsect">Screens</div>
+  <a href="#" id="moneyBtn" class="ditem"><span>Money<small>Accounts, spending, subscriptions</small></span><em>›</em></a>
+  <div class="dsect">Settings</div>
+  <a href="#" id="auto" class="ditem"><span>Listen on open<small>Start listening when the app opens</small></span><em id="autoState">On</em></a>
+  <a href="#" id="bell" class="ditem"><span>Alerts<small>Timers and reminders on this phone</small></span><em id="bellState">Off</em></a>
+  <a href="#" id="signout" class="ditem"><span>Sign out</span><em></em></a>
+</nav>
 <div id="stage">
   <canvas id="core"></canvas>
   <div id="status"><span id="statetxt">STANDBY</span><span class="sub" id="substate">Tap the button to talk</span></div>
@@ -479,15 +505,32 @@
     else startListening();
   };
 
+  // ------------------------------------------------------------------ menu drawer
+  // One menu (top left) instead of a row of header buttons, so new screens have somewhere to go.
+  const menuBtn = $("menuBtn"), drawer = $("drawer");
+  function setMenu(open) {
+    document.body.classList.toggle("menu", open);
+    menuBtn.setAttribute("aria-expanded", open); drawer.setAttribute("aria-hidden", !open);
+  }
+  menuBtn.onclick = (e) => { e.preventDefault(); setMenu(!document.body.classList.contains("menu")); };
+  $("scrim").onclick = () => setMenu(false);
+  // Screens close the menu; settings rows stay open so you can see the switch change.
+  $("moneyBtn").addEventListener("click", () => setMenu(false));
+  $("signout").addEventListener("click", () => setMenu(false));
+  let swipeX = null;   // swipe the drawer left to close it
+  drawer.addEventListener("touchstart", (e) => { swipeX = e.touches[0].clientX; }, { passive: true });
+  drawer.addEventListener("touchend", (e) => { if (swipeX !== null && swipeX - e.changedTouches[0].clientX > 60) setMenu(false); swipeX = null; });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") setMenu(false); });
+
   // ------------------------------------------------------------------ alerts (timers + reminders)
   const bell = $("bell");
   const b64ToBytes = (s) => { const p = "=".repeat((4 - s.length % 4) % 4); const r = atob((s + p).replace(/-/g, "+").replace(/_/g, "/"));
     return Uint8Array.from(r, (c) => c.charCodeAt(0)); };
-  function setBell(on, txt) { bell.classList.toggle("on", on); bell.textContent = txt || (on ? "Alerts on" : "Alerts off"); }
+  function setBell(on, txt) { bell.classList.toggle("on", on); $("bellState").textContent = txt || (on ? "On" : "Off"); }
   async function subscribeAlerts(ask) {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) { if (ask) info("This browser can't show alerts."); return; }
     if (ask && Notification.permission === "default") await Notification.requestPermission();
-    if (Notification.permission !== "granted") { setBell(false, Notification.permission === "denied" ? "Alerts blocked" : "Alerts off");
+    if (Notification.permission !== "granted") { setBell(false, Notification.permission === "denied" ? "Blocked" : "Off");
       if (ask && Notification.permission === "denied") info("Alerts are blocked. Allow notifications for Jarvis in Android's app settings."); return; }
     const reg = await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
@@ -514,7 +557,7 @@
   const AUTO_KEY = "jarvis.autoListen";
   const autoOn = () => { try { return localStorage.getItem(AUTO_KEY) !== "off"; } catch { return true; } };
   const autoBtn = $("auto");
-  const showAuto = () => { autoBtn.textContent = autoOn() ? "Auto on" : "Auto off"; autoBtn.classList.toggle("on", autoOn()); };
+  const showAuto = () => { $("autoState").textContent = autoOn() ? "On" : "Off"; autoBtn.classList.toggle("on", autoOn()); };
   autoBtn.onclick = (e) => {
     e.preventDefault();
     try { localStorage.setItem(AUTO_KEY, autoOn() ? "off" : "on"); } catch {}
