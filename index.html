@@ -382,7 +382,13 @@
     setState("idle");
     if (await authHeaders()) setLink(true, "Online");
     else { setLink(false, LOGIN_ENABLED ? "Signed out" : "Not paired"); showSignin(true); }
-    if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+    if ("serviceWorker" in navigator) {
+      // updateViaCache "none": the browser always checks sw.js itself for a new version
+      navigator.serviceWorker.register("sw.js", { updateViaCache: "none" }).then((reg) => reg.update()).catch(() => {});
+      // when a new version takes over, reload once so the new page is what you see
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => { if (!reloaded) { reloaded = true; location.reload(); } });
+    }
     if (await authHeaders()) subscribeAlerts(false).catch(() => {});   // keep this phone's alert sign-up fresh
   })();
 
