@@ -22,7 +22,7 @@
   body {
     background: radial-gradient(ellipse at 50% 30%, var(--bg1) 0%, var(--bg0) 70%);
     color: var(--text); font-family: "Rajdhani", "Segoe UI", system-ui, sans-serif;
-    display: flex; flex-direction: column; height: 100dvh;
+    display: flex; flex-direction: column; height: 100dvh; height: var(--app-h, 100dvh);
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
   #grid { position: fixed; inset: 0; pointer-events: none; opacity: 0.3;
@@ -67,7 +67,7 @@
   .msg.jarvis .who { color: var(--cyan); } .msg.jarvis .body { color: #e6f7ff; }
   .msg.user .body { color: #b9cfdf; } .msg.info .body { font-size: 14px; color: var(--muted); font-style: italic; }
   @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  #controls { display: flex; align-items: center; gap: 10px; padding: 12px 12px 16px; z-index: 2; }
+  #controls { display: flex; align-items: center; gap: 10px; padding: 12px 12px 16px; z-index: 2; flex: none; }
   #talk { flex: none; width: 74px; height: 74px; border-radius: 50%; border: 2px solid var(--cyan); background: rgba(79,216,255,0.08);
     color: var(--cyan); font-family: "Orbitron", sans-serif; font-size: 10px; letter-spacing: 0.15em; box-shadow: 0 0 18px rgba(79,216,255,0.35); }
   #talk.rec { border-color: var(--red); color: var(--red); background: rgba(255,90,106,0.12); box-shadow: 0 0 26px rgba(255,90,106,0.55); animation: recpulse 1s ease-in-out infinite; }
@@ -430,6 +430,18 @@
       if (gen === generation) setState("idle");
     }
   }
+  // Fit the page to the screen that's really visible. In the installed app on Ben's S24, 100dvh
+  // came out a status bar taller than the screen, which pushed Talk and the text box under the
+  // gesture bar (2026-11-16). innerHeight / clientHeight don't change when the keyboard opens.
+  function fitScreen() {
+    const h = Math.min(window.innerHeight, document.documentElement.clientHeight || window.innerHeight);
+    if (h > 200) document.documentElement.style.setProperty("--app-h", h + "px");
+  }
+  fitScreen();
+  window.addEventListener("resize", fitScreen);
+  window.addEventListener("orientationchange", () => setTimeout(fitScreen, 300));
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") setTimeout(fitScreen, 100); });
+
   const inp = $("in");
   // When the keyboard opens, Android scrolls the whole page up; the page can't be scrolled back by
   // hand (it's locked to the screen), so put it back ourselves. And closing the keyboard with the
