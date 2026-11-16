@@ -1650,6 +1650,9 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
 
   const motes = Array.from({ length: 70 }, () => ({ a: Math.random() * 6.283, r: 0.9 + Math.random() * 1.6, s: 0.0005 + Math.random() * 0.002, z: Math.random() }));
   let rotY = 0, rotX = 0.35, t0 = performance.now(), last = t0, pulse = 0, glowSm = 0, scaleSm = 1, beat = 0;
+  const hud = { sweep: 0, spin: 0, seg: 0, state: "", peak: 0 };
+  const ripples = [], eqBars = new Float32Array(96);
+  const SEGS = [[0, 0.9], [1.15, 0.35], [1.7, 1.3], [3.3, 0.2], [3.7, 1.0], [5.0, 0.7]];  // [start, length] radians
 
   function frame(now) {
     if (PAUSED() || !W || !H) { last = now; requestAnimationFrame(frame); return; }
@@ -1667,7 +1670,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     const speed = { idle: 0.18, listening: 0.32, thinking: 1.1, speaking: 0.4 + lvl * 0.8 }[st] || 0.2;
     rotY += dt * speed; rotX = 0.35 + Math.sin(t * 0.21) * 0.25;
     const breathe = st === "listening" ? 0.04 * Math.sin(t * 3.2) : 0.015 * Math.sin(t * 1.1);
-    scaleSm += ((1 + breathe + lvl * 0.42 + pulse * 0.04) - scaleSm) * 0.25;
+    scaleSm += ((1 + breathe + lvl * 0.22 + pulse * 0.04) - scaleSm) * 0.25;
     const glowT = { idle: 0.35, listening: 0.75, thinking: 0.6, speaking: 0.7 + lvl * 1.3 }[st] || 0.4;
     glowSm += (glowT - glowSm) * 0.15;
 
@@ -1715,23 +1718,94 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       cx.fillRect(ox + Math.cos(m.a) * rr, oy + Math.sin(m.a) * rr * 0.55, 1.4, 1.4);
     }
 
-    // rings
+    // ---------------------------------------------------------------- arc-reactor HUD
+    // Rings around the core: a circular voice equalizer (his voice while speaking, Ben's while
+    // listening), a rotating tick ring with a scanning sweep, counter-rotating segment arcs,
+    // targeting brackets, ripples on voice peaks and state changes, and a small state label.
+    const Rb = Math.min(W, H) * 0.24;                 // HUD scale ignores the voice "breathing"
+    const spd = { idle: 0.35, listening: 1.1, thinking: 3.2, speaking: 0.9 }[st] || 0.4;
+    hud.sweep += dt * spd; hud.spin += dt * spd * 0.12; hud.seg -= dt * spd * 0.2;
+    if (st !== hud.state) { hud.state = st; ripples.push({ r: 1.05, a: 0.55 }); }
+    if (lvl - hud.peak > 0.18 && ripples.length < 6) ripples.push({ r: 1.25, a: 0.25 + lvl * 0.35 });
+    hud.peak = Math.max(lvl, hud.peak - dt * 0.8);
+    const tint = st === "thinking" ? "170,240,255" : "79,216,255";
+
+    // ripples
+    cx.lineWidth = 1.2;
+    for (let i = ripples.length - 1; i >= 0; i--) {
+      const rp = ripples[i];
+      rp.r += dt * 0.55; rp.a -= dt * 0.45;
+      if (rp.a <= 0 || rp.r > 2.4) { ripples.splice(i, 1); continue; }
+      cx.strokeStyle = `rgba(${tint},${rp.a * 0.6})`;
+      cx.beginPath(); cx.arc(ox, oy, Rb * rp.r, 0, 6.283); cx.stroke();
+    }
+
+    // circular equalizer: 96 bars just outside the shape
+    const NB = 96, eqR = Rb * 1.3, live = st === "speaking" || st === "listening";
+    for (let b = 0; b < NB; b++) {
+      const target = live ? lvl * (0.35 + 0.65 * Math.abs(Math.sin(b * 0.73 + t * 6.5) * Math.cos(b * 0.21 - t * 2.9))) : 0;
+      eqBars[b] += (target - eqBars[b]) * (target > eqBars[b] ? 0.5 : 0.12);
+      const ang = (b / NB) * 6.283 - 1.5708, len = Rb * (0.025 + eqBars[b] * 0.2);
+      const c = Math.cos(ang), s = Math.sin(ang);
+      cx.strokeStyle = `rgba(${eqBars[b] > 0.25 ? "200,245,255" : tint},${0.22 + glowSm * 0.2 + eqBars[b] * 0.6})`;
+      cx.lineWidth = 1.6;
+      cx.beginPath(); cx.moveTo(ox + c * eqR, oy + s * eqR); cx.lineTo(ox + c * (eqR + len), oy + s * (eqR + len)); cx.stroke();
+    }
+
+    // scanning sweep: a fading wedge across the tick ring
+    const tickR = Rb * 1.58;
+    if (cx.createConicGradient) {
+      const g = cx.createConicGradient(hud.sweep, ox, oy);
+      g.addColorStop(0, `rgba(${tint},${0.16 + glowSm * 0.1})`);
+      g.addColorStop(0.08, `rgba(${tint},0)`);
+      g.addColorStop(1, `rgba(${tint},0)`);
+      cx.fillStyle = g;
+      cx.beginPath(); cx.arc(ox, oy, tickR + Rb * 0.06, 0, 6.283); cx.arc(ox, oy, Rb * 1.42, 0, 6.283, true); cx.fill();
+    }
+
+    // tick ring: 120 ticks, every 10th long; ticks just behind the sweep light up
+    for (let k = 0; k < 120; k++) {
+      const ang = hud.spin + (k / 120) * 6.283;
+      const behind = ((hud.sweep - ang) % 6.283 + 6.283) % 6.283;
+      const lit = behind < 0.6 ? 1 - behind / 0.6 : 0;
+      const major = k % 10 === 0, len = Rb * (major ? 0.075 : 0.035);
+      const c = Math.cos(ang), s = Math.sin(ang);
+      cx.strokeStyle = `rgba(${lit > 0.3 ? "210,248,255" : tint},${(major ? 0.38 : 0.18) + glowSm * 0.12 + lit * 0.55})`;
+      cx.lineWidth = major ? 1.6 : 1;
+      cx.beginPath(); cx.moveTo(ox + c * tickR, oy + s * tickR); cx.lineTo(ox + c * (tickR + len), oy + s * (tickR + len)); cx.stroke();
+    }
+
+    // segment arcs, counter-rotating
+    const segR = Rb * 1.72;
+    cx.lineWidth = 2.4;
+    for (let k = 0; k < SEGS.length; k++) {
+      const [a0, len] = SEGS[k];
+      cx.strokeStyle = `rgba(${tint},${0.22 + glowSm * 0.22 + (k === 0 ? 0.15 : 0)})`;
+      cx.beginPath(); cx.arc(ox, oy, segR, hud.seg + a0, hud.seg + a0 + len); cx.stroke();
+    }
     cx.lineWidth = 1;
-    for (let r = 0; r < 3; r++) {
-      const rad = R * (1.32 + r * 0.17) + lvl * R * 0.12 * (r + 1);
-      const spin = t * (r % 2 ? -0.4 : 0.3) * (st === "thinking" ? 3 : 1);
-      cx.strokeStyle = `rgba(79,216,255,${0.10 + glowSm * 0.12 - r * 0.03})`;
-      cx.setLineDash(r === 1 ? [2, 10] : r === 2 ? [40, 18, 4, 18] : []);
-      cx.beginPath();
-      if (r === 0) cx.arc(ox, oy, rad, spin, spin + Math.PI * 1.6);
-      else cx.ellipse(ox, oy, rad, rad, spin, 0, Math.PI * 2);
-      cx.stroke();
+    cx.strokeStyle = `rgba(${tint},${0.10 + glowSm * 0.08})`;
+    cx.beginPath(); cx.arc(ox, oy, segR + Rb * 0.07, 0, 6.283); cx.stroke();
+
+    // targeting brackets at the four corners of the outer ring; they close in while thinking
+    const brR = Rb * (st === "thinking" ? 1.86 : 1.92) + Math.sin(t * 2) * Rb * 0.01;
+    cx.strokeStyle = `rgba(${tint},${0.35 + glowSm * 0.25})`; cx.lineWidth = 1.6;
+    for (let q = 0; q < 4; q++) {
+      const ang = q * 1.5708 + 0.785 + (st === "thinking" ? hud.spin * 2 : 0);
+      cx.beginPath(); cx.arc(ox, oy, brR, ang - 0.16, ang + 0.16); cx.stroke();
+      const c = Math.cos(ang), s = Math.sin(ang);
+      cx.beginPath(); cx.moveTo(ox + c * brR, oy + s * brR); cx.lineTo(ox + c * (brR - Rb * 0.06), oy + s * (brR - Rb * 0.06)); cx.stroke();
     }
-    cx.setLineDash([]);
-    if (st === "thinking") {  // orbiting arc
-      cx.strokeStyle = "rgba(160,235,255,0.6)"; cx.lineWidth = 2;
-      cx.beginPath(); cx.arc(ox, oy, R * 1.5, t * 4, t * 4 + 0.7); cx.stroke();
+
+    // thinking: two bright dots chasing round the tick ring
+    if (st === "thinking") {
+      for (let d = 0; d < 2; d++) {
+        const ang = hud.sweep * 1.4 + d * Math.PI;
+        cx.fillStyle = "rgba(220,250,255,0.9)";
+        cx.beginPath(); cx.arc(ox + Math.cos(ang) * tickR, oy + Math.sin(ang) * tickR, 2.6, 0, 6.283); cx.fill();
+      }
     }
+
 
     // edges: k nearest neighbours, flickering. The neighbour lists only change while the shape
     // morphs, so they're recomputed every few frames then (not 60 times a second): this sort over
