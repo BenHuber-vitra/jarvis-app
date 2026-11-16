@@ -206,7 +206,8 @@
 <nav id="drawer" aria-label="Menu" aria-hidden="true">
   <div class="dhead">J.A.R.V.I.S.</div>
   <div class="dsect">Screens</div>
-  <a href="#" id="moneyBtn" class="ditem"><span>Money<small>Accounts, spending, subscriptions</small></span><em>›</em></a>
+  <a href="#" id="moneyBiz" class="ditem"><span>Business money<small>Business accounts, spending, subscriptions</small></span><em>›</em></a>
+  <a href="#" id="moneyPers" class="ditem"><span>Personal money<small>Your own accounts, spending, subscriptions</small></span><em>›</em></a>
   <div class="dsect">Settings</div>
   <a href="#" id="auto" class="ditem"><span>Listen on open<small>Start listening when the app opens</small></span><em id="autoState">On</em></a>
   <a href="#" id="bell" class="ditem"><span>Alerts<small>Timers and reminders on this phone</small></span><em id="bellState">Off</em></a>
@@ -228,7 +229,7 @@
   <p class="small">Ask Jarvis on the laptop for a pairing code, then scan it with this phone's camera.</p>
 </div></div>
 <div id="money">
-  <div class="mhead"><a href="#" id="mback">‹ Jarvis</a><h1>MONEY</h1><span style="width:60px"></span></div>
+  <div class="mhead"><a href="#" id="mback">‹ Jarvis</a><h1 id="mtitle">MONEY</h1><span style="width:60px"></span></div>
   <div id="mbody"></div>
   <nav><button data-tab="dash">Dashboard</button><button data-tab="spend">Spending</button><button data-tab="recur">Recurring</button><button data-tab="tx">Transactions</button></nav>
 </div>
@@ -527,7 +528,7 @@
   menuBtn.onclick = (e) => { e.preventDefault(); setMenu(!document.body.classList.contains("menu")); };
   $("scrim").onclick = () => setMenu(false);
   // Screens close the menu; settings rows stay open so you can see the switch change.
-  $("moneyBtn").addEventListener("click", () => setMenu(false));
+  for (const id of ["moneyBiz", "moneyPers"]) $(id).addEventListener("click", () => setMenu(false));
   $("signout").addEventListener("click", () => setMenu(false));
   let swipeX = null;   // swipe the drawer left to close it
   drawer.addEventListener("touchstart", (e) => { swipeX = e.touches[0].clientX; }, { passive: true });
@@ -599,6 +600,8 @@
   // Accounts (linked through Plaid, read-only, plus cash / business funds entered by hand),
   // spending by category, recurring charges and transactions. The maths is MC (money_calc.js,
   // shared with cloud Jarvis). Data comes from /jarvis/money/*; #money-demo shows sample data.
+  // Two separate books (2026-11-16): "Business money" and "Personal money", each its own screen in
+  // the menu with the same tabs. Every request carries the book; nothing is ever added across them.
   {
     const MC = (() => { // Money maths shared by cloud Jarvis (imported by tools_m.ts) and the phone app (app/build.py
 // inlines this file into the Money screen), so what Jarvis says and what the screen shows always
@@ -847,8 +850,10 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     const el = $("money"), body = $("mbody"), tip = $("mtip"), sheet = $("msheet");
     const M = { data: null, tab: "dash", period: "month", offset: 0, bills: true, recur: "Subscription", q: "", cat: "", shown: 120,
-      open: {}, busy: "", error: "" };
+      open: {}, busy: "", error: "", book: "personal", cache: {} };
+    const BOOKS = { business: "Business money", personal: "Personal money" };
     try { M.tab = localStorage.getItem("jarvis.moneyTab") || "dash"; } catch {}
+    try { if (localStorage.getItem("jarvis.moneyBook") === "business") M.book = "business"; } catch {}
     let demoCache = null;   // sample data for #money-demo
 
     // -------------------------------------------------------------- network
@@ -857,7 +862,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       const auth = await authHeaders();
       if (!auth) { showSignin(true); throw new Error("This phone isn't paired."); }
       const r = await fetch(FN + "/money/" + action, { method: "POST",
-        headers: { ...auth, apikey: PUBLISHABLE_KEY, "content-type": "application/json" }, body: JSON.stringify(payload || {}) });
+        headers: { ...auth, apikey: PUBLISHABLE_KEY, "content-type": "application/json" }, body: JSON.stringify({ book: M.book, ...(payload || {}) }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || `Money service error (${r.status})`);
       return j;
@@ -865,16 +870,28 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     async function load(refresh) {
       M.busy = refresh === "force" ? "Syncing with your bank…" : (refresh ? "Checking for new transactions…" : "Loading…");
       M.error = ""; render();
-      try { M.data = DEMO ? demoData() : await mcall("data", { tz: TZ, refresh }); }
-      catch (e) { M.error = e.message; }
+      const book = M.book;
+      try { const got = DEMO ? demoData() : await mcall("data", { tz: TZ, refresh });
+        M.cache[book] = got; if (M.book !== book) return;   // switched books while this was loading
+        M.data = got; }
+      catch (e) { if (M.book !== book) return; M.error = e.message; }
       if (M.data && M.data.refreshed && M.data.refreshed.errors && M.data.refreshed.errors.length) M.error = M.data.refreshed.errors.join(" · ");
       M.busy = ""; render();
     }
 
     // -------------------------------------------------------------- open / close / tabs
-    function openMoney() { el.classList.add("on"); if (!M.data) load(true); else { render(); load(true); } }
+    function openMoney(book) {
+      if (book && book !== M.book) {
+        M.book = book; M.data = M.cache[book] || null; M.open = {}; M.q = ""; M.cat = ""; M.error = "";
+        try { localStorage.setItem("jarvis.moneyBook", book); } catch {}
+      }
+      $("mtitle").textContent = M.book === "business" ? "BUSINESS" : "PERSONAL";
+      body.scrollTop = 0; el.classList.add("on");
+      if (!M.data) load(true); else { render(); load(true); }
+    }
     function closeMoney() { el.classList.remove("on"); hideTip(); }
-    $("moneyBtn").onclick = (e) => { e.preventDefault(); openMoney(); };
+    $("moneyBiz").onclick = (e) => { e.preventDefault(); openMoney("business"); };
+    $("moneyPers").onclick = (e) => { e.preventDefault(); openMoney("personal"); };
     $("mback").onclick = (e) => { e.preventDefault(); closeMoney(); };
     el.querySelectorAll("nav button").forEach((b) => (b.onclick = () => {
       M.tab = b.dataset.tab; try { localStorage.setItem("jarvis.moneyTab", M.tab); } catch {}
@@ -1039,7 +1056,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
         <div class="row" style="margin-top:8px"><div class="grow"><div class="name">Income this month</div></div><div class="amt in">${f(inc)}</div></div>
       </div>`;
       h += `<div class="sect"><span class="label">Accounts</span><span class="note" style="margin:0">${items.length ? "Synced " + esc(ago(newest)) + " · " : ""}<button class="linkish" id="msync">Sync now</button></span></div><div class="card">`;
-      const shown = groups.filter((g) => g.items.length || ["checking", "savings", "credit", "cash", "business"].includes(g.kind));
+      const shown = groups.filter((g) => g.items.length || ["checking", "savings", "credit", "cash"].includes(g.kind));
       for (const g of shown) {
         const isOpen = !!M.open[g.kind];
         h += `<div class="row click" data-group="${g.kind}"><span class="chev">${g.items.length ? (isOpen ? "▾" : "▸") : ""}</span><div class="grow"><div class="name">${esc(g.label)}</div>` +
@@ -1050,10 +1067,11 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
         }
         if (g.kind === "credit") h += `<div class="row"><span class="chev"></span><div class="grow"><div class="name">Net cash</div><div class="meta">Checking + savings + cash − cards</div></div><div class="amt ${netCash >= 0 ? "in" : ""}">${f(netCash)}</div></div>`;
       }
-      h += `</div><div class="btns"><button class="btn" id="mlink">+ Link a bank</button><button class="btn quiet" id="mmanual">+ Cash or business funds</button></div>`;
-      if (!d().configured && !DEMO) h += `<div class="note">Bank linking needs Plaid keys in Supabase first. Cash and business funds work now.</div>`;
+      h += `</div><div class="btns"><button class="btn" id="mlink">+ Link a bank</button><button class="btn quiet" id="mmanual">+ Add by hand</button></div>`;
+      if (!d().configured && !DEMO) h += `<div class="note">Bank linking needs Plaid keys in Supabase first. Amounts added by hand work now.</div>`;
       else if (d().env === "sandbox" && !DEMO) h += `<div class="note">Plaid is in Sandbox mode: only Plaid's test banks can be linked (user_good / pass_good).</div>`;
       for (const it of items) if (it.error) h += `<div class="note err">${esc(it.institution)}: ${esc(it.error)}</div>`;
+      if (!items.length && !d().accounts.length) h += `<div class="note">Nothing in ${esc(BOOKS[M.book])} yet. Link a bank or add an amount by hand; it stays separate from ${esc(M.book === "business" ? BOOKS.personal : BOOKS.business)}.</div>`;
       if (items.length) h += `<div class="sect"><span class="label">Linked banks</span></div><div class="card">` +
         items.map((it) => `<div class="row"><div class="grow"><div class="name">${esc(it.institution)}</div><div class="meta">Read-only · synced ${esc(ago(it.synced_at))}</div></div>` +
           `<button class="linkish" data-unlink="${esc(it.item_id)}" data-inst="${esc(it.institution)}">Unlink</button></div>`).join("") + `</div>`;
@@ -1210,7 +1228,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
 
     function manualSheet(a, kind) {
       const k = a ? a.kind : kind;
-      openSheet(`<h2>${a ? "Edit " + esc(a.name) : "Add cash or business funds"}</h2><div class="meta">Entered by hand. Update the amount whenever it changes.</div>
+      openSheet(`<h2>${a ? "Edit " + esc(a.name) : "Add to " + esc(BOOKS[M.book])}</h2><div class="meta">Entered by hand. Update the amount whenever it changes.</div>
         <label>Name</label><input id="sn" value="${esc(a ? a.name : k === "business" ? "Business funds" : "Cash")}" maxlength="60">
         <label>Section</label><select id="sk">${[["cash", "Cash"], ["business", "Business funds"], ["savings", "Savings"], ["other", "Other"]].map(([v, l]) =>
           `<option value="${v}" ${k === v ? "selected" : ""}>${l}</option>`).join("")}</select>
@@ -1233,12 +1251,16 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     function accountSheet(a) {
       openSheet(`<h2>${esc(a.name)}${a.mask ? " ··" + esc(a.mask) : ""}</h2><div class="meta">${esc(a.institution || "")} · linked read-only · balance ${f(+a.balance)}</div>
         <label>Show under</label><select id="sk">${MC.GROUPS.map(([v, l]) => `<option value="${v}" ${a.kind === v ? "selected" : ""}>${l}</option>`).join("")}</select>
+        <label>Belongs to</label><select id="sbook">${Object.entries(BOOKS).map(([v, l]) => `<option value="${v}" ${v === M.book ? "selected" : ""}>${l}</option>`).join("")}</select>
         <label class="check"><input type="checkbox" id="sh" ${a.hidden ? "checked" : ""}> Hide this account from the totals</label>
         <div class="btns"><button class="btn" id="ssave">Save</button><button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`,
       (box) => {
         box.querySelector("#sx").onclick = closeSheet;
         box.querySelector("#ssave").onclick = async () => {
-          try { await mcall("account", { id: a.id, kind: box.querySelector("#sk").value, hidden: box.querySelector("#sh").checked }); closeSheet(); load(false); }
+          const to = box.querySelector("#sbook").value;
+          try { await mcall("account", { id: a.id, kind: box.querySelector("#sk").value, hidden: box.querySelector("#sh").checked, ...(to !== M.book ? { move_to: to } : {}) });
+            if (to !== M.book) delete M.cache[to];
+            closeSheet(); load(false); }
           catch (e) { sheetErr(e.message); }
         };
       });
@@ -1311,16 +1333,16 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       try {
         M.busy = "Opening Plaid…"; render();
         const [{ link_token }] = await Promise.all([mcall("link", {}), plaidScript()]);
-        try { localStorage.setItem("jarvis.plaidLink", link_token); } catch {}
+        try { localStorage.setItem("jarvis.plaidLink", link_token); localStorage.setItem("jarvis.plaidBook", M.book); } catch {}
         M.busy = ""; render(); openLink(link_token);
       } catch (e) { M.busy = ""; M.error = e.message; render(); }
     }
     // Banks that sign in on their own site send you back here with ?oauth_state_id=...: finish linking.
     if (/[?&]oauth_state_id=/.test(location.search)) {
-      let tok = null; try { tok = localStorage.getItem("jarvis.plaidLink"); } catch {}
+      let tok = null, book = M.book; try { tok = localStorage.getItem("jarvis.plaidLink"); book = localStorage.getItem("jarvis.plaidBook") || book; } catch {}
       const back = location.href;
       history.replaceState(null, "", location.pathname);
-      openMoney();
+      openMoney(book);   // the bank goes into the book you were linking from
       if (tok) plaidScript().then(() => openLink(tok, back)).catch((e) => { M.error = e.message; render(); });
     } else if (DEMO || /#money\b/.test(location.hash)) openMoney();
 
