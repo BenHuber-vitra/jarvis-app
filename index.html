@@ -523,47 +523,58 @@
   // ------------------------------------------------------------------ menu drawer
   // One menu (top left) instead of a row of header buttons, so new screens have somewhere to go.
   const menuBtn = $("menuBtn"), drawer = $("drawer");
-  function setMenu(open) {
+  // ------------------------------------------------------------------ back gesture = step history
+  // Android's swipe-from-the-edge "back" walks back through what Ben did, one step at a time
+  // (2026-11-16: "it always goes back to where I was"). Every step (open the menu, open a money
+  // screen, switch tab, open a sheet) pushes a history entry {jarvis: depth} and remembers how to
+  // undo itself. Back -> popstate -> undo steps until we're at that depth. Closing something by
+  // tapping (Cancel, the dark scrim) drops its step and steps history back over it, so the next
+  // swipe isn't wasted. On the bare talk screen there are no steps, so back leaves the app.
+  const nav = {
+    stack: [], seq: 0, skip: 0,
+    push(undo) { const id = ++this.seq; this.stack.push({ id, undo }); history.pushState({ jarvis: this.stack.length }, ""); return id; },
+    drop(id) {
+      const i = this.stack.findIndex((e) => e.id === id);
+      if (i < 0) return;   // already undone by a back
+      if (i === this.stack.length - 1) { this.stack.pop(); this.skip++; history.back(); } else this.stack.splice(i, 1);
+    },
+    // Reuse the menu's step for where the menu took you, so back goes to where you were before.
+    // (Dropping it and pushing a new one would race: history.back() lands after the push.)
+    swap(id, undo) { const top = this.stack[this.stack.length - 1]; if (id && top && top.id === id) { top.undo = undo; return id; } return this.push(undo); },
+    screens: [],   // functions that close a whole screen (money.js adds its own)
+    home() {       // "Jarvis" in the menu: back to the talk screen in one go
+      const n = this.stack.length; this.stack = [];
+      setMenu(false, true); for (const f of this.screens) f();
+      if (n) { this.skip++; history.go(-n); }
+    },
+  };
+  window.addEventListener("popstate", () => {
+    if (nav.skip) { nav.skip--; return; }
+    const depth = (history.state && history.state.jarvis) || 0;
+    while (nav.stack.length > depth) nav.stack.pop().undo();
+  });
+
+  let menuStep = null;
+  // keep=true: the caller takes over the menu's history step (see nav.swap); returns that step's id.
+  function setMenu(open, keep) {
     const was = document.body.classList.contains("menu");
     document.body.classList.toggle("menu", open);
     menuBtn.setAttribute("aria-expanded", open); drawer.setAttribute("aria-hidden", !open);
     if (open && !was) {   // show which screen you're on
       const m = $("money").classList.contains("on") && $("mtitle").textContent;
       for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"]]) $(id).classList.toggle("cur", on);
-      nav.opened();
+      menuStep = nav.push(() => setMenu(false));
     }
-    if (!open && was) nav.closed();
+    const id = menuStep;
+    if (!open && was) { menuStep = null; if (!keep) nav.drop(id); }
+    return keep ? id : null;
   }
   menuBtn.onclick = (e) => { e.preventDefault(); setMenu(!document.body.classList.contains("menu")); };
   $("scrim").onclick = () => setMenu(false);
-  // Screens close the menu; settings rows stay open so you can see the switch change.
-  for (const id of ["moneyBiz", "moneyPers", "signout"]) $(id).addEventListener("click", () => setMenu(false));
+  // Settings rows keep the menu open so you can see the switch change; money.js wires the money screens.
+  $("signout").addEventListener("click", () => setMenu(false));
   // "Jarvis" = the talk screen: close whatever screen is on top of it.
-  $("navJarvis").onclick = (e) => { e.preventDefault(); setMenu(false); nav.home(); };
-
-  // ------------------------------------------------------------------ back gesture
-  // Android's swipe-from-the-edge "back" used to leave the app. Now, while a sheet, the menu or a
-  // money screen is open, one history entry (state {jarvis: 1}) sits on top: back pops it, we close
-  // the topmost layer, and put the entry back if something is still open. Closing things by tapping
-  // removes the entry again, so back on the bare talk screen still leaves the app as usual.
-  const nav = {
-    layers: [],   // [{isOpen, close}] topmost first; money.js adds the sheet and the money screen
-    menu: { isOpen: () => document.body.classList.contains("menu"), close: () => setMenu(false) },
-    anyOpen() { return [...this.layers, this.menu].some((l) => l.isOpen()); },
-    opened() { if (!(history.state && history.state.jarvis)) history.pushState({ jarvis: 1 }, ""); },
-    // after a tap closed something: drop our entry if nothing is open any more (checked after the
-    // click has finished, so switching screens from the menu doesn't drop it)
-    // (skipPop also means "a back is already on its way": closing two things at once must not go back twice)
-    closed() { setTimeout(() => { if (!this.skipPop && !this.anyOpen() && history.state && history.state.jarvis) { this.skipPop = true; history.back(); } }, 0); },
-    home() { for (const l of this.layers) if (l.isOpen()) l.close(); this.closed(); },
-    skipPop: false,
-  };
-  window.addEventListener("popstate", () => {
-    if (nav.skipPop) { nav.skipPop = false; return; }
-    const top = [nav.layers[0], nav.menu, ...nav.layers.slice(1)].find((l) => l && l.isOpen());   // sheet, menu, screen
-    if (top) top.close();
-    if (nav.anyOpen()) history.pushState({ jarvis: 1 }, "");
-  });
+  $("navJarvis").onclick = (e) => { e.preventDefault(); nav.home(); };
   let swipeX = null;   // swipe the drawer left to close it
   drawer.addEventListener("touchstart", (e) => { swipeX = e.touches[0].clientX; }, { passive: true });
   drawer.addEventListener("touchend", (e) => { if (swipeX !== null && swipeX - e.changedTouches[0].clientX > 60) setMenu(false); swipeX = null; });
@@ -886,9 +897,8 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     const M = { data: null, tab: "dash", period: "month", offset: 0, bills: true, recur: "Subscription", q: "", cat: "", shown: 120,
       open: {}, busy: "", error: "", book: "personal", cache: {} };
     const BOOKS = { business: "Business money", personal: "Personal money" };
-    try { M.tab = localStorage.getItem("jarvis.moneyTab") || "dash"; } catch {}
     try { if (localStorage.getItem("jarvis.moneyBook") === "business") M.book = "business"; } catch {}
-    let demoCache = null;   // sample data for #money-demo
+    let demoCache = null, sheetStep = null;   // sample data for #money-demo
 
     // -------------------------------------------------------------- network
     async function mcall(action, payload) {
@@ -914,24 +924,38 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     }
 
     // -------------------------------------------------------------- open / close / tabs
-    function openMoney(book) {
-      if (book && book !== M.book) {
+    // Places: (book, tab). Opening a book always starts on Dashboard; every tab you tap and every
+    // book you pick from the menu is a step that the back gesture undoes (see nav in the page).
+    function show(book, tab) {
+      const fresh = !el.classList.contains("on") || book !== M.book;
+      if (book !== M.book) {
         M.book = book; M.data = M.cache[book] || null; M.open = {}; M.q = ""; M.cat = ""; M.error = "";
         try { localStorage.setItem("jarvis.moneyBook", book); } catch {}
       }
+      M.tab = tab;
       $("mtitle").textContent = M.book === "business" ? "BUSINESS" : "PERSONAL";
-      body.scrollTop = 0; el.classList.add("on"); nav.opened();
-      if (!M.data) load(true); else { render(); load(true); }
+      body.scrollTop = 0; hideTip(); el.classList.add("on");
+      if (!fresh) render(); else if (!M.data) load(true); else { render(); load(true); }
     }
-    function closeMoney() { if (sheet.classList.contains("on")) closeSheet(); el.classList.remove("on"); hideTip(); nav.closed(); }
-    $("moneyBiz").onclick = (e) => { e.preventDefault(); openMoney("business"); };
-    $("moneyPers").onclick = (e) => { e.preventDefault(); openMoney("personal"); };
-    nav.layers.push({ isOpen: () => sheet.classList.contains("on"), close: closeSheet },
-                    { isOpen: () => el.classList.contains("on"), close: closeMoney });
+    function hideMoney() { closeSheet(); el.classList.remove("on"); hideTip(); }
+    nav.screens.push(hideMoney);
+    function openMoney(book) {   // from outside the menu (page load, bank sign-in coming back)
+      if (!el.classList.contains("on")) nav.push(hideMoney);
+      show(book || M.book, "dash");
+    }
+    function goBook(book) {      // from the menu
+      const was = el.classList.contains("on"), from = { book: M.book, tab: M.tab };
+      nav.swap(setMenu(false, true), was ? () => show(from.book, from.tab) : hideMoney);
+      show(book, "dash");
+    }
+    $("moneyBiz").onclick = (e) => { e.preventDefault(); goBook("business"); };
+    $("moneyPers").onclick = (e) => { e.preventDefault(); goBook("personal"); };
     $("mmenu").onclick = (e) => { e.preventDefault(); setMenu(true); };
     el.querySelectorAll("nav button").forEach((b) => (b.onclick = () => {
-      M.tab = b.dataset.tab; try { localStorage.setItem("jarvis.moneyTab", M.tab); } catch {}
-      body.scrollTop = 0; render();
+      if (b.dataset.tab === M.tab) return;
+      const from = { book: M.book, tab: M.tab };
+      nav.push(() => show(from.book, from.tab));
+      show(M.book, b.dataset.tab);
     }));
     let lastW = innerWidth;   // redraw charts on rotation, not when the keyboard opens (that would close it)
     window.addEventListener("resize", () => { if (el.classList.contains("on") && innerWidth !== lastW) { lastW = innerWidth; render(); } });
@@ -1255,11 +1279,16 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
 
     // -------------------------------------------------------------- sheets (edit dialogs)
     function openSheet(html, wire) {
-      sheet.innerHTML = `<div class="box">${html}</div>`; sheet.classList.add("on"); nav.opened();
+      if (!sheet.classList.contains("on")) sheetStep = nav.push(closeSheet);
+      sheet.innerHTML = `<div class="box">${html}</div>`; sheet.classList.add("on");
       sheet.onclick = (e) => { if (e.target === sheet) closeSheet(); };
       wire(sheet.querySelector(".box"));
     }
-    function closeSheet() { if (!sheet.classList.contains("on")) return; sheet.classList.remove("on"); sheet.innerHTML = ""; nav.closed(); }
+    function closeSheet() {
+      if (!sheet.classList.contains("on")) return;
+      sheet.classList.remove("on"); sheet.innerHTML = "";
+      const id = sheetStep; sheetStep = null; nav.drop(id);
+    }
     const sheetErr = (msg) => { const e = sheet.querySelector(".err"); if (e) e.textContent = msg; };
 
     function manualSheet(a, kind) {
