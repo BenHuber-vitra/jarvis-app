@@ -34,6 +34,7 @@
   .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); margin-right: 5px; }
   .dot.on { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); } .dot.off { background: var(--red); box-shadow: 0 0 8px var(--red); }
   header .left { display: flex; align-items: center; gap: 12px; }
+  /* Shared by the phone app and the laptop window. */
   .menubtn { width: 34px; height: 30px; margin-left: -6px; padding: 6px; background: none; border: 0; display: flex; flex-direction: column;
     justify-content: space-between; cursor: pointer; }
   .menubtn i { display: block; height: 2px; border-radius: 1px; background: var(--cyan); box-shadow: 0 0 6px var(--cyan-dim); }
@@ -53,52 +54,6 @@
   #drawer .ditem em { font-style: normal; font-size: 14px; color: var(--muted); letter-spacing: 0.06em; }
   #drawer .ditem.on em { color: var(--cyan); }
   #drawer .ditem.cur { background: rgba(79,216,255,0.08); box-shadow: inset 3px 0 0 var(--cyan); }
-  #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
-  #core { position: absolute; inset: 0; width: 100%; height: 100%; }
-  body.typing #stage { display: none; }
-  body.typing #talk { width: 52px; height: 52px; }
-  #status { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; font-family: "Orbitron", sans-serif;
-    letter-spacing: 0.45em; font-size: 12px; color: var(--cyan-dim); text-shadow: 0 0 10px rgba(79,216,255,0.4); }
-  #status .sub { display: block; margin-top: 5px; font-family: "Rajdhani", sans-serif; letter-spacing: 0.2em; font-size: 11px; color: var(--muted); }
-  #log { flex: 1; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 8px 16px; margin: 0 12px; background: var(--panel); border: 1px solid var(--line);
-    border-radius: 4px; z-index: 2; min-height: 0; }
-  .msg { margin: 0 0 12px; animation: rise .3s ease-out; }
-  .msg .who { font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
-  .msg .body { font-size: 17px; line-height: 1.35; }
-  .msg.jarvis .who { color: var(--cyan); } .msg.jarvis .body { color: #e6f7ff; }
-  .msg.user .body { color: #b9cfdf; } .msg.info .body { font-size: 14px; color: var(--muted); font-style: italic; }
-  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-  #controls { display: flex; align-items: center; gap: 10px; padding: 12px 12px 16px; z-index: 2; flex: none; }
-  #talk { flex: none; width: 74px; height: 74px; border-radius: 50%; border: 2px solid var(--cyan); background: rgba(79,216,255,0.08);
-    color: var(--cyan); font-family: "Orbitron", sans-serif; font-size: 10px; letter-spacing: 0.15em; box-shadow: 0 0 18px rgba(79,216,255,0.35); }
-  #talk.rec { border-color: var(--red); color: var(--red); background: rgba(255,90,106,0.12); box-shadow: 0 0 26px rgba(255,90,106,0.55); animation: recpulse 1s ease-in-out infinite; }
-  #talk.busy { border-color: var(--amber); color: var(--amber); box-shadow: 0 0 18px rgba(255,181,71,0.4); }
-  @keyframes recpulse { 50% { transform: scale(1.06); } }
-  form { flex: 1; display: flex; gap: 8px; min-width: 0; }
-  input { flex: 1; min-width: 0; background: rgba(2,10,20,0.7); border: 1px solid var(--line); color: var(--text); font: inherit;
-    font-size: 16px; padding: 12px; border-radius: 4px; outline: none; }
-  input:focus { border-color: var(--cyan); }
-  button.small { background: transparent; color: var(--cyan); border: 1px solid var(--cyan-dim); border-radius: 4px; font-family: "Orbitron", sans-serif;
-    font-size: 10px; letter-spacing: 0.15em; padding: 0 12px; }
-  /* sign-in */
-  #signin { position: fixed; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center; background: rgba(2,6,13,0.92); }
-  #signin.on { display: flex; }
-  #signin form { flex-direction: column; width: min(340px, 88vw); gap: 12px; padding: 22px; background: var(--panel);
-    border: 1px solid var(--line); border-radius: 6px; }
-  #signin h2 { margin: 0 0 4px; font-family: "Orbitron", sans-serif; letter-spacing: 0.3em; font-size: 15px; color: var(--cyan); text-align: center; }
-  #signin button { padding: 12px; font-size: 12px; }
-  #tapany { position: fixed; inset: 0; z-index: 8; display: none; align-items: flex-end; justify-content: center;
-    padding-bottom: 28vh; background: rgba(2,6,13,0.35); }
-  #tapany.on { display: flex; }
-  #tapany div { font-family: "Orbitron", sans-serif; letter-spacing: 0.3em; font-size: 13px; color: var(--cyan);
-    border: 1px solid var(--cyan-dim); border-radius: 30px; padding: 14px 22px; background: rgba(8,26,46,0.85);
-    box-shadow: 0 0 22px rgba(79,216,255,0.35); animation: recpulse 1.4s ease-in-out infinite; }
-  #unpaired { position: fixed; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center; background: rgba(2,6,13,0.94); }
-  #unpaired.on { display: flex; }
-  #unpaired .box { width: min(340px, 88vw); padding: 24px; text-align: center; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
-  #unpaired h2 { margin: 0 0 10px; font-family: "Orbitron", sans-serif; letter-spacing: 0.3em; font-size: 15px; color: var(--cyan); }
-  #unpaired p { margin: 8px 0; font-size: 17px; } #unpaired p.small { font-size: 14px; color: var(--muted); }
-  #signin .err { color: var(--red); font-size: 14px; min-height: 18px; text-align: center; }
   /* ---------------------------------------------------------------- Money screen */
   #money { position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column; background: var(--bg0);
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -197,6 +152,52 @@
   #msheet .btn.danger { border-color: rgba(208,59,59,0.6); color: #ff8a8a; background: transparent; }
   #msheet .err { color: #ff8a8a; font-size: 14px; min-height: 18px; margin-top: 8px; }
 
+  #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
+  #core { position: absolute; inset: 0; width: 100%; height: 100%; }
+  body.typing #stage { display: none; }
+  body.typing #talk { width: 52px; height: 52px; }
+  #status { position: absolute; left: 0; right: 0; bottom: 4px; text-align: center; font-family: "Orbitron", sans-serif;
+    letter-spacing: 0.45em; font-size: 12px; color: var(--cyan-dim); text-shadow: 0 0 10px rgba(79,216,255,0.4); }
+  #status .sub { display: block; margin-top: 5px; font-family: "Rajdhani", sans-serif; letter-spacing: 0.2em; font-size: 11px; color: var(--muted); }
+  #log { flex: 1; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 8px 16px; margin: 0 12px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 4px; z-index: 2; min-height: 0; }
+  .msg { margin: 0 0 12px; animation: rise .3s ease-out; }
+  .msg .who { font-size: 10px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+  .msg .body { font-size: 17px; line-height: 1.35; }
+  .msg.jarvis .who { color: var(--cyan); } .msg.jarvis .body { color: #e6f7ff; }
+  .msg.user .body { color: #b9cfdf; } .msg.info .body { font-size: 14px; color: var(--muted); font-style: italic; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  #controls { display: flex; align-items: center; gap: 10px; padding: 12px 12px 16px; z-index: 2; flex: none; }
+  #talk { flex: none; width: 74px; height: 74px; border-radius: 50%; border: 2px solid var(--cyan); background: rgba(79,216,255,0.08);
+    color: var(--cyan); font-family: "Orbitron", sans-serif; font-size: 10px; letter-spacing: 0.15em; box-shadow: 0 0 18px rgba(79,216,255,0.35); }
+  #talk.rec { border-color: var(--red); color: var(--red); background: rgba(255,90,106,0.12); box-shadow: 0 0 26px rgba(255,90,106,0.55); animation: recpulse 1s ease-in-out infinite; }
+  #talk.busy { border-color: var(--amber); color: var(--amber); box-shadow: 0 0 18px rgba(255,181,71,0.4); }
+  @keyframes recpulse { 50% { transform: scale(1.06); } }
+  form { flex: 1; display: flex; gap: 8px; min-width: 0; }
+  input { flex: 1; min-width: 0; background: rgba(2,10,20,0.7); border: 1px solid var(--line); color: var(--text); font: inherit;
+    font-size: 16px; padding: 12px; border-radius: 4px; outline: none; }
+  input:focus { border-color: var(--cyan); }
+  button.small { background: transparent; color: var(--cyan); border: 1px solid var(--cyan-dim); border-radius: 4px; font-family: "Orbitron", sans-serif;
+    font-size: 10px; letter-spacing: 0.15em; padding: 0 12px; }
+  /* sign-in */
+  #signin { position: fixed; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center; background: rgba(2,6,13,0.92); }
+  #signin.on { display: flex; }
+  #signin form { flex-direction: column; width: min(340px, 88vw); gap: 12px; padding: 22px; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 6px; }
+  #signin h2 { margin: 0 0 4px; font-family: "Orbitron", sans-serif; letter-spacing: 0.3em; font-size: 15px; color: var(--cyan); text-align: center; }
+  #signin button { padding: 12px; font-size: 12px; }
+  #tapany { position: fixed; inset: 0; z-index: 8; display: none; align-items: flex-end; justify-content: center;
+    padding-bottom: 28vh; background: rgba(2,6,13,0.35); }
+  #tapany.on { display: flex; }
+  #tapany div { font-family: "Orbitron", sans-serif; letter-spacing: 0.3em; font-size: 13px; color: var(--cyan);
+    border: 1px solid var(--cyan-dim); border-radius: 30px; padding: 14px 22px; background: rgba(8,26,46,0.85);
+    box-shadow: 0 0 22px rgba(79,216,255,0.35); animation: recpulse 1.4s ease-in-out infinite; }
+  #unpaired { position: fixed; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center; background: rgba(2,6,13,0.94); }
+  #unpaired.on { display: flex; }
+  #unpaired .box { width: min(340px, 88vw); padding: 24px; text-align: center; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+  #unpaired h2 { margin: 0 0 10px; font-family: "Orbitron", sans-serif; letter-spacing: 0.3em; font-size: 15px; color: var(--cyan); }
+  #unpaired p { margin: 8px 0; font-size: 17px; } #unpaired p.small { font-size: 14px; color: var(--muted); }
+  #signin .err { color: var(--red); font-size: 14px; min-height: 18px; text-align: center; }
 </style>
 </head>
 <body>
@@ -219,6 +220,13 @@
   <a href="#" id="bell" class="ditem"><span>Alerts<small>Timers and reminders on this phone</small></span><em id="bellState">Off</em></a>
   <a href="#" id="signout" class="ditem"><span>Sign out</span><em></em></a>
 </nav>
+<div id="money">
+  <div class="mhead"><button id="mmenu" class="menubtn" aria-label="Menu"><i></i><i></i><i></i></button><h1 id="mtitle">MONEY</h1><span style="width:34px"></span></div>
+  <div id="mbody"></div>
+  <nav><button data-tab="dash">Dashboard</button><button data-tab="spend">Spending</button><button data-tab="recur">Recurring</button><button data-tab="tx">Transactions</button></nav>
+</div>
+<div id="msheet"></div>
+<div id="mtip"></div>
 <div id="stage">
   <canvas id="core"></canvas>
   <div id="status"><span id="statetxt">STANDBY</span><span class="sub" id="substate">Tap the button to talk</span></div>
@@ -234,13 +242,6 @@
   <p>This phone isn't paired with Jarvis.</p>
   <p class="small">Ask Jarvis on the laptop for a pairing code, then scan it with this phone's camera.</p>
 </div></div>
-<div id="money">
-  <div class="mhead"><button id="mmenu" class="menubtn" aria-label="Menu"><i></i><i></i><i></i></button><h1 id="mtitle">MONEY</h1><span style="width:34px"></span></div>
-  <div id="mbody"></div>
-  <nav><button data-tab="dash">Dashboard</button><button data-tab="spend">Spending</button><button data-tab="recur">Recurring</button><button data-tab="tx">Transactions</button></nav>
-</div>
-<div id="msheet"></div>
-<div id="mtip"></div>
 <div id="signin"><form id="sf">
   <h2>J.A.R.V.I.S.</h2>
   <input id="em" type="email" placeholder="Email" autocomplete="username" required>
@@ -524,6 +525,8 @@
     else startListening();
   };
 
+  // Shared by the phone app (app/build.py inlines it) and the laptop window (jarvis/ui/server.py).
+  // Needs from the page: $(id), and #menuBtn, #drawer, #scrim, #money, #mtitle, #navJarvis, #moneyBiz, #moneyPers, #navCosts.
   // ------------------------------------------------------------------ menu drawer
   // One menu (top left) instead of a row of header buttons, so new screens have somewhere to go.
   const menuBtn = $("menuBtn"), drawer = $("drawer");
@@ -575,14 +578,17 @@
   }
   menuBtn.onclick = (e) => { e.preventDefault(); setMenu(!document.body.classList.contains("menu")); };
   $("scrim").onclick = () => setMenu(false);
-  // Settings rows keep the menu open so you can see the switch change; money.js wires the money screens.
-  $("signout").addEventListener("click", () => setMenu(false));
+  // money.js wires the money screens.
   // "Jarvis" = the talk screen: close whatever screen is on top of it.
   $("navJarvis").onclick = (e) => { e.preventDefault(); nav.home(); };
   let swipeX = null;   // swipe the drawer left to close it
   drawer.addEventListener("touchstart", (e) => { swipeX = e.touches[0].clientX; }, { passive: true });
   drawer.addEventListener("touchend", (e) => { if (swipeX !== null && swipeX - e.changedTouches[0].clientX > 60) setMenu(false); swipeX = null; });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") setMenu(false); });
+
+
+  // Settings rows keep the menu open so you can see the switch change.
+  $("signout").addEventListener("click", () => setMenu(false));
 
   // ------------------------------------------------------------------ alerts (timers + reminders)
   const bell = $("bell");
@@ -1720,7 +1726,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
 
     // ---------------------------------------------------------------- arc-reactor HUD
     // Rings around the core: a circular voice equalizer (his voice while speaking, Ben's while
-    // listening), a rotating tick ring with a scanning sweep, counter-rotating segment arcs,
+    // listening), a rotating tick ring, counter-rotating segment arcs,
     // targeting brackets, ripples on voice peaks and state changes, and a small state label.
     const Rb = Math.min(W, H) * 0.24;                 // HUD scale ignores the voice "breathing"
     const spd = { idle: 0.35, listening: 1.1, thinking: 3.2, speaking: 0.9 }[st] || 0.4;
@@ -1752,25 +1758,14 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       cx.beginPath(); cx.moveTo(ox + c * eqR, oy + s * eqR); cx.lineTo(ox + c * (eqR + len), oy + s * (eqR + len)); cx.stroke();
     }
 
-    // scanning sweep: a fading wedge across the tick ring
     const tickR = Rb * 1.58;
-    if (cx.createConicGradient) {
-      const g = cx.createConicGradient(hud.sweep, ox, oy);
-      g.addColorStop(0, `rgba(${tint},${0.16 + glowSm * 0.1})`);
-      g.addColorStop(0.08, `rgba(${tint},0)`);
-      g.addColorStop(1, `rgba(${tint},0)`);
-      cx.fillStyle = g;
-      cx.beginPath(); cx.arc(ox, oy, tickR + Rb * 0.06, 0, 6.283); cx.arc(ox, oy, Rb * 1.42, 0, 6.283, true); cx.fill();
-    }
 
-    // tick ring: 120 ticks, every 10th long; ticks just behind the sweep light up
+    // tick ring: 120 ticks, every 10th long
     for (let k = 0; k < 120; k++) {
       const ang = hud.spin + (k / 120) * 6.283;
-      const behind = ((hud.sweep - ang) % 6.283 + 6.283) % 6.283;
-      const lit = behind < 0.6 ? 1 - behind / 0.6 : 0;
       const major = k % 10 === 0, len = Rb * (major ? 0.075 : 0.035);
       const c = Math.cos(ang), s = Math.sin(ang);
-      cx.strokeStyle = `rgba(${lit > 0.3 ? "210,248,255" : tint},${(major ? 0.38 : 0.18) + glowSm * 0.12 + lit * 0.55})`;
+      cx.strokeStyle = `rgba(${tint},${(major ? 0.38 : 0.18) + glowSm * 0.12})`;
       cx.lineWidth = major ? 1.6 : 1;
       cx.beginPath(); cx.moveTo(ox + c * tickR, oy + s * tickR); cx.lineTo(ox + c * (tickR + len), oy + s * (tickR + len)); cx.stroke();
     }
