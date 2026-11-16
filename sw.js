@@ -1,5 +1,5 @@
 // Caches only the app shell (so it opens instantly); answers and data always come from the network.
-const CACHE = "jarvis-shell-36536853";
+const CACHE = "jarvis-shell-45665997";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 self.addEventListener("install", (e) => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL))); });
 self.addEventListener("activate", (e) => e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())));
@@ -9,16 +9,18 @@ self.addEventListener("push", (e) => {
   e.waitUntil((async () => {
     await self.registration.showNotification("J.A.R.V.I.S. · " + (d.title || "Alert"), {
       body: d.body || "", icon: "icons/icon-192.png", badge: "icons/icon-192.png", tag: d.tag || "jarvis",
-      vibrate: [250, 120, 250, 120, 400], requireInteraction: true, renotify: true });
+      vibrate: [250, 120, 250, 120, 400], requireInteraction: true, renotify: true, data: { url: d.url || "./" } });
     for (const c of await self.clients.matchAll({ type: "window", includeUncontrolled: true })) c.postMessage({ type: "alarm", body: d.body });
   })());
 });
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
   e.waitUntil((async () => {
+    // briefing / recap notifications carry ./?brief=1 or ./?recap=1: the app reads it out when opened
+    const url = (e.notification.data && e.notification.data.url) || "./";
     const all = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-    if (all.length) return all[0].focus();
-    return self.clients.openWindow("./");
+    if (all.length) { await all[0].focus(); all[0].postMessage({ type: "open", url }); return; }
+    return self.clients.openWindow(url);
   })());
 });
 self.addEventListener("fetch", (e) => {

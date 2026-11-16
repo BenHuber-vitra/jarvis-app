@@ -601,6 +601,7 @@
   bell.onclick = (e) => { e.preventDefault(); audioCtx(); subscribeAlerts(true).catch((err) => info("Couldn't turn on alerts: " + err.message)); };
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.addEventListener("message", (e) => {
+      if (e.data && e.data.type === "open") { wantAsk(e.data.url); runPendingAsk(); return; }   // notification tapped, app already open
       if (!e.data || e.data.type !== "alarm") return;
       add("jarvis", "Jarvis", e.data.body);
       if (document.visibilityState === "visible" && S.state === "idle") { const v = speaker(++generation); v.say(e.data.body); v.end();
@@ -623,17 +624,51 @@
   };
   showAuto();
   const tapAny = $("tapany");
-  tapAny.addEventListener("click", () => { tapAny.classList.remove("on"); audioCtx(); startListening(); });
+  tapAny.addEventListener("click", () => { tapAny.classList.remove("on"); audioCtx(); if (pendingAsk) runPendingAsk(true); else startListening(); });
+
+  // ------------------------------------------------------------------ notification taps
+  // Tapping the morning-briefing or evening-recap notification opens the app at ./?brief=1 or
+  // ./?recap=1 (or, if the app was already open, the service worker sends {type: "open", url}).
+  // Jarvis then asks for it and reads it out; if Android still has sound locked, the screen says
+  // "Tap to hear your briefing" and one tap does it. Kept in sessionStorage too, so the one-off
+  // reload after an app update doesn't lose it.
+  const ASKS = { brief: ["Good morning. Give me my morning briefing.", "Tap to hear your briefing"],
+                 recap: ["Give me my evening recap: what did I miss today?", "Tap to hear your recap"] };
+  let pendingAsk = null;
+  function wantAsk(url) {
+    try {
+      const q = new URL(url, location.href).searchParams, k = q.has("brief") ? "brief" : q.has("recap") ? "recap" : null;
+      if (k) { pendingAsk = k; try { sessionStorage.setItem("jarvis.ask", k); } catch {} }
+    } catch {}
+  }
+  wantAsk(location.href);
+  try { if (!pendingAsk && ASKS[sessionStorage.getItem("jarvis.ask")]) pendingAsk = sessionStorage.getItem("jarvis.ask"); } catch {}
+  if (/[?&](brief|recap)=/.test(location.search)) history.replaceState(history.state, "", location.pathname + location.hash);
+  async function runPendingAsk(tapped) {
+    const k = pendingAsk;
+    if (!k || !(await authHeaders())) return;
+    if (!tapped) {
+      try { audioCtx(); await ac.resume(); } catch {}
+      await new Promise((r) => setTimeout(r, 200));
+      if (!ac || ac.state !== "running") { tapAny.firstElementChild.textContent = ASKS[k][1]; tapAny.classList.add("on"); return; }
+    }
+    pendingAsk = null; try { sessionStorage.removeItem("jarvis.ask"); } catch {}
+    tapAny.classList.remove("on");
+    if ($("money").classList.contains("on") || document.body.classList.contains("menu")) nav.home();
+    ask(ASKS[k][0]);
+  }
   let lastAuto = 0;
   async function autoListen() {
-    if (!autoOn() || S.state !== "idle" || document.visibilityState !== "visible") return;
+    if (document.visibilityState !== "visible") return;
+    if (pendingAsk) return runPendingAsk();   // opened from the briefing / recap notification
+    if (!autoOn() || S.state !== "idle") return;
     if ($("money").classList.contains("on")) return;   // looking at money, not talking
     if (document.body.classList.contains("typing") || !(await authHeaders())) return;
     if (Date.now() - lastAuto < 3000) return;
     lastAuto = Date.now();
     try { audioCtx(); await ac.resume(); } catch {}
     await new Promise((r) => setTimeout(r, 200));
-    if (!ac || ac.state !== "running") { tapAny.classList.add("on"); return; }
+    if (!ac || ac.state !== "running") { tapAny.firstElementChild.textContent = "Tap anywhere to talk"; tapAny.classList.add("on"); return; }
     startListening();
   }
   document.addEventListener("visibilitychange", () => {
