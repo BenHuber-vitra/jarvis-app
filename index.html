@@ -216,6 +216,7 @@
   <a href="#" id="navJarvis" class="ditem"><span>Jarvis<small>Talk to Jarvis</small></span><em>›</em></a>
   <a href="#" id="moneyBiz" class="ditem"><span>Business money<small>Business accounts, spending, subscriptions</small></span><em>›</em></a>
   <a href="#" id="moneyPers" class="ditem"><span>Personal money<small>Your own accounts, spending, subscriptions</small></span><em>›</em></a>
+  <a href="#" id="navCrm" class="ditem"><span>Customers<small>The Customer Factor: jobs, invoices, estimates</small></span><em>›</em></a>
   <a href="#" id="navCosts" class="ditem"><span>Jarvis costs<small>What Jarvis costs to run this month</small></span><em>›</em></a>
   <div class="dsect">Settings</div>
   <a href="#" id="auto" class="ditem"><span>Listen on open<small>Start listening when the app opens</small></span><em id="autoState">On</em></a>
@@ -535,7 +536,7 @@
   };
 
   // Shared by the phone app (app/build.py inlines it) and the laptop window (jarvis/ui/server.py).
-  // Needs from the page: $(id), and #menuBtn, #drawer, #scrim, #money, #mtitle, #navJarvis, #moneyBiz, #moneyPers, #navCosts.
+  // Needs from the page: $(id), and #menuBtn, #drawer, #scrim, #money, #mtitle, #navJarvis, #moneyBiz, #moneyPers, #navCrm, #navCosts.
   // ------------------------------------------------------------------ menu drawer
   // One menu (top left) instead of a row of header buttons, so new screens have somewhere to go.
   const menuBtn = $("menuBtn"), drawer = $("drawer");
@@ -578,7 +579,7 @@
     menuBtn.setAttribute("aria-expanded", open); drawer.setAttribute("aria-hidden", !open);
     if (open && !was) {   // show which screen you're on
       const m = $("money").classList.contains("on") && $("mtitle").textContent;
-      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCosts", m === "JARVIS COSTS"]]) $(id).classList.toggle("cur", on);
+      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"]]) $(id).classList.toggle("cur", on);
       menuStep = nav.push(() => setMenu(false));
     }
     const id = menuStep;
@@ -967,6 +968,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     }
     async function load(refresh) {
       if (M.book === "costs") return loadCosts();
+      if (M.book === "crm") return loadCrm();
       M.busy = refresh === "force" ? "Syncing with your bank…" : (refresh ? "Checking for new transactions…" : "Loading…");
       M.error = ""; render();
       const book = M.book;
@@ -987,8 +989,11 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
         M.book = book; M.data = M.cache[book] || null; M.open = {}; M.q = ""; M.cat = ""; M.error = "";
         try { localStorage.setItem("jarvis.moneyBook", book); } catch {}
       }
+      const tabs = M.book === "crm" ? CRM_TABS : MONEY_TABS;   // the Customers screen has its own four tabs
+      if (!tabs.some(([k]) => k === tab)) tab = tabs[0][0];
+      el.querySelectorAll("nav button").forEach((b, i) => { b.dataset.tab = tabs[i][0]; b.textContent = tabs[i][1]; });
       M.tab = tab;
-      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS" }[M.book];
+      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS" }[M.book];
       el.classList.toggle("costs", M.book === "costs");   // no Dashboard/Spending/... tabs there
       body.scrollTop = 0; hideTip(); el.classList.add("on");
       if (!fresh) render(); else if (!M.data) load(true); else { render(); load(true); }
@@ -1007,6 +1012,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     $("moneyBiz").onclick = (e) => { e.preventDefault(); goBook("business"); };
     $("moneyPers").onclick = (e) => { e.preventDefault(); goBook("personal"); };
     $("navCosts").onclick = (e) => { e.preventDefault(); goBook("costs"); };
+    $("navCrm").onclick = (e) => { e.preventDefault(); goBook("crm"); };
     $("mmenu").onclick = (e) => { e.preventDefault(); setMenu(true); };
     el.querySelectorAll("nav button").forEach((b) => (b.onclick = () => {
       if (b.dataset.tab === M.tab) return;
@@ -1405,13 +1411,529 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
         fixedTotal: 30, total: 30 + month, projectedTotal: 30 + month / +t.slice(8) * n };
     }
 
+    // -------------------------------------------------------------- Customers (The Customer Factor CRM, 2026-11-19)
+    // Ben uploads a full backup from The Customer Factor about once a month. The file is parsed HERE
+    // (crm_calc.js: parseDump + compact), so card details in it never leave this device; only the
+    // compact copy goes to cloud Jarvis (/jarvis/crm/upload). Same screen shell as money: it's the
+    // "book" called crm, with its own four tabs. Inserted into money.js (app/build.py).
+    const R = (() => { // The Customer Factor (Ben's CRM) inside Jarvis (2026-11-19). Ben exports a full backup from The
+// Customer Factor (a MySQL dump, .sql) about once a month and uploads it on the Customers screen.
+// This file is shared like money_calc.js: the app (inlined by app/build.py) parses the dump in the
+// browser and shows the screen; cloud Jarvis (tools_crm.ts) imports it for the crm tool, so what
+// Jarvis says and what the screen shows always agree. Plain JavaScript, no imports.
+//
+// How The Customer Factor stores things (found in Ben's first backup, 2026-11-19):
+// - One row in customer_jobs per SERVICE LINE per DAY, not per job. A visit = one customer on one
+//   day; a multi-day project (md_id) repeats every line, with its price, on every day of it, so job
+//   rows must never be added up for money. Money comes only from invoices and payments.
+// - rj_id = a recurring series (scheduled years ahead); job_status "X" = cancelled.
+// - Dates are Unix seconds at midnight US Pacific (their server); we turn them into local dates.
+// - Estimates: accepted "Y" / "X" (declined); status S = scheduled, C = closed, the rest are open.
+//   custtype "c" = for a customer, "p" = for a prospect.
+// - Estimate lines are often alternatives (monthly / every 3 months), so an estimate has no single total.
+// - payment_form: 3 = card (has card transaction ids), 9 = other (payment_mode says e.g. Venmo);
+//   1 and 2 are guesses (1 has check numbers, so check; 2 cash). Ben to confirm.
+// Card details in the backup (card_num, card_type, trans_id) are never kept.
+
+const PAYMENT_FORMS = { 1: "check", 2: "cash", 3: "card", 9: "other" };
+
+// ------------------------------------------------------------------ the backup file
+/** MySQL dump text -> { tableSuffix: [ {column: value} ] } (table names lose their "<account>_" prefix). */
+function parseDump(text) {
+  const out = {};
+  const cols = {};
+  const ct = /CREATE TABLE `(\w+)` \(([\s\S]*?)\n\) ENGINE/g;
+  for (let m; (m = ct.exec(text));) cols[m[1]] = [...m[2].matchAll(/^\s*`(\w+)` /gm)].map((x) => x[1]);
+  const ins = /INSERT INTO `(\w+)` VALUES /g;
+  for (let m; (m = ins.exec(text));) {
+    const names = cols[m[1]];
+    if (!names) continue;
+    const { rows, end } = values(text, ins.lastIndex);
+    ins.lastIndex = end;
+    const key = m[1].replace(/^[^_]+_/, "");
+    (out[key] ||= []).push(...rows.map((r) => Object.fromEntries(names.map((n, i) => [n, r[i] ?? null]))));
+  }
+  for (const k of Object.keys(cols)) out[k.replace(/^[^_]+_/, "")] ||= [];
+  return out;
+}
+function values(s, i) {
+  const rows = [];
+  let row = null;
+  const ESC = { n: "\n", r: "\r", t: "\t", 0: "\0", Z: "\x1a" };
+  for (; i < s.length; i++) {
+    const c = s[i];
+    if (row === null) {
+      if (c === "(") row = [];
+      else if (c === ";") return { rows, end: i + 1 };
+      continue;
+    }
+    if (c === "'") {
+      let buf = "";
+      for (i++; i < s.length; i++) {
+        const ch = s[i];
+        if (ch === "\\") { const nx = s[++i]; buf += ESC[nx] ?? nx; }
+        else if (ch === "'" && s[i + 1] === "'") { buf += "'"; i++; }
+        else if (ch === "'") break;
+        else buf += ch;
+      }
+      row.push(buf);
+    } else if (c === ",") { /* next value */ }
+    else if (c === ")") { rows.push(row); row = null; }
+    else if (!/\s/.test(c)) {
+      let j = i;
+      while (j < s.length && s[j] !== "," && s[j] !== ")") j++;
+      const tok = s.slice(i, j).trim();
+      row.push(tok === "NULL" ? null : tok);
+      i = j - 1;
+    }
+  }
+  return { rows, end: s.length };
+}
+
+const num = (v) => { const n = parseFloat(v); return Number.isFinite(n) ? n : 0; };
+const str = (v, max = 400) => String(v ?? "").trim().slice(0, max);
+const yes = (v) => v === "1" || v === "Y" || v === "y";
+/** Unix seconds -> "YYYY-MM-DD" in tz ("" for 0 / empty). */
+function dateOf(ts, tz) {
+  const n = parseInt(ts, 10);
+  if (!(n > 0)) return "";
+  return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(n * 1000));
+}
+/** Start time of a job, if it has one (a date stamp that isn't midnight Pacific): "9:00 AM". */
+function timeOf(ts, tz) {
+  const n = parseInt(ts, 10);
+  if (!(n > 0)) return "";
+  const pac = new Intl.DateTimeFormat("en-US", { timeZone: "America/Los_Angeles", hour: "numeric", minute: "2-digit", hourCycle: "h23" }).format(new Date(n * 1000));
+  if (/^(0|00|24):00$/.test(pac)) return "";
+  return new Intl.DateTimeFormat("en-US", { timeZone: tz, hour: "numeric", minute: "2-digit" }).format(new Date(n * 1000));
+}
+const clean = (v) => str(v, 600).replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+
+function person(r, kind, tz) {
+  const phones = [];
+  for (const [k, label] of [["cell_phone1", "mobile"], ["phone1", "phone"], ["phone3", "other"], ["cell_phone2", "mobile 2"], ["phone2", "phone 2"]]) {
+    const n = str(r[k], 40);
+    if (n && !phones.some((p) => p.n === n)) phones.push({ n, label });
+  }
+  const emails = ["email", "email2", "email3", "email4"].map((k) => str(r[k], 120)).filter(Boolean);
+  const cell = [str(r.cell1_firstname, 40), str(r.cell1_lastname, 40)].filter(Boolean).join(" ");
+  return {
+    id: (kind === "customer" ? "c" : "p") + r[kind === "customer" ? "c_id" : "p_id"],
+    kind, type: str(r.cat, 20), company: str(r.company_name, 120),
+    first: str(r.first_name, 60), last: str(r.last_name, 60), cellName: cell,
+    address: str(r.address, 160), city: str(r.city, 60), state: str(r.state, 10), zip: str(r.zip, 12),
+    phones, emails, notes: clean(r.notes), source: str(r.hearus || r.source, 60),
+    active: yes(r.active) && !(parseInt(r.date_deleted, 10) > 0) && !(parseInt(r.archived_date, 10) > 0),
+    added: dateOf(kind === "customer" ? r.date_cadded : r.date_padded, tz),
+    callback: yes(r.on_callback) ? str(r.next_callback, 40) : "",
+    fromProspect: r.prospect_id && r.prospect_id !== "0" ? "p" + r.prospect_id : "",
+  };
+}
+
+/** Parsed backup -> the compact data Jarvis keeps (only what he needs; no card details). */
+function compact(t, tz, fileName = "") {
+  const customers = (t.customers || []).map((r) => person(r, "customer", tz));
+  const prospects = (t.prospects || []).map((r) => person(r, "prospect", tz));
+  const jobs = (t.customer_jobs || []).map((r) => ({
+    id: r.cj_id, cust: "c" + r.c_id, date: dateOf(r.date, tz), time: timeOf(r.date, tz),
+    service: str(r.job_type, 120), price: num(r.est), qty: str(r.quantity, 12),
+    invoice: r.invoice_num && r.invoice_num !== "0" ? r.invoice_num : "",
+    series: r.rj_id && r.rj_id !== "0" ? r.rj_id : "", project: r.md_id && r.md_id !== "0" ? r.md_id : "",
+    cancelled: r.job_status === "X", notes: clean(r.job_addl_notes).slice(0, 300),
+  })).filter((j) => j.date);
+  const lines = {};
+  for (const r of t.estimate_details || []) (lines[r.e_id] ||= []).push({
+    service: str(r.job_type, 120), price: num(r.est), priceTo: num(r.est_to), qty: str(r.quantity, 12), notes: clean(r.job_addl_notes).slice(0, 200) });
+  const estimates = (t.estimates || []).map((r) => ({
+    id: r.e_id, who: (r.custtype === "p" ? "p" : "c") + r.id, date: dateOf(r.date, tz), number: r.invoice_num && r.invoice_num !== "0" ? r.invoice_num : "",
+    accepted: r.accepted === "Y" ? "yes" : r.accepted === "X" ? "no" : "", status: str(r.status, 4),
+    acceptedOn: dateOf(r.accepted_date, tz), emailed: dateOf(r.emailed_date, tz), notes: clean(r.addl_notes).slice(0, 300),
+    lines: lines[r.e_id] || [],
+  }));
+  const invoices = (t.invoices || []).map((r) => ({
+    num: r.invoice_num, cust: "c" + r.c_id, date: dateOf(r.invoice_timestamp, tz),
+    total: num(r.totalamt), paid: num(r.totalpaid), emailed: dateOf(r.emailed_date, tz), badDebt: yes(r.bad_debt),
+  }));
+  const payments = (t.invoice_payments || []).map((r) => ({
+    id: r.payment_id, invoice: r.invoice_num, amount: num(r.amount_paid),
+    form: PAYMENT_FORMS[r.payment_form] === "other" ? (str(r.payment_mode, 20) || "other") : (PAYMENT_FORMS[r.payment_form] || "other"),
+    date: dateOf(parseInt(r.actual_paiddate, 10) > 0 ? r.actual_paiddate : r.paid_date, tz),
+  }));
+  const all = [...jobs.map((j) => j.date), ...invoices.map((i) => i.date)].filter(Boolean).sort();
+  return { version: 1, fileName: str(fileName, 120), exportedOn: (/(\d{4}-\d{2}-\d{2})/.exec(fileName) || [])[1] || "",
+    firstDate: all[0] || "", customers, prospects, jobs, estimates, invoices, payments };
+}
+
+/** Sanity check before saving (the upload route runs it too). Returns a problem, or "". */
+function problem(d) {
+  if (!d || typeof d !== "object") return "That isn't a Customer Factor backup.";
+  for (const k of ["customers", "prospects", "jobs", "estimates", "invoices", "payments"]) if (!Array.isArray(d[k])) return `The backup has no ${k}.`;
+  if (!d.customers.length && !d.jobs.length) return "That backup has no customers or jobs in it. Is it the right file?";
+  return "";
+}
+
+// ------------------------------------------------------------------ names and lookups
+function nameOf(p) {
+  if (!p) return "someone not in the CRM";
+  const full = [p.first, p.last].filter(Boolean).join(" ");
+  if (p.company && full && !p.company.toLowerCase().includes(full.toLowerCase())) return `${p.company} (${full})`;
+  return p.company || full || p.cellName || "(no name)";
+}
+function people(d) {
+  if (d._people) return d._people;
+  const m = new Map();
+  for (const p of [...d.customers, ...d.prospects]) m.set(p.id, p);
+  Object.defineProperty(d, "_people", { value: m, enumerable: false });
+  return m;
+}
+const words = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9@.\s]/g, " ").split(/\s+/).filter(Boolean);
+
+/** Customers and prospects matching what Ben said (name, company, street, city, phone, email). */
+function find(d, q, limit = 6) {
+  const qs = words(q).filter((w) => !["the", "a", "of", "and", "family", "house", "customer", "client", "mr", "mrs", "ms"].includes(w));
+  const digits = String(q || "").replace(/\D/g, "");
+  if (!qs.length && digits.length < 4) return [];
+  const scored = [];
+  for (const p of people(d).values()) {
+    const name = words([p.company, p.first, p.last, p.cellName].join(" "));
+    const place = words([p.address, p.city].join(" "));
+    const other = words(p.emails.join(" "));
+    let s = 0;
+    for (const w of qs) {
+      const plural = w.endsWith("s") ? w.slice(0, -1) : w;   // "the Smiths" -> smith
+      if (name.includes(w) || name.includes(plural)) s += 3;
+      else if (name.some((n) => n.startsWith(w) && w.length >= 3)) s += 2;
+      else if (place.includes(w)) s += 1.5;
+      else if (other.some((e) => e.includes(w))) s += 1;
+      else s -= 1;
+    }
+    if (digits.length >= 4 && p.phones.some((ph) => ph.n.replace(/\D/g, "").endsWith(digits))) s += 4;
+    if (s > 0) scored.push({ p, s: s + (p.kind === "customer" ? 0.3 : 0) + (p.active ? 0.2 : 0) });
+  }
+  scored.sort((a, b) => b.s - a.s);
+  const top = scored[0]?.s ?? 0;
+  return scored.filter((x) => x.s >= top - 1.5).slice(0, limit).map((x) => x.p);
+}
+
+// ------------------------------------------------------------------ visits, money, estimates
+/** Jobs grouped the way Ben thinks of them: one customer on one day, or one multi-day project. */
+function visits(d) {
+  if (d._visits) return d._visits;
+  const groups = new Map();
+  for (const j of d.jobs) {
+    if (j.cancelled) continue;
+    const key = j.project ? "m" + j.project : `${j.cust}|${j.date}`;
+    let g = groups.get(key);
+    if (!g) groups.set(key, (g = { key, cust: j.cust, project: !!j.project, days: new Set(), lines: [], series: "", time: "", invoiced: false, notes: "" }));
+    g.days.add(j.date);
+    g.lines.push(j);
+    if (j.series) g.series = j.series;
+    if (j.time && !g.time) g.time = j.time;
+    if (j.invoice) g.invoiced = true;
+    if (j.notes && !g.notes) g.notes = j.notes;
+  }
+  const out = [...groups.values()].map((g) => {
+    const days = [...g.days].sort();
+    // A project repeats its lines every day: count one day's worth (the first day's lines).
+    const counted = g.project ? g.lines.filter((l) => l.date === days[0]) : g.lines;
+    const services = [...new Set(counted.map((l) => l.service))];
+    return { key: g.key, cust: g.cust, project: g.project, first: days[0], last: days[days.length - 1], days,
+      services, price: counted.reduce((s, l) => s + l.price, 0), recurring: !!g.series, series: g.series,
+      time: g.time, invoiced: g.invoiced, notes: g.notes };
+  }).sort((a, b) => (a.first < b.first ? -1 : a.first > b.first ? 1 : 0));
+  Object.defineProperty(d, "_visits", { value: out, enumerable: false });
+  return out;
+}
+/** Visits that fall (at least one day) between from and to, inclusive. */
+function schedule(d, from, to) {
+  const out = [];
+  for (const v of visits(d)) {
+    const days = v.days.filter((x) => x >= from && x <= to);
+    if (days.length) out.push({ ...v, onDays: days });
+  }
+  return out.sort((a, b) => (a.onDays[0] < b.onDays[0] ? -1 : a.onDays[0] > b.onDays[0] ? 1 : 0));
+}
+const balanceOf = (i) => Math.round((i.total - i.paid) * 100) / 100;
+/** Unpaid invoices, oldest first. */
+function owed(d) {
+  return d.invoices.filter((i) => !i.badDebt && balanceOf(i) > 0.005).sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+// Lines are often alternatives ("every month" / "every 3 months"), so never add them up as one price.
+function estimateValue(e) {
+  const lo = e.lines.reduce((s, l) => s + l.price, 0), hi = e.lines.reduce((s, l) => s + Math.max(l.price, l.priceTo), 0);
+  return { lo, hi };
+}
+function estimateState(e) {
+  if (e.accepted === "yes") return "accepted";
+  if (e.accepted === "no" || e.status === "X") return "declined";
+  if (e.status === "S") return "accepted";
+  if (e.status === "C") return "closed";
+  return "open";
+}
+function daysBetween(a, b) { return Math.round((Date.parse(b + "T12:00:00Z") - Date.parse(a + "T12:00:00Z")) / 86400000); }
+
+/** Everything about one customer or prospect. */
+function profile(d, id, today) {
+  const p = people(d).get(id);
+  const vs = visits(d).filter((v) => v.cust === id);
+  const past = vs.filter((v) => v.first <= today), next = vs.filter((v) => v.first > today);
+  const inv = d.invoices.filter((i) => i.cust === id).sort((a, b) => (a.date < b.date ? 1 : -1));
+  const ests = d.estimates.filter((e) => e.who === id || (p && p.fromProspect && e.who === p.fromProspect)).sort((a, b) => (a.date < b.date ? 1 : -1));
+  const payments = d.payments.filter((x) => inv.some((i) => i.num === x.invoice));
+  return { p, past, next, invoices: inv, estimates: ests, payments,
+    billed: inv.reduce((s, i) => s + i.total, 0), balance: inv.filter((i) => !i.badDebt).reduce((s, i) => s + Math.max(0, balanceOf(i)), 0) };
+}
+
+/** Totals for a period (dates inclusive). Money from invoices and payments only. */
+function summary(d, from, to, today) {
+  const inR = (x) => x && x >= from && x <= to;
+  const inv = d.invoices.filter((i) => inR(i.date));
+  const pays = d.payments.filter((p) => inR(p.date));
+  const done = visits(d).filter((v) => inR(v.last) && v.last <= today);
+  const services = {};
+  for (const v of done) for (const s of v.services) services[s] = (services[s] || 0) + 1;
+  const ests = d.estimates.filter((e) => inR(e.date));
+  const acc = d.estimates.filter((e) => estimateState(e) === "accepted" && inR(e.acceptedOn || e.date));
+  const byForm = {};
+  for (const p of pays) byForm[p.form] = (byForm[p.form] || 0) + p.amount;
+  return {
+    billed: inv.reduce((s, i) => s + i.total, 0), invoices: inv.length,
+    collected: pays.reduce((s, p) => s + p.amount, 0), byForm,
+    jobs: done.length, recurringJobs: done.filter((v) => v.recurring).length,
+    topServices: Object.entries(services).sort((a, b) => b[1] - a[1]).slice(0, 6),
+    newCustomers: d.customers.filter((c) => inR(c.added)).length, newProspects: d.prospects.filter((c) => inR(c.added)).length,
+    estimatesSent: ests.length, estimatesAccepted: acc.length,
+  };
+}
+
+/** Billed and collected per month, oldest first: [{ month: "2026-10", billed, collected }]. */
+function months(d) {
+  const m = {};
+  for (const i of d.invoices) if (i.date) (m[i.date.slice(0, 7)] ||= { month: i.date.slice(0, 7), billed: 0, collected: 0 }).billed += i.total;
+  for (const p of d.payments) if (p.date) (m[p.date.slice(0, 7)] ||= { month: p.date.slice(0, 7), billed: 0, collected: 0 }).collected += p.amount;
+  return Object.values(m).sort((a, b) => (a.month < b.month ? -1 : 1));
+}
+
+const usd = (n, cents = false) => "$" + (+n || 0).toLocaleString("en-US", { minimumFractionDigits: cents ? 2 : 0, maximumFractionDigits: cents ? 2 : 0 });
+function niceDate(iso, withYear = false) {
+  if (!iso) return "";
+  const dt = new Date(iso + "T12:00:00Z");
+  return dt.toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short", month: "short", day: "numeric", ...(withYear ? { year: "numeric" } : {}) });
+}
+
+return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, find, visits, schedule, balanceOf, owed, estimateValue, estimateState, daysBetween, profile, summary, months, usd, niceDate };
+ })();
+    const CRM_TABS = [["over", "Overview"], ["sched", "Schedule"], ["people", "Customers"], ["est", "Estimates"]];
+    const C = { sched: "next", people: "customer", q: "", est: "open" };
+    async function rcall(action, payload) {
+      const auth = await authHeaders();
+      if (!auth) { showSignin(true); throw new Error("This phone isn't paired."); }
+      const r = await fetch(FN + "/crm/" + action, { method: "POST",
+        headers: { ...auth, apikey: PUBLISHABLE_KEY, "content-type": "application/json" }, body: JSON.stringify({ tz: TZ, ...(payload || {}) }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || `Customers service error (${r.status})`);
+      return j;
+    }
+    async function loadCrm() {
+      M.busy = M.data ? "" : "Loading…"; M.error = ""; render();
+      try { const got = await rcall("data"); M.cache.crm = got; if (M.book !== "crm") return; M.data = got; }
+      catch (e) { if (M.book !== "crm") return; M.error = e.message; }
+      M.busy = ""; render();
+    }
+    const cd = () => M.data && M.data.data;
+    const ctoday = () => (M.data && M.data.today) || new Date().toISOString().slice(0, 10);
+    const usd = (n) => R.usd(n, Math.abs(n) < 1000 && Math.round(n) !== n);
+    const pname = (id) => R.nameOf(R.people(cd()).get(id));
+    const addDay = (iso, n) => new Date(Date.parse(iso + "T12:00:00Z") + n * 86400000).toISOString().slice(0, 10);
+
+    // ---- upload: pick the .sql backup, check it, show what's in it, then send the compact copy
+    function pickBackup() {
+      const inp = document.createElement("input");
+      inp.type = "file"; inp.accept = ".sql,.txt,application/sql,text/plain";
+      inp.onchange = async () => {
+        const file = inp.files && inp.files[0];
+        if (!file) return;
+        let data;
+        try {
+          if (file.size > 40e6) throw new Error("That file is too big to be a Customer Factor backup.");
+          data = R.compact(R.parseDump(await file.text()), TZ, file.name);
+          const why = R.problem(data); if (why) throw new Error(why);
+        } catch (e) { M.error = "Couldn't read that file: " + e.message; render(); return; }
+        const n = (k) => data[k].length.toLocaleString();
+        openSheet(`<h2>Upload this backup?</h2><div class="meta">${esc(file.name)}</div>
+          <div class="card" style="margin-top:12px">${[["Customers", "customers"], ["Prospects", "prospects"], ["Job lines", "jobs"], ["Estimates", "estimates"],
+            ["Invoices", "invoices"], ["Payments", "payments"]].map(([l, k]) => `<div class="row"><div class="grow"><div class="name">${l}</div></div><div class="amt">${n(k)}</div></div>`).join("")}</div>
+          <div class="meta">It replaces the copy Jarvis has now${cd() ? ` (from ${esc(R.niceDate(cd().exportedOn || M.data.uploadedAt.slice(0, 10), true))})` : ""}. Card details in the backup are left out.</div>
+          <div class="btns"><button class="btn" id="sup">Upload</button><button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`,
+        (box) => {
+          box.querySelector("#sx").onclick = closeSheet;
+          box.querySelector("#sup").onclick = async (ev) => {
+            ev.target.disabled = true; ev.target.textContent = "Uploading…";
+            try { await rcall("upload", { data, fileName: file.name }); closeSheet(); M.data = null; M.cache.crm = null; loadCrm(); }
+            catch (e) { ev.target.disabled = false; ev.target.textContent = "Upload"; sheetErr(e.message); }
+          };
+        });
+      };
+      inp.click();
+    }
+
+    // ---- rows
+    function visitRow(v, today, withName = true) {
+      const when = v.project ? `${R.niceDate(v.first)} – ${R.niceDate(v.last)} · ${v.days.length}-day project` : R.niceDate(v.first, v.first.slice(0, 4) !== today.slice(0, 4)) + (v.time ? " · " + v.time : "");
+      const flags = [v.recurring ? "recurring" : "", v.first <= today && !v.invoiced ? "not invoiced" : ""].filter(Boolean).join(" · ");
+      return `<div class="row${withName ? " click" : ""}" ${withName ? `data-p="${esc(v.cust)}"` : ""}><div class="grow">
+        <div class="name">${esc(withName ? pname(v.cust) : v.services.join(", "))}</div>
+        <div class="meta">${esc(when)}${withName ? " · " + esc(v.services.join(", ")) : ""}${flags ? " · " + esc(flags) : ""}</div></div>
+        <div class="amt">${usd(v.price)}</div></div>`;
+    }
+    function estRow(e, withName = true) {
+      const st = R.estimateState(e), one = e.lines.length === 1 && e.lines[0];   // lines are often alternatives: no total
+      return `<div class="row${withName ? " click" : ""}" ${withName ? `data-p="${esc(e.who)}"` : ""}><div class="grow">
+        <div class="name">${esc(withName ? pname(e.who) : e.lines.map((l) => l.service).slice(0, 3).join(", "))}</div>
+        <div class="meta">${esc(R.niceDate(e.date, true))} · ${esc(st)}${withName ? " · " + esc(e.lines.map((l) => l.service).slice(0, 3).join(", ")) : ""}</div></div>
+        <div class="amt">${one ? usd(one.price) : e.lines.length + " items"}</div></div>`;
+    }
+    const wireRows = (host) => host.querySelectorAll(".row[data-p]").forEach((r) => (r.onclick = () => personSheet(r.dataset.p)));
+
+    // ---- one customer / prospect
+    function personSheet(id) {
+      const d = cd(), t = ctoday(), pr = R.profile(d, id, t), p = pr.p;
+      if (!p) return;
+      const tel = (n) => `<a class="linkish" href="tel:${esc(n.replace(/[^\d+]/g, ""))}">${esc(n)}</a>`;
+      let h = `<h2>${esc(R.nameOf(p))}</h2><div class="meta">${esc([p.kind, p.type, p.active ? "" : "inactive", p.added ? "added " + R.niceDate(p.added, true) : "", p.source ? "via " + p.source : ""].filter(Boolean).join(" · "))}</div>`;
+      h += `<div class="card" style="margin-top:12px">`;
+      for (const ph of p.phones) h += `<div class="row"><div class="grow"><div class="meta">${esc(ph.label)}</div><div class="name">${tel(ph.n)}</div></div></div>`;
+      for (const em of p.emails) h += `<div class="row"><div class="grow"><div class="meta">email</div><div class="name"><a class="linkish" href="mailto:${esc(em)}">${esc(em)}</a></div></div></div>`;
+      const addr = [p.address, p.city, p.state, p.zip].filter(Boolean).join(", ");
+      if (addr) h += `<div class="row"><div class="grow"><div class="meta">address</div><div class="name"><a class="linkish" target="_blank" rel="noopener" href="https://maps.google.com/?q=${encodeURIComponent(addr)}">${esc(addr)}</a></div></div></div>`;
+      if (!p.phones.length && !p.emails.length && !addr) h += `<div class="empty">No contact details.</div>`;
+      h += `</div>`;
+      if (p.notes) h += `<div class="note">${esc(p.notes)}</div>`;
+      if (pr.invoices.length) h += `<div class="sect"><span class="label">Invoices</span><span class="note" style="margin:0">billed ${usd(pr.billed)}${pr.balance > 0 ? ` · <b style="color:#ff8a8a">owes ${usd(pr.balance)}</b>` : ""}</span></div><div class="card">` +
+        pr.invoices.slice(0, 8).map((i) => `<div class="row"><div class="grow"><div class="name">#${esc(i.num)} · ${esc(R.niceDate(i.date, true))}</div>
+          <div class="meta">${R.balanceOf(i) > 0.005 ? "owes " + usd(R.balanceOf(i)) : "paid"}</div></div><div class="amt">${usd(i.total)}</div></div>`).join("") + `</div>`;
+      if (pr.next.length) h += `<div class="sect"><span class="label">Coming up</span></div><div class="card">${pr.next.slice(0, 6).map((v) => visitRow(v, t, false)).join("")}</div>`;
+      if (pr.past.length) h += `<div class="sect"><span class="label">Past jobs</span><span class="note" style="margin:0">${pr.past.length}</span></div><div class="card">${pr.past.slice(-8).reverse().map((v) => visitRow(v, t, false)).join("")}</div>`;
+      if (pr.estimates.length) h += `<div class="sect"><span class="label">Estimates</span></div><div class="card">${pr.estimates.slice(0, 6).map((e) => estRow(e, false)).join("")}</div>`;
+      h += `<div class="btns"><button class="btn quiet" id="sx">Close</button></div>`;
+      openSheet(h, (box) => { box.querySelector("#sx").onclick = closeSheet; });
+    }
+
+    // ---- tabs
+    function renderCrm() {
+      const got = M.data;
+      if (!got.data) {
+        body.innerHTML = status() + `<div class="card"><div class="label">The Customer Factor</div>
+          <div class="sub" style="margin:8px 0">No backup uploaded yet. In The Customer Factor, download a backup of your account (the .sql file), then upload it here. Do it about once a month to keep Jarvis up to date.</div>
+          <div class="btns"><button class="btn" id="cup">Upload backup</button></div></div>`;
+        $("cup").onclick = pickBackup; return;
+      }
+      ({ over: crmOverview, sched: crmSchedule, people: crmPeople, est: crmEstimates }[M.tab] || crmOverview)();
+      wireRows(body);
+    }
+    function asOfCard() {
+      const d = cd(), asOf = d.exportedOn || M.data.uploadedAt.slice(0, 10), age = R.daysBetween(asOf, ctoday());
+      return `<div class="card"><div class="row"><div class="grow"><div class="name">Backup from ${esc(R.niceDate(asOf, true))}</div>
+        <div class="meta">${age <= 0 ? "today" : age === 1 ? "yesterday" : age + " days ago"} · ${d.customers.length} customers · ${d.prospects.length} prospects</div></div>
+        <button class="linkish" id="cup">Upload new</button></div>${age > 35 ? `<div class="note err">This is over a month old. Upload a fresh backup so Jarvis knows about new jobs and payments.</div>` : ""}</div>`;
+    }
+    function crmOverview() {
+      const d = cd(), t = ctoday(), ow = R.owed(d), owedSum = ow.reduce((s, i) => s + R.balanceOf(i), 0);
+      const y = t.slice(0, 4), yr = R.summary(d, `${y}-01-01`, `${y}-12-31`, t);
+      const dow = (new Date(t + "T12:00:00Z").getUTCDay() + 6) % 7, wk = R.schedule(d, t, addDay(t, 6 - dow));
+      const recentOpen = d.estimates.filter((e) => R.estimateState(e) === "open" && R.daysBetween(e.date, t) <= 120);
+      let h = status() + `<div class="card"><div class="label">Owed to you</div><div class="hero">${usd(owedSum)}</div>
+        <div class="sub">${ow.length ? `${ow.length} unpaid invoice${ow.length > 1 ? "s" : ""}` : "Every invoice is paid"}</div>
+        ${ow.map((i) => `<div class="row click" data-p="${esc(i.cust)}"><div class="grow"><div class="name">${esc(pname(i.cust))}</div>
+          <div class="meta">#${esc(i.num)} · ${esc(R.niceDate(i.date, true))} · ${R.daysBetween(i.date, t)} days</div></div><div class="amt">${usd(R.balanceOf(i))}</div></div>`).join("")}</div>`;
+      h += `<div class="sect"><span class="label">This week</span><span class="note" style="margin:0">${wk.length} job${wk.length === 1 ? "" : "s"}</span></div><div class="card">` +
+        (wk.length ? wk.map((v) => visitRow(v, t)).join("") : `<div class="empty">Nothing booked for the rest of this week.</div>`) + `</div>`;
+      h += `<div class="sect"><span class="label">${esc(y)} so far</span></div><div class="card stats">
+        <div class="row"><div class="grow"><div class="name">Billed</div><div class="meta">${yr.invoices} invoices</div></div><div class="amt">${usd(yr.billed)}</div></div>
+        <div class="row"><div class="grow"><div class="name">Collected</div><div class="meta">${Object.entries(yr.byForm).map(([k, v]) => `${k} ${usd(v)}`).join(" · ")}</div></div><div class="amt">${usd(yr.collected)}</div></div>
+        <div class="row"><div class="grow"><div class="name">Jobs done</div><div class="meta">${yr.recurringJobs} recurring</div></div><div class="amt">${yr.jobs}</div></div>
+        <div class="row"><div class="grow"><div class="name">New customers</div><div class="meta">${yr.newProspects} new prospects</div></div><div class="amt">${yr.newCustomers}</div></div>
+        <div class="row"><div class="grow"><div class="name">Estimates accepted</div><div class="meta">${yr.estimatesAccepted} of ${yr.estimatesSent} given</div></div><div class="amt">${yr.estimatesSent ? Math.round(yr.estimatesAccepted / yr.estimatesSent * 100) : 0}%</div></div>
+        <div id="cmonths" style="margin-top:10px"></div><div class="legend"><span><span class="sw" style="background:${SPEND}"></span>Billed per month</span></div></div>`;
+      if (recentOpen.length) h += `<div class="sect"><span class="label">Waiting on an answer</span><span class="note" style="margin:0">${recentOpen.length} estimates</span></div><div class="card">${recentOpen.slice(0, 5).map((e) => estRow(e)).join("")}</div>`;
+      h += asOfCard();
+      body.innerHTML = h;
+      $("cup").onclick = pickBackup;
+      monthBars($("cmonths"), R.months(d).slice(-12), t.slice(0, 7));
+    }
+    function monthBars(host, ms, cur) {
+      if (!host || !ms.length) return;
+      const W = Math.max(260, host.clientWidth), H = 110, P = { l: 2, r: 46, t: 8, b: 18 };
+      const top = Math.max(1, ...ms.map((m) => m.billed)) * 1.1, slot = (W - P.l - P.r) / ms.length, bw = Math.max(4, Math.min(22, slot - 4));
+      const Y = (v) => P.t + (1 - v / top) * (H - P.t - P.b), base = Y(0), s = svg(W, H);
+      node("line", { x1: P.l, x2: W - P.r, y1: base, y2: base, stroke: "rgba(79,216,255,0.25)" }, s);
+      node("text", { x: W - P.r + 4, y: P.t + 8 }, s).textContent = R.usd(top / 1.1);
+      ms.forEach((m, i) => {
+        const cx = P.l + slot * i + slot / 2;
+        if (m.billed > 0) node("path", { d: barPath(cx - bw / 2, Y(m.billed), bw, base - Y(m.billed), 2), fill: m.month === cur ? CYAN : SPEND }, s);
+        const lab = new Date(m.month + "-15T12:00:00Z").toLocaleDateString("en-US", { month: "short", timeZone: "UTC" });
+        if (ms.length <= 7 || i % 2 === ms.length % 2) node("text", { x: cx, y: H - 4, "text-anchor": "middle" }, s).textContent = lab[0] + lab.slice(1, 3);
+        const hit = node("rect", { x: cx - slot / 2, y: 0, width: slot, height: H, fill: "transparent" }, s);
+        hit.addEventListener("click", (e) => { const r = host.getBoundingClientRect();
+          showTip(`<b>${esc(new Date(m.month + "-15T12:00:00Z").toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" }))}</b><br>billed ${usd(m.billed)}<br>collected ${usd(m.collected)}`, r.left + cx * r.width / W, e.clientY); });
+      });
+      host.innerHTML = ""; host.appendChild(s);
+    }
+    function seg(name, opts, cur) {
+      return `<div class="seg">${opts.map(([v, l]) => `<button data-seg="${name}" data-v="${v}" class="${cur === v ? "on" : ""}">${esc(l)}</button>`).join("")}</div>`;
+    }
+    const wireSeg = () => body.querySelectorAll("[data-seg]").forEach((b) => (b.onclick = () => { C[b.dataset.seg] = b.dataset.v; render(); }));
+    function crmSchedule() {
+      const d = cd(), t = ctoday();
+      const list = C.sched === "next" ? R.schedule(d, t, addDay(t, 60)) : R.schedule(d, addDay(t, -60), addDay(t, -1)).reverse();
+      let h = status() + seg("sched", [["next", "Next 60 days"], ["past", "Last 60 days"]], C.sched);
+      if (!list.length) h += `<div class="empty">${C.sched === "next" ? "Nothing booked in the next 60 days." : "No jobs in the last 60 days."}</div>`;
+      let wk = "";
+      for (const v of list) {
+        const day = v.onDays[0], dow = (new Date(day + "T12:00:00Z").getUTCDay() + 6) % 7, mon = addDay(day, -dow);
+        if (mon !== wk) { if (wk) h += `</div>`; wk = mon; h += `<div class="sect"><span class="label">Week of ${esc(R.niceDate(mon))}</span></div><div class="card">`; }
+        h += visitRow(v, t);
+      }
+      if (wk) h += `</div>`;
+      if (C.sched === "next" && d.exportedOn) h += `<div class="note">Jobs booked after ${esc(R.niceDate(d.exportedOn, true))} show up after the next upload.</div>`;
+      body.innerHTML = h; wireSeg();
+    }
+    function crmPeople() {
+      const d = cd();
+      body.innerHTML = status() + seg("people", [["customer", `Customers (${d.customers.filter((c) => c.active).length})`], ["prospect", `Prospects (${d.prospects.filter((c) => c.active).length})`]], C.people) +
+        `<input id="cq" class="search" type="search" placeholder="Search name, street, city, phone" value="${esc(C.q)}" style="width:100%;margin:0 0 12px;padding:10px 12px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:16px">
+        <div class="card" id="clist"></div>`;
+      wireSeg();
+      const draw = () => {
+        const q = C.q.trim();
+        let list = q ? R.find(d, q, 40).filter((p) => p.kind === C.people) : (C.people === "customer" ? d.customers : d.prospects).filter((p) => p.active);
+        if (!q) list = list.slice().sort((a, b) => R.nameOf(a).localeCompare(R.nameOf(b)));
+        $("clist").innerHTML = list.length ? list.map((p) => `<div class="row click" data-p="${esc(p.id)}"><div class="grow"><div class="name">${esc(R.nameOf(p))}</div>
+          <div class="meta">${esc([p.city, p.type, p.phones[0] && p.phones[0].n].filter(Boolean).join(" · "))}</div></div><span class="chev">›</span></div>`).join("") : `<div class="empty">No match.</div>`;
+        wireRows($("clist"));
+      };
+      $("cq").oninput = (e) => { C.q = e.target.value; draw(); };
+      draw();
+    }
+    function crmEstimates() {
+      const d = cd(), t = ctoday();
+      const list = d.estimates.filter((e) => R.estimateState(e) === C.est).sort((a, b) => (a.date < b.date ? 1 : -1));
+      const recent = C.est === "open" ? list.filter((e) => R.daysBetween(e.date, t) <= 120) : list;
+      let h = status() + seg("est", [["open", "Open"], ["accepted", "Accepted"], ["declined", "Declined"]], C.est);
+      h += `<div class="card">${recent.length ? recent.slice(0, 80).map((e) => estRow(e)).join("") : `<div class="empty">None.</div>`}</div>`;
+      if (recent.length !== list.length) h += `<div class="note">${list.length - recent.length} older open estimates (over 4 months) aren't shown.</div>`;
+      body.innerHTML = h; wireSeg();
+    }
+
+    const MONEY_TABS = [["dash", "Dashboard"], ["spend", "Spending"], ["recur", "Recurring"], ["tx", "Transactions"]];
     function render() {
       el.querySelectorAll("nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === M.tab));
       hideTip();
-      if (!d()) { body.innerHTML = status() + (M.busy ? "" : `<div class="empty">Couldn't load ${M.book === "costs" ? "the cost figures" : "your money data"}.</div><div class="btns"><button class="btn" id="mretry">Try again</button></div>`);
+      if (!d()) { body.innerHTML = status() + (M.busy ? "" : `<div class="empty">Couldn't load ${M.book === "costs" ? "the cost figures" : M.book === "crm" ? "your customers" : "your money data"}.</div><div class="btns"><button class="btn" id="mretry">Try again</button></div>`);
         const r = $("mretry"); if (r) r.onclick = () => load(true); return; }
       try {
         if (M.book === "costs") renderCosts();
+        else if (M.book === "crm") renderCrm();
         else ({ dash: renderDash, spend: renderSpending, recur: renderRecurring, tx: renderTx }[M.tab] || renderDash)();
       } catch (e) { console.error(e); body.innerHTML = `<div class="note err">Couldn't draw this screen: ${esc(e.message)}</div>`; }
     }
