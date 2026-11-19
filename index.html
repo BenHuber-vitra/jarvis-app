@@ -154,6 +154,11 @@
   #msheet .btn.quiet { border-color: var(--line); color: #9fbcd1; background: transparent; }
   #msheet .btn.danger { border-color: rgba(208,59,59,0.6); color: #ff8a8a; background: transparent; }
   #msheet .err { color: #ff8a8a; font-size: 14px; min-height: 18px; margin-top: 8px; }
+  #msheet .swatches { display: flex; flex-wrap: wrap; gap: 10px; margin: 14px 0 6px; }
+  #msheet .swatch { width: 38px; height: 38px; border-radius: 50%; border: 2px solid transparent; padding: 0; cursor: pointer; position: relative; }
+  #msheet .swatch.on { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.25); }
+  #msheet .swatch.any { background: conic-gradient(#e66767, #ffb547, #0ca30c, #4fd8ff, #9085e9, #d640a8, #e66767); overflow: hidden; }
+  #msheet .swatch.any input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -921,7 +926,7 @@ function recurring(txns, rules, today) {
 
 const GROUPS = [
   ["checking", "Checking"], ["savings", "Savings"], ["credit", "Card balance"], ["cash", "Cash"],
-  ["business", "Business funds"], ["investment", "Investments"], ["loan", "Loans"], ["other", "Other"],
+  ["business", "Business funds"], ["receivable", "Unpaid invoices"], ["investment", "Investments"], ["loan", "Loans"], ["other", "Other"],
 ];
 function accountGroups(accounts) {
   const groups = GROUPS.map(([kind, label]) => {
@@ -948,7 +953,8 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     const SLOT = { "Groceries": "#3987e5", "Dining & drinks": "#d95926", "Shopping": "#199e70", "Bills & utilities": "#c98500",
       "Auto & transport": "#d55181", "Entertainment": "#0ca30c", "Rent": "#9085e9", "Travel": "#e66767" };
     const OTHER = "#4a5d70", CYAN = "#4fd8ff", MUTED = "#6f93ad", INCOME = "#199e70", SPEND = "#3987e5";
-    const colorOf = (c) => SLOT[c] || OTHER;
+    const custom = () => (M.data && M.data.settings && M.data.settings.colors) || {};   // Ben's own colours (shared by both books)
+    const colorOf = (c) => custom()[c] || SLOT[c] || OTHER;
     const f = MC.money, f0 = (n) => MC.money(n, false);
     const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     const el = $("money"), body = $("mbody"), tip = $("mtip"), sheet = $("msheet");
@@ -1182,7 +1188,8 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
         <div class="row" style="margin-top:8px"><div class="grow"><div class="name">Income this month</div></div><div class="amt in">${f(inc)}</div></div>
       </div>`;
       h += `<div class="sect"><span class="label">Accounts</span><span class="note" style="margin:0">${items.length ? "Synced " + esc(ago(newest)) + " · " : ""}<button class="linkish" id="msync">Sync now</button></span></div><div class="card">`;
-      const shown = groups.filter((g) => g.items.length || ["checking", "savings", "credit", "cash"].includes(g.kind));
+      const shown = groups.filter((g) => g.kind !== "receivable" && (g.items.length || ["checking", "savings", "credit", "cash"].includes(g.kind)));
+      const invc = M.book === "business" ? invoicesCard() : null;
       // Cash / business funds with at most one entry: one tap opens "set the amount" (Ben, 2026-11-19).
       const setOnTap = (g) => (g.kind === "cash" || g.kind === "business") && g.items.length <= 1;
       for (const g of shown) {
@@ -1193,7 +1200,8 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
           h += `<div class="row sub2 click" data-acct="${esc(a.id)}"><div class="grow"><div class="name">${esc(a.name)}${a.mask ? " ··" + esc(a.mask) : ""}</div>` +
             `<div class="meta">${esc(a.manual ? "Entered by hand · updated " + ago(a.updated_at) : a.institution || "")}${g.kind === "credit" && a.credit_limit ? " · limit " + f0(+a.credit_limit) : ""}</div></div><div class="amt">${f(+a.balance)}</div></div>`;
         }
-        if (g.kind === "credit") h += `<div class="row"><span class="chev"></span><div class="grow"><div class="name">Net cash</div><div class="meta">Checking + savings + cash − cards</div></div><div class="amt ${netCash >= 0 ? "in" : ""}">${f(netCash)}</div></div>`;
+        if (g.kind === "credit") h += `<div class="row"><span class="chev"></span><div class="grow"><div class="name">Net cash</div><div class="meta">Checking + savings + cash − cards</div></div><div class="amt ${netCash >= 0 ? "in" : ""}">${f(netCash)}</div></div>` +
+          (invc && invc.on && invc.total ? `<div class="row"><span class="chev"></span><div class="grow"><div class="name">With unpaid invoices</div><div class="meta">Net cash + what customers owe</div></div><div class="amt in">${f(netCash + invc.total)}</div></div>` : "");
       }
       // Hidden accounts (duplicates of another login's accounts, or hidden by hand) aren't in any total,
       // but stay listed here so they can be shown again.
@@ -1208,6 +1216,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       else if (d().env === "sandbox" && !DEMO) h += `<div class="note">Plaid is in Sandbox mode: only Plaid's test banks can be linked (user_good / pass_good).</div>`;
       for (const it of items) if (it.error) h += `<div class="note err">${esc(it.institution)}: ${esc(it.error)}</div>`;
       if (!items.length && !d().accounts.length) h += `<div class="note">Nothing in ${esc(BOOKS[M.book])} yet. Link a bank or add an amount by hand; it stays separate from ${esc(M.book === "business" ? BOOKS.personal : BOOKS.business)}.</div>`;
+      if (invc) h += invc.html;
       if (items.length) h += `<div class="sect"><span class="label">Linked banks</span></div><div class="card">` +
         items.map((it) => `<div class="row"><div class="grow"><div class="name">${esc(it.institution)}</div><div class="meta">Read-only · synced ${esc(ago(it.synced_at))}</div></div>` +
           `<button class="linkish" data-unlink="${esc(it.item_id)}" data-inst="${esc(it.institution)}">Unlink</button></div>`).join("") + `</div>`;
@@ -1233,6 +1242,10 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       $("msync").onclick = () => load("force");
       $("mlink").onclick = linkBank;
       $("mmanual").onclick = () => manualSheet(null, "cash");
+      if (invc) {
+        $("maddinv").onclick = () => manualSheet(null, "receivable");
+        $("minv").onchange = async (e) => { try { const r = await mcall("settings", { invoicesInTotal: e.target.checked }); d().settings = r.settings; render(); } catch (err) { M.error = err.message; render(); } };
+      }
     }
 
     // -------------------------------------------------------------- Spending
@@ -1251,9 +1264,11 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       }
       const pct = s.income > 0 ? Math.round((s.net / s.income) * 100) : null;
       const prevBy = Object.fromEntries(sb.categories.map((c) => [c.name, c.amount]));
-      const slices = Object.keys(SLOT).map((n) => ({ name: n, value: (s.categories.find((c) => c.name === n) || {}).amount || 0, color: SLOT[n],
+      const own = (n) => SLOT[n] || custom()[n];   // categories with a colour of their own get their own slice
+      const named = [...new Set([...Object.keys(SLOT), ...Object.keys(custom())])];
+      const slices = named.map((n) => ({ name: n, value: (s.categories.find((c) => c.name === n) || {}).amount || 0, color: colorOf(n),
         onClick: () => { M.cat = n; M.tab = "tx"; render(); } }));
-      const otherAmt = s.categories.filter((c) => !SLOT[c.name]).reduce((a, c) => a + c.amount, 0);
+      const otherAmt = s.categories.filter((c) => !own(c.name)).reduce((a, c) => a + c.amount, 0);
       slices.push({ name: "Other", value: otherAmt, color: OTHER });
       const change = sb.spend ? Math.round(((s.spend - sb.spend) / Math.abs(sb.spend)) * 100) : null;
       let h = status() + `<div class="seg">${["week", "month", "quarter", "year"].map((k) =>
@@ -1282,7 +1297,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       barChart($("mbars"), groups, (o) => { M.offset = o; render(); });
       donut($("mdonut"), slices, { top: "Total spend", value: f0(s.spend), sub: p.label });
       body.querySelectorAll("[data-period]").forEach((b) => (b.onclick = () => { M.period = b.dataset.period; M.offset = 0; render(); }));
-      body.querySelectorAll("[data-cat]").forEach((r) => (r.onclick = () => { M.cat = r.dataset.cat; M.q = ""; M.tab = "tx"; body.scrollTop = 0; render(); }));
+      body.querySelectorAll("[data-cat]").forEach((r) => (r.onclick = () => categorySheet(r.dataset.cat)));
       $("mbills").onchange = (e) => { M.bills = e.target.checked; render(); };
       const now = $("mnow"); if (now) now.onclick = () => { M.offset = 0; render(); };
     }
@@ -1975,14 +1990,53 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
     }
     const sheetErr = (msg) => { const e = sheet.querySelector(".err"); if (e) e.textContent = msg; };
 
+    // Tap a category on Spending: pick its colour (Ben, 2026-11-19), or see its transactions.
+    const PICK = ["#3987e5", "#4fd8ff", "#199e70", "#0ca30c", "#c98500", "#ffb547", "#d95926", "#e66767", "#d640a8", "#d55181", "#9085e9", "#7a8fa3"];
+    function categorySheet(cat) {
+      const now = colorOf(cat);
+      openSheet(`<h2><span class="sw" style="background:${now};width:14px;height:14px;margin-right:8px"></span>${esc(cat)}</h2>
+        <div class="meta">Pick its colour on the charts (both books).</div>
+        <div class="swatches">${PICK.map((c) => `<button class="swatch${c.toLowerCase() === now.toLowerCase() ? " on" : ""}" data-hex="${c}" style="background:${c}" aria-label="${c}"></button>`).join("")}
+          <label class="swatch any" title="Any colour"><input type="color" id="scol" value="${now}"></label></div>
+        <div class="btns"><button class="btn" id="stx">See transactions</button>${custom()[cat] ? `<button class="btn quiet" id="sreset">Default colour</button>` : ""}<button class="btn quiet" id="sx">Close</button></div><div class="err"></div>`,
+      (box) => {
+        const save = async (hex) => {
+          try { const r = await mcall("settings", { color: { category: cat, hex } }); if (M.data) M.data.settings = r.settings; for (const k of Object.keys(M.cache)) if (M.cache[k] && M.cache[k].settings) M.cache[k].settings = r.settings;
+            closeSheet(); render(); } catch (e) { sheetErr(e.message); }
+        };
+        box.querySelectorAll("[data-hex]").forEach((b) => (b.onclick = () => save(b.dataset.hex)));
+        box.querySelector("#scol").onchange = (e) => save(e.target.value);
+        box.querySelector("#stx").onclick = () => { closeSheet(); M.cat = cat; M.q = ""; M.tab = "tx"; body.scrollTop = 0; render(); };
+        const rs = box.querySelector("#sreset"); if (rs) rs.onclick = () => save(null);
+        box.querySelector("#sx").onclick = closeSheet;
+      });
+    }
+
+    // Business book: what customers owe (2026-11-19). From the Customer Factor backup (read-only here)
+    // plus any Ben adds by hand (kind "receivable"); a switch counts them in the business total.
+    function invoicesCard() {
+      const crm = (d().invoices && d().invoices.items) || [], byHand = d().accounts.filter((a) => a.kind === "receivable" && !a.hidden);
+      const total = crm.reduce((s, i) => s + i.amount, 0) + byHand.reduce((s, a) => s + +a.balance, 0);
+      const on = !!(d().settings && d().settings.invoicesInTotal);
+      let h = `<div class="sect"><span class="label">Unpaid invoices</span><span class="note" style="margin:0">${f(total)}</span></div><div class="card">`;
+      for (const i of crm) h += `<div class="row"><div class="grow"><div class="name">${esc(i.name)}</div><div class="meta">#${esc(i.num)} · ${esc(MC.shortDate(i.date))} · ${i.days} days · from The Customer Factor</div></div><div class="amt">${f(i.amount)}</div></div>`;
+      for (const a of byHand) h += `<div class="row click" data-acct="${esc(a.id)}"><div class="grow"><div class="name">${esc(a.name)}</div><div class="meta">Added by hand · tap to change or mark paid</div></div><div class="amt">${f(+a.balance)}</div></div>`;
+      if (!crm.length && !byHand.length) h += `<div class="empty">Nothing owed. Add one below${d().invoices ? "" : ", or upload a Customer Factor backup (menu > Customers)"}.</div>`;
+      if (d().invoices && crm.length) h += `<div class="note">Customer Factor invoices as of ${esc(MC.shortDate(d().invoices.asOf))}; they update with each upload.</div>`;
+      h += `<label class="check" style="margin-top:10px"><input type="checkbox" id="minv" ${on ? "checked" : ""}> Count unpaid invoices in the business total</label>
+        <div class="btns"><button class="btn quiet" id="maddinv">+ Add an unpaid invoice</button></div></div>`;
+      return { html: h, total, on };
+    }
+
     function manualSheet(a, kind) {
       const k = a ? a.kind : kind;
-      openSheet(`<h2>${a ? "Set " + esc(a.name) : "Add to " + esc(BOOKS[M.book])}</h2><div class="meta">Entered by hand: type what you have now, and change it whenever it changes.</div>
-        <label>Name</label><input id="sn" value="${esc(a ? a.name : k === "business" ? "Business funds" : "Cash")}" maxlength="60">
-        <label>Section</label><select id="sk">${[["cash", "Cash"], ["business", "Business funds"], ["savings", "Savings"], ["other", "Other"]].map(([v, l]) =>
+      const inv = k === "receivable";
+      openSheet(`<h2>${inv ? (a ? "Unpaid invoice" : "Add an unpaid invoice") : a ? "Set " + esc(a.name) : "Add to " + esc(BOOKS[M.book])}</h2><div class="meta">${inv ? "Who owes it and how much. Remove it once it's paid." : "Entered by hand: type what you have now, and change it whenever it changes."}</div>
+        <label>${inv ? "Customer / invoice" : "Name"}</label><input id="sn" value="${esc(a ? a.name : inv ? "" : k === "business" ? "Business funds" : "Cash")}" maxlength="60" ${inv ? 'placeholder="e.g. Smith #541"' : ""}>
+        <label>Section</label><select id="sk">${[["cash", "Cash"], ["business", "Business funds"], ...(M.book === "business" ? [["receivable", "Unpaid invoice"]] : []), ["savings", "Savings"], ["other", "Other"]].map(([v, l]) =>
           `<option value="${v}" ${k === v ? "selected" : ""}>${l}</option>`).join("")}</select>
         <label>Amount ($)</label><input id="sb" type="number" inputmode="decimal" step="0.01" value="${a ? +a.balance : ""}" placeholder="0.00">
-        <div class="btns"><button class="btn" id="ssave">Save</button>${a ? `<button class="btn danger" id="sdel">Remove</button>` : ""}<button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`,
+        <div class="btns"><button class="btn" id="ssave">Save</button>${a ? `<button class="btn danger" id="sdel">${inv ? "Paid: remove" : "Remove"}</button>` : ""}<button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`,
       (box) => {
         box.querySelector("#sx").onclick = closeSheet;
         box.querySelector("#ssave").onclick = async () => {
@@ -2126,7 +2180,8 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       }
       tx.sort((a, b) => (a.date < b.date ? 1 : -1));
       const now = new Date().toISOString();
-      demoCache = { configured: true, env: "demo", today: t, rules: {}, transactions: tx,
+      demoCache = { configured: true, env: "demo", today: t, rules: {}, transactions: tx, settings: { invoicesInTotal: false, colors: {} },
+        invoices: { asOf: t, items: [{ num: "540", name: "Sample HOA", amount: 2812.5, total: 2812.5, date: t, days: 12 }] },
         items: [{ item_id: "demo", institution: "Demo Bank", synced_at: now, error: null }],
         accounts: [
           { id: "chk", name: "Everyday Checking", mask: "1234", kind: "checking", balance: 5848.12, institution: "Demo Bank", updated_at: now },
@@ -2147,6 +2202,12 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       } else if (action === "account") Object.assign(D.accounts.find((x) => x.id === p.id), { kind: p.kind, hidden: p.hidden });
       else if (action === "categorize") { if (!p.all) D.transactions.find((t) => t.id === p.id).user_category = p.category; else (D.rules[p.merchant_key] ||= {}).category = p.category; }
       else if (action === "recurring") (D.rules[p.merchant_key] ||= {}).recurring = p.recurring;
+      else if (action === "settings") {
+        D.settings = { invoicesInTotal: false, colors: {}, ...(D.settings || {}) };
+        if (typeof p.invoicesInTotal === "boolean") D.settings.invoicesInTotal = p.invoicesInTotal;
+        if (p.color) { D.settings.colors = { ...D.settings.colors }; if (p.color.hex) D.settings.colors[p.color.category] = p.color.hex; else delete D.settings.colors[p.color.category]; }
+        return Promise.resolve({ ok: true, settings: D.settings });
+      }
       return Promise.resolve({ ok: true });
     }
   }
