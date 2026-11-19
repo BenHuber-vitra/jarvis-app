@@ -233,6 +233,11 @@
     <a href="#" id="moneyBiz" class="ditem"><span>Business<small>Accounts, spending, invoices</small></span><em>›</em></a>
     <a href="#" id="moneyPers" class="ditem"><span>Personal<small>Your own accounts, spending</small></span><em>›</em></a>
   </div>
+  <a href="#" id="navGoals" class="ditem" aria-expanded="false"><span>Goals<small>Business and personal goals</small></span><em class="dchev">▸</em></a>
+  <div id="goalsSub" class="dsub">
+    <a href="#" id="goalsBiz" class="ditem"><span>Business goals</span><em>›</em></a>
+    <a href="#" id="goalsPers" class="ditem"><span>Personal goals</span><em>›</em></a>
+  </div>
   <a href="#" id="navCrm" class="ditem"><span>Customers<small>The Customer Factor: jobs, invoices, estimates</small></span><em>›</em></a>
   <a href="#" id="navCosts" class="ditem"><span>Jarvis costs<small>What Jarvis costs to run this month</small></span><em>›</em></a>
   <div class="dsect">Settings</div>
@@ -553,7 +558,7 @@
   };
 
   // Shared by the phone app (app/build.py inlines it) and the laptop window (jarvis/ui/server.py).
-  // Needs from the page: $(id), and #menuBtn, #drawer, #scrim, #money, #mtitle, #navJarvis, #navMoney, #moneySub, #moneyBiz, #moneyPers, #navCrm, #navCosts.
+  // Needs from the page: $(id), and #menuBtn, #drawer, #scrim, #money, #mtitle, #navJarvis, #navMoney, #moneySub, #moneyBiz, #moneyPers, #navGoals, #goalsSub, #goalsBiz, #goalsPers, #navCrm, #navCosts.
   // ------------------------------------------------------------------ menu drawer
   // One menu (top left) instead of a row of header buttons, so new screens have somewhere to go.
   const menuBtn = $("menuBtn"), drawer = $("drawer");
@@ -596,8 +601,9 @@
     menuBtn.setAttribute("aria-expanded", open); drawer.setAttribute("aria-hidden", !open);
     if (open && !was) {   // show which screen you're on
       const m = $("money").classList.contains("on") && $("mtitle").textContent;
-      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"]]) $(id).classList.toggle("cur", on);
-      moneyOpen(m === "BUSINESS" || m === "PERSONAL");   // on a money screen, show its two books open
+      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS"]]) $(id).classList.toggle("cur", on);
+      subOpen("Money", m === "BUSINESS" || m === "PERSONAL");   // on one of their screens, show the group open
+      subOpen("Goals", m === "BUSINESS GOALS" || m === "PERSONAL GOALS");
       menuStep = nav.push(() => setMenu(false));
     }
     const id = menuStep;
@@ -607,8 +613,9 @@
   menuBtn.onclick = (e) => { e.preventDefault(); setMenu(!document.body.classList.contains("menu")); };
   $("scrim").onclick = () => setMenu(false);
   // One "Money" item (Ben, 2026-11-19) that opens its two books, Business and Personal, underneath.
-  function moneyOpen(on) { $("navMoney").setAttribute("aria-expanded", on); $("moneySub").classList.toggle("on", on); }
-  $("navMoney").onclick = (e) => { e.preventDefault(); moneyOpen($("navMoney").getAttribute("aria-expanded") !== "true"); };
+  // Goals works the same way (Business goals / Personal goals; just the menu for now, 2026-11-19).
+  function subOpen(name, on) { $("nav" + name).setAttribute("aria-expanded", on); $(name.toLowerCase() + "Sub").classList.toggle("on", on); }
+  for (const name of ["Money", "Goals"]) $("nav" + name).onclick = (e) => { e.preventDefault(); subOpen(name, $("nav" + name).getAttribute("aria-expanded") !== "true"); };
   // money.js wires the money screens.
   // "Jarvis" = the talk screen: close whatever screen is on top of it.
   $("navJarvis").onclick = (e) => { e.preventDefault(); nav.home(); };
@@ -974,6 +981,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     const M = { data: null, tab: "dash", period: "month", offset: 0, bills: true, recur: "Subscription", q: "", cat: "", shown: 120,
       open: {}, busy: "", error: "", book: "personal", cache: {} };
     const BOOKS = { business: "Business money", personal: "Personal money" };
+    const GOALS = { goalsBiz: "Business goals", goalsPers: "Personal goals" };   // menu only so far (Ben, 2026-11-19)
     try { if (localStorage.getItem("jarvis.moneyBook") === "business") M.book = "business"; } catch {}
     let demoCache = null, sheetStep = null;   // sample data for #money-demo
 
@@ -991,6 +999,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     async function load(refresh) {
       if (M.book === "costs") return loadCosts();
       if (M.book === "crm") return loadCrm();
+      if (GOALS[M.book]) { M.data = { goals: true }; M.busy = ""; M.error = ""; return render(); }   // nothing to load yet
       M.busy = refresh === "force" ? "Syncing with your bank…" : (refresh ? "Checking for new transactions…" : "Loading…");
       M.error = ""; render();
       const book = M.book;
@@ -1015,8 +1024,8 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       if (!tabs.some(([k]) => k === tab)) tab = tabs[0][0];
       el.querySelectorAll("nav button").forEach((b, i) => { b.dataset.tab = tabs[i][0]; b.textContent = tabs[i][1]; });
       M.tab = tab;
-      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS" }[M.book];
-      el.classList.toggle("costs", M.book === "costs");   // no Dashboard/Spending/... tabs there
+      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS" }[M.book];
+      el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book]);   // no Dashboard/Spending/... tabs there
       body.scrollTop = 0; hideTip(); el.classList.add("on");
       if (!fresh) render(); else if (!M.data) load(true); else { render(); load(true); }
     }
@@ -1034,6 +1043,8 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     $("moneyBiz").onclick = (e) => { e.preventDefault(); goBook("business"); };
     $("moneyPers").onclick = (e) => { e.preventDefault(); goBook("personal"); };
     $("navCosts").onclick = (e) => { e.preventDefault(); goBook("costs"); };
+    $("goalsBiz").onclick = (e) => { e.preventDefault(); goBook("goalsBiz"); };
+    $("goalsPers").onclick = (e) => { e.preventDefault(); goBook("goalsPers"); };
     $("navCrm").onclick = (e) => { e.preventDefault(); goBook("crm"); };
     $("mmenu").onclick = (e) => { e.preventDefault(); setMenu(true); };
     el.querySelectorAll("nav button").forEach((b) => (b.onclick = () => {
@@ -1983,7 +1994,8 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       if (!d()) { body.innerHTML = status() + (M.busy ? "" : `<div class="empty">Couldn't load ${M.book === "costs" ? "the cost figures" : M.book === "crm" ? "your customers" : "your money data"}.</div><div class="btns"><button class="btn" id="mretry">Try again</button></div>`);
         const r = $("mretry"); if (r) r.onclick = () => load(true); return; }
       try {
-        if (M.book === "costs") renderCosts();
+        if (GOALS[M.book]) body.innerHTML = `<div class="card"><div class="label">${esc(GOALS[M.book])}</div><div class="sub" style="margin-top:8px">No goals here yet. This screen is ready for them.</div></div>`;
+        else if (M.book === "costs") renderCosts();
         else if (M.book === "crm") renderCrm();
         else ({ dash: renderDash, spend: renderSpending, recur: renderRecurring, tx: renderTx }[M.tab] || renderDash)();
       } catch (e) { console.error(e); body.innerHTML = `<div class="note err">Couldn't draw this screen: ${esc(e.message)}</div>`; }
