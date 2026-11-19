@@ -2523,7 +2523,10 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       body.innerHTML = h;
       body.querySelectorAll("[data-v]").forEach((b) => (b.onclick = () => {
         const g = BZ.goals[+b.dataset.g], vi = +b.dataset.v;
-        g.done = g.done.includes(vi) ? g.done.filter((x) => x !== vi) : [...g.done, vi];
+        // A box marks how far he's got (Ben, 2026-11-19): it and every box before it are checked, every box
+        // after it unchecked. Tapping the furthest checked box again steps back one.
+        const upTo = g.done.length === vi + 1 && g.done.every((x) => x <= vi) ? vi - 1 : vi;
+        g.done = Array.from({ length: upTo + 1 }, (_, i) => i);
         render(); saveBiz();
       }));
       body.querySelectorAll("[data-gcheck]").forEach((b) => (b.onclick = () => { const g = BZ.goals[+b.dataset.gcheck]; g.done = g.done.length ? [] : [0]; render(); saveBiz(); }));
