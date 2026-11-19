@@ -213,6 +213,13 @@
   #msheet .gm { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   #msheet .gm input:first-child { grid-column: 1 / -1; }
   #msheet input[type=range] { width: 100%; accent-color: var(--cyan); }
+  /* ---------------------------------------------------------------- Settings > Personality */
+  #money .persona .pdial { padding: 10px 0 12px; border-top: 1px solid var(--grid); }
+  #money .persona .pdial:first-child { border-top: 0; padding-top: 2px; }
+  #money .persona .ptop { display: flex; justify-content: space-between; align-items: baseline; }
+  #money .persona .pname { font-size: 17px; color: var(--ink); } #money .persona .pval { font-size: 14px; color: var(--cyan); font-variant-numeric: tabular-nums; }
+  #money .persona input[type=range] { width: 100%; margin: 10px 0 2px; accent-color: var(--cyan); height: 26px; }
+  #money .persona .pends { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink3); letter-spacing: 0.06em; }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -293,6 +300,7 @@
   <div id="dset">
   <a href="#" id="dback" class="ditem dback"><span>‹ Menu</span><em></em></a>
   <div class="dsect">Jarvis</div>
+  <a href="#" id="navPersona" class="ditem"><span>Personality<small>Humor, formality, detail and more</small></span><em>›</em></a>
   <a href="#" id="navCosts" class="ditem"><span>Jarvis costs<small>What Jarvis costs to run this month</small></span><em>›</em></a>
   <div class="dsect">This phone</div>
   <a href="#" id="auto" class="ditem"><span>Listen on open<small>Start listening when the app opens</small></span><em id="autoState">On</em></a>
@@ -656,8 +664,8 @@
     menuBtn.setAttribute("aria-expanded", open); drawer.setAttribute("aria-hidden", !open);
     if (open && !was) {   // show which screen you're on
       const m = $("money").classList.contains("on") && $("mtitle").textContent;
-      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || m === "2027 BINGO"]]) $(id).classList.toggle("cur", on);
-      showSettings(m === "JARVIS COSTS");   // the cog's page holds Jarvis costs, so open there from it
+      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || m === "2027 BINGO"]]) $(id).classList.toggle("cur", on);
+      showSettings(m === "JARVIS COSTS" || m === "PERSONALITY");   // the cog's page holds Jarvis costs, so open there from it
       subOpen("Money", m === "BUSINESS" || m === "PERSONAL");   // on one of their screens, show the group open
       subOpen("Goals", m === "BUSINESS GOALS" || m === "PERSONAL GOALS" || m === "2027 BINGO");
       menuStep = nav.push(() => setMenu(false));
@@ -1060,6 +1068,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       if (M.book === "costs") return loadCosts();
       if (M.book === "crm") return loadCrm();
       if (M.book === "goalsPers" || M.book === "bingo") return loadGoals();
+      if (M.book === "persona") return loadPersona();
       if (GOALS[M.book]) { M.data = { goals: true }; M.busy = ""; M.error = ""; return render(); }   // business goals: nothing yet
       M.busy = refresh === "force" ? "Syncing with your bank…" : (refresh ? "Checking for new transactions…" : "Loading…");
       M.error = ""; render();
@@ -1085,8 +1094,8 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       if (!tabs.some(([k]) => k === tab)) tab = tabs[0][0];
       el.querySelectorAll("nav button").forEach((b, i) => { b.dataset.tab = tabs[i][0]; b.textContent = tabs[i][1]; });
       M.tab = tab;
-      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "2027 BINGO" }[M.book];
-      el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book] || M.book === "bingo");   // no Dashboard/Spending/... tabs there
+      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "2027 BINGO", persona: "PERSONALITY" }[M.book];
+      el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book] || M.book === "bingo" || M.book === "persona");   // no Dashboard/Spending/... tabs there
       body.scrollTop = 0; hideTip(); el.classList.add("on");
       if (!fresh) render(); else if (!M.data) load(true); else { render(); load(true); }
     }
@@ -1104,6 +1113,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     $("moneyBiz").onclick = (e) => { e.preventDefault(); goBook("business"); };
     $("moneyPers").onclick = (e) => { e.preventDefault(); goBook("personal"); };
     $("navCosts").onclick = (e) => { e.preventDefault(); goBook("costs"); };
+    $("navPersona").onclick = (e) => { e.preventDefault(); goBook("persona"); };
     $("goalsBiz").onclick = (e) => { e.preventDefault(); goBook("goalsBiz"); };
     $("goalsPers").onclick = (e) => { e.preventDefault(); goBook("goalsPers"); };
     $("navCrm").onclick = (e) => { e.preventDefault(); goBook("crm"); };
@@ -2270,6 +2280,60 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       return Promise.resolve({ ok: true, cell: n });
     }
 
+    // -------------------------------------------------------------- Settings > Personality (Ben, 2026-11-19)
+    // Sliders 0-100 for Jarvis's personality (humor, seriousness, formality, ...); 50 = as he is now.
+    // Saved in the cloud (/jarvis/settings/personality, table kv "personality"), which turns them into
+    // a few lines of instructions for both brains (tools_persona.ts; the laptop picks them up within a
+    // minute). Inserted into money.js by app/build.py (a screen "book" called persona, no tabs).
+    const P = { dials: null, traits: null, error: "", timer: null, saved: "" };
+    async function pcall(payload) {
+      if (DEMO) { P.demo = { ...(P.demo || {}), ...((payload && payload.dials) || {}) };
+        return { dials: { humor: 50, seriousness: 50, formality: 50, warmth: 50, detail: 50, sarcasm: 50, directness: 50, enthusiasm: 50, ...P.demo },
+          traits: [["humor", "Humor", "Dry", "Funny"], ["seriousness", "Seriousness", "Light", "Serious"], ["formality", "Formality", "Casual", "Formal"],
+            ["warmth", "Warmth", "Cool", "Warm"], ["detail", "Detail", "Brief", "Thorough"], ["sarcasm", "Sarcasm", "None", "Plenty"],
+            ["directness", "Directness", "Gentle", "Blunt"], ["enthusiasm", "Enthusiasm", "Calm", "Upbeat"]].map(([key, name, lo, hi]) => ({ key, name, lo, hi })) }; }
+      const auth = await authHeaders();
+      if (!auth) { showSignin(true); throw new Error("This phone isn't paired."); }
+      const r = await fetch(FN + "/settings/personality", { method: "POST",
+        headers: { ...auth, apikey: PUBLISHABLE_KEY, "content-type": "application/json" }, body: JSON.stringify(payload || {}) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || `Settings service error (${r.status})`);
+      return j;
+    }
+    async function loadPersona() {
+      M.data = { persona: true }; P.error = ""; render();
+      try { const got = await pcall(); P.dials = got.dials; P.traits = got.traits; } catch (e) { P.error = e.message; }
+      if (M.book === "persona") render();
+    }
+    function word(v, t) { return v <= 15 ? "Very " + t.lo.toLowerCase() : v < 41 ? t.lo : v < 60 ? "Normal" : v < 85 ? t.hi : "Very " + t.hi.toLowerCase(); }
+    function savePersona() {   // save shortly after the last slider move
+      clearTimeout(P.timer);
+      P.saved = "Saving…"; const st = $("psaved"); if (st) st.textContent = P.saved;
+      P.timer = setTimeout(async () => {
+        try { const got = await pcall({ dials: P.dials }); P.dials = got.dials; P.saved = "Saved · Jarvis uses it from his next reply"; }
+        catch (e) { P.saved = "Couldn't save: " + e.message; }
+        const s = $("psaved"); if (s) s.textContent = P.saved;
+      }, 600);
+    }
+    function renderPersona() {
+      if (!P.dials) { body.innerHTML = P.error ? `<div class="note err">${esc(P.error)}</div>` : `<div class="note">Loading…</div>`; return; }
+      let h = `<div class="note" style="margin-top:0">Slide to change how Jarvis talks. 50 is his normal self. Tone only: he stays just as accurate and still asks before doing things.</div><div class="card persona">`;
+      for (const t of P.traits) {
+        const v = P.dials[t.key] ?? 50;
+        h += `<div class="pdial"><div class="ptop"><span class="pname">${esc(t.name)}</span><span class="pval" id="pv-${t.key}">${v} · ${esc(word(v, t))}</span></div>
+          <input type="range" min="0" max="100" step="5" value="${v}" data-dial="${t.key}" aria-label="${esc(t.name)}">
+          <div class="pends"><span>${esc(t.lo)}</span><span>${esc(t.hi)}</span></div></div>`;
+      }
+      h += `</div><div class="btns"><button class="btn quiet" id="preset">Reset all to 50</button></div><div class="note" id="psaved">${esc(P.saved)}</div>`;
+      body.innerHTML = h;
+      body.querySelectorAll("[data-dial]").forEach((r) => {
+        const t = P.traits.find((x) => x.key === r.dataset.dial);
+        r.oninput = () => { P.dials[t.key] = +r.value; $("pv-" + t.key).textContent = `${r.value} · ${word(+r.value, t)}`; };
+        r.onchange = savePersona;
+      });
+      $("preset").onclick = () => { for (const t of P.traits) P.dials[t.key] = 50; renderPersona(); savePersona(); };
+    }
+
     const MONEY_TABS = [["dash", "Dashboard"], ["spend", "Spending"], ["recur", "Recurring"], ["tx", "Transactions"]];
     function render() {
       el.querySelectorAll("nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === M.tab));
@@ -2279,6 +2343,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       try {
         if (GOALS[M.book]) renderGoalsHome();
         else if (M.book === "bingo") renderBingo();
+        else if (M.book === "persona") renderPersona();
         else if (M.book === "costs") renderCosts();
         else if (M.book === "crm") renderCrm();
         else ({ dash: renderDash, spend: renderSpending, recur: renderRecurring, tx: renderTx }[M.tab] || renderDash)();
