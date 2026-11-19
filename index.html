@@ -234,6 +234,23 @@
   #msheet .gseg button.on { background: var(--cyan); color: #02060d; border-color: var(--cyan); font-weight: 600; }
   #msheet .gseg button[data-diff="hard"].on { background: #d640a8; border-color: #d640a8; color: #fff; }
   #msheet .gseg button[data-diff="easy"].on { background: #e9f3f8; border-color: #e9f3f8; }
+  /* ---------------------------------------------------------------- Business goals (Ben's sheet) */
+  #money .byear { display: flex; justify-content: space-between; align-items: center; margin: 0 2px 10px; font-size: 15px; color: var(--ink); }
+  #money .tbar { position: relative; height: 14px; border-radius: 7px; background: rgba(79,216,255,0.1); overflow: hidden; margin: 4px 0 2px; }
+  #money .tbar i { position: absolute; left: 0; top: 0; bottom: 0; background: linear-gradient(90deg, var(--cyan), #d640a8); border-radius: 7px; }
+  #money .tbar s { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(2,6,13,0.55); }
+  #money .tmonths { display: flex; justify-content: space-around; font-size: 10px; color: var(--ink3); margin-bottom: 6px; }
+  #money .bgoal .bghead { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+  #money .bgoal .name { white-space: normal; font-size: 16px; line-height: 1.25; }
+  #money .bboxes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin-top: 8px; }
+  #money .bbox { position: relative; height: 40px; border-radius: 6px; border: 1px solid var(--line); background: transparent; color: var(--ink);
+    font: inherit; font-size: 14px; font-variant-numeric: tabular-nums; cursor: pointer; padding: 0; overflow: hidden; }
+  #money .bbox.on { background: rgba(46,204,113,0.16); border-color: rgba(46,204,113,0.6); color: #9be8bd; }
+  #money .bbox.on::after { content: ""; position: absolute; inset: 7px 9px; background:
+    linear-gradient(to top right, transparent calc(50% - 1px), rgba(46,204,113,0.9) 50%, transparent calc(50% + 1px)),
+    linear-gradient(to top left, transparent calc(50% - 1px), rgba(46,204,113,0.9) 50%, transparent calc(50% + 1px)); }
+  #money .bcheckbox { width: 44px; height: 44px; border-radius: 8px; border: 2px solid var(--line); background: transparent; color: #fff; font-size: 24px; cursor: pointer; }
+  #money .bcheckbox.on { background: #2ecc71; border-color: #2ecc71; }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -1083,7 +1100,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       if (M.book === "crm") return loadCrm();
       if (M.book === "goalsPers" || M.book === "bingo") return loadGoals();
       if (M.book === "persona") return loadPersona();
-      if (GOALS[M.book]) { M.data = { goals: true }; M.busy = ""; M.error = ""; return render(); }   // business goals: nothing yet
+      if (M.book === "goalsBiz") return loadBiz();
       M.busy = refresh === "force" ? "Syncing with your bank…" : (refresh ? "Checking for new transactions…" : "Loading…");
       M.error = ""; render();
       const book = M.book;
@@ -2215,6 +2232,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
 
     // ---- Personal goals: the card that opens the board (Business goals stays a placeholder)
     function renderGoalsHome() {
+      if (M.book === "goalsBiz") return renderBiz();   // Business goals: Ben's sheet (bizgoals.js)
       if (M.book !== "goalsPers") {
         body.innerHTML = `<div class="card"><div class="label">${esc(GOALS[M.book])}</div><div class="sub" style="margin-top:8px">No goals here yet. This screen is ready for them.</div></div>`;
         return;
@@ -2411,6 +2429,122 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       const { idx, board, ...rest } = p, n = { ...cur, ...rest, idx, done_at: rest.status === "done" ? new Date().toISOString() : cur.done_at };
       if (i >= 0) demoBoard[i] = n; else demoBoard.push(n);
       return Promise.resolve({ ok: true, cell: n });
+    }
+
+    // -------------------------------------------------------------- Business goals (Ben's printed sheet, 2026-11-19)
+    // "Business Goals by the end of <year>": a time-left bar that fills a little each day, then one card per
+    // goal: a row of number boxes to tap as he hits each one (crossed off like his paper sheet), or a single
+    // checkbox. Saved per year in the cloud (/jarvis/goals/biz, kv "biz-goals-<year>"); the gross goal also
+    // shows billed / collected for the year from the Customer Factor backup. Appended to goals.js by build.py.
+    const BZ = { year: new Date().getFullYear(), goals: null, crm: null, error: "", saving: false };
+    const range = (...parts) => parts.flatMap(([a, b, step]) => { const o = []; for (let v = a; v <= b; v += step) o.push(v); return o; });
+    // Ben's sheet for 2026, as he'd crossed it off (gross through $65K, all 5 trainings); used until he saves his own
+    const SHEET_2026 = () => [
+      { id: "gross", title: "$200K in gross, year to date", kind: "boxes", prefix: "$", suffix: "K", crm: "gross",
+        values: [...range([2, 20, 2], [25, 70, 5], [80, 100, 10]), 115, 130, 145, 160, 175, 190, 200, 220, 240, 260, 280, 300, 350, 400, 450, 500, 650], done: Array.from({ length: 19 }, (_, i) => i) },
+      { id: "contracts", title: "100 contracts for the next year, commercial or residential", kind: "boxes",
+        values: [...range([10, 100, 10]), 120, 140, 160, 180, 200, 225, 250, 275, 300, 400], done: [] },
+      { id: "crews", title: "Actively run multiple crews without a hiccup", kind: "check", values: [], done: [] },
+      { id: "truck", title: "Wrap a company truck", kind: "check", values: [], done: [] },
+      { id: "warehouse", title: "Get into a warehouse", kind: "check", values: [], done: [] },
+      { id: "righthand", title: "Have a 'right-hand man'", kind: "check", values: [], done: [] },
+      { id: "training", title: "Do 5 different trainings or classes to grow the business", kind: "boxes", values: [1, 2, 3, 4, 5, 7, 10, 15, 20, 30], done: [0, 1, 2, 3, 4] },
+    ];
+    async function bcall(payload) {
+      if (DEMO) { if (payload && payload.goals) BZ.demo = payload.goals;
+        return { year: payload.year, goals: BZ.demo || null, crm: { asOf: new Date().toISOString().slice(0, 10), billed: 61321.57, collected: 65414.98 } }; }
+      const auth = await authHeaders();
+      if (!auth) { showSignin(true); throw new Error("This phone isn't paired."); }
+      const r = await fetch(FN + "/goals/biz", { method: "POST",
+        headers: { ...auth, apikey: PUBLISHABLE_KEY, "content-type": "application/json" }, body: JSON.stringify({ tz: TZ, ...payload }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || `Goals service error (${r.status})`);
+      return j;
+    }
+    async function loadBiz() {
+      M.data = { goals: true }; BZ.error = ""; render();
+      try { const got = await bcall({ year: BZ.year }); BZ.crm = got.crm;
+        BZ.goals = got.goals || (BZ.year === 2026 ? SHEET_2026() : []); BZ.fromSheet = !got.goals; }
+      catch (e) { BZ.error = e.message; }
+      if (M.book === "goalsBiz") render();
+    }
+    async function saveBiz() {
+      try { await bcall({ year: BZ.year, goals: BZ.goals }); BZ.fromSheet = false; BZ.error = ""; }
+      catch (e) { BZ.error = "Couldn't save: " + e.message; render(); }
+    }
+    const fmtVal = (g, v) => `${g.prefix || ""}${v}${g.suffix || ""}`;
+    const goalPct = (g) => (g.kind === "check" ? (g.done.length ? 100 : 0) : g.values.length ? Math.round(g.done.length / g.values.length * 100) : 0);
+
+    function renderBiz() {
+      if (!BZ.goals) { body.innerHTML = BZ.error ? `<div class="note err">${esc(BZ.error)}</div>` : `<div class="note">Loading…</div>`; return; }
+      // time left this year: fills a little more every day
+      const now = new Date(), y = BZ.year, start = new Date(y, 0, 1), end = new Date(y + 1, 0, 1);
+      const total = Math.round((end - start) / 864e5), gone = Math.max(0, Math.min(total, Math.floor((now - start) / 864e5) + 1)), left = total - gone, pct = gone / total * 100;
+      let h = (BZ.error ? `<div class="note err">${esc(BZ.error)}</div>` : "") +
+        `<div class="byear"><button class="linkish" id="bprev">‹ ${y - 1}</button><b>Goals by the end of ${y}</b><button class="linkish" id="bnext">${y + 1} ›</button></div>
+        <div class="card"><div class="row" style="border:0;padding:0 0 6px"><div class="grow"><div class="label">Time left</div></div>
+          <div class="amt">${left > 0 ? `${left} day${left === 1 ? "" : "s"}` : now < start ? "Not started" : "Year over"}</div></div>
+          <div class="tbar"><i style="width:${pct.toFixed(2)}%"></i>${Array.from({ length: 11 }, (_, k) => `<s style="left:${((new Date(y, k + 1, 1) - start) / 864e5 / total * 100).toFixed(2)}%"></s>`).join("")}</div>
+          <div class="tmonths">${"JFMAMJJASOND".split("").map((m) => `<span>${m}</span>`).join("")}</div>
+          <div class="meta">${Math.round(pct)}% of ${y} gone${BZ.goals.length ? ` · goals ${Math.round(BZ.goals.reduce((s, g) => s + goalPct(g), 0) / BZ.goals.length)}% done` : ""}</div></div>`;
+      if (BZ.fromSheet && BZ.goals.length) h += `<div class="note">Copied from your printed sheet, crossed off as on paper. Tap any box to change it.</div>`;
+      BZ.goals.forEach((g, gi) => {
+        const p = goalPct(g);
+        h += `<div class="card bgoal"><div class="bghead"><div class="grow"><div class="name">${esc(g.title)}</div>
+          <div class="meta">${g.kind === "check" ? (p ? "Done" : "Not yet") : `${g.done.length} of ${g.values.length} · ${p}%`}</div></div>
+          <button class="linkish" data-gedit="${gi}">Edit</button></div>`;
+        if (g.kind === "check") h += `<button class="bcheckbox${g.done.length ? " on" : ""}" data-gcheck="${gi}">${g.done.length ? "✓" : ""}</button>`;
+        else {
+          h += `<div class="meter"><i style="width:${p}%;background:${p === 100 ? "#2ecc71" : CYAN}"></i></div><div class="bboxes">`;
+          g.values.forEach((v, vi) => { h += `<button class="bbox${g.done.includes(vi) ? " on" : ""}" data-g="${gi}" data-v="${vi}">${esc(fmtVal(g, v))}</button>`; });
+          h += `</div>`;
+        }
+        if (g.crm === "gross" && BZ.crm) h += `<div class="note">The Customer Factor (backup ${esc(MC.shortDate(BZ.crm.asOf))}): ${f0(BZ.crm.billed)} billed, ${f0(BZ.crm.collected)} collected in ${y}.</div>`;
+        h += `</div>`;
+      });
+      h += `<div class="btns"><button class="btn quiet" id="baddgoal">+ Add a goal</button></div>`;
+      body.innerHTML = h;
+      body.querySelectorAll("[data-v]").forEach((b) => (b.onclick = () => {
+        const g = BZ.goals[+b.dataset.g], vi = +b.dataset.v;
+        g.done = g.done.includes(vi) ? g.done.filter((x) => x !== vi) : [...g.done, vi];
+        render(); saveBiz();
+      }));
+      body.querySelectorAll("[data-gcheck]").forEach((b) => (b.onclick = () => { const g = BZ.goals[+b.dataset.gcheck]; g.done = g.done.length ? [] : [0]; render(); saveBiz(); }));
+      body.querySelectorAll("[data-gedit]").forEach((b) => (b.onclick = () => bizSheet(+b.dataset.gedit)));
+      $("baddgoal").onclick = () => bizSheet(-1);
+      $("bprev").onclick = () => { BZ.year--; BZ.goals = null; loadBiz(); };
+      $("bnext").onclick = () => { BZ.year++; BZ.goals = null; loadBiz(); };
+    }
+
+    function bizSheet(gi) {
+      const g = gi >= 0 ? BZ.goals[gi] : { title: "", kind: "boxes", values: [], prefix: "", suffix: "", done: [] };
+      openSheet(`<h2>${gi >= 0 ? "Edit goal" : "New goal"}</h2>
+        <label>Goal</label><input id="bgt" maxlength="140" value="${esc(g.title)}" placeholder="e.g. 100 contracts this year">
+        <label>Type</label><div class="seg gseg">${[["boxes", "Number boxes"], ["check", "One checkbox"]].map(([v, l]) => `<button type="button" data-kind="${v}" class="${g.kind === v ? "on" : ""}">${l}</button>`).join("")}</div>
+        <div id="bgvals"><label>Boxes (numbers, separated by commas)</label><input id="bgv" value="${esc(g.values.join(", "))}" placeholder="10, 20, 30, 40, 50">
+          <div class="gm"><input id="bgp" maxlength="4" value="${esc(g.prefix || "")}" placeholder="Before, e.g. $" style="grid-column:auto"><input id="bgs" maxlength="6" value="${esc(g.suffix || "")}" placeholder="After, e.g. K"></div></div>
+        <div class="btns"><button class="btn" id="bgsave">Save</button>${gi >= 0 ? `<button class="btn danger" id="bgdel">Remove</button>` : ""}<button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`,
+      (box) => {
+        let kind = g.kind;
+        const showVals = () => { box.querySelector("#bgvals").style.display = kind === "boxes" ? "" : "none"; };
+        box.querySelectorAll("[data-kind]").forEach((b) => (b.onclick = () => { kind = b.dataset.kind; box.querySelectorAll("[data-kind]").forEach((x) => x.classList.toggle("on", x === b)); showVals(); }));
+        showVals();
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelector("#bgsave").onclick = () => {
+          const title = box.querySelector("#bgt").value.trim();
+          if (!title) return sheetErr("Give the goal a name.");
+          const values = kind === "boxes" ? box.querySelector("#bgv").value.split(/[,\s]+/).map((x) => Number(x.replace(/[^0-9.\-]/g, ""))).filter((x) => x || x === 0) : [];
+          if (kind === "boxes" && !values.length) return sheetErr("Add at least one number, or choose One checkbox.");
+          // keep what's crossed off by value, so editing the list doesn't lose ticks
+          const doneVals = new Set(g.done.map((i) => g.values[i]));
+          const item = { ...g, id: g.id || "g" + Date.now(), title, kind, values, prefix: box.querySelector("#bgp").value.trim(), suffix: box.querySelector("#bgs").value.trim(),
+            done: kind === "check" ? (g.kind === "check" ? g.done : []) : values.map((v, i) => (doneVals.has(v) ? i : -1)).filter((i) => i >= 0) };
+          if (gi >= 0) BZ.goals[gi] = item; else BZ.goals.push(item);
+          closeSheet(); render(); saveBiz();
+        };
+        const del = box.querySelector("#bgdel");
+        if (del) del.onclick = () => { if (!confirm(`Remove "${g.title}"?`)) return; BZ.goals.splice(gi, 1); closeSheet(); render(); saveBiz(); };
+      });
     }
 
     // -------------------------------------------------------------- Settings > Personality (Ben, 2026-11-19)
