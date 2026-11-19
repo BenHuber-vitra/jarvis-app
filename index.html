@@ -1193,6 +1193,14 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
         }
         if (g.kind === "credit") h += `<div class="row"><span class="chev"></span><div class="grow"><div class="name">Net cash</div><div class="meta">Checking + savings + cash − cards</div></div><div class="amt ${netCash >= 0 ? "in" : ""}">${f(netCash)}</div></div>`;
       }
+      // Hidden accounts (duplicates of another login's accounts, or hidden by hand) aren't in any total,
+      // but stay listed here so they can be shown again.
+      const hid = d().accounts.filter((a) => a.hidden);
+      if (hid.length) {
+        const isOpen = !!M.open.hidden;
+        h += `<div class="row click" data-group="hidden"><span class="chev">${isOpen ? "▾" : "▸"}</span><div class="grow"><div class="name">Hidden</div><div class="meta">${hid.length} not counted (duplicates or hidden by you)</div></div><div class="amt"></div></div>`;
+        if (isOpen) for (const a of hid) h += `<div class="row sub2 click" data-acct="${esc(a.id)}"><div class="grow"><div class="name">${esc(a.name)}${a.mask ? " ··" + esc(a.mask) : ""}</div><div class="meta">${esc(a.institution || "")} · tap to show it again</div></div><div class="amt">${f(+a.balance)}</div></div>`;
+      }
       h += `</div><div class="btns"><button class="btn" id="mlink">+ Link a bank</button><button class="btn quiet" id="mmanual">+ Add by hand</button></div>`;
       if (!d().configured && !DEMO) h += `<div class="note">Bank linking needs Plaid keys in Supabase first. Amounts added by hand work now.</div>`;
       else if (d().env === "sandbox" && !DEMO) h += `<div class="note">Plaid is in Sandbox mode: only Plaid's test banks can be linked (user_good / pass_good).</div>`;
@@ -1207,6 +1215,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
         { name: "This month", values: cur, color: CYAN, fill: true, endDot: true },
       ], now.start, day);
       body.querySelectorAll("[data-group]").forEach((r) => (r.onclick = () => {
+        if (r.dataset.group === "hidden") { M.open.hidden = !M.open.hidden; return render(); }
         const g = groups.find((x) => x.kind === r.dataset.group);
         if (!g.items.length && (g.kind === "cash" || g.kind === "business")) return manualSheet(null, g.kind);
         M.open[g.kind] = !M.open[g.kind]; render();
