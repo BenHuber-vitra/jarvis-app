@@ -2557,7 +2557,8 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
     const niceList = (x) => { const m = Math.pow(10, Math.floor(Math.log10(x))); return [...NICE.map((k) => k * m), 10 * m, 11 * m]; };
     function niceNum(x, ints) {   // the tidy number nearest x (whole numbers for counts)
       if (x <= 0) return 0;
-      const v = niceList(x).reduce((b, c) => (Math.abs(c - x) < Math.abs(b - x) ? c : b));
+      // whole-number lists only take tidy numbers that are already whole (no 22.5 -> 23)
+      const v = niceList(x).filter((c) => !ints || c < 1 || Number.isInteger(+c.toPrecision(12))).reduce((b, c) => (Math.abs(c - x) < Math.abs(b - x) ? c : b));
       return ints ? Math.max(1, Math.round(v)) : +v.toPrecision(6);
     }
     function niceAbove(prev, ints) {   // the next tidy number above prev
@@ -2571,7 +2572,25 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       const ints = Number.isInteger(goal) && (!(start > 0) || Number.isInteger(+start));   // contracts, classes: no fractions
       const first = start > 0 && start < goal ? +start : NaN;
       let vals;
-      const lo = first > 0 ? first : 1;
+      // With a first box, it is also the smallest step (Ben: "start at 1k, don't go up by 200"): every box is a
+      // whole multiple of it, the early ones step by one unit when the boxes are many, the jumps grow later.
+      if (first > 0) {
+        const u = first, k = goal / u, units = [];
+        if (k <= n) for (let i = 1; i < k; i++) units.push(i);             // few enough: every multiple
+        else for (let i = 0; i < n - 1; i++) {
+          const want = Math.max(1, niceNum(Math.pow(k, i / (n - 1)), true));
+          units.push(units.length && want <= units[units.length - 1] ? units[units.length - 1] + 1 : want);
+        }
+        const toGoal = [...units.filter((x) => x * u < goal).map((x) => +(x * u).toPrecision(12)), goal];
+        const r = Math.min(1.25, Math.max(1.1, Math.pow(k, 1 / Math.max(1, toGoal.length - 1))));
+        const more = [];
+        for (let j = 1; j <= extra; j++) {
+          const want = Math.max(1, Math.round(niceNum(goal * Math.pow(r, j)) / u)) * u, prev = more.length ? more[more.length - 1] : goal;
+          more.push(+(want > prev ? want : prev + u).toPrecision(12));
+        }
+        return [...toGoal, ...more];
+      }
+      const lo = 1;
       if (ints && goal - lo + 1 <= n) vals = Array.from({ length: goal - lo + 1 }, (_, i) => lo + i);   // small ranges: every number
       else {
         const s = first > 0 ? first : Math.max(goal / 20, ints ? 1 : 0);
