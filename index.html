@@ -57,6 +57,12 @@
   #drawer .ditem em { font-style: normal; font-size: 14px; color: var(--muted); letter-spacing: 0.06em; }
   #drawer .ditem.on em { color: var(--cyan); }
   #drawer .ditem.cur { background: rgba(214,64,168,0.07); box-shadow: inset 3px 0 0 var(--magenta); }
+  /* Money opens its two books underneath (one menu item) */
+  #drawer .dsub { display: none; }
+  #drawer .dsub.on { display: block; }
+  #drawer .dsub .ditem { padding-left: 38px; font-size: 16px; }
+  #drawer .dchev { transition: transform .15s; }
+  #drawer [aria-expanded="true"] .dchev { transform: rotate(90deg); color: var(--cyan); }
   /* ---------------------------------------------------------------- Money screen */
   #money { position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column; background: var(--bg0);
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -222,8 +228,11 @@
   <div class="dhead">J.A.R.V.I.S.</div>
   <div class="dsect">Screens</div>
   <a href="#" id="navJarvis" class="ditem"><span>Jarvis<small>Talk to Jarvis</small></span><em>›</em></a>
-  <a href="#" id="moneyBiz" class="ditem"><span>Business money<small>Business accounts, spending, subscriptions</small></span><em>›</em></a>
-  <a href="#" id="moneyPers" class="ditem"><span>Personal money<small>Your own accounts, spending, subscriptions</small></span><em>›</em></a>
+  <a href="#" id="navMoney" class="ditem" aria-expanded="false"><span>Money<small>Business and personal accounts, spending</small></span><em class="dchev">▸</em></a>
+  <div id="moneySub" class="dsub">
+    <a href="#" id="moneyBiz" class="ditem"><span>Business<small>Accounts, spending, invoices</small></span><em>›</em></a>
+    <a href="#" id="moneyPers" class="ditem"><span>Personal<small>Your own accounts, spending</small></span><em>›</em></a>
+  </div>
   <a href="#" id="navCrm" class="ditem"><span>Customers<small>The Customer Factor: jobs, invoices, estimates</small></span><em>›</em></a>
   <a href="#" id="navCosts" class="ditem"><span>Jarvis costs<small>What Jarvis costs to run this month</small></span><em>›</em></a>
   <div class="dsect">Settings</div>
@@ -544,7 +553,7 @@
   };
 
   // Shared by the phone app (app/build.py inlines it) and the laptop window (jarvis/ui/server.py).
-  // Needs from the page: $(id), and #menuBtn, #drawer, #scrim, #money, #mtitle, #navJarvis, #moneyBiz, #moneyPers, #navCrm, #navCosts.
+  // Needs from the page: $(id), and #menuBtn, #drawer, #scrim, #money, #mtitle, #navJarvis, #navMoney, #moneySub, #moneyBiz, #moneyPers, #navCrm, #navCosts.
   // ------------------------------------------------------------------ menu drawer
   // One menu (top left) instead of a row of header buttons, so new screens have somewhere to go.
   const menuBtn = $("menuBtn"), drawer = $("drawer");
@@ -588,6 +597,7 @@
     if (open && !was) {   // show which screen you're on
       const m = $("money").classList.contains("on") && $("mtitle").textContent;
       for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"]]) $(id).classList.toggle("cur", on);
+      moneyOpen(m === "BUSINESS" || m === "PERSONAL");   // on a money screen, show its two books open
       menuStep = nav.push(() => setMenu(false));
     }
     const id = menuStep;
@@ -596,6 +606,9 @@
   }
   menuBtn.onclick = (e) => { e.preventDefault(); setMenu(!document.body.classList.contains("menu")); };
   $("scrim").onclick = () => setMenu(false);
+  // One "Money" item (Ben, 2026-11-19) that opens its two books, Business and Personal, underneath.
+  function moneyOpen(on) { $("navMoney").setAttribute("aria-expanded", on); $("moneySub").classList.toggle("on", on); }
+  $("navMoney").onclick = (e) => { e.preventDefault(); moneyOpen($("navMoney").getAttribute("aria-expanded") !== "true"); };
   // money.js wires the money screens.
   // "Jarvis" = the talk screen: close whatever screen is on top of it.
   $("navJarvis").onclick = (e) => { e.preventDefault(); nav.home(); };
