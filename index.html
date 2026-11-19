@@ -1431,8 +1431,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
 // - Estimates: accepted "Y" / "X" (declined); status S = scheduled, C = closed, the rest are open.
 //   custtype "c" = for a customer, "p" = for a prospect.
 // - Estimate lines are often alternatives (monthly / every 3 months), so an estimate has no single total.
-// - payment_form: 3 = card (has card transaction ids), 9 = other (payment_mode says e.g. Venmo);
-//   1 and 2 are guesses (1 has check numbers, so check; 2 cash). Ben to confirm.
+// - payment_form: 1 = check, 2 = cash (confirmed by Ben), 3 = card, 9 = other (payment_mode, e.g. Venmo).
 // Card details in the backup (card_num, card_type, trans_id) are never kept.
 
 const PAYMENT_FORMS = { 1: "check", 2: "cash", 3: "card", 9: "other" };
@@ -1724,7 +1723,7 @@ function niceDate(iso, withYear = false) {
 return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, find, visits, schedule, balanceOf, owed, estimateValue, estimateState, daysBetween, profile, summary, months, usd, niceDate };
  })();
     const CRM_TABS = [["over", "Overview"], ["sched", "Schedule"], ["people", "Customers"], ["est", "Estimates"]];
-    const C = { sched: "next", people: "customer", q: "", est: "open" };
+    const C = { sched: "next", people: "customer", q: "", est: "open", done: "" };
     async function rcall(action, payload) {
       const auth = await authHeaders();
       if (!auth) { showSignin(true); throw new Error("This phone isn't paired."); }
@@ -1748,17 +1747,25 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
 
     // ---- upload: pick the .sql backup, check it, show what's in it, then send the compact copy
     function pickBackup() {
-      const inp = document.createElement("input");
-      inp.type = "file"; inp.accept = ".sql,.txt,application/sql,text/plain";
+      // No `accept` filter: Android doesn't know .sql files' type and greys them out in the picker
+      // (Ben's first try on 2026-11-19 never reached us). The input lives in the page, because a
+      // detached one doesn't always open a picker (some WebViews).
+      let inp = $("crmfile");
+      if (!inp) { inp = document.createElement("input"); inp.type = "file"; inp.id = "crmfile"; inp.style.display = "none"; document.body.appendChild(inp); }
+      inp.value = "";
       inp.onchange = async () => {
         const file = inp.files && inp.files[0];
         if (!file) return;
         let data;
+        M.busy = `Reading ${file.name}…`; M.error = ""; render();
         try {
           if (file.size > 40e6) throw new Error("That file is too big to be a Customer Factor backup.");
-          data = R.compact(R.parseDump(await file.text()), TZ, file.name);
+          const text = await file.text();
+          if (!/CREATE TABLE/.test(text.slice(0, 200000))) throw new Error("it isn't a Customer Factor backup (pick the .sql file it downloads).");
+          data = R.compact(R.parseDump(text), TZ, file.name);
           const why = R.problem(data); if (why) throw new Error(why);
-        } catch (e) { M.error = "Couldn't read that file: " + e.message; render(); return; }
+        } catch (e) { M.busy = ""; M.error = "Couldn't read that file: " + e.message; render(); return; }
+        M.busy = ""; render();
         const n = (k) => data[k].length.toLocaleString();
         openSheet(`<h2>Upload this backup?</h2><div class="meta">${esc(file.name)}</div>
           <div class="card" style="margin-top:12px">${[["Customers", "customers"], ["Prospects", "prospects"], ["Job lines", "jobs"], ["Estimates", "estimates"],
@@ -1769,7 +1776,9 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
           box.querySelector("#sx").onclick = closeSheet;
           box.querySelector("#sup").onclick = async (ev) => {
             ev.target.disabled = true; ev.target.textContent = "Uploading…";
-            try { await rcall("upload", { data, fileName: file.name }); closeSheet(); M.data = null; M.cache.crm = null; loadCrm(); }
+            try { const r = await rcall("upload", { data, fileName: file.name }); closeSheet();
+              C.done = `Uploaded ${file.name}: ${r.counts.customers} customers, ${r.counts.invoices} invoices, ${r.counts.jobs} job lines.`;
+              M.data = null; M.cache.crm = null; loadCrm(); }
             catch (e) { ev.target.disabled = false; ev.target.textContent = "Upload"; sheetErr(e.message); }
           };
         });
@@ -1842,7 +1851,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       const y = t.slice(0, 4), yr = R.summary(d, `${y}-01-01`, `${y}-12-31`, t);
       const dow = (new Date(t + "T12:00:00Z").getUTCDay() + 6) % 7, wk = R.schedule(d, t, addDay(t, 6 - dow));
       const recentOpen = d.estimates.filter((e) => R.estimateState(e) === "open" && R.daysBetween(e.date, t) <= 120);
-      let h = status() + `<div class="card"><div class="label">Owed to you</div><div class="hero">${usd(owedSum)}</div>
+      let h = status() + (C.done ? `<div class="note">✓ ${esc(C.done)}</div>` : "") + `<div class="card"><div class="label">Owed to you</div><div class="hero">${usd(owedSum)}</div>
         <div class="sub">${ow.length ? `${ow.length} unpaid invoice${ow.length > 1 ? "s" : ""}` : "Every invoice is paid"}</div>
         ${ow.map((i) => `<div class="row click" data-p="${esc(i.cust)}"><div class="grow"><div class="name">${esc(pname(i.cust))}</div>
           <div class="meta">#${esc(i.num)} · ${esc(R.niceDate(i.date, true))} · ${R.daysBetween(i.date, t)} days</div></div><div class="amt">${usd(R.balanceOf(i))}</div></div>`).join("")}</div>`;
