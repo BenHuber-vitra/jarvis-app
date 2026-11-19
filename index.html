@@ -13,14 +13,17 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
   :root {
-    --bg0: #02060d; --bg1: #061426; --cyan: #4fd8ff; --cyan-dim: rgba(79,216,255,0.55);
+    --magenta: #ff3dbf; --magenta-dim: rgba(255,61,191,0.55); --magenta-faint: rgba(255,61,191,0.12);
+    --bg0: #020309; --bg1: #07112a; --cyan: #4fd8ff; --cyan-dim: rgba(79,216,255,0.55);
     --cyan-faint: rgba(79,216,255,0.14); --text: #cfeeff; --muted: #6f93ad; --amber: #ffb547;
     --panel: rgba(8,26,46,0.62); --line: rgba(79,216,255,0.22); --red: #ff5a6a;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; height: 100%; overflow: hidden; }
   body {
-    background: radial-gradient(ellipse at 50% 30%, var(--bg1) 0%, var(--bg0) 70%);
+    background: radial-gradient(ellipse at 100% 100%, rgba(255,61,191,0.09) 0%, transparent 45%),
+      radial-gradient(ellipse at 50% 30%, var(--bg1) 0%, var(--bg0) 70%);
+    background-color: var(--bg0);
     color: var(--text); font-family: "Rajdhani", "Segoe UI", system-ui, sans-serif;
     display: flex; flex-direction: column; height: 100dvh; height: var(--app-h, 100dvh);
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -53,7 +56,7 @@
   #drawer .ditem small { display: block; font-size: 13px; color: var(--muted); margin-top: 1px; }
   #drawer .ditem em { font-style: normal; font-size: 14px; color: var(--muted); letter-spacing: 0.06em; }
   #drawer .ditem.on em { color: var(--cyan); }
-  #drawer .ditem.cur { background: rgba(79,216,255,0.08); box-shadow: inset 3px 0 0 var(--cyan); }
+  #drawer .ditem.cur { background: rgba(255,61,191,0.07); box-shadow: inset 3px 0 0 var(--magenta); }
   /* ---------------------------------------------------------------- Money screen */
   #money { position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column; background: var(--bg0);
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -167,12 +170,12 @@
   .msg.jarvis .who { color: var(--cyan); } .msg.jarvis .body { color: #e6f7ff; }
   .msg .dial { display: inline-block; margin-top: 8px; padding: 10px 18px; border: 1px solid var(--cyan); border-radius: 22px;
     color: var(--cyan); text-decoration: none; font-size: 15px; letter-spacing: 0.08em; }
-  .msg.user .body { color: #b9cfdf; } .msg.info .body { font-size: 14px; color: var(--muted); font-style: italic; }
+  .msg.user .who { color: var(--magenta); } .msg.user .body { color: #e4d3e6; } .msg.info .body { font-size: 14px; color: var(--muted); font-style: italic; }
   @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
   #controls { display: flex; align-items: center; gap: 10px; padding: 12px 12px 16px; z-index: 2; flex: none; }
   #talk { flex: none; width: 74px; height: 74px; border-radius: 50%; border: 2px solid var(--cyan); background: rgba(79,216,255,0.08);
     color: var(--cyan); font-family: "Orbitron", sans-serif; font-size: 10px; letter-spacing: 0.15em; box-shadow: 0 0 18px rgba(79,216,255,0.35); }
-  #talk.rec { border-color: var(--red); color: var(--red); background: rgba(255,90,106,0.12); box-shadow: 0 0 26px rgba(255,90,106,0.55); animation: recpulse 1s ease-in-out infinite; }
+  #talk.rec { border-color: var(--magenta); color: var(--magenta); background: rgba(255,61,191,0.12); box-shadow: 0 0 26px rgba(255,61,191,0.55); animation: recpulse 1s ease-in-out infinite; }
   #talk.busy { border-color: var(--amber); color: var(--amber); box-shadow: 0 0 18px rgba(255,181,71,0.4); }
   @keyframes recpulse { 50% { transform: scale(1.06); } }
   form { flex: 1; display: flex; gap: 8px; min-width: 0; }
@@ -2156,28 +2159,54 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
 
   // ------------------------------------------------------------------ geometry
   // N points that morph between shapes; lines join near neighbours and flicker on and off.
-  const N = 72;
-  const fib = [];
-  for (let i = 0; i < N; i++) {
-    const y = 1 - (i / (N - 1)) * 2, r = Math.sqrt(1 - y * y), th = i * Math.PI * (3 - Math.sqrt(5));
-    fib.push([Math.cos(th) * r, y, Math.sin(th) * r]);
-  }
+  // Colours (2026-11-19, Ben: cyan primary, magenta secondary from his business palette): the near
+  // side of the shape is cyan and the far side fades to magenta; Ben's voice (listening) is magenta,
+  // Jarvis's (speaking) cyan. Lines and dots are drawn in a few batched paths (by depth band), so
+  // the denser "HD" mesh costs fewer draw calls than the old 72-point one did.
+  const CY = [79, 216, 255], MG = [255, 61, 191];
+  const mix = (a, b, f) => a.map((v, i) => Math.round(v + (b[i] - v) * f)).join(",");
+  const CYS = CY.join(","), MGS = MG.join(",");
+  const N = 132;            // the phone build lowers this
+  const K = 4;              // neighbours per point
+  const fibSphere = (n) => Array.from({ length: n }, (_, i) => {
+    const y = 1 - (i / (n - 1)) * 2, r = Math.sqrt(1 - y * y), th = i * Math.PI * (3 - Math.sqrt(5));
+    return [Math.cos(th) * r, y, Math.sin(th) * r];
+  });
+  const fib = fibSphere(N);
   const norm = (p, f) => { const k = f(p); return [p[0] / k, p[1] / k, p[2] / k]; };
+  const GA = Math.PI * (3 - Math.sqrt(5));
   const SHAPES = [
     fib.map(p => p),                                                                        // sphere
     fib.map(p => norm(p, q => Math.abs(q[0]) + Math.abs(q[1]) + Math.abs(q[2])).map(v => v * 1.35)), // octahedron
     fib.map(p => norm(p, q => Math.max(Math.abs(q[0]), Math.abs(q[1]), Math.abs(q[2]))).map(v => v * 0.78)), // cube
-    fib.map((p, i) => { const u = (i / N) * Math.PI * 2 * 6, v = (i / N) * Math.PI * 2;      // torus knot
+    fib.map((p, i) => { const v = (i / N) * Math.PI * 2;                                     // torus knot
       const R = 0.62 + 0.28 * Math.cos(3 * v); return [R * Math.cos(2 * v), 0.28 * Math.sin(3 * v) * 1.4, R * Math.sin(2 * v)]; }),
     fib.map(p => { const k = Math.pow(Math.abs(p[1]), 0.6); const s = 1 - k * 0.85;          // double cone / crystal
       return [p[0] * s * 1.05, p[1] * 1.15, p[2] * s * 1.05]; }),
-    fib.map((p, i) => { const a = (i / N) * Math.PI * 2 * 4, h = (i / N) * 2 - 1;             // helix lattice
-      return [Math.cos(a) * 0.75, h * 1.05, Math.sin(a) * 0.75]; }),
+    fib.map((p, i) => { const s = i % 2, h = (Math.floor(i / 2) / (N / 2)) * 2 - 1;          // double helix
+      const a = h * Math.PI * 2.2 + s * Math.PI; return [Math.cos(a) * 0.62, h * 1.1, Math.sin(a) * 0.62]; }),
+    fib.map((p, i) => { const u = i * GA, v = (i / N) * Math.PI * 2 * 9;                     // torus
+      return [(0.7 + 0.3 * Math.cos(v)) * Math.cos(u), 0.3 * Math.sin(v), (0.7 + 0.3 * Math.cos(v)) * Math.sin(u)]; }),
+    fib.map(p => { const th = Math.atan2(p[2], p[0]), ph = Math.acos(Math.max(-1, Math.min(1, p[1])));   // spiked star
+      const r = 0.78 + 0.26 * Math.pow(Math.abs(Math.sin(3 * ph) * Math.cos(4 * th)), 1.5); return p.map(v => v * r); }),
   ];
+  // Ben's logo (2026-11-19): every LOGO_EVERY-th morph the points gather into it, the shape turns to
+  // face the viewer, holds, then breaks up into the next shape. The points come from
+  // assets/logo_points.json (made by tools/make_logo_points.py from his logo file; ordered so any
+  // first N are spread evenly) and are filled in here by app/build.py for the laptop and the phone.
+  const LOGO = /*LOGO_POINTS*/null;
+  const LOGO_EVERY = 3, LOGO_HOLD = 6;
+  const LOGO_SHAPE = LOGO && LOGO.length >= N ? LOGO.slice(0, N).map(([x, y], i) => [x, y, (((i * 2654435761) >>> 0) / 4294967295 - 0.5) * 0.06]) : null;
   let cur = SHAPES[0].map(p => p.slice()), from = cur.map(p => p.slice()), to = SHAPES[0], morphT = 1, shapeIdx = 0, nextMorph = 4;
+  let morphCount = 0, face = 0, logoTurn = 0;
   function startMorph() {
+    morphCount++;
+    from = cur.map(p => p.slice()); morphT = 0;
+    if (LOGO_SHAPE && to !== LOGO_SHAPE && morphCount % LOGO_EVERY === 0) {
+      to = LOGO_SHAPE; shapeIdx = -1; logoTurn = Math.ceil(rotY / 6.283 + 0.25) * 6.283; return;
+    }
     let n; do { n = Math.floor(Math.random() * SHAPES.length); } while (n === shapeIdx);
-    shapeIdx = n; from = cur.map(p => p.slice()); to = SHAPES[n]; morphT = 0;
+    shapeIdx = n; to = SHAPES[n];
   }
   const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
@@ -2185,7 +2214,31 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
   let flickerSeed = 1;
   const hash = (a, b, s) => { let h = (a * 73856093) ^ (b * 19349663) ^ (s * 83492791); h = (h ^ (h >>> 13)) * 1274126177; return ((h ^ (h >>> 16)) >>> 0) / 4294967295; };
 
-  let nbrs = null, nbrAge = 0, nbrMorphDone = null;
+  // K nearest neighbours of every point, as a unique edge list [i, j, i, j, ...] (selection, no sort).
+  function edgesOf(pts) {
+    const n = pts.length, out = [], seen = new Set(), bd = new Float64Array(K), bj = new Int32Array(K);
+    for (let i = 0; i < n; i++) {
+      bd.fill(Infinity); bj.fill(-1);
+      const a = pts[i];
+      for (let j = 0; j < n; j++) {
+        if (j === i) continue;
+        const b = pts[j], d = (a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2;
+        if (d >= bd[K - 1]) continue;
+        let k = K - 1; while (k > 0 && bd[k - 1] > d) { bd[k] = bd[k - 1]; bj[k] = bj[k - 1]; k--; }
+        bd[k] = d; bj[k] = j;
+      }
+      for (let k = 0; k < K; k++) {
+        const j = bj[k]; if (j < 0) continue;
+        const key = i < j ? i * 4096 + j : j * 4096 + i;
+        if (!seen.has(key)) { seen.add(key); out.push(Math.min(i, j), Math.max(i, j)); }
+      }
+    }
+    return out;
+  }
+  // A second, smaller wireframe inside, turning the other way (magenta).
+  const IN_N = 42, inner = fibSphere(IN_N).map(p => p.map(v => v * 0.42)), innerEdges = edgesOf(inner);
+
+  let edges = null, nbrAge = 0, nbrMorphDone = null;
   const GLOW_BLUR = false;   // the phone build turns this off (canvas shadow blur is costly on phones)
   const MAX_DPR = 1.5;        // the phone build lowers this
   let PAUSED = () => document.hidden || document.body.classList.contains('typing'); // the phone pauses drawing while the keyboard is up
@@ -2194,11 +2247,15 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
   function resize() { DPR = Math.min(MAX_DPR, window.devicePixelRatio || 1); W = cv.clientWidth; H = cv.clientHeight; cv.width = W * DPR; cv.height = H * DPR; }
   window.addEventListener("resize", resize); resize();
 
-  const motes = Array.from({ length: 70 }, () => ({ a: Math.random() * 6.283, r: 0.9 + Math.random() * 1.6, s: 0.0005 + Math.random() * 0.002, z: Math.random() }));
+  const motes = Array.from({ length: 90 }, (_, i) => ({ a: Math.random() * 6.283, r: 0.9 + Math.random() * 1.6, s: 0.0005 + Math.random() * 0.002, z: Math.random(), m: i % 4 === 0 }));
   let rotY = 0, rotX = 0.35, t0 = performance.now(), last = t0, pulse = 0, glowSm = 0, scaleSm = 1, beat = 0;
   const hud = { sweep: 0, spin: 0, seg: 0, state: "", peak: 0 };
   const ripples = [], eqBars = new Float32Array(96);
   const SEGS = [[0, 0.9], [1.15, 0.35], [1.7, 1.3], [3.3, 0.2], [3.7, 1.0], [5.0, 0.7]];  // [start, length] radians
+  const BANDS = 4;                                    // depth bands for batched drawing: 0 = nearest
+  const bandCol = Array.from({ length: BANDS }, (_, b) => mix(CY, MG, Math.pow(b / (BANDS - 1), 1.3)));
+  const bandOf = (z) => Math.max(0, Math.min(BANDS - 1, Math.floor((z + 1.05) / 2.1 * BANDS)));
+  const paths = Array.from({ length: BANDS }, () => []);
 
   function frame(now) {
     if (PAUSED() || !W || !H) { last = now; requestAnimationFrame(frame); return; }
@@ -2214,7 +2271,8 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
     pulse *= 0.93;
 
     const speed = { idle: 0.18, listening: 0.32, thinking: 1.1, speaking: 0.4 + lvl * 0.8 }[st] || 0.2;
-    rotY += dt * speed; rotX = 0.35 + Math.sin(t * 0.21) * 0.25;
+    face += ((to === LOGO_SHAPE && LOGO_SHAPE ? 1 : 0) - face) * Math.min(1, dt * 2.2);   // turn to face Ben for the logo
+    rotY += dt * speed * (1 - face); rotX = 0.35 + Math.sin(t * 0.21) * 0.25;
     const breathe = st === "listening" ? 0.04 * Math.sin(t * 3.2) : 0.015 * Math.sin(t * 1.1);
     scaleSm += ((1 + breathe + lvl * 0.22 + pulse * 0.04) - scaleSm) * 0.25;
     const glowT = { idle: 0.35, listening: 0.75, thinking: 0.6, speaking: 0.7 + lvl * 1.3 }[st] || 0.4;
@@ -2222,7 +2280,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
 
     // morph between shapes; faster while thinking
     nextMorph -= dt * (st === "thinking" ? 3 : 1);
-    if (nextMorph <= 0 && morphT >= 1) { startMorph(); nextMorph = 5 + Math.random() * 4; }
+    if (nextMorph <= 0 && morphT >= 1) { startMorph(); nextMorph = to === LOGO_SHAPE ? LOGO_HOLD + 2.2 : 5 + Math.random() * 4; }
     if (morphT < 1) {
       morphT = Math.min(1, morphT + dt / (st === "thinking" ? 0.9 : 2.2));
       const e = ease(morphT);
@@ -2234,47 +2292,52 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
 
     // project
     const R = Math.min(W, H) * 0.24 * scaleSm, ox = W / 2, oy = H * 0.47;
-    const cy = Math.cos(rotY), sy = Math.sin(rotY), cxr = Math.cos(rotX), sxr = Math.sin(rotX);
-    const P = cur.map(([x, y, z], i) => {
-      // ripple the surface with the voice
-      const wob = 1 + lvl * 0.18 * Math.sin(t * 9 + i * 1.7);
-      x *= wob; y *= wob; z *= wob;
-      const x1 = x * cy - z * sy, z1 = x * sy + z * cy;
-      const y1 = y * cxr - z1 * sxr, z2 = y * sxr + z1 * cxr;
-      const f = 2.6 / (2.6 + z2);
-      return [ox + x1 * R * f, oy + y1 * R * f, z2];
-    });
+    const project = (pts, ry, rx, wobAmt) => {
+      const cy = Math.cos(ry), sy = Math.sin(ry), cxr = Math.cos(rx), sxr = Math.sin(rx);
+      return pts.map(([x, y, z], i) => {
+        const wob = 1 + wobAmt * Math.sin(t * 9 + i * 1.7);   // ripple the surface with the voice
+        x *= wob; y *= wob; z *= wob;
+        const x1 = x * cy - z * sy, z1 = x * sy + z * cy;
+        const y1 = y * cxr - z1 * sxr, z2 = y * sxr + z1 * cxr;
+        const f = 2.6 / (2.6 + z2);
+        return [ox + x1 * R * f, oy + y1 * R * f, z2];
+      });
+    };
+    const fe = ease(face);
+    const P = project(cur, rotY + (logoTurn - rotY) * fe, rotX * (1 - fe), lvl * 0.18);
 
     cx.setTransform(DPR, 0, 0, DPR, 0, 0);
     cx.clearRect(0, 0, W, H);
 
-    // halo
+    // halo: cyan core light with a faint magenta rim
     const hal = cx.createRadialGradient(ox, oy, R * 0.1, ox, oy, R * (1.9 + lvl * 0.6));
-    hal.addColorStop(0, `rgba(79,216,255,${0.10 + glowSm * 0.16})`);
+    hal.addColorStop(0, `rgba(${CYS},${0.10 + glowSm * 0.16})`);
     hal.addColorStop(0.45, `rgba(30,120,200,${0.05 + glowSm * 0.06})`);
+    hal.addColorStop(0.8, `rgba(${MGS},${0.025 + glowSm * 0.03})`);
     hal.addColorStop(1, "rgba(0,0,0,0)");
     cx.fillStyle = hal; cx.fillRect(0, 0, W, H);
 
-    // floating motes
+    // floating motes (one in four magenta)
     cx.globalCompositeOperation = "lighter";
     for (const m of motes) {
       m.a += m.s * (1 + lvl * 3) * (st === "thinking" ? 3 : 1);
       const rr = R * m.r;
-      cx.fillStyle = `rgba(120,220,255,${0.08 + m.z * 0.25})`;
+      cx.fillStyle = m.m ? `rgba(255,120,215,${0.06 + m.z * 0.2})` : `rgba(120,220,255,${0.08 + m.z * 0.25})`;
       cx.fillRect(ox + Math.cos(m.a) * rr, oy + Math.sin(m.a) * rr * 0.55, 1.4, 1.4);
     }
 
     // ---------------------------------------------------------------- arc-reactor HUD
-    // Rings around the core: a circular voice equalizer (his voice while speaking, Ben's while
-    // listening), a rotating tick ring, counter-rotating segment arcs,
-    // targeting brackets, ripples on voice peaks and state changes, and a small state label.
+    // Rings around the core: a circular voice equalizer (his voice while speaking in cyan, Ben's
+    // while listening in magenta), a rotating tick ring, counter-rotating segment arcs (cyan and
+    // magenta), targeting brackets, ripples on voice peaks and state changes.
     const Rb = Math.min(W, H) * 0.24;                 // HUD scale ignores the voice "breathing"
     const spd = { idle: 0.35, listening: 1.1, thinking: 3.2, speaking: 0.9 }[st] || 0.4;
     hud.sweep += dt * spd; hud.spin += dt * spd * 0.12; hud.seg -= dt * spd * 0.2;
-    if (st !== hud.state) { hud.state = st; ripples.push({ r: 1.05, a: 0.55 }); }
-    if (lvl - hud.peak > 0.18 && ripples.length < 6) ripples.push({ r: 1.25, a: 0.25 + lvl * 0.35 });
+    if (st !== hud.state) { hud.state = st; ripples.push({ r: 1.05, a: 0.55, c: st === "listening" ? MGS : null }); }
+    if (lvl - hud.peak > 0.18 && ripples.length < 6) ripples.push({ r: 1.25, a: 0.25 + lvl * 0.35, c: st === "listening" ? MGS : null });
     hud.peak = Math.max(lvl, hud.peak - dt * 0.8);
-    const tint = st === "thinking" ? "170,240,255" : "79,216,255";
+    const tint = st === "thinking" ? "170,240,255" : CYS;
+    const voice = st === "listening" ? MGS : tint;    // whose voice the equalizer shows
 
     // ripples
     cx.lineWidth = 1.2;
@@ -2282,45 +2345,53 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       const rp = ripples[i];
       rp.r += dt * 0.55; rp.a -= dt * 0.45;
       if (rp.a <= 0 || rp.r > 2.4) { ripples.splice(i, 1); continue; }
-      cx.strokeStyle = `rgba(${tint},${rp.a * 0.6})`;
+      cx.strokeStyle = `rgba(${rp.c || tint},${rp.a * 0.6})`;
       cx.beginPath(); cx.arc(ox, oy, Rb * rp.r, 0, 6.283); cx.stroke();
     }
 
     // circular equalizer: 96 bars just outside the shape
     const NB = 96, eqR = Rb * 1.3, live = st === "speaking" || st === "listening";
+    const hot = st === "listening" ? "255,170,230" : "200,245,255";
+    cx.lineWidth = 1.6;
     for (let b = 0; b < NB; b++) {
       const target = live ? lvl * (0.35 + 0.65 * Math.abs(Math.sin(b * 0.73 + t * 6.5) * Math.cos(b * 0.21 - t * 2.9))) : 0;
       eqBars[b] += (target - eqBars[b]) * (target > eqBars[b] ? 0.5 : 0.12);
       const ang = (b / NB) * 6.283 - 1.5708, len = Rb * (0.025 + eqBars[b] * 0.2);
       const c = Math.cos(ang), s = Math.sin(ang);
-      cx.strokeStyle = `rgba(${eqBars[b] > 0.25 ? "200,245,255" : tint},${0.22 + glowSm * 0.2 + eqBars[b] * 0.6})`;
-      cx.lineWidth = 1.6;
+      cx.strokeStyle = `rgba(${eqBars[b] > 0.25 ? hot : voice},${0.22 + glowSm * 0.2 + eqBars[b] * 0.6})`;
       cx.beginPath(); cx.moveTo(ox + c * eqR, oy + s * eqR); cx.lineTo(ox + c * (eqR + len), oy + s * (eqR + len)); cx.stroke();
     }
 
     const tickR = Rb * 1.58;
 
-    // tick ring: 120 ticks, every 10th long
-    for (let k = 0; k < 120; k++) {
-      const ang = hud.spin + (k / 120) * 6.283;
-      const major = k % 10 === 0, len = Rb * (major ? 0.075 : 0.035);
-      const c = Math.cos(ang), s = Math.sin(ang);
+    // tick ring: 120 ticks, every 10th long (two batched paths)
+    for (const major of [false, true]) {
       cx.strokeStyle = `rgba(${tint},${(major ? 0.38 : 0.18) + glowSm * 0.12})`;
       cx.lineWidth = major ? 1.6 : 1;
-      cx.beginPath(); cx.moveTo(ox + c * tickR, oy + s * tickR); cx.lineTo(ox + c * (tickR + len), oy + s * (tickR + len)); cx.stroke();
+      cx.beginPath();
+      for (let k = major ? 0 : 1; k < 120; k += major ? 10 : 1) {
+        if (!major && k % 10 === 0) continue;
+        const ang = hud.spin + (k / 120) * 6.283, len = Rb * (major ? 0.075 : 0.035);
+        const c = Math.cos(ang), s = Math.sin(ang);
+        cx.moveTo(ox + c * tickR, oy + s * tickR); cx.lineTo(ox + c * (tickR + len), oy + s * (tickR + len));
+      }
+      cx.stroke();
     }
 
-    // segment arcs, counter-rotating
+    // segment arcs, counter-rotating; every other one magenta
     const segR = Rb * 1.72;
     cx.lineWidth = 2.4;
     for (let k = 0; k < SEGS.length; k++) {
       const [a0, len] = SEGS[k];
-      cx.strokeStyle = `rgba(${tint},${0.22 + glowSm * 0.22 + (k === 0 ? 0.15 : 0)})`;
+      cx.strokeStyle = `rgba(${k % 2 ? MGS : tint},${(k % 2 ? 0.2 : 0.22) + glowSm * 0.22 + (k === 0 ? 0.15 : 0)})`;
       cx.beginPath(); cx.arc(ox, oy, segR, hud.seg + a0, hud.seg + a0 + len); cx.stroke();
     }
     cx.lineWidth = 1;
     cx.strokeStyle = `rgba(${tint},${0.10 + glowSm * 0.08})`;
     cx.beginPath(); cx.arc(ox, oy, segR + Rb * 0.07, 0, 6.283); cx.stroke();
+    // a thin magenta ring just inside the tick ring, turning slowly the other way, with a gap
+    cx.strokeStyle = `rgba(${MGS},${0.12 + glowSm * 0.1})`;
+    cx.beginPath(); cx.arc(ox, oy, Rb * 1.5, -hud.spin * 1.5, -hud.spin * 1.5 + 5.2); cx.stroke();
 
     // targeting brackets at the four corners of the outer ring; they close in while thinking
     const brR = Rb * (st === "thinking" ? 1.86 : 1.92) + Math.sin(t * 2) * Rb * 0.01;
@@ -2332,66 +2403,89 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       cx.beginPath(); cx.moveTo(ox + c * brR, oy + s * brR); cx.lineTo(ox + c * (brR - Rb * 0.06), oy + s * (brR - Rb * 0.06)); cx.stroke();
     }
 
-    // thinking: two bright dots chasing round the tick ring
+    // thinking: two bright dots chasing round the tick ring (one cyan, one magenta)
     if (st === "thinking") {
       for (let d = 0; d < 2; d++) {
         const ang = hud.sweep * 1.4 + d * Math.PI;
-        cx.fillStyle = "rgba(220,250,255,0.9)";
+        cx.fillStyle = d ? "rgba(255,140,220,0.9)" : "rgba(220,250,255,0.9)";
         cx.beginPath(); cx.arc(ox + Math.cos(ang) * tickR, oy + Math.sin(ang) * tickR, 2.6, 0, 6.283); cx.fill();
       }
     }
 
+    // inner wireframe: small, magenta, turning the other way
+    const PI2 = project(inner, -rotY * 1.6, rotX * 0.6 + 0.4, lvl * 0.1);
+    cx.strokeStyle = `rgba(${MGS},${(0.16 + glowSm * 0.22) * (1 - fe * 0.9)})`; cx.lineWidth = 0.8;   // fades while the logo shows
+    cx.beginPath();
+    for (let e = 0; e < innerEdges.length; e += 2) {
+      const a = PI2[innerEdges[e]], b = PI2[innerEdges[e + 1]];
+      cx.moveTo(a[0], a[1]); cx.lineTo(b[0], b[1]);
+    }
+    cx.stroke();
 
-    // edges: k nearest neighbours, flickering. The neighbour lists only change while the shape
-    // morphs, so they're recomputed every few frames then (not 60 times a second): this sort over
-    // every pair of points was the main cost on the phone.
-    cx.shadowColor = "rgba(79,216,255,0.9)";
-    cx.shadowBlur = GLOW_BLUR ? 6 + glowSm * 14 : 0;
-    const show = { idle: 0.7, listening: 0.82, thinking: 0.55, speaking: 0.78 }[st] || 0.7;
-    if (!nbrs || (morphT < 1 && ++nbrAge >= 4) || nbrMorphDone !== (morphT >= 1)) {
+    // edges: K nearest neighbours, flickering. The edge list only changes while the shape morphs,
+    // so it's recomputed every few frames then (not 60 times a second). Lines are batched into one
+    // path per depth band: near = cyan, far = magenta.
+    cx.shadowColor = `rgba(${CYS},0.9)`;
+    cx.shadowBlur = GLOW_BLUR ? 5 + glowSm * 12 : 0;
+    const show = { idle: 0.66, listening: 0.8, thinking: 0.52, speaking: 0.76 }[st] || 0.66;
+    if (!edges || (morphT < 1 && ++nbrAge >= 4) || nbrMorphDone !== (morphT >= 1)) {
       nbrAge = 0; nbrMorphDone = morphT >= 1;
-      nbrs = cur.map((a, i) => {
-        const d = [];
-        for (let j = 0; j < N; j++) if (j !== i) {
-          const b = cur[j];
-          d.push([(a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2 + (a[2] - b[2]) ** 2, j]);
-        }
-        d.sort((p, q) => p[0] - q[0]);
-        return [d[0][1], d[1][1], d[2][1]];
-      });
+      edges = edgesOf(cur);
     }
-    for (let i = 0; i < N; i++) {
-      for (let n = 0; n < 3; n++) {
-        const j = nbrs[i][n]; if (j < i && n < 2) continue;
-        const v = hash(Math.min(i, j), Math.max(i, j), flickerSeed);
-        if (v > show) continue;
-        const depth = (P[i][2] + P[j][2]) / 2;
-        const a = (0.18 + glowSm * 0.45) * (0.55 + (1 - depth) * 0.35) * (v < 0.06 ? 1.6 : 1);
-        cx.strokeStyle = `rgba(${v < 0.06 ? "200,245,255" : "79,216,255"},${Math.min(1, a)})`;
-        cx.lineWidth = v < 0.06 ? 1.6 : 1;
-        cx.beginPath(); cx.moveTo(P[i][0], P[i][1]); cx.lineTo(P[j][0], P[j][1]); cx.stroke();
-      }
+    for (const p of paths) p.length = 0;
+    const bright = [];
+    for (let e = 0; e < edges.length; e += 2) {
+      const i = edges[e], j = edges[e + 1];
+      const v = hash(i, j, flickerSeed);
+      if (v > show) continue;
+      if (v < 0.04) { bright.push(i, j); continue; }
+      paths[bandOf((P[i][2] + P[j][2]) / 2)].push(i, j);
     }
-    // a few long chords that flash across the core
+    for (let b = 0; b < BANDS; b++) {
+      if (!paths[b].length) continue;
+      const a = (0.2 + glowSm * 0.45) * (1 - b * 0.17);
+      cx.strokeStyle = `rgba(${bandCol[b]},${Math.min(1, a)})`;
+      cx.lineWidth = b === 0 ? 1.1 : 0.8;
+      if (b === BANDS - 1) cx.shadowColor = `rgba(${MGS},0.7)`;
+      cx.beginPath();
+      const L = paths[b];
+      for (let e = 0; e < L.length; e += 2) { cx.moveTo(P[L[e]][0], P[L[e]][1]); cx.lineTo(P[L[e + 1]][0], P[L[e + 1]][1]); }
+      cx.stroke();
+    }
+    cx.shadowColor = `rgba(${CYS},0.9)`;
+    if (bright.length) {
+      cx.strokeStyle = `rgba(210,248,255,${Math.min(1, 0.45 + glowSm * 0.5)})`; cx.lineWidth = 1.5;
+      cx.beginPath();
+      for (let e = 0; e < bright.length; e += 2) { cx.moveTo(P[bright[e]][0], P[bright[e]][1]); cx.lineTo(P[bright[e + 1]][0], P[bright[e + 1]][1]); }
+      cx.stroke();
+    }
+    // a few long chords that flash across the core (magenta)
     const chords = st === "thinking" ? 6 : st === "speaking" ? Math.round(lvl * 6) : 1;
+    cx.strokeStyle = `rgba(255,110,210,${0.12 + glowSm * 0.18})`; cx.lineWidth = 0.7;
+    cx.beginPath();
     for (let c = 0; c < chords; c++) {
       const i = Math.floor(hash(c, 7, flickerSeed) * N), j = Math.floor(hash(c, 13, flickerSeed) * N);
-      cx.strokeStyle = `rgba(140,230,255,${0.12 + glowSm * 0.18})`; cx.lineWidth = 0.8;
-      cx.beginPath(); cx.moveTo(P[i][0], P[i][1]); cx.lineTo(P[j][0], P[j][1]); cx.stroke();
+      cx.moveTo(P[i][0], P[i][1]); cx.lineTo(P[j][0], P[j][1]);
     }
-    // vertices
-    for (let i = 0; i < N; i++) {
-      const sz = 1.2 + (1 - P[i][2]) * 0.9 + lvl * 1.4;
-      cx.fillStyle = `rgba(200,245,255,${0.5 + glowSm * 0.3})`;
-      cx.beginPath(); cx.arc(P[i][0], P[i][1], sz, 0, 6.283); cx.fill();
+    cx.stroke();
+    // vertices: small and crisp, one path per depth band
+    for (const p of paths) p.length = 0;
+    for (let i = 0; i < N; i++) paths[bandOf(P[i][2])].push(i);
+    for (let b = 0; b < BANDS; b++) {
+      cx.fillStyle = b === 0 ? `rgba(225,250,255,${0.6 + glowSm * 0.3})` : `rgba(${bandCol[b]},${(0.55 + glowSm * 0.3) * (1 - b * 0.15)})`;
+      cx.beginPath();
+      const sz = (b === 0 ? 1.5 : 1.1 - b * 0.12) + lvl * 1.1;
+      for (const i of paths[b]) { cx.moveTo(P[i][0] + sz, P[i][1]); cx.arc(P[i][0], P[i][1], sz, 0, 6.283); }
+      cx.fill();
     }
     cx.shadowBlur = 0;
 
     // inner core
-    const core = cx.createRadialGradient(ox, oy, 0, ox, oy, R * (0.42 + lvl * 0.35));
-    core.addColorStop(0, `rgba(220,250,255,${0.35 + glowSm * 0.4})`);
-    core.addColorStop(0.35, `rgba(79,216,255,${0.18 + glowSm * 0.25})`);
-    core.addColorStop(1, "rgba(79,216,255,0)");
+    const core = cx.createRadialGradient(ox, oy, 0, ox, oy, R * (0.42 + lvl * 0.35)), dim = 1 - fe * 0.7;   // dimmer behind the logo
+    core.addColorStop(0, `rgba(220,250,255,${(0.35 + glowSm * 0.4) * dim})`);
+    core.addColorStop(0.35, `rgba(${CYS},${(0.18 + glowSm * 0.25) * dim})`);
+    core.addColorStop(0.75, `rgba(${MGS},${0.04 + glowSm * 0.06})`);
+    core.addColorStop(1, `rgba(${MGS},0)`);
     cx.fillStyle = core; cx.beginPath(); cx.arc(ox, oy, R * (0.42 + lvl * 0.35), 0, 6.283); cx.fill();
     cx.globalCompositeOperation = "source-over";
 
