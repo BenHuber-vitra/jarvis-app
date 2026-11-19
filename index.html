@@ -2526,32 +2526,87 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       $("bnext").onclick = () => { BZ.year++; BZ.goals = null; loadBiz(); };
     }
 
+    // Ben types the goal number; Jarvis fills the boxes with exponential growth up to it (small steps first,
+    // bigger near the goal, like his paper sheet), then a few pink bonus boxes past it, rounded to tidy numbers.
+    const NICE = [1, 1.1, 1.2, 1.25, 1.4, 1.5, 1.6, 1.75, 2, 2.25, 2.5, 2.75, 3, 3.5, 4, 4.5, 5, 5.5, 6, 7, 7.5, 8, 9];
+    const niceList = (x) => { const m = Math.pow(10, Math.floor(Math.log10(x))); return [...NICE.map((k) => k * m), 10 * m, 11 * m]; };
+    function niceNum(x, ints) {   // the tidy number nearest x (whole numbers for counts)
+      if (x <= 0) return 0;
+      const v = niceList(x).reduce((b, c) => (Math.abs(c - x) < Math.abs(b - x) ? c : b));
+      return ints ? Math.max(1, Math.round(v)) : +v.toPrecision(6);
+    }
+    function niceAbove(prev, ints) {   // the next tidy number above prev
+      const c = [...niceList(prev), ...niceList(prev * 10)].map((v) => (ints ? Math.round(v) : +v.toPrecision(6))).filter((v) => v > prev);
+      return Math.min(...c);
+    }
+    function fillBoxes(goal, n = 10, extra = 5) {
+      goal = +goal; n = Math.max(2, Math.min(40, Math.round(n))); extra = Math.max(0, Math.min(20, Math.round(extra)));
+      if (!(goal > 0)) return [];
+      const ints = Number.isInteger(goal);   // contracts, classes: no fractions
+      let vals;
+      if (ints && goal <= n) vals = Array.from({ length: goal }, (_, i) => i + 1);   // small goals: 1, 2, 3, ...
+      else {
+        const s = Math.max(goal / 20, ints ? 1 : 0);
+        vals = Array.from({ length: n }, (_, i) => (i === n - 1 ? goal : niceNum(s * Math.pow(goal / s, i / (n - 1)), ints)));
+      }
+      // bonus boxes keep growing, but gently (his sheet: 200 -> 650 over 10 boxes)
+      const r = Math.min(1.25, Math.max(1.1, Math.pow(goal / (vals[0] || 1), 1 / Math.max(1, vals.length - 1))));
+      for (let k = 1; k <= extra; k++) vals.push(niceNum(goal * Math.pow(r, k), ints));
+      const out = [];   // strictly rising, no repeats; the goal itself always stays
+      for (const v of vals) {
+        let w = out.length && v <= out[out.length - 1] ? niceAbove(out[out.length - 1], ints) : v;
+        if (out.length && out[out.length - 1] < goal && w > goal && vals.includes(goal) && v <= goal) w = goal;
+        out.push(w);
+      }
+      return out;
+    }
+
     function bizSheet(gi) {
       const g = gi >= 0 ? BZ.goals[gi] : { title: "", kind: "boxes", values: [], prefix: "", suffix: "", done: [] };
+      const isBonus = (v) => g.target !== undefined && g.target !== null && v > g.target;
+      const nIn = g.values.filter((v) => !isBonus(v)).length || 10, nOut = g.values.filter(isBonus).length || (g.values.length ? 0 : 5);
       openSheet(`<h2>${gi >= 0 ? "Edit goal" : "New goal"}</h2>
         <label>Goal</label><input id="bgt" maxlength="140" value="${esc(g.title)}" placeholder="e.g. 100 contracts this year">
         <label>Type</label><div class="seg gseg">${[["boxes", "Number boxes"], ["check", "One checkbox"]].map(([v, l]) => `<button type="button" data-kind="${v}" class="${g.kind === v ? "on" : ""}">${l}</button>`).join("")}</div>
-        <div id="bgvals"><label>Boxes (numbers, separated by commas)</label><input id="bgv" value="${esc(g.values.join(", "))}" placeholder="10, 20, 30, 40, 50">
-          <label>The goal (boxes above it are bonus and shaded pink)</label><input id="bgtarget" type="number" inputmode="decimal" step="any" value="${g.target ?? ""}" placeholder="e.g. 100 (leave empty: all boxes count)">
-          <div class="gm"><input id="bgp" maxlength="4" value="${esc(g.prefix || "")}" placeholder="Before, e.g. $" style="grid-column:auto"><input id="bgs" maxlength="6" value="${esc(g.suffix || "")}" placeholder="After, e.g. K"></div></div>
+        <div id="bgvals">
+          <label>The goal number</label><input id="bgtarget" type="number" inputmode="decimal" step="any" value="${g.target ?? ""}" placeholder="e.g. 100: the boxes fill in by themselves">
+          <div class="gm"><div><label style="margin-top:6px">Boxes to the goal</label><input id="bgn" type="number" inputmode="numeric" min="2" max="40" value="${nIn}"></div>
+            <div><label style="margin-top:6px">Bonus boxes (pink)</label><input id="bgx" type="number" inputmode="numeric" min="0" max="20" value="${nOut}"></div></div>
+          <div class="gm"><input id="bgp" maxlength="4" value="${esc(g.prefix || "")}" placeholder="Before, e.g. $" style="grid-column:auto"><input id="bgs" maxlength="6" value="${esc(g.suffix || "")}" placeholder="After, e.g. K"></div>
+          <label>Boxes (filled in for you; you can still change them)</label><input id="bgv" value="${esc(g.values.join(", "))}" placeholder="fills in from the goal number">
+          <div class="meta" id="bgnote"></div></div>
         <div class="btns"><button class="btn" id="bgsave">Save</button>${gi >= 0 ? `<button class="btn danger" id="bgdel">Remove</button>` : ""}<button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`,
       (box) => {
-        let kind = g.kind;
-        const showVals = () => { box.querySelector("#bgvals").style.display = kind === "boxes" ? "" : "none"; };
+        let kind = g.kind, regenerated = false;
+        const $b = (id) => box.querySelector(id);
+        const showVals = () => { $b("#bgvals").style.display = kind === "boxes" ? "" : "none"; };
         box.querySelectorAll("[data-kind]").forEach((b) => (b.onclick = () => { kind = b.dataset.kind; box.querySelectorAll("[data-kind]").forEach((x) => x.classList.toggle("on", x === b)); showVals(); }));
         showVals();
+        const refill = () => {
+          const goal = parseFloat($b("#bgtarget").value);
+          if (!(goal > 0)) return;
+          const vals = fillBoxes(goal, +$b("#bgn").value || 10, +$b("#bgx").value || 0);
+          $b("#bgv").value = vals.join(", "); regenerated = true;
+          const reached = Math.max(-Infinity, ...g.done.map((i) => g.values[i]));
+          $b("#bgnote").textContent = Number.isFinite(reached) ? `Boxes up to ${reached} stay crossed off.` : "";
+        };
+        let t = null; const soon = () => { clearTimeout(t); t = setTimeout(refill, 300); };
+        for (const id of ["#bgtarget", "#bgn", "#bgx"]) $b(id).oninput = soon;
+        $b("#bgv").oninput = () => { regenerated = false; $b("#bgnote").textContent = ""; };
         box.querySelector("#sx").onclick = closeSheet;
         box.querySelector("#bgsave").onclick = () => {
-          const title = box.querySelector("#bgt").value.trim();
+          const title = $b("#bgt").value.trim();
           if (!title) return sheetErr("Give the goal a name.");
-          const values = kind === "boxes" ? box.querySelector("#bgv").value.split(/[,\s]+/).map((x) => Number(x.replace(/[^0-9.\-]/g, ""))).filter((x) => x || x === 0) : [];
-          if (kind === "boxes" && !values.length) return sheetErr("Add at least one number, or choose One checkbox.");
-          // keep what's crossed off by value, so editing the list doesn't lose ticks
-          const doneVals = new Set(g.done.map((i) => g.values[i]));
-          const tv = box.querySelector("#bgtarget").value;
+          if (kind === "boxes" && !$b("#bgv").value.trim()) refill();
+          const values = kind === "boxes" ? $b("#bgv").value.split(/[,\s]+/).map((x) => Number(x.replace(/[^0-9.\-]/g, ""))).filter((x) => x || x === 0) : [];
+          if (kind === "boxes" && !values.length) return sheetErr("Type the goal number (or some boxes), or choose One checkbox.");
+          const tv = $b("#bgtarget").value;
+          // crossed-off boxes: after a refill, everything up to the furthest box he'd reached; otherwise by value
+          const doneVals = new Set(g.done.map((i) => g.values[i])), reached = Math.max(-Infinity, ...g.done.map((i) => g.values[i]));
+          const done = kind === "check" ? (g.kind === "check" ? g.done : [])
+            : values.map((v, i) => ((regenerated ? v <= reached : doneVals.has(v)) ? i : -1)).filter((i) => i >= 0);
           const item = { ...g, id: g.id || "g" + Date.now(), title, kind, values, target: kind === "boxes" && tv !== "" ? Number(tv) : undefined,
-            prefix: box.querySelector("#bgp").value.trim(), suffix: box.querySelector("#bgs").value.trim(),
-            done: kind === "check" ? (g.kind === "check" ? g.done : []) : values.map((v, i) => (doneVals.has(v) ? i : -1)).filter((i) => i >= 0) };
+            prefix: $b("#bgp").value.trim(), suffix: $b("#bgs").value.trim(), done };
           if (gi >= 0) BZ.goals[gi] = item; else BZ.goals.push(item);
           closeSheet(); render(); saveBiz();
         };
