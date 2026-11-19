@@ -700,10 +700,10 @@
     menuBtn.setAttribute("aria-expanded", open); drawer.setAttribute("aria-hidden", !open);
     if (open && !was) {   // show which screen you're on
       const m = $("money").classList.contains("on") && $("mtitle").textContent;
-      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || m === "2027 BINGO"]]) $(id).classList.toggle("cur", on);
+      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || / BINGO$/.test(m)]]) $(id).classList.toggle("cur", on);
       showSettings(m === "JARVIS COSTS" || m === "PERSONALITY");   // the cog's page holds Jarvis costs, so open there from it
       subOpen("Money", m === "BUSINESS" || m === "PERSONAL");   // on one of their screens, show the group open
-      subOpen("Goals", m === "BUSINESS GOALS" || m === "PERSONAL GOALS" || m === "2027 BINGO");
+      subOpen("Goals", m === "BUSINESS GOALS" || m === "PERSONAL GOALS" || / BINGO$/.test(m));
       menuStep = nav.push(() => setMenu(false));
     }
     const id = menuStep;
@@ -1130,7 +1130,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       if (!tabs.some(([k]) => k === tab)) tab = tabs[0][0];
       el.querySelectorAll("nav button").forEach((b, i) => { b.dataset.tab = tabs[i][0]; b.textContent = tabs[i][1]; });
       M.tab = tab;
-      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "2027 BINGO", persona: "PERSONALITY" }[M.book];
+      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY" }[M.book];
       el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book] || M.book === "bingo" || M.book === "persona");   // no Dashboard/Spending/... tabs there
       body.scrollTop = 0; hideTip(); el.classList.add("on");
       if (!fresh) render(); else if (!M.data) load(true); else { render(); load(true); }
@@ -2101,7 +2101,9 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
     // diagonals) of done squares are bingos. Saved in the cloud (/jarvis/goals/*, table goal_cells),
     // so the phone and laptop show one board. Images are shrunk to a small JPEG on this device first.
     // Inserted into money.js by app/build.py (shares its screen, sheets and back steps).
-    const BINGO = "bingo-2027";
+    // One card per year (Ben, 2026-11-19: "the same rotating years as business goals"); opens on 2027.
+    let BINGO_YEAR = Math.max(2027, new Date().getFullYear());
+    const boardId = () => "bingo-" + BINGO_YEAR;
     // -------------------------------------------------------------- Goal pictures in Jarvis's style (Ben, 2026-11-19)
     // A square without a photo gets a still drawing like the shapes on the Jarvis screen: a 3D wireframe
     // (cyan near side, magenta far side, glowing points) on the dark grid, with the goal's number on it.
@@ -2212,7 +2214,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       const auth = await authHeaders();
       if (!auth) { showSignin(true); throw new Error("This phone isn't paired."); }
       const r = await fetch(FN + "/goals/" + action, { method: "POST",
-        headers: { ...auth, apikey: PUBLISHABLE_KEY, "content-type": "application/json" }, body: JSON.stringify({ board: BINGO, ...(payload || {}) }) });
+        headers: { ...auth, apikey: PUBLISHABLE_KEY, "content-type": "application/json" }, body: JSON.stringify({ board: boardId(), ...(payload || {}) }) });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.error || `Goals service error (${r.status})`);
       return j;
@@ -2245,7 +2247,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       const cells = G.cells || Array.from({ length: 25 }, (_, i) => blank(i)), lines = bingoLines(cells);
       body.innerHTML = (G.error ? `<div class="note err">${esc(G.error)}</div>` : "") + `<div class="card click bingocard" id="openBingo">
         <div class="bmini">${cells.map((c) => `<i class="${c.status === "done" ? "d" : c.status === "in_progress" ? "p" : c.title ? "s" : ""}"></i>`).join("")}</div>
-        <div class="grow"><div class="name" style="font-size:19px">2027 Bingo card</div>
+        <div class="grow"><div class="name" style="font-size:19px">${BINGO_YEAR} Bingo card</div>
           <div class="meta">${countOf("done")} done · ${countOf("in_progress")} in progress · ${cells.filter((c) => c.title).length} of 25 set${lines.length ? ` · ${lines.length} bingo${lines.length > 1 ? "s" : ""}!` : ""}</div></div>
         <span class="chev">›</span></div>`;
       $("openBingo").onclick = () => { nav.push(() => show("goalsPers", "dash")); show("bingo", "dash"); };
@@ -2253,10 +2255,12 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
 
     // ---- the board
     function renderBingo() {
+      $("mtitle").textContent = BINGO_YEAR + " BINGO";
       setTimeout(backfillArt, 0);
       if (!G.cells) { body.innerHTML = G.error ? `<div class="note err">${esc(G.error)}</div>` : `<div class="note">Loading…</div>`; return; }
       const lines = bingoLines(G.cells), inLine = new Set(lines.flat());
       let h = (G.error ? `<div class="note err">${esc(G.error)}</div>` : "") +
+        `<div class="byear"><button class="linkish" id="gyprev">‹ ${BINGO_YEAR - 1}</button><b>${BINGO_YEAR} bingo card</b><button class="linkish" id="gynext">${BINGO_YEAR + 1} ›</button></div>` +
         `<div class="bstats"><span><b>${countOf("done")}</b> done</span><span><b>${countOf("in_progress")}</b> in progress</span><span class="${lines.length ? "win" : ""}"><b>${lines.length}</b> bingo${lines.length === 1 ? "" : "s"}</span></div><div class="bingo">`;
       for (const c of G.cells) {
         const img = c.image ? ` style="background-image:url('${c.image}')"` : "";
@@ -2272,6 +2276,9 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       body.querySelectorAll("[data-rw]").forEach((r) => (r.onclick = () => rewardSheet(+r.dataset.rw)));
       $("graddrw").onclick = () => rewardSheet(-1);
       body.querySelectorAll("[data-sq]").forEach((b) => (b.onclick = () => { const c = G.cells[+b.dataset.sq]; c.title ? squareSheet(c) : editSheet(c); }));
+      const goYear = (y) => { BINGO_YEAR = y; G.cells = null; G.rewards = []; loadGoals(); };
+      $("gyprev").onclick = () => goYear(BINGO_YEAR - 1);
+      $("gynext").onclick = () => goYear(BINGO_YEAR + 1);
     }
 
     // ---- rewards for bingos (Ben): each unlocks at N bingos, or 25 = blackout (every square done)
@@ -2420,19 +2427,19 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
     }
 
     // ---- #money-demo: a few sample squares, kept in memory
-    let demoBoard = null;
+    const demoBoards = {};   // per year, in memory
     function demoGoals(action, p) {
-      if (!demoBoard) demoBoard = [
+      if (!demoBoards[BINGO_YEAR]) demoBoards[BINGO_YEAR] = BINGO_YEAR !== 2027 ? [] : [
         { idx: 0, title: "Run a half marathon", description: "Sign up for the spring race and train three days a week.", status: "in_progress", progress: 40, metric: { label: "Training miles", current: 120, target: 300, unit: "mi" } },
         { idx: 6, title: "Read 24 books", description: "Two a month.", status: "in_progress", progress: 25, metric: { label: "Books", current: 6, target: 24, unit: "" } },
         { idx: 12, title: "Family trip to Zion", description: "", status: "done", progress: 100, metric: null },
         { idx: 18, title: "Learn to surf", description: "", status: "none", progress: 0, metric: null },
       ];
-      if (action === "board") return Promise.resolve({ cells: demoBoard, rewards: G.rewards.length ? G.rewards : [{ at: 1, text: "New running shoes", claimed: false }, { at: 25, text: "Weekend in San Diego", claimed: false }] });
+      if (action === "board") return Promise.resolve({ cells: demoBoards[BINGO_YEAR], rewards: G.rewards.length ? G.rewards : [{ at: 1, text: "New running shoes", claimed: false }, { at: 25, text: "Weekend in San Diego", claimed: false }] });
       if (action === "rewards") return Promise.resolve({ ok: true, rewards: p.rewards });
-      const i = demoBoard.findIndex((c) => c.idx === p.idx), cur = i >= 0 ? demoBoard[i] : blank(p.idx);
+      const i = demoBoards[BINGO_YEAR].findIndex((c) => c.idx === p.idx), cur = i >= 0 ? demoBoards[BINGO_YEAR][i] : blank(p.idx);
       const { idx, board, ...rest } = p, n = { ...cur, ...rest, idx, done_at: rest.status === "done" ? new Date().toISOString() : cur.done_at };
-      if (i >= 0) demoBoard[i] = n; else demoBoard.push(n);
+      if (i >= 0) demoBoards[BINGO_YEAR][i] = n; else demoBoards[BINGO_YEAR].push(n);
       return Promise.resolve({ ok: true, cell: n });
     }
 
