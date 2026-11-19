@@ -2564,15 +2564,18 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       const c = [...niceList(prev), ...niceList(prev * 10)].map((v) => (ints ? Math.round(v) : +v.toPrecision(6))).filter((v) => v > prev);
       return Math.min(...c);
     }
-    function fillBoxes(goal, n = 10, extra = 5) {
+    // start: the first box (Ben: "1 or 25k, and it grows from that point"); empty = goal / 20.
+    function fillBoxes(goal, n = 10, extra = 5, start = NaN) {
       goal = +goal; n = Math.max(2, Math.min(40, Math.round(n))); extra = Math.max(0, Math.min(20, Math.round(extra)));
       if (!(goal > 0)) return [];
-      const ints = Number.isInteger(goal);   // contracts, classes: no fractions
+      const ints = Number.isInteger(goal) && (!(start > 0) || Number.isInteger(+start));   // contracts, classes: no fractions
+      const first = start > 0 && start < goal ? +start : NaN;
       let vals;
-      if (ints && goal <= n) vals = Array.from({ length: goal }, (_, i) => i + 1);   // small goals: 1, 2, 3, ...
+      const lo = first > 0 ? first : 1;
+      if (ints && goal - lo + 1 <= n) vals = Array.from({ length: goal - lo + 1 }, (_, i) => lo + i);   // small ranges: every number
       else {
-        const s = Math.max(goal / 20, ints ? 1 : 0);
-        vals = Array.from({ length: n }, (_, i) => (i === n - 1 ? goal : niceNum(s * Math.pow(goal / s, i / (n - 1)), ints)));
+        const s = first > 0 ? first : Math.max(goal / 20, ints ? 1 : 0);
+        vals = Array.from({ length: n }, (_, i) => (i === 0 && first > 0 ? first : i === n - 1 ? goal : niceNum(s * Math.pow(goal / s, i / (n - 1)), ints)));
       }
       // bonus boxes keep growing, but gently (his sheet: 200 -> 650 over 10 boxes)
       const r = Math.min(1.25, Math.max(1.1, Math.pow(goal / (vals[0] || 1), 1 / Math.max(1, vals.length - 1))));
@@ -2595,6 +2598,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
         <label>Type</label><div class="seg gseg">${[["boxes", "Number boxes"], ["check", "One checkbox"]].map(([v, l]) => `<button type="button" data-kind="${v}" class="${g.kind === v ? "on" : ""}">${l}</button>`).join("")}</div>
         <div id="bgvals">
           <label>The goal number</label><input id="bgtarget" inputmode="text" autocomplete="off" value="${g.target !== undefined && g.target !== null ? esc(fmtVal(g, g.target)) : ""}" placeholder="e.g. 100, 200k or $1.5m: the boxes fill in by themselves">
+          <label>First box (where the boxes start)</label><input id="bgstart" inputmode="text" autocomplete="off" value="${g.values.length ? esc(fmtNum(g.values[0])) : ""}" placeholder="e.g. 1 or 25k (empty: Jarvis picks)">
           <div class="gm"><div><label style="margin-top:6px">Boxes to the goal</label><input id="bgn" type="number" inputmode="numeric" min="2" max="40" value="${nIn}"></div>
             <div><label style="margin-top:6px">Bonus boxes (pink)</label><input id="bgx" type="number" inputmode="numeric" min="0" max="20" value="${nOut}"></div></div>
           <label class="check" style="margin-top:10px"><input type="checkbox" id="bgmoney" ${g.prefix === "$" ? "checked" : ""}> Money (show $)</label>
@@ -2611,13 +2615,13 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
           const goal = parseAmount($b("#bgtarget").value);
           if (!(goal > 0)) return;
           if (/\$/.test($b("#bgtarget").value)) $b("#bgmoney").checked = true;   // typed "$200k": it's money
-          const vals = fillBoxes(goal, +$b("#bgn").value || 10, +$b("#bgx").value || 0);
+          const vals = fillBoxes(goal, +$b("#bgn").value || 10, +$b("#bgx").value || 0, parseAmount($b("#bgstart").value));
           $b("#bgv").value = vals.map(fmtNum).join(", "); regenerated = true;
           const reached = Math.max(-Infinity, ...g.done.map((i) => g.values[i]));
           $b("#bgnote").textContent = Number.isFinite(reached) ? `Boxes up to ${fmtVal({ ...g, prefix: $b("#bgmoney").checked ? "$" : "" }, reached)} stay crossed off.` : "";
         };
         let t = null; const soon = () => { clearTimeout(t); t = setTimeout(refill, 300); };
-        for (const id of ["#bgtarget", "#bgn", "#bgx"]) $b(id).oninput = soon;
+        for (const id of ["#bgtarget", "#bgstart", "#bgn", "#bgx"]) $b(id).oninput = soon;
         $b("#bgv").oninput = () => { regenerated = false; $b("#bgnote").textContent = ""; };
         box.querySelector("#sx").onclick = closeSheet;
         box.querySelector("#bgsave").onclick = () => {
