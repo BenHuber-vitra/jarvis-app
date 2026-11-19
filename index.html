@@ -198,7 +198,7 @@
   #money .rw .rwicon { flex: none; width: 26px; text-align: center; font-size: 17px; }
   #money .rw.locked .name { color: var(--ink2); } #money .rw.earned .rwicon { color: #ffcc33; } #money .rw.claimed .rwicon { color: #2ecc71; }
   #money .rw.earned .meta { color: #ffcc33; }
-  #msheet .bhero { position: relative; height: 190px; margin: -4px 0 12px; border-radius: 8px; background: center / cover no-repeat; overflow: hidden; }
+  #msheet .bhero { position: relative; aspect-ratio: 1.35; max-height: 300px; margin: -4px 0 12px; border-radius: 8px; background: center / cover no-repeat; overflow: hidden; }
   #msheet .bcheck { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(46,204,113,0.35); }
   #msheet .bcheck svg { width: 90px; height: 90px; }
   #msheet .bdesc { white-space: pre-wrap; line-height: 1.4; margin: 10px 0; color: #cfe3f0; }
@@ -2066,6 +2066,110 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
     // so the phone and laptop show one board. Images are shrunk to a small JPEG on this device first.
     // Inserted into money.js by app/build.py (shares its screen, sheets and back steps).
     const BINGO = "bingo-2027";
+    // -------------------------------------------------------------- Goal pictures in Jarvis's style (Ben, 2026-11-19)
+    // A square without a photo gets a still drawing like the shapes on the Jarvis screen: a 3D wireframe
+    // (cyan near side, magenta far side, glowing points) on the dark grid, with the goal's number on it.
+    // The icon is picked from the goal's words: "Bench 225" -> barbell + "225"; "Make 350k gross" ->
+    // dollar sign + "$350K". goalArt(title) -> a JPEG data URL (520 px). Inserted into goals.js's scope.
+    const ART = (() => {
+      const P = (pts) => pts.map(([x, y]) => [x, y]);
+      const circle = (cx, cy, r, n = 28, a0 = 0, a1 = Math.PI * 2) => Array.from({ length: n + 1 }, (_, i) => { const a = a0 + (a1 - a0) * i / n; return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]; });
+      const rect = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]];
+      // each icon: polylines in -1..1 (y down)
+      return {
+        barbell: [P([[-0.95, 0], [0.95, 0]]), rect(-0.78, -0.42, -0.62, 0.42), rect(-0.6, -0.3, -0.48, 0.3), rect(0.62, -0.42, 0.78, 0.42),
+          rect(0.48, -0.3, 0.6, 0.3), rect(-0.46, -0.07, -0.4, 0.07), rect(0.4, -0.07, 0.46, 0.07)],
+        dollar: [P([[0.42, -0.42], [0.25, -0.58], [-0.05, -0.62], [-0.32, -0.55], [-0.45, -0.38], [-0.42, -0.18], [-0.25, -0.06], [0.25, 0.06], [0.42, 0.18], [0.45, 0.38], [0.32, 0.55], [0.05, 0.62], [-0.25, 0.58], [-0.42, 0.42]]),
+          P([[0, -0.85], [0, 0.85]])],
+        book: [P([[0, -0.45], [-0.3, -0.58], [-0.85, -0.5], [-0.85, 0.5], [-0.3, 0.42], [0, 0.55], [0.3, 0.42], [0.85, 0.5], [0.85, -0.5], [0.3, -0.58], [0, -0.45], [0, 0.55]]),
+          P([[-0.72, -0.28], [-0.18, -0.34]]), P([[-0.72, -0.08], [-0.18, -0.14]]), P([[0.18, -0.34], [0.72, -0.28]]), P([[0.18, -0.14], [0.72, -0.08]])],
+        globe: [circle(0, 0, 0.85, 40), P(circle(0, 0, 0.85, 30).map(([x, y]) => [x * 0.45, y])), P(circle(0, 0, 0.85, 30).map(([x, y]) => [x * 0.12, y])),
+          P([[-0.85, 0], [0.85, 0]]), P(circle(0, -0.42, 0.74, 24, Math.PI, 0).map(([x, y]) => [x, -0.42])), P([[-0.74, -0.42], [0.74, -0.42]]), P([[-0.74, 0.42], [0.74, 0.42]])],
+        medal: [circle(0, 0.22, 0.5, 32), circle(0, 0.22, 0.34, 28), P([[-0.3, -0.18], [-0.5, -0.88], [-0.15, -0.88], [0.05, -0.28]]), P([[0.3, -0.18], [0.5, -0.88], [0.15, -0.88], [-0.05, -0.28]])],
+        heart: [P([[0, 0.78], [-0.72, 0.05], [-0.82, -0.3], [-0.65, -0.62], [-0.32, -0.7], [0, -0.42], [0.32, -0.7], [0.65, -0.62], [0.82, -0.3], [0.72, 0.05], [0, 0.78]])],
+        house: [P([[-0.75, -0.05], [0, -0.75], [0.75, -0.05]]), rect(-0.58, -0.2, 0.58, 0.75), rect(-0.15, 0.25, 0.15, 0.75), rect(0.25, 0.05, 0.45, 0.25)],
+        car: [P([[-0.9, 0.25], [-0.9, -0.05], [-0.55, -0.1], [-0.32, -0.45], [0.35, -0.45], [0.6, -0.1], [0.9, -0.02], [0.9, 0.25], [-0.9, 0.25]]),
+          circle(-0.5, 0.3, 0.18, 18), circle(0.5, 0.3, 0.18, 18), P([[-0.25, -0.38], [-0.08, -0.12], [0.45, -0.12], [0.3, -0.38], [-0.25, -0.38]])],
+        mountain: [P([[-0.95, 0.65], [-0.35, -0.3], [-0.1, 0.05], [0.25, -0.62], [0.95, 0.65], [-0.95, 0.65]]), P([[0.25, -0.62], [0.25, -0.95], [0.55, -0.85], [0.25, -0.75]])],
+        target: [circle(0, 0, 0.82, 36), circle(0, 0, 0.55, 30), circle(0, 0, 0.28, 24), P([[0.95, -0.95], [0.05, -0.05]]), P([[0.95, -0.95], [0.7, -0.95]]), P([[0.95, -0.95], [0.95, -0.7]])],
+        plane: [P([[-0.9, 0], [0.55, -0.04], [0.9, 0], [0.55, 0.04], [-0.9, 0]]), P([[0.1, -0.02], [-0.2, -0.7], [-0.32, -0.7], [-0.15, -0.02]]),
+          P([[0.1, 0.02], [-0.2, 0.7], [-0.32, 0.7], [-0.15, 0.02]]), P([[-0.72, -0.01], [-0.85, -0.3], [-0.92, -0.3], [-0.85, 0]])],
+        star: [P(Array.from({ length: 11 }, (_, i) => { const a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 0.36 : 0.88; return [Math.cos(a) * r, Math.sin(a) * r]; }))],
+      };
+    })();
+    const ART_WORDS = [   // first match wins
+      ["barbell", /\b(bench|squat|deadlift|lift|press|gym|pull-?ups?|push-?ups?|strength|lbs?|pounds|curl|weights?)\b/i],
+      ["dollar", /(\$|\b(gross|revenue|income|sales|profit|earn|save|savings|money|invest|debt|net worth|salary|pay ?off|budget)\b|\d\s*k\b)/i],
+      ["medal", /\b(run|marathon|race|5k|10k|half|triathlon|miles?|km|swim|bike|cycle|ironman)\b/i],
+      ["book", /\b(read|books?|learn|study|course|class|degree|certif\w*|write|language|spanish)\b/i],
+      ["plane", /\b(trip|travel|vacation|visit|fly|flight|cruise|europe|japan|hawaii|abroad)\b/i],
+      ["mountain", /\b(hike|climb|summit|peak|mountain|camp\w*|ski\w*|outdoors?)\b/i],
+      ["heart", /\b(family|wife|kids?|date|marriage|love|friends?|amber|church|serve|volunteer|give|charity)\b/i],
+      ["house", /\b(house|home|remodel|garage|yard|basement|rental|property|real estate|move)\b/i],
+      ["car", /\b(car|truck|tundra|boat|motorcycle|vehicle|drive)\b/i],
+      ["globe", /\b(world|countries|global|business|clients?|customers?|launch|grow|expand)\b/i],
+      ["target", /\b(goal|habit|daily|every day|streak|lose|weight|diet|sleep|meditat\w*|journal)\b/i],
+    ];
+    function artLabel(title) {   // the number to print on the picture: "$350K", "225", "26.2", ...
+      const t = String(title || "");
+      const m = t.match(/(\$\s?)?(\d[\d,]*(?:\.\d+)?)\s*(k|m|mil(?:lion)?|thousand)?\b/i);
+      if (!m) return "";
+      let n = m[2].replace(/,/g, ""), suf = (m[3] || "").toLowerCase();
+      suf = suf.startsWith("m") ? "M" : suf ? "K" : "";
+      if (!suf && +n >= 10000) { const v = +n; n = v >= 1e6 ? +(v / 1e6).toFixed(1) + "" : +(v / 1e3).toFixed(0) + ""; suf = v >= 1e6 ? "M" : "K"; }
+      const money = !!m[1] || /\b(gross|revenue|income|sales|profit|earn|save|savings|money|invest|debt|net worth|salary|budget|\$)/i.test(t);
+      return (money ? "$" : "") + n + suf;
+    }
+    function goalArt(title) {
+      const S = 520, cv = document.createElement("canvas"); cv.width = cv.height = S;
+      const g = cv.getContext("2d"), cx = S / 2;
+      const kind = (ART_WORDS.find(([, re]) => re.test(title || "")) || ["star"])[0], label = artLabel(title);
+      // icon a little high and the number just under it, so both survive the wide crop in the big view
+      const cy = label ? S * 0.42 : S * 0.5;
+      // background: deep navy, grid, soft glow, HUD rings
+      const bg = g.createRadialGradient(cx, cy, 10, cx, cy, S * 0.75); bg.addColorStop(0, "#0b1d38"); bg.addColorStop(1, "#02040b");
+      g.fillStyle = bg; g.fillRect(0, 0, S, S);
+      g.strokeStyle = "rgba(79,216,255,0.07)"; g.lineWidth = 1;
+      for (let x = 0; x <= S; x += 26) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, S); g.stroke(); g.beginPath(); g.moveTo(0, x); g.lineTo(S, x); g.stroke(); }
+      g.lineWidth = 1.5; g.strokeStyle = "rgba(79,216,255,0.25)"; g.beginPath(); g.arc(cx, cy, S * 0.4, -2.4, 0.9); g.stroke();
+      g.strokeStyle = "rgba(214,64,168,0.28)"; g.beginPath(); g.arc(cx, cy, S * 0.43, 1.2, 2.9); g.stroke();
+      for (let k = 0; k < 72; k++) { const a = k / 72 * Math.PI * 2, r0 = S * 0.455, r1 = r0 + (k % 6 ? 5 : 11);
+        g.strokeStyle = `rgba(79,216,255,${k % 6 ? 0.18 : 0.38})`; g.beginPath(); g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); g.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); g.stroke(); }
+      const halo = g.createRadialGradient(cx, cy, 0, cx, cy, S * 0.33); halo.addColorStop(0, "rgba(79,216,255,0.16)"); halo.addColorStop(1, "rgba(79,216,255,0)");
+      g.fillStyle = halo; g.fillRect(0, 0, S, S);
+      // the icon as a 3D wireframe: front face, back face, and struts between them
+      const ry = -0.55, rx = 0.32, depth = 0.16, R = S * (label ? 0.23 : 0.27);
+      const proj = ([x, y], z) => { const x1 = x * Math.cos(ry) - z * Math.sin(ry), z1 = x * Math.sin(ry) + z * Math.cos(ry);
+        const y1 = y * Math.cos(rx) - z1 * Math.sin(rx), z2 = y * Math.sin(rx) + z1 * Math.cos(rx), f = 2.8 / (2.8 + z2); return [cx + x1 * R * f, cy + y1 * R * f]; };
+      const lines = ART[kind];
+      const stroke = (col, w, blur, fn) => { g.strokeStyle = col; g.lineWidth = w; g.shadowColor = col; g.shadowBlur = blur; g.lineJoin = g.lineCap = "round"; g.beginPath(); fn(); g.stroke(); g.shadowBlur = 0; };
+      g.globalCompositeOperation = "lighter";
+      stroke("rgba(214,64,168,0.55)", 1.6, 8, () => { for (const l of lines) l.forEach((p, i) => { const q = proj(p, depth); i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); }); });
+      stroke("rgba(140,160,230,0.35)", 1, 0, () => { for (const l of lines) l.forEach((p, i) => { if (i % 3) return; const a = proj(p, -depth), b = proj(p, depth); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); }); });
+      stroke("rgba(79,216,255,0.95)", 2.4, 14, () => { for (const l of lines) l.forEach((p, i) => { const q = proj(p, -depth); i ? g.lineTo(q[0], q[1]) : g.moveTo(q[0], q[1]); }); });
+      g.fillStyle = "rgba(225,250,255,0.95)"; g.shadowColor = "#4fd8ff"; g.shadowBlur = 10;
+      for (const l of lines) l.forEach((p, i) => { if (i % 2 && i !== l.length - 1) return; const q = proj(p, -depth); g.beginPath(); g.arc(q[0], q[1], 2.6, 0, 6.283); g.fill(); });
+      g.shadowBlur = 0; g.globalCompositeOperation = "source-over";
+      // the number, big, under the icon
+      if (label) {
+        g.font = `700 ${label.length > 6 ? 54 : 66}px Orbitron, "Segoe UI", sans-serif`; g.textAlign = "center"; g.textBaseline = "middle";
+        g.shadowColor = "rgba(79,216,255,0.9)"; g.shadowBlur = 18; g.fillStyle = "#e9fbff"; g.fillText(label, cx, S * 0.71); g.shadowBlur = 0;
+        g.strokeStyle = "rgba(214,64,168,0.6)"; g.lineWidth = 1; g.strokeText(label, cx + 2, S * 0.71 + 2);
+      }
+      return cv.toDataURL("image/jpeg", 0.86);
+    }
+
+    // The drawings use Jarvis's Orbitron font: wait for it once, or the number comes out in a plain font.
+    const artReady = (document.fonts && document.fonts.load ? document.fonts.load("700 60px Orbitron").catch(() => {}) : Promise.resolve());
+    let backfilling = false;
+    async function backfillArt() {   // squares saved without a picture get Jarvis's drawing (once, in the background)
+      if (backfilling) return;
+      const missing = (G.cells || []).filter((c) => c.title && !c.image);
+      if (!missing.length) return;
+      backfilling = true; await artReady;
+      for (const c of missing) { try { await saveCell(c, { image: goalArt(c.title), image_kind: "auto" }); } catch {} }
+      backfilling = false; if (M.book === "bingo" || M.book === "goalsPers") render();
+    }
     const G = { cells: null, rewards: [], error: "", busy: false };
     async function gcall(action, payload) {
       if (DEMO) return demoGoals(action, payload);
@@ -2112,6 +2216,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
 
     // ---- the board
     function renderBingo() {
+      setTimeout(backfillArt, 0);
       if (!G.cells) { body.innerHTML = G.error ? `<div class="note err">${esc(G.error)}</div>` : `<div class="note">Loading…</div>`; return; }
       const lines = bingoLines(G.cells), inLine = new Set(lines.flat());
       let h = (G.error ? `<div class="note err">${esc(G.error)}</div>` : "") +
@@ -2222,12 +2327,13 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
     }
     function editSheet(c) {
       const m = c.metric || {};
-      let image = c.image;
+      // The picture is Jarvis's own drawing (made from the goal's words, see goalart.js) unless Ben picks a photo.
+      let image = c.image, kind = c.image_kind || (c.image ? "photo" : "auto");
       openSheet(`<h2>${c.title ? "Edit square" : "New goal"}</h2><div class="meta">Square ${c.idx + 1} of 25</div>
         <label>Goal</label><input id="gt" maxlength="80" value="${esc(c.title)}" placeholder="e.g. Run a half marathon">
         <label>Description</label><textarea id="gd" rows="4" maxlength="2000" placeholder="What it means, why it matters, how you'll do it">${esc(c.description)}</textarea>
-        <label>Image</label><div class="gimg"><div id="gprev" class="gprev"${image ? ` style="background-image:url('${image}')"` : ""}>${image ? "" : "No image"}</div>
-          <div class="btns" style="margin:0;flex-direction:column"><button class="btn quiet" id="gpick">Choose photo</button>${image ? `<button class="btn quiet" id="gnoimg">Remove</button>` : ""}</div></div>
+        <label>Picture</label><div class="gimg"><div id="gprev" class="gprev"></div>
+          <div class="btns" style="margin:0;flex-direction:column"><div class="meta" id="gkind"></div><button class="btn quiet" id="gpick">Choose photo</button><button class="btn quiet" id="gauto">Use Jarvis picture</button></div></div>
         <label>Metric (optional: progress follows it)</label>
         <div class="gm"><input id="gml" placeholder="What you count, e.g. Miles" maxlength="40" value="${esc(m.label || "")}">
           <input id="gmc" type="number" inputmode="decimal" step="any" placeholder="Now" value="${m.current ?? ""}">
@@ -2239,11 +2345,20 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
         box.querySelector("#gpick").onclick = () => {
           const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*"; inp.style.display = "none"; document.body.appendChild(inp);
           inp.onchange = async () => { const f = inp.files && inp.files[0]; inp.remove(); if (!f) return;
-            try { image = await shrink(f); const pv = box.querySelector("#gprev"); pv.style.backgroundImage = `url('${image}')`; pv.textContent = ""; } catch (e) { sheetErr(e.message); } };
+            try { image = await shrink(f); kind = "photo"; preview(); } catch (e) { sheetErr(e.message); } };
           inp.click();
         };
-        const noimg = box.querySelector("#gnoimg");
-        if (noimg) noimg.onclick = () => { image = null; const pv = box.querySelector("#gprev"); pv.style.backgroundImage = ""; pv.textContent = "No image"; };
+        const pv = box.querySelector("#gprev"), titleIn = box.querySelector("#gt");
+        const preview = () => {   // Jarvis's drawing follows the goal's name as Ben types
+          if (kind === "auto") image = goalArt(titleIn.value.trim() || "Goal");
+          pv.style.backgroundImage = `url('${image}')`;
+          box.querySelector("#gkind").textContent = kind === "auto" ? "Jarvis picture (from the goal's words)" : "Your photo";
+          box.querySelector("#gauto").style.display = kind === "auto" ? "none" : "";
+        };
+        let typing = null;
+        titleIn.oninput = () => { if (kind !== "auto") return; clearTimeout(typing); typing = setTimeout(preview, 350); };
+        box.querySelector("#gauto").onclick = () => { kind = "auto"; preview(); };
+        artReady.then(preview);
         box.querySelector("#gsave").onclick = async (ev) => {
           const title = box.querySelector("#gt").value.trim();
           if (!title) return sheetErr("Give the goal a name.");
@@ -2252,7 +2367,8 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
           const hasMetric = metric.label || metric.target !== null || metric.current !== null;
           ev.target.disabled = true; ev.target.textContent = "Saving…";
           try {
-            const n = await saveCell(c, { title, description: box.querySelector("#gd").value, image, metric: hasMetric ? metric : null,
+            if (kind === "auto") image = goalArt(title);
+            const n = await saveCell(c, { title, description: box.querySelector("#gd").value, image, image_kind: kind, metric: hasMetric ? metric : null,
               ...(hasMetric && metric.target ? { progress: Math.max(0, Math.min(100, Math.round(((metric.current || 0) / metric.target) * 100))) } : {}) });
             closeSheet(); render(); squareSheet(n);
           } catch (e) { ev.target.disabled = false; ev.target.textContent = "Save"; sheetErr(e.message); }
