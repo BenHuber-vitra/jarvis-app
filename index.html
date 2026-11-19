@@ -1183,10 +1183,12 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       </div>`;
       h += `<div class="sect"><span class="label">Accounts</span><span class="note" style="margin:0">${items.length ? "Synced " + esc(ago(newest)) + " · " : ""}<button class="linkish" id="msync">Sync now</button></span></div><div class="card">`;
       const shown = groups.filter((g) => g.items.length || ["checking", "savings", "credit", "cash"].includes(g.kind));
+      // Cash / business funds with at most one entry: one tap opens "set the amount" (Ben, 2026-11-19).
+      const setOnTap = (g) => (g.kind === "cash" || g.kind === "business") && g.items.length <= 1;
       for (const g of shown) {
-        const isOpen = !!M.open[g.kind];
-        h += `<div class="row click" data-group="${g.kind}"><span class="chev">${g.items.length ? (isOpen ? "▾" : "▸") : ""}</span><div class="grow"><div class="name">${esc(g.label)}</div>` +
-          `${g.items.length ? "" : `<div class="meta">${g.kind === "cash" || g.kind === "business" ? "Tap to add" : "None linked"}</div>`}</div><div class="amt">${f(g.total)}</div></div>`;
+        const isOpen = !!M.open[g.kind] && !setOnTap(g);
+        h += `<div class="row click" data-group="${g.kind}"><span class="chev">${g.items.length && !setOnTap(g) ? (isOpen ? "▾" : "▸") : ""}</span><div class="grow"><div class="name">${esc(g.label)}</div>` +
+          `${setOnTap(g) ? `<div class="meta">Tap to set the amount</div>` : g.items.length ? "" : `<div class="meta">None linked</div>`}</div><div class="amt">${f(g.total)}</div></div>`;
         if (isOpen) for (const a of g.items) {
           h += `<div class="row sub2 click" data-acct="${esc(a.id)}"><div class="grow"><div class="name">${esc(a.name)}${a.mask ? " ··" + esc(a.mask) : ""}</div>` +
             `<div class="meta">${esc(a.manual ? "Entered by hand · updated " + ago(a.updated_at) : a.institution || "")}${g.kind === "credit" && a.credit_limit ? " · limit " + f0(+a.credit_limit) : ""}</div></div><div class="amt">${f(+a.balance)}</div></div>`;
@@ -1217,7 +1219,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       body.querySelectorAll("[data-group]").forEach((r) => (r.onclick = () => {
         if (r.dataset.group === "hidden") { M.open.hidden = !M.open.hidden; return render(); }
         const g = groups.find((x) => x.kind === r.dataset.group);
-        if (!g.items.length && (g.kind === "cash" || g.kind === "business")) return manualSheet(null, g.kind);
+        if (setOnTap(g)) return g.items.length ? manualSheet(g.items[0]) : manualSheet(null, g.kind);
         M.open[g.kind] = !M.open[g.kind]; render();
       }));
       body.querySelectorAll("[data-acct]").forEach((r) => (r.onclick = () => {
@@ -1975,7 +1977,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
 
     function manualSheet(a, kind) {
       const k = a ? a.kind : kind;
-      openSheet(`<h2>${a ? "Edit " + esc(a.name) : "Add to " + esc(BOOKS[M.book])}</h2><div class="meta">Entered by hand. Update the amount whenever it changes.</div>
+      openSheet(`<h2>${a ? "Set " + esc(a.name) : "Add to " + esc(BOOKS[M.book])}</h2><div class="meta">Entered by hand: type what you have now, and change it whenever it changes.</div>
         <label>Name</label><input id="sn" value="${esc(a ? a.name : k === "business" ? "Business funds" : "Cash")}" maxlength="60">
         <label>Section</label><select id="sk">${[["cash", "Cash"], ["business", "Business funds"], ["savings", "Savings"], ["other", "Other"]].map(([v, l]) =>
           `<option value="${v}" ${k === v ? "selected" : ""}>${l}</option>`).join("")}</select>
