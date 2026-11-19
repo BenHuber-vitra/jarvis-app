@@ -63,6 +63,14 @@
   #drawer .dsub .ditem { padding-left: 38px; font-size: 16px; }
   #drawer .dchev { transition: transform .15s; }
   #drawer [aria-expanded="true"] .dchev { transform: rotate(90deg); color: var(--cyan); }
+  /* the cog next to the name: Settings page inside the menu */
+  #drawer .dhead { display: flex; align-items: center; justify-content: space-between; padding-right: 12px; }
+  #drawer .cog { background: none; border: 0; padding: 4px; width: 34px; height: 34px; color: var(--muted); cursor: pointer; border-radius: 50%; }
+  #drawer .cog svg { width: 22px; height: 22px; display: block; margin: auto; transition: transform .3s; }
+  #drawer .cog[aria-pressed="true"] { color: var(--cyan); background: rgba(79,216,255,0.1); }
+  #drawer .cog[aria-pressed="true"] svg { transform: rotate(60deg); }
+  #drawer #dset { display: none; } #drawer.set #dset { display: block; } #drawer.set #dmain { display: none; }
+  #drawer .dback span { color: var(--cyan); font-size: 16px; }
   /* ---------------------------------------------------------------- Money screen */
   #money { position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column; background: var(--bg0);
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
@@ -165,6 +173,46 @@
   #msheet .swatch.on { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.25); }
   #msheet .swatch.any { background: conic-gradient(#e66767, #ffb547, #0ca30c, #4fd8ff, #9085e9, #d640a8, #e66767); overflow: hidden; }
   #msheet .swatch.any input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+  /* ---------------------------------------------------------------- Goals: 2027 bingo card */
+  #money .bingocard { display: flex; align-items: center; gap: 14px; cursor: pointer; }
+  #money .bmini { flex: none; display: grid; grid-template-columns: repeat(5, 9px); gap: 2px; }
+  #money .bmini i { width: 9px; height: 9px; border-radius: 2px; background: rgba(79,216,255,0.12); }
+  #money .bmini i.s { background: rgba(79,216,255,0.35); } #money .bmini i.p { background: #ffcc33; } #money .bmini i.d { background: #2ecc71; }
+  #money .bstats { display: flex; justify-content: space-between; font-size: 14px; color: var(--ink2); margin: 2px 2px 10px; }
+  #money .bstats b { color: var(--ink); font-size: 17px; margin-right: 3px; } #money .bstats .win b, #money .bstats .win { color: #2ecc71; }
+  #money .bingo { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+  #money .bsq { position: relative; aspect-ratio: 1; border-radius: 7px; border: 1px solid var(--line); background: var(--surface) center / cover no-repeat;
+    padding: 0; overflow: hidden; cursor: pointer; display: flex; align-items: flex-end; font: inherit; color: var(--ink); }
+  #money .bsq.img::before { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 35%, rgba(2,6,13,0.85)); }
+  #money .bsq .bt { position: relative; width: 100%; padding: 3px 4px; font-size: 10.5px; line-height: 1.1; text-align: left;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 0 1px 2px #000; }
+  #money .bsq .bplus { margin: auto; color: var(--ink3); font-size: 20px; }
+  #money .blight { position: absolute; top: 5px; right: 5px; width: 9px; height: 9px; border-radius: 50%; background: #ffcc33;
+    box-shadow: 0 0 6px 2px rgba(255,204,51,0.7); animation: blink 2.2s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: 0.55; } }
+  #money .bbar { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--cyan); }
+  #money .bsq.done { border-color: #2ecc71; }
+  #money .bcheck { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(46,204,113,0.42); }
+  #money .bcheck svg { width: 58%; height: 58%; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6)); }
+  #money .bsq.line { box-shadow: 0 0 0 2px #2ecc71, 0 0 12px rgba(46,204,113,0.55); }
+  #money .rw .rwicon { flex: none; width: 26px; text-align: center; font-size: 17px; }
+  #money .rw.locked .name { color: var(--ink2); } #money .rw.earned .rwicon { color: #ffcc33; } #money .rw.claimed .rwicon { color: #2ecc71; }
+  #money .rw.earned .meta { color: #ffcc33; }
+  #msheet .bhero { position: relative; height: 190px; margin: -4px 0 12px; border-radius: 8px; background: center / cover no-repeat; overflow: hidden; }
+  #msheet .bcheck { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(46,204,113,0.35); }
+  #msheet .bcheck svg { width: 90px; height: 90px; }
+  #msheet .bdesc { white-space: pre-wrap; line-height: 1.4; margin: 10px 0; color: #cfe3f0; }
+  #msheet .meter { height: 8px; border-radius: 4px; background: rgba(79,216,255,0.12); margin: 4px 0 10px; overflow: hidden; }
+  #msheet .meter i { display: block; height: 100%; border-radius: 4px; }
+  #msheet .bstat.onp { border-color: #ffcc33; color: #ffcc33; background: rgba(255,204,51,0.1); }
+  #msheet .bstat.ond { border-color: #2ecc71; color: #2ecc71; background: rgba(46,204,113,0.1); }
+  #msheet textarea { width: 100%; font: inherit; font-size: 16px; padding: 10px; border-radius: 6px; border: 1px solid var(--line); background: rgba(2,10,20,0.7); color: var(--text); resize: vertical; }
+  #msheet .gimg { display: flex; gap: 10px; align-items: stretch; }
+  #msheet .gprev { width: 110px; height: 110px; flex: none; border-radius: 8px; border: 1px dashed var(--line); background: center / cover no-repeat;
+    display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 13px; }
+  #msheet .gm { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  #msheet .gm input:first-child { grid-column: 1 / -1; }
+  #msheet input[type=range] { width: 100%; accent-color: var(--cyan); }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -225,7 +273,8 @@
 </header>
 <div id="scrim"></div>
 <nav id="drawer" aria-label="Menu" aria-hidden="true">
-  <div class="dhead">J.A.R.V.I.S.</div>
+  <div class="dhead"><span>J.A.R.V.I.S.</span><button id="cog" class="cog" aria-label="Settings" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></button></div>
+  <div id="dmain">
   <div class="dsect">Screens</div>
   <a href="#" id="navJarvis" class="ditem"><span>Jarvis<small>Talk to Jarvis</small></span><em>›</em></a>
   <a href="#" id="navMoney" class="ditem" aria-expanded="false"><span>Money<small>Business and personal accounts, spending</small></span><em class="dchev">▸</em></a>
@@ -239,11 +288,17 @@
     <a href="#" id="goalsPers" class="ditem"><span>Personal goals</span><em>›</em></a>
   </div>
   <a href="#" id="navCrm" class="ditem"><span>Customers<small>The Customer Factor: jobs, invoices, estimates</small></span><em>›</em></a>
+  </div>
+  <!-- Settings (the cog next to the name, Ben 2026-11-19): Jarvis costs, then this device's own rows -->
+  <div id="dset">
+  <a href="#" id="dback" class="ditem dback"><span>‹ Menu</span><em></em></a>
+  <div class="dsect">Jarvis</div>
   <a href="#" id="navCosts" class="ditem"><span>Jarvis costs<small>What Jarvis costs to run this month</small></span><em>›</em></a>
-  <div class="dsect">Settings</div>
+  <div class="dsect">This phone</div>
   <a href="#" id="auto" class="ditem"><span>Listen on open<small>Start listening when the app opens</small></span><em id="autoState">On</em></a>
   <a href="#" id="bell" class="ditem"><span>Alerts<small>Timers and reminders on this phone</small></span><em id="bellState">Off</em></a>
   <a href="#" id="signout" class="ditem"><span>Sign out</span><em></em></a>
+  </div>
 </nav>
 <div id="money">
   <div class="mhead"><button id="mmenu" class="menubtn" aria-label="Menu"><i></i><i></i><i></i></button><h1 id="mtitle">MONEY</h1><span style="width:34px"></span></div>
@@ -601,9 +656,10 @@
     menuBtn.setAttribute("aria-expanded", open); drawer.setAttribute("aria-hidden", !open);
     if (open && !was) {   // show which screen you're on
       const m = $("money").classList.contains("on") && $("mtitle").textContent;
-      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS"]]) $(id).classList.toggle("cur", on);
+      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || m === "2027 BINGO"]]) $(id).classList.toggle("cur", on);
+      showSettings(m === "JARVIS COSTS");   // the cog's page holds Jarvis costs, so open there from it
       subOpen("Money", m === "BUSINESS" || m === "PERSONAL");   // on one of their screens, show the group open
-      subOpen("Goals", m === "BUSINESS GOALS" || m === "PERSONAL GOALS");
+      subOpen("Goals", m === "BUSINESS GOALS" || m === "PERSONAL GOALS" || m === "2027 BINGO");
       menuStep = nav.push(() => setMenu(false));
     }
     const id = menuStep;
@@ -613,6 +669,10 @@
   menuBtn.onclick = (e) => { e.preventDefault(); setMenu(!document.body.classList.contains("menu")); };
   $("scrim").onclick = () => setMenu(false);
   // One "Money" item (Ben, 2026-11-19) that opens its two books, Business and Personal, underneath.
+  // The cog next to the name swaps the list for Settings (Jarvis costs + this device's settings).
+  function showSettings(on) { drawer.classList.toggle("set", on); $("cog").setAttribute("aria-pressed", on); }
+  $("cog").onclick = (e) => { e.preventDefault(); showSettings(!drawer.classList.contains("set")); };
+  $("dback").onclick = (e) => { e.preventDefault(); showSettings(false); };
   // Goals works the same way (Business goals / Personal goals; just the menu for now, 2026-11-19).
   function subOpen(name, on) { $("nav" + name).setAttribute("aria-expanded", on); $(name.toLowerCase() + "Sub").classList.toggle("on", on); }
   for (const name of ["Money", "Goals"]) $("nav" + name).onclick = (e) => { e.preventDefault(); subOpen(name, $("nav" + name).getAttribute("aria-expanded") !== "true"); };
@@ -999,7 +1059,8 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     async function load(refresh) {
       if (M.book === "costs") return loadCosts();
       if (M.book === "crm") return loadCrm();
-      if (GOALS[M.book]) { M.data = { goals: true }; M.busy = ""; M.error = ""; return render(); }   // nothing to load yet
+      if (M.book === "goalsPers" || M.book === "bingo") return loadGoals();
+      if (GOALS[M.book]) { M.data = { goals: true }; M.busy = ""; M.error = ""; return render(); }   // business goals: nothing yet
       M.busy = refresh === "force" ? "Syncing with your bank…" : (refresh ? "Checking for new transactions…" : "Loading…");
       M.error = ""; render();
       const book = M.book;
@@ -1024,8 +1085,8 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       if (!tabs.some(([k]) => k === tab)) tab = tabs[0][0];
       el.querySelectorAll("nav button").forEach((b, i) => { b.dataset.tab = tabs[i][0]; b.textContent = tabs[i][1]; });
       M.tab = tab;
-      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS" }[M.book];
-      el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book]);   // no Dashboard/Spending/... tabs there
+      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "2027 BINGO" }[M.book];
+      el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book] || M.book === "bingo");   // no Dashboard/Spending/... tabs there
       body.scrollTop = 0; hideTip(); el.classList.add("on");
       if (!fresh) render(); else if (!M.data) load(true); else { render(); load(true); }
     }
@@ -1987,6 +2048,228 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       body.innerHTML = h; wireSeg();
     }
 
+    // -------------------------------------------------------------- Goals: 2027 bingo card (Ben, 2026-11-19)
+    // Personal goals > "2027 Bingo card": a 5x5 grid of goals, each with a title, description, its own
+    // image, progress (a bar, from a metric's current/target or set by hand) and a status: in progress
+    // = yellow light in the corner, done = green check over the square. Full lines (rows, columns,
+    // diagonals) of done squares are bingos. Saved in the cloud (/jarvis/goals/*, table goal_cells),
+    // so the phone and laptop show one board. Images are shrunk to a small JPEG on this device first.
+    // Inserted into money.js by app/build.py (shares its screen, sheets and back steps).
+    const BINGO = "bingo-2027";
+    const G = { cells: null, rewards: [], error: "", busy: false };
+    async function gcall(action, payload) {
+      if (DEMO) return demoGoals(action, payload);
+      const auth = await authHeaders();
+      if (!auth) { showSignin(true); throw new Error("This phone isn't paired."); }
+      const r = await fetch(FN + "/goals/" + action, { method: "POST",
+        headers: { ...auth, apikey: PUBLISHABLE_KEY, "content-type": "application/json" }, body: JSON.stringify({ board: BINGO, ...(payload || {}) }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || `Goals service error (${r.status})`);
+      return j;
+    }
+    const blank = (idx) => ({ idx, title: "", description: "", image: null, status: "none", progress: 0, metric: null });
+    async function loadGoals() {
+      M.data = { goals: true }; M.error = ""; G.busy = !G.cells; render();
+      try { const got = await gcall("board"); G.cells = Array.from({ length: 25 }, (_, i) => got.cells.find((c) => c.idx === i) || blank(i)); G.rewards = got.rewards || []; G.error = ""; }
+      catch (e) { G.error = e.message; }
+      G.busy = false; if (GOALS[M.book] || M.book === "bingo") render();
+    }
+    const progressOf = (c) => { const m = c.metric; return m && m.target ? Math.max(0, Math.min(100, Math.round(((m.current || 0) / m.target) * 100))) : (c.status === "done" && !c.progress ? 100 : c.progress || 0); };
+    function bingoLines(cells) {   // indexes of every full line of done squares
+      const done = (i) => cells[i] && cells[i].status === "done", lines = [];
+      for (let r = 0; r < 5; r++) lines.push([0, 1, 2, 3, 4].map((c) => r * 5 + c));
+      for (let c = 0; c < 5; c++) lines.push([0, 1, 2, 3, 4].map((r) => r * 5 + c));
+      lines.push([0, 6, 12, 18, 24], [4, 8, 12, 16, 20]);
+      return lines.filter((l) => l.every(done));
+    }
+    const countOf = (s) => (G.cells || []).filter((c) => c.status === s).length;
+    const CHECK = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+
+    // ---- Personal goals: the card that opens the board (Business goals stays a placeholder)
+    function renderGoalsHome() {
+      if (M.book !== "goalsPers") {
+        body.innerHTML = `<div class="card"><div class="label">${esc(GOALS[M.book])}</div><div class="sub" style="margin-top:8px">No goals here yet. This screen is ready for them.</div></div>`;
+        return;
+      }
+      const cells = G.cells || Array.from({ length: 25 }, (_, i) => blank(i)), lines = bingoLines(cells);
+      body.innerHTML = (G.error ? `<div class="note err">${esc(G.error)}</div>` : "") + `<div class="card click bingocard" id="openBingo">
+        <div class="bmini">${cells.map((c) => `<i class="${c.status === "done" ? "d" : c.status === "in_progress" ? "p" : c.title ? "s" : ""}"></i>`).join("")}</div>
+        <div class="grow"><div class="name" style="font-size:19px">2027 Bingo card</div>
+          <div class="meta">${countOf("done")} done · ${countOf("in_progress")} in progress · ${cells.filter((c) => c.title).length} of 25 set${lines.length ? ` · ${lines.length} bingo${lines.length > 1 ? "s" : ""}!` : ""}</div></div>
+        <span class="chev">›</span></div>`;
+      $("openBingo").onclick = () => { nav.push(() => show("goalsPers", "dash")); show("bingo", "dash"); };
+    }
+
+    // ---- the board
+    function renderBingo() {
+      if (!G.cells) { body.innerHTML = G.error ? `<div class="note err">${esc(G.error)}</div>` : `<div class="note">Loading…</div>`; return; }
+      const lines = bingoLines(G.cells), inLine = new Set(lines.flat());
+      let h = (G.error ? `<div class="note err">${esc(G.error)}</div>` : "") +
+        `<div class="bstats"><span><b>${countOf("done")}</b> done</span><span><b>${countOf("in_progress")}</b> in progress</span><span class="${lines.length ? "win" : ""}"><b>${lines.length}</b> bingo${lines.length === 1 ? "" : "s"}</span></div><div class="bingo">`;
+      for (const c of G.cells) {
+        const img = c.image ? ` style="background-image:url('${c.image}')"` : "";
+        h += `<button class="bsq${c.image ? " img" : ""}${c.status === "done" ? " done" : ""}${inLine.has(c.idx) ? " line" : ""}" data-sq="${c.idx}"${img}>` +
+          (c.title ? `<span class="bt">${esc(c.title)}</span>` : `<span class="bplus">+</span>`) +
+          (c.status === "in_progress" ? `<i class="blight" title="In progress"></i>` : "") +
+          (c.status === "done" ? `<span class="bcheck">${CHECK}</span>` : "") +
+          (c.status !== "done" && progressOf(c) ? `<i class="bbar" style="width:${progressOf(c)}%"></i>` : "") + `</button>`;
+      }
+      h += `</div><div class="note">Tap a square to see it or fill it in. Yellow light = in progress, green check = done.</div>`;
+      h += rewardsCard(lines.length);
+      body.innerHTML = h;
+      body.querySelectorAll("[data-rw]").forEach((r) => (r.onclick = () => rewardSheet(+r.dataset.rw)));
+      $("graddrw").onclick = () => rewardSheet(-1);
+      body.querySelectorAll("[data-sq]").forEach((b) => (b.onclick = () => { const c = G.cells[+b.dataset.sq]; c.title ? squareSheet(c) : editSheet(c); }));
+    }
+
+    // ---- rewards for bingos (Ben): each unlocks at N bingos, or 25 = blackout (every square done)
+    const atLabel = (at) => (at >= 25 ? "Blackout (all 25)" : at === 1 ? "1st bingo" : at === 2 ? "2nd bingo" : at === 3 ? "3rd bingo" : at + "th bingo");
+    const earned = (r, n) => (r.at >= 25 ? countOf("done") === 25 : n >= r.at);
+    function rewardsCard(n) {
+      const list = G.rewards.map((r, i) => ({ ...r, i })).sort((a, b) => a.at - b.at);
+      let h = `<div class="sect"><span class="label">Rewards</span><span class="note" style="margin:0">${list.filter((r) => earned(r, n)).length} of ${list.length} earned</span></div><div class="card">`;
+      for (const r of list) {
+        const st = r.claimed ? "claimed" : earned(r, n) ? "earned" : "locked";
+        h += `<div class="row click rw ${st}" data-rw="${r.i}"><span class="rwicon">${st === "claimed" ? "✓" : st === "earned" ? "★" : "🔒"}</span><div class="grow"><div class="name">${esc(r.text)}</div>
+          <div class="meta">${esc(atLabel(r.at))} · ${st === "claimed" ? "claimed" : st === "earned" ? "earned: go enjoy it!" : r.at >= 25 ? `${25 - countOf("done")} squares to go` : `${r.at - n} more bingo${r.at - n === 1 ? "" : "s"} to go`}</div></div></div>`;
+      }
+      if (!list.length) h += `<div class="empty">No rewards yet. Add something to look forward to for your 1st bingo.</div>`;
+      return h + `<div class="btns"><button class="btn quiet" id="graddrw">+ Add a reward</button></div></div>`;
+    }
+    async function saveRewards(list) { const got = await gcall("rewards", { rewards: list }); G.rewards = got.rewards; }
+    function rewardSheet(i) {
+      const r = i >= 0 ? G.rewards[i] : { at: Math.min(12, (G.rewards.reduce((m, x) => Math.max(m, x.at < 25 ? x.at : 0), 0)) + 1), text: "", claimed: false };
+      const n = bingoLines(G.cells).length, ok = earned(r, n);
+      openSheet(`<h2>${i >= 0 ? "Reward" : "New reward"}</h2>
+        <label>Reward</label><input id="rwt" maxlength="120" value="${esc(r.text)}" placeholder="e.g. Steak dinner at Ruth's Chris">
+        <label>Earned at</label><select id="rwa">${[...Array.from({ length: 12 }, (_, k) => k + 1), 25].map((a) => `<option value="${a}" ${r.at === a ? "selected" : ""}>${atLabel(a)}</option>`).join("")}</select>
+        ${i >= 0 && ok ? `<label class="check" style="margin-top:12px"><input type="checkbox" id="rwc" ${r.claimed ? "checked" : ""}> I've had this reward</label>` : ""}
+        <div class="btns"><button class="btn" id="rws">Save</button>${i >= 0 ? `<button class="btn danger" id="rwd">Remove</button>` : ""}<button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`,
+      (box) => {
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelector("#rws").onclick = async () => {
+          const text = box.querySelector("#rwt").value.trim();
+          if (!text) return sheetErr("What's the reward?");
+          const cl = box.querySelector("#rwc"), item = { at: +box.querySelector("#rwa").value, text, claimed: cl ? cl.checked : !!r.claimed };
+          const list = G.rewards.slice(); if (i >= 0) list[i] = item; else list.push(item);
+          try { await saveRewards(list); closeSheet(); render(); } catch (e) { sheetErr(e.message); }
+        };
+        const del = box.querySelector("#rwd");
+        if (del) del.onclick = async () => { try { await saveRewards(G.rewards.filter((_, k) => k !== i)); closeSheet(); render(); } catch (e) { sheetErr(e.message); } };
+      });
+    }
+
+    async function saveCell(c, patch) {
+      const got = await gcall("cell", { idx: c.idx, ...patch });
+      G.cells[c.idx] = { ...blank(c.idx), ...got.cell };
+      return G.cells[c.idx];
+    }
+
+    // ---- one square: big view with progress, metric and the two status buttons
+    function squareSheet(c) {
+      const p = progressOf(c), m = c.metric;
+      openSheet(`${c.image ? `<div class="bhero" style="background-image:url('${c.image}')">${c.status === "done" ? `<span class="bcheck big">${CHECK}</span>` : ""}</div>` : ""}
+        <h2>${esc(c.title)}</h2>
+        <div class="meta">${c.status === "done" ? "Done" : c.status === "in_progress" ? "In progress" : "Not started"}${c.status === "done" && c.done_at ? " · " + esc(MC.shortDate(c.done_at.slice(0, 10))) : ""}</div>
+        ${c.description ? `<p class="bdesc">${esc(c.description)}</p>` : ""}
+        <div class="bprog"><div class="row" style="border:0;padding:6px 0 4px"><div class="grow"><div class="name" style="font-size:15px">Progress</div></div><div class="amt">${p}%</div></div>
+          <div class="meter"><i style="width:${p}%;background:${c.status === "done" ? "#2ecc71" : "var(--cyan)"}"></i></div></div>
+        ${m && (m.label || m.target) ? `<div class="bmetric"><label>${esc(m.label || "Current")}${m.target ? ` (goal ${esc(String(m.target))}${m.unit ? " " + esc(m.unit) : ""})` : ""}</label>
+          <div style="display:flex;gap:8px"><input id="gcur" type="number" inputmode="decimal" step="any" value="${m.current ?? ""}" style="flex:1"><button class="btn" id="gupd" style="flex:none;min-width:0">Update</button></div></div>`
+          : `<label>Progress (%)</label><input id="gman" type="range" min="0" max="100" step="5" value="${c.progress || 0}">`}
+        <div class="btns"><button class="btn bstat${c.status === "in_progress" ? " onp" : ""}" id="gprog">${c.status === "in_progress" ? "● In progress" : "In progress"}</button>
+          <button class="btn bstat${c.status === "done" ? " ond" : ""}" id="gdone">${c.status === "done" ? "✓ Completed" : "Completed"}</button></div>
+        <div class="btns"><button class="btn quiet" id="gedit">Edit</button><button class="btn quiet" id="sx">Close</button></div><div class="err"></div>`,
+      (box) => {
+        const act = async (patch) => { try { const n = await saveCell(c, patch); closeSheet(); render(); squareSheet(n); } catch (e) { sheetErr(e.message); } };
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelector("#gedit").onclick = () => { closeSheet(); editSheet(c); };
+        box.querySelector("#gprog").onclick = () => act({ status: c.status === "in_progress" ? "none" : "in_progress" });
+        box.querySelector("#gdone").onclick = () => act({ status: c.status === "done" ? "in_progress" : "done", ...(c.status !== "done" && !(m && m.target) ? { progress: 100 } : {}) });
+        const upd = box.querySelector("#gupd");
+        if (upd) upd.onclick = () => {
+          const v = box.querySelector("#gcur").value, cur = v === "" ? null : Number(v);
+          const metric = { ...m, current: cur }, pr = metric.target ? Math.max(0, Math.min(100, Math.round(((cur || 0) / metric.target) * 100))) : c.progress;
+          act({ metric, progress: pr, ...(c.status === "none" && cur ? { status: "in_progress" } : {}) });
+        };
+        const man = box.querySelector("#gman");
+        if (man) man.onchange = () => act({ progress: +man.value, ...(c.status === "none" && +man.value > 0 ? { status: "in_progress" } : {}) });
+      });
+    }
+
+    // ---- fill in / change a square
+    function shrink(file) {   // photo -> small JPEG data URL (max 520 px), so the board loads fast
+      return new Promise((res, rej) => {
+        const url = URL.createObjectURL(file), im = new Image();
+        im.onload = () => { const k = Math.min(1, 520 / Math.max(im.width, im.height)), cv = document.createElement("canvas");
+          cv.width = Math.round(im.width * k); cv.height = Math.round(im.height * k);
+          cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url);
+          let q = 0.82, out = cv.toDataURL("image/jpeg", q); while (out.length > 380000 && q > 0.4) { q -= 0.12; out = cv.toDataURL("image/jpeg", q); }
+          res(out); };
+        im.onerror = () => { URL.revokeObjectURL(url); rej(new Error("That file isn't a picture.")); };
+        im.src = url;
+      });
+    }
+    function editSheet(c) {
+      const m = c.metric || {};
+      let image = c.image;
+      openSheet(`<h2>${c.title ? "Edit square" : "New goal"}</h2><div class="meta">Square ${c.idx + 1} of 25</div>
+        <label>Goal</label><input id="gt" maxlength="80" value="${esc(c.title)}" placeholder="e.g. Run a half marathon">
+        <label>Description</label><textarea id="gd" rows="4" maxlength="2000" placeholder="What it means, why it matters, how you'll do it">${esc(c.description)}</textarea>
+        <label>Image</label><div class="gimg"><div id="gprev" class="gprev"${image ? ` style="background-image:url('${image}')"` : ""}>${image ? "" : "No image"}</div>
+          <div class="btns" style="margin:0;flex-direction:column"><button class="btn quiet" id="gpick">Choose photo</button>${image ? `<button class="btn quiet" id="gnoimg">Remove</button>` : ""}</div></div>
+        <label>Metric (optional: progress follows it)</label>
+        <div class="gm"><input id="gml" placeholder="What you count, e.g. Miles" maxlength="40" value="${esc(m.label || "")}">
+          <input id="gmc" type="number" inputmode="decimal" step="any" placeholder="Now" value="${m.current ?? ""}">
+          <input id="gmt" type="number" inputmode="decimal" step="any" placeholder="Goal" value="${m.target ?? ""}">
+          <input id="gmu" placeholder="Unit" maxlength="12" value="${esc(m.unit || "")}"></div>
+        <div class="btns"><button class="btn" id="gsave">Save</button>${c.title ? `<button class="btn danger" id="gclear">Clear square</button>` : ""}<button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`,
+      (box) => {
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelector("#gpick").onclick = () => {
+          const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*"; inp.style.display = "none"; document.body.appendChild(inp);
+          inp.onchange = async () => { const f = inp.files && inp.files[0]; inp.remove(); if (!f) return;
+            try { image = await shrink(f); const pv = box.querySelector("#gprev"); pv.style.backgroundImage = `url('${image}')`; pv.textContent = ""; } catch (e) { sheetErr(e.message); } };
+          inp.click();
+        };
+        const noimg = box.querySelector("#gnoimg");
+        if (noimg) noimg.onclick = () => { image = null; const pv = box.querySelector("#gprev"); pv.style.backgroundImage = ""; pv.textContent = "No image"; };
+        box.querySelector("#gsave").onclick = async (ev) => {
+          const title = box.querySelector("#gt").value.trim();
+          if (!title) return sheetErr("Give the goal a name.");
+          const num = (id) => { const v = box.querySelector(id).value; return v === "" ? null : Number(v); };
+          const metric = { label: box.querySelector("#gml").value.trim(), current: num("#gmc"), target: num("#gmt"), unit: box.querySelector("#gmu").value.trim() };
+          const hasMetric = metric.label || metric.target !== null || metric.current !== null;
+          ev.target.disabled = true; ev.target.textContent = "Saving…";
+          try {
+            const n = await saveCell(c, { title, description: box.querySelector("#gd").value, image, metric: hasMetric ? metric : null,
+              ...(hasMetric && metric.target ? { progress: Math.max(0, Math.min(100, Math.round(((metric.current || 0) / metric.target) * 100))) } : {}) });
+            closeSheet(); render(); squareSheet(n);
+          } catch (e) { ev.target.disabled = false; ev.target.textContent = "Save"; sheetErr(e.message); }
+        };
+        const clr = box.querySelector("#gclear");
+        if (clr) clr.onclick = async () => { if (!confirm(`Clear "${c.title}" from the board?`)) return;
+          try { await saveCell(c, { title: "", description: "", image: null, status: "none", progress: 0, metric: null }); closeSheet(); render(); } catch (e) { sheetErr(e.message); } };
+      });
+    }
+
+    // ---- #money-demo: a few sample squares, kept in memory
+    let demoBoard = null;
+    function demoGoals(action, p) {
+      if (!demoBoard) demoBoard = [
+        { idx: 0, title: "Run a half marathon", description: "Sign up for the spring race and train three days a week.", status: "in_progress", progress: 40, metric: { label: "Training miles", current: 120, target: 300, unit: "mi" } },
+        { idx: 6, title: "Read 24 books", description: "Two a month.", status: "in_progress", progress: 25, metric: { label: "Books", current: 6, target: 24, unit: "" } },
+        { idx: 12, title: "Family trip to Zion", description: "", status: "done", progress: 100, metric: null },
+        { idx: 18, title: "Learn to surf", description: "", status: "none", progress: 0, metric: null },
+      ];
+      if (action === "board") return Promise.resolve({ cells: demoBoard, rewards: G.rewards.length ? G.rewards : [{ at: 1, text: "New running shoes", claimed: false }, { at: 25, text: "Weekend in San Diego", claimed: false }] });
+      if (action === "rewards") return Promise.resolve({ ok: true, rewards: p.rewards });
+      const i = demoBoard.findIndex((c) => c.idx === p.idx), cur = i >= 0 ? demoBoard[i] : blank(p.idx);
+      const { idx, board, ...rest } = p, n = { ...cur, ...rest, idx, done_at: rest.status === "done" ? new Date().toISOString() : cur.done_at };
+      if (i >= 0) demoBoard[i] = n; else demoBoard.push(n);
+      return Promise.resolve({ ok: true, cell: n });
+    }
+
     const MONEY_TABS = [["dash", "Dashboard"], ["spend", "Spending"], ["recur", "Recurring"], ["tx", "Transactions"]];
     function render() {
       el.querySelectorAll("nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === M.tab));
@@ -1994,7 +2277,8 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       if (!d()) { body.innerHTML = status() + (M.busy ? "" : `<div class="empty">Couldn't load ${M.book === "costs" ? "the cost figures" : M.book === "crm" ? "your customers" : "your money data"}.</div><div class="btns"><button class="btn" id="mretry">Try again</button></div>`);
         const r = $("mretry"); if (r) r.onclick = () => load(true); return; }
       try {
-        if (GOALS[M.book]) body.innerHTML = `<div class="card"><div class="label">${esc(GOALS[M.book])}</div><div class="sub" style="margin-top:8px">No goals here yet. This screen is ready for them.</div></div>`;
+        if (GOALS[M.book]) renderGoalsHome();
+        else if (M.book === "bingo") renderBingo();
         else if (M.book === "costs") renderCosts();
         else if (M.book === "crm") renderCrm();
         else ({ dash: renderDash, spend: renderSpending, recur: renderRecurring, tx: renderTx }[M.tab] || renderDash)();
