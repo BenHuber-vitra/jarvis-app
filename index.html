@@ -220,6 +220,20 @@
   #money .persona .pname { font-size: 17px; color: var(--ink); } #money .persona .pval { font-size: 14px; color: var(--cyan); font-variant-numeric: tabular-nums; }
   #money .persona input[type=range] { width: 100%; margin: 10px 0 2px; accent-color: var(--cyan); height: 26px; }
   #money .persona .pends { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink3); letter-spacing: 0.06em; }
+  /* easy / hard goals (Ben): hard = pink shade over the square, easy = white shade */
+  #money .bsq.hard::after, #money .bsq.easy::after { content: ""; position: absolute; inset: 0; pointer-events: none; }
+  #money .bsq.hard::after { background: rgba(214,64,168,0.26); }
+  #money .bsq.hard { border-color: rgba(214,64,168,0.55); }
+  #money .bsq.easy::after { background: rgba(255,255,255,0.16); }
+  #money .bsq.easy { border-color: rgba(255,255,255,0.35); }
+  #money .bsq .bt, #money .bsq .blight, #money .bsq .bcheck, #money .bsq .bbar { z-index: 1; }
+  #msheet .gdiff { font-family: inherit; font-size: 12px; letter-spacing: 0.08em; padding: 2px 8px; border-radius: 10px; vertical-align: 3px; margin-left: 6px; }
+  #msheet .gdiff.hard { background: rgba(214,64,168,0.25); color: #f0a6d8; } #msheet .gdiff.easy { background: rgba(255,255,255,0.15); color: #fff; }
+  #msheet .gseg { display: flex; gap: 6px; }
+  #msheet .gseg button { flex: 1; padding: 8px 0; border-radius: 18px; border: 1px solid var(--line); background: transparent; color: var(--ink2, #9fbcd1); font: inherit; font-size: 14px; }
+  #msheet .gseg button.on { background: var(--cyan); color: #02060d; border-color: var(--cyan); font-weight: 600; }
+  #msheet .gseg button[data-diff="hard"].on { background: #d640a8; border-color: #d640a8; color: #fff; }
+  #msheet .gseg button[data-diff="easy"].on { background: #e9f3f8; border-color: #e9f3f8; }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -2181,7 +2195,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       if (!r.ok) throw new Error(j.error || `Goals service error (${r.status})`);
       return j;
     }
-    const blank = (idx) => ({ idx, title: "", description: "", image: null, status: "none", progress: 0, metric: null });
+    const blank = (idx) => ({ idx, title: "", description: "", image: null, status: "none", progress: 0, metric: null, difficulty: null });
     async function loadGoals() {
       M.data = { goals: true }; M.error = ""; G.busy = !G.cells; render();
       try { const got = await gcall("board"); G.cells = Array.from({ length: 25 }, (_, i) => got.cells.find((c) => c.idx === i) || blank(i)); G.rewards = got.rewards || []; G.error = ""; }
@@ -2223,7 +2237,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
         `<div class="bstats"><span><b>${countOf("done")}</b> done</span><span><b>${countOf("in_progress")}</b> in progress</span><span class="${lines.length ? "win" : ""}"><b>${lines.length}</b> bingo${lines.length === 1 ? "" : "s"}</span></div><div class="bingo">`;
       for (const c of G.cells) {
         const img = c.image ? ` style="background-image:url('${c.image}')"` : "";
-        h += `<button class="bsq${c.image ? " img" : ""}${c.status === "done" ? " done" : ""}${inLine.has(c.idx) ? " line" : ""}" data-sq="${c.idx}"${img}>` +
+        h += `<button class="bsq${c.image ? " img" : ""}${c.difficulty ? " " + c.difficulty : ""}${c.status === "done" ? " done" : ""}${inLine.has(c.idx) ? " line" : ""}" data-sq="${c.idx}"${img}>` +
           (c.title ? `<span class="bt">${esc(c.title)}</span>` : `<span class="bplus">+</span>`) +
           (c.status === "in_progress" ? `<i class="blight" title="In progress"></i>` : "") +
           (c.status === "done" ? `<span class="bcheck">${CHECK}</span>` : "") +
@@ -2284,7 +2298,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
     function squareSheet(c) {
       const p = progressOf(c), m = c.metric;
       openSheet(`${c.image ? `<div class="bhero" style="background-image:url('${c.image}')">${c.status === "done" ? `<span class="bcheck big">${CHECK}</span>` : ""}</div>` : ""}
-        <h2>${esc(c.title)}</h2>
+        <h2>${esc(c.title)}${c.difficulty ? ` <span class="gdiff ${c.difficulty}">${c.difficulty === "hard" ? "Hard" : "Easy"}</span>` : ""}</h2>
         <div class="meta">${c.status === "done" ? "Done" : c.status === "in_progress" ? "In progress" : "Not started"}${c.status === "done" && c.done_at ? " · " + esc(MC.shortDate(c.done_at.slice(0, 10))) : ""}</div>
         ${c.description ? `<p class="bdesc">${esc(c.description)}</p>` : ""}
         <div class="bprog"><div class="row" style="border:0;padding:6px 0 4px"><div class="grow"><div class="name" style="font-size:15px">Progress</div></div><div class="amt">${p}%</div></div>
@@ -2331,6 +2345,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       let image = c.image, kind = c.image_kind || (c.image ? "photo" : "auto");
       openSheet(`<h2>${c.title ? "Edit square" : "New goal"}</h2><div class="meta">Square ${c.idx + 1} of 25</div>
         <label>Goal</label><input id="gt" maxlength="80" value="${esc(c.title)}" placeholder="e.g. Run a half marathon">
+        <label>How hard</label><div class="seg gseg">${[["", "Normal"], ["easy", "Easy"], ["hard", "Hard"]].map(([v, l]) => `<button type="button" data-diff="${v}" class="${(c.difficulty || "") === v ? "on" : ""}">${l}</button>`).join("")}</div>
         <label>Description</label><textarea id="gd" rows="4" maxlength="2000" placeholder="What it means, why it matters, how you'll do it">${esc(c.description)}</textarea>
         <label>Picture</label><div class="gimg"><div id="gprev" class="gprev"></div>
           <div class="btns" style="margin:0;flex-direction:column"><div class="meta" id="gkind"></div><button class="btn quiet" id="gpick">Choose photo</button><button class="btn quiet" id="gauto">Use Jarvis picture</button></div></div>
@@ -2348,6 +2363,8 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
             try { image = await shrink(f); kind = "photo"; preview(); } catch (e) { sheetErr(e.message); } };
           inp.click();
         };
+        let diff = c.difficulty || "";   // easy / hard (tint on the board)
+        box.querySelectorAll("[data-diff]").forEach((b) => (b.onclick = () => { diff = b.dataset.diff; box.querySelectorAll("[data-diff]").forEach((x) => x.classList.toggle("on", x === b)); }));
         const pv = box.querySelector("#gprev"), titleIn = box.querySelector("#gt");
         const preview = () => {   // Jarvis's drawing follows the goal's name as Ben types
           if (kind === "auto") image = goalArt(titleIn.value.trim() || "Goal");
@@ -2368,14 +2385,14 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
           ev.target.disabled = true; ev.target.textContent = "Saving…";
           try {
             if (kind === "auto") image = goalArt(title);
-            const n = await saveCell(c, { title, description: box.querySelector("#gd").value, image, image_kind: kind, metric: hasMetric ? metric : null,
+            const n = await saveCell(c, { title, description: box.querySelector("#gd").value, image, image_kind: kind, difficulty: diff || null, metric: hasMetric ? metric : null,
               ...(hasMetric && metric.target ? { progress: Math.max(0, Math.min(100, Math.round(((metric.current || 0) / metric.target) * 100))) } : {}) });
             closeSheet(); render(); squareSheet(n);
           } catch (e) { ev.target.disabled = false; ev.target.textContent = "Save"; sheetErr(e.message); }
         };
         const clr = box.querySelector("#gclear");
         if (clr) clr.onclick = async () => { if (!confirm(`Clear "${c.title}" from the board?`)) return;
-          try { await saveCell(c, { title: "", description: "", image: null, status: "none", progress: 0, metric: null }); closeSheet(); render(); } catch (e) { sheetErr(e.message); } };
+          try { await saveCell(c, { title: "", description: "", image: null, status: "none", progress: 0, metric: null, difficulty: null }); closeSheet(); render(); } catch (e) { sheetErr(e.message); } };
       });
     }
 
