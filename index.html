@@ -251,6 +251,11 @@
     linear-gradient(to top left, transparent calc(50% - 1px), rgba(46,204,113,0.9) 50%, transparent calc(50% + 1px)); }
   #money .bcheckbox { width: 44px; height: 44px; border-radius: 8px; border: 2px solid var(--line); background: transparent; color: #fff; font-size: 24px; cursor: pointer; }
   #money .bcheckbox.on { background: #2ecc71; border-color: #2ecc71; }
+  #money .bbox.over { background: rgba(214,64,168,0.12); border-color: rgba(214,64,168,0.38); color: #e7b9d9; }
+  #money .bbox.over.on { background: rgba(214,64,168,0.28); border-color: rgba(214,64,168,0.7); color: #f6d3ea; }
+  #money .bbox.over.on::after { background:
+    linear-gradient(to top right, transparent calc(50% - 1px), rgba(240,140,205,0.95) 50%, transparent calc(50% + 1px)),
+    linear-gradient(to top left, transparent calc(50% - 1px), rgba(240,140,205,0.95) 50%, transparent calc(50% + 1px)); }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -2440,15 +2445,15 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
     const range = (...parts) => parts.flatMap(([a, b, step]) => { const o = []; for (let v = a; v <= b; v += step) o.push(v); return o; });
     // Ben's sheet for 2026, as he'd crossed it off (gross through $65K, all 5 trainings); used until he saves his own
     const SHEET_2026 = () => [
-      { id: "gross", title: "$200K in gross, year to date", kind: "boxes", prefix: "$", suffix: "K", crm: "gross",
+      { id: "gross", title: "$200K in gross, year to date", kind: "boxes", prefix: "$", suffix: "K", crm: "gross", target: 200,
         values: [...range([2, 20, 2], [25, 70, 5], [80, 100, 10]), 115, 130, 145, 160, 175, 190, 200, 220, 240, 260, 280, 300, 350, 400, 450, 500, 650], done: Array.from({ length: 19 }, (_, i) => i) },
-      { id: "contracts", title: "100 contracts for the next year, commercial or residential", kind: "boxes",
+      { id: "contracts", title: "100 contracts for the next year, commercial or residential", kind: "boxes", target: 100,
         values: [...range([10, 100, 10]), 120, 140, 160, 180, 200, 225, 250, 275, 300, 400], done: [] },
       { id: "crews", title: "Actively run multiple crews without a hiccup", kind: "check", values: [], done: [] },
       { id: "truck", title: "Wrap a company truck", kind: "check", values: [], done: [] },
       { id: "warehouse", title: "Get into a warehouse", kind: "check", values: [], done: [] },
       { id: "righthand", title: "Have a 'right-hand man'", kind: "check", values: [], done: [] },
-      { id: "training", title: "Do 5 different trainings or classes to grow the business", kind: "boxes", values: [1, 2, 3, 4, 5, 7, 10, 15, 20, 30], done: [0, 1, 2, 3, 4] },
+      { id: "training", title: "Do 5 different trainings or classes to grow the business", kind: "boxes", target: 5, values: [1, 2, 3, 4, 5, 7, 10, 15, 20, 30], done: [0, 1, 2, 3, 4] },
     ];
     async function bcall(payload) {
       if (DEMO) { if (payload && payload.goals) BZ.demo = payload.goals;
@@ -2473,7 +2478,12 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       catch (e) { BZ.error = "Couldn't save: " + e.message; render(); }
     }
     const fmtVal = (g, v) => `${g.prefix || ""}${v}${g.suffix || ""}`;
-    const goalPct = (g) => (g.kind === "check" ? (g.done.length ? 100 : 0) : g.values.length ? Math.round(g.done.length / g.values.length * 100) : 0);
+    // Boxes above the goal number (Ben, 2026-11-19) are bonus: pink, and they don't count toward progress.
+    const bonus = (g, v) => g.target !== undefined && g.target !== null && v > g.target;
+    const inGoal = (g) => g.values.map((v, i) => i).filter((i) => !bonus(g, g.values[i]));
+    const goalCount = (g) => { const ids = inGoal(g); return { done: ids.filter((i) => g.done.includes(i)).length, of: ids.length,
+      extra: g.done.filter((i) => bonus(g, g.values[i])).length }; };
+    const goalPct = (g) => { if (g.kind === "check") return g.done.length ? 100 : 0; const c = goalCount(g); return c.of ? Math.round(c.done / c.of * 100) : 0; };
 
     function renderBiz() {
       if (!BZ.goals) { body.innerHTML = BZ.error ? `<div class="note err">${esc(BZ.error)}</div>` : `<div class="note">Loading…</div>`; return; }
@@ -2491,12 +2501,12 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       BZ.goals.forEach((g, gi) => {
         const p = goalPct(g);
         h += `<div class="card bgoal"><div class="bghead"><div class="grow"><div class="name">${esc(g.title)}</div>
-          <div class="meta">${g.kind === "check" ? (p ? "Done" : "Not yet") : `${g.done.length} of ${g.values.length} · ${p}%`}</div></div>
+          <div class="meta">${g.kind === "check" ? (p ? "Done" : "Not yet") : (() => { const c = goalCount(g); return `${c.done} of ${c.of} · ${p}%${c.extra ? ` · +${c.extra} bonus` : ""}`; })()}</div></div>
           <button class="linkish" data-gedit="${gi}">Edit</button></div>`;
         if (g.kind === "check") h += `<button class="bcheckbox${g.done.length ? " on" : ""}" data-gcheck="${gi}">${g.done.length ? "✓" : ""}</button>`;
         else {
           h += `<div class="meter"><i style="width:${p}%;background:${p === 100 ? "#2ecc71" : CYAN}"></i></div><div class="bboxes">`;
-          g.values.forEach((v, vi) => { h += `<button class="bbox${g.done.includes(vi) ? " on" : ""}" data-g="${gi}" data-v="${vi}">${esc(fmtVal(g, v))}</button>`; });
+          g.values.forEach((v, vi) => { h += `<button class="bbox${g.done.includes(vi) ? " on" : ""}${bonus(g, v) ? " over" : ""}" data-g="${gi}" data-v="${vi}"${bonus(g, v) ? ' title="Beyond the goal: bonus"' : ""}>${esc(fmtVal(g, v))}</button>`; });
           h += `</div>`;
         }
         if (g.crm === "gross" && BZ.crm) h += `<div class="note">The Customer Factor (backup ${esc(MC.shortDate(BZ.crm.asOf))}): ${f0(BZ.crm.billed)} billed, ${f0(BZ.crm.collected)} collected in ${y}.</div>`;
@@ -2522,6 +2532,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
         <label>Goal</label><input id="bgt" maxlength="140" value="${esc(g.title)}" placeholder="e.g. 100 contracts this year">
         <label>Type</label><div class="seg gseg">${[["boxes", "Number boxes"], ["check", "One checkbox"]].map(([v, l]) => `<button type="button" data-kind="${v}" class="${g.kind === v ? "on" : ""}">${l}</button>`).join("")}</div>
         <div id="bgvals"><label>Boxes (numbers, separated by commas)</label><input id="bgv" value="${esc(g.values.join(", "))}" placeholder="10, 20, 30, 40, 50">
+          <label>The goal (boxes above it are bonus and shaded pink)</label><input id="bgtarget" type="number" inputmode="decimal" step="any" value="${g.target ?? ""}" placeholder="e.g. 100 (leave empty: all boxes count)">
           <div class="gm"><input id="bgp" maxlength="4" value="${esc(g.prefix || "")}" placeholder="Before, e.g. $" style="grid-column:auto"><input id="bgs" maxlength="6" value="${esc(g.suffix || "")}" placeholder="After, e.g. K"></div></div>
         <div class="btns"><button class="btn" id="bgsave">Save</button>${gi >= 0 ? `<button class="btn danger" id="bgdel">Remove</button>` : ""}<button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`,
       (box) => {
@@ -2537,7 +2548,9 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
           if (kind === "boxes" && !values.length) return sheetErr("Add at least one number, or choose One checkbox.");
           // keep what's crossed off by value, so editing the list doesn't lose ticks
           const doneVals = new Set(g.done.map((i) => g.values[i]));
-          const item = { ...g, id: g.id || "g" + Date.now(), title, kind, values, prefix: box.querySelector("#bgp").value.trim(), suffix: box.querySelector("#bgs").value.trim(),
+          const tv = box.querySelector("#bgtarget").value;
+          const item = { ...g, id: g.id || "g" + Date.now(), title, kind, values, target: kind === "boxes" && tv !== "" ? Number(tv) : undefined,
+            prefix: box.querySelector("#bgp").value.trim(), suffix: box.querySelector("#bgs").value.trim(),
             done: kind === "check" ? (g.kind === "check" ? g.done : []) : values.map((v, i) => (doneVals.has(v) ? i : -1)).filter((i) => i >= 0) };
           if (gi >= 0) BZ.goals[gi] = item; else BZ.goals.push(item);
           closeSheet(); render(); saveBiz();
