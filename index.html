@@ -278,6 +278,9 @@
   #modes { display: flex; gap: 6px; padding: 8px 12px 0; z-index: 2; flex: none; }
   #modes button { flex: 1; padding: 6px 0; border-radius: 16px; border: 1px solid var(--line); background: transparent; color: var(--muted);
     font-family: "Rajdhani", sans-serif; font-size: 13px; letter-spacing: 0.04em; }
+  #brainSel { flex: 0 0 auto; max-width: 34%; padding: 5px 6px; border-radius: 16px; border: 1px solid var(--line); background: rgba(2,10,20,0.7);
+    color: var(--cyan); font-family: "Rajdhani", sans-serif; font-size: 13px; }
+  #brainSel.opus { color: #f0a6d8; border-color: var(--magenta); }
   #modes button.on { border-color: var(--cyan); color: var(--cyan); background: rgba(79,216,255,0.1); }
   body.typing #modes { display: none; }
   body.mode-typing #talk { display: none; }
@@ -366,7 +369,7 @@
   <div id="status"><span id="statetxt">STANDBY</span><span class="sub" id="substate">Tap the button to talk</span></div>
 </div>
 <div id="log"></div>
-<div id="modes" role="group" aria-label="How to talk"><button data-mode="conversation">Conversation</button><button data-mode="review">Voice + review</button><button data-mode="typing">Typing</button></div>
+<div id="modes" role="group" aria-label="How to talk"><button data-mode="conversation">Conversation</button><button data-mode="review">Voice + review</button><button data-mode="typing">Typing</button><select id="brainSel" aria-label="Which model answers" title="Which model answers"><option value="haiku">Haiku 5.5 · fast</option><option value="opus">Opus 5.5 · smartest</option></select></div>
 <div id="controls">
   <button id="talk" aria-label="Talk to Jarvis">TALK</button>
   <form id="f" autocomplete="off"><input id="in" placeholder="Or type to Jarvis…" aria-label="Message Jarvis"><button class="small" type="submit">Send</button></form>
@@ -647,6 +650,19 @@
     showMode();
   }));
   showMode();
+
+  // Which model answers (Ben, 2026-11-20): Haiku 5.5 (fast) or Opus 5.5 (smartest), like the Claude app's
+  // picker. One setting shared with the laptop (cloud kv "brain_model"); "think hard" still works on Haiku.
+  const brainSel = $("brainSel");
+  const showBrain = (m) => { brainSel.value = m; brainSel.classList.toggle("opus", m === "opus"); };
+  async function loadBrain(set) {
+    try { const r = await call("/settings/brain", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(set ? { model: set } : {}) });
+      showBrain((await r.json()).model || "haiku"); } catch {}
+  }
+  brainSel.onchange = () => {
+    showBrain(brainSel.value); loadBrain(brainSel.value);
+    info(brainSel.value === "opus" ? "Opus 5.5 answers now: smartest, slower, and about 40× the cost per reply." : "Haiku 5.5 answers now: fast and cheap.");
+  };
 
   let rec = null, micStream = null, chunks = [], live = null, cancelled = false;
   // A live session: a bubble that fills in as he speaks, fed by ElevenLabs' real-time transcription.
@@ -3100,7 +3116,8 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       let reloaded = false;
       navigator.serviceWorker.addEventListener("controllerchange", () => { if (!reloaded) { reloaded = true; location.reload(); } });
     }
-    if (await authHeaders()) subscribeAlerts(false).catch(() => {});   // keep this phone's alert sign-up fresh
+    if (await authHeaders()) { subscribeAlerts(false).catch(() => {}); loadBrain(); }   // alerts sign-up fresh; the model picker
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") loadBrain(); });
     autoListen();
   })();
 
