@@ -256,6 +256,9 @@
   #money .bbox.over.on::after { background:
     linear-gradient(to top right, transparent calc(50% - 1px), rgba(240,140,205,0.95) 50%, transparent calc(50% + 1px)),
     linear-gradient(to top left, transparent calc(50% - 1px), rgba(240,140,205,0.95) 50%, transparent calc(50% + 1px)); }
+  #msheet .ctrans { max-height: 40vh; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  #msheet .cline { padding: 5px 0; font-size: 15px; line-height: 1.35; color: #cfe3f0; }
+  #msheet .cline b { color: var(--cyan); margin-right: 4px; } #msheet .cline.them b { color: #f0a6d8; }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -343,6 +346,7 @@
     <a href="#" id="goalsBiz" class="ditem"><span>Business goals</span><em>›</em></a>
     <a href="#" id="goalsPers" class="ditem"><span>Personal goals</span><em>›</em></a>
   </div>
+  <a href="#" id="navCalls" class="ditem"><span>Calls<small>Calls Jarvis made for you, with transcripts</small></span><em>›</em></a>
   <a href="#" id="navCrm" class="ditem"><span>Customers<small>The Customer Factor: jobs, invoices, estimates</small></span><em>›</em></a>
   </div>
   <!-- Settings (the cog next to the name, Ben 2026-11-19): Jarvis costs, then this device's own rows -->
@@ -834,7 +838,7 @@
     menuBtn.setAttribute("aria-expanded", open); drawer.setAttribute("aria-hidden", !open);
     if (open && !was) {   // show which screen you're on
       const m = $("money").classList.contains("on") && $("mtitle").textContent;
-      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || / BINGO$/.test(m)]]) $(id).classList.toggle("cur", on);
+      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["navCalls", m === "CALLS"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || / BINGO$/.test(m)]]) $(id).classList.toggle("cur", on);
       showSettings(m === "JARVIS COSTS" || m === "PERSONALITY");   // the cog's page holds Jarvis costs, so open there from it
       subOpen("Money", m === "BUSINESS" || m === "PERSONAL");   // on one of their screens, show the group open
       subOpen("Goals", m === "BUSINESS GOALS" || m === "PERSONAL GOALS" || / BINGO$/.test(m));
@@ -887,7 +891,10 @@
   bell.onclick = (e) => { e.preventDefault(); audioCtx(); subscribeAlerts(true).catch((err) => info("Couldn't turn on alerts: " + err.message)); };
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.addEventListener("message", (e) => {
-      if (e.data && e.data.type === "open") { wantAsk(e.data.url); runPendingAsk(); return; }   // notification tapped, app already open
+      if (e.data && e.data.type === "open") {   // notification tapped, app already open
+        const cid = (() => { try { return new URL(e.data.url, location.href).searchParams.get("call"); } catch { return null; } })();
+        if (cid && window.jarvisShowCall) { window.jarvisShowCall(cid); return; }
+        wantAsk(e.data.url); runPendingAsk(); return; }
       if (!e.data || e.data.type !== "alarm") return;
       add("jarvis", "Jarvis", e.data.body);
       if (document.visibilityState === "visible" && S.state === "idle") { const v = speaker(++generation); v.say(e.data.body); v.end();
@@ -1239,6 +1246,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       if (M.book === "crm") return loadCrm();
       if (M.book === "goalsPers" || M.book === "bingo") return loadGoals();
       if (M.book === "persona") return loadPersona();
+      if (M.book === "calls") return loadCalls();
       if (M.book === "goalsBiz") return loadBiz();
       M.busy = refresh === "force" ? "Syncing with your bank…" : (refresh ? "Checking for new transactions…" : "Loading…");
       M.error = ""; render();
@@ -1264,8 +1272,8 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       if (!tabs.some(([k]) => k === tab)) tab = tabs[0][0];
       el.querySelectorAll("nav button").forEach((b, i) => { b.dataset.tab = tabs[i][0]; b.textContent = tabs[i][1]; });
       M.tab = tab;
-      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY" }[M.book];
-      el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book] || M.book === "bingo" || M.book === "persona");   // no Dashboard/Spending/... tabs there
+      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY", calls: "CALLS" }[M.book];
+      el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book] || M.book === "bingo" || M.book === "persona" || M.book === "calls");   // no Dashboard/Spending/... tabs there
       body.scrollTop = 0; hideTip(); el.classList.add("on");
       if (!fresh) render(); else if (!M.data) load(true); else { render(); load(true); }
     }
@@ -1283,6 +1291,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     $("moneyBiz").onclick = (e) => { e.preventDefault(); goBook("business"); };
     $("moneyPers").onclick = (e) => { e.preventDefault(); goBook("personal"); };
     $("navCosts").onclick = (e) => { e.preventDefault(); goBook("costs"); };
+    $("navCalls").onclick = (e) => { e.preventDefault(); goBook("calls"); };
     $("navPersona").onclick = (e) => { e.preventDefault(); goBook("persona"); };
     $("goalsBiz").onclick = (e) => { e.preventDefault(); goBook("goalsBiz"); };
     $("goalsPers").onclick = (e) => { e.preventDefault(); goBook("goalsPers"); };
@@ -2851,6 +2860,56 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       $("preset").onclick = () => { for (const t of P.traits) P.dials[t.key] = 50; renderPersona(); savePersona(); };
     }
 
+    // -------------------------------------------------------------- Calls Jarvis made himself (the AI caller, 2026-11-20)
+    // Tapping the "Call with Amber" notification opens the app at ./?call=<id>: the summary, the full transcript and
+    // Keep / Delete (not kept within 7 days = deleted, in the cloud and at ElevenLabs). Menu > Calls lists recent ones.
+    async function ccall2(action, payload) {
+      if (DEMO) return action === "list" ? { calls: [] } : { call: null };
+      const auth = await authHeaders();
+      if (!auth) { showSignin(true); throw new Error("This phone isn't paired."); }
+      const r = await fetch(FN + "/calls/" + action, { method: "POST",
+        headers: { ...auth, apikey: PUBLISHABLE_KEY, "content-type": "application/json" }, body: JSON.stringify(payload || {}) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || `Calls service error (${r.status})`);
+      return j;
+    }
+    const RESULT = { answered: "Answered", voicemail: "Voicemail", busy: "Busy", no_answer: "No answer", failed: "Didn't connect" };
+    async function showCall(id) {
+      let c;
+      try { c = (await ccall2("get", { id })).call; } catch (e) { M.error = e.message; render(); return; }
+      if (!c) { openSheet(`<h2>Call</h2><div class="meta">That call's transcript has been deleted.</div><div class="btns"><button class="btn quiet" id="sx">Close</button></div>`, (b) => (b.querySelector("#sx").onclick = closeSheet)); return; }
+      const lines = (c.transcript || []).map((t) => `<div class="cline ${t.role === "agent" ? "jv" : "them"}"><b>${t.role === "agent" ? "Jarvis" : esc(c.who.split(" ")[0])}</b> ${esc(t.message)}</div>`).join("");
+      openSheet(`<h2>Call with ${esc(c.who)}</h2>
+        <div class="meta">${esc(new Date(c.created_at).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" }))} · ${esc(c.status === "calling" ? "in progress" : RESULT[c.result] || c.result || c.status)}${c.duration_s ? " · " + Math.round(c.duration_s) + " s" : ""}</div>
+        <div class="note" style="margin-top:8px"><b>Goal:</b> ${esc(c.goal)}</div>
+        ${c.summary ? `<div class="card" style="margin-top:10px"><div class="label">What happened</div><div class="sub" style="margin-top:6px">${esc(c.summary)}</div></div>` : ""}
+        ${lines ? `<div class="label" style="margin:12px 0 6px">Transcript</div><div class="ctrans">${lines}</div>` : ""}
+        <div class="meta" style="margin-top:10px">${c.keep === true ? "Kept." : "Keep this transcript? If not, it's deleted after 7 days."}</div>
+        <div class="btns">${c.keep === true ? "" : `<button class="btn" id="ckeep">Keep</button>`}<button class="btn danger" id="cdel">Delete</button><button class="btn quiet" id="sx">Close</button></div><div class="err"></div>`,
+      (box) => {
+        box.querySelector("#sx").onclick = closeSheet;
+        const k = box.querySelector("#ckeep");
+        if (k) k.onclick = async () => { try { await ccall2("keep", { id, keep: true }); closeSheet(); if (M.book === "calls") loadCalls(); } catch (e) { sheetErr(e.message); } };
+        box.querySelector("#cdel").onclick = async () => { if (!confirm("Delete this call's transcript for good?")) return;
+          try { await ccall2("keep", { id, keep: false }); closeSheet(); if (M.book === "calls") loadCalls(); } catch (e) { sheetErr(e.message); } };
+      });
+    }
+    window.jarvisShowCall = (id) => { if (!el.classList.contains("on")) { nav.push(hideMoney); show("calls", "dash"); } showCall(id); };
+    const CL = { list: null };
+    async function loadCalls() {
+      M.data = { calls: true }; render();
+      try { CL.list = (await ccall2("list")).calls; } catch (e) { M.error = e.message; }
+      if (M.book === "calls") render();
+    }
+    function renderCalls() {
+      if (!CL.list) { body.innerHTML = `<div class="note">Loading…</div>`; return; }
+      body.innerHTML = `<div class="note" style="margin-top:0">Calls Jarvis made for you ("you call Amber and ask…"). Tap one for the transcript.</div><div class="card">` +
+        (CL.list.length ? CL.list.map((c) => `<div class="row click" data-call="${esc(c.id)}"><div class="grow"><div class="name">${esc(c.who)}</div>
+          <div class="meta">${esc(new Date(c.created_at).toLocaleDateString([], { month: "short", day: "numeric" }))} · ${esc(c.status === "calling" ? "in progress" : RESULT[c.result] || c.status)} · ${esc(c.summary || c.goal)}</div></div><span class="chev">${c.keep ? "★" : "›"}</span></div>`).join("")
+          : `<div class="empty">No calls yet. Ask Jarvis: "you call Amber and ask what she wants for dinner".</div>`) + `</div>`;
+      body.querySelectorAll("[data-call]").forEach((r) => (r.onclick = () => showCall(r.dataset.call)));
+    }
+
     const MONEY_TABS = [["dash", "Dashboard"], ["spend", "Spending"], ["recur", "Recurring"], ["tx", "Transactions"]];
     function render() {
       el.querySelectorAll("nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === M.tab));
@@ -2861,6 +2920,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
         if (GOALS[M.book]) renderGoalsHome();
         else if (M.book === "bingo") renderBingo();
         else if (M.book === "persona") renderPersona();
+        else if (M.book === "calls") renderCalls();
         else if (M.book === "costs") renderCosts();
         else if (M.book === "crm") renderCrm();
         else ({ dash: renderDash, spend: renderSpending, recur: renderRecurring, tx: renderTx }[M.tab] || renderDash)();
@@ -3118,6 +3178,9 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
     }
     if (await authHeaders()) { subscribeAlerts(false).catch(() => {}); loadBrain(); }   // alerts sign-up fresh; the model picker
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") loadBrain(); });
+    // opened from an AI-call notification: show that call (summary, transcript, Keep / Delete)
+    const callId = new URLSearchParams(location.search).get("call");
+    if (callId) { history.replaceState(history.state, "", location.pathname + location.hash); if (window.jarvisShowCall) window.jarvisShowCall(callId); return; }
     autoListen();
   })();
 
