@@ -837,10 +837,38 @@
   .gkr { display: flex; gap: 5px; justify-content: center; }
   .gk { flex: 1; max-width: 44px; height: 52px; border: 0; border-radius: 6px; background: rgba(255,255,255,0.14); color: #fff; font: inherit; font-size: 17px; font-weight: 600; }
   .gk.wide { max-width: 72px; flex: 1.6; font-size: 13px; } .gk.c-g { background: #2fa866; } .gk.c-y { background: #c99a1a; } .gk.c-b { background: #2a2e40; color: #8a90a8; }
-  /* snake */
-  .scv { flex: none; border-radius: 12px; box-shadow: 0 0 0 1px rgba(var(--th-a),0.4), 0 0 24px rgba(var(--th-a),0.2); touch-action: none; }
-  .spad { display: flex; flex-direction: column; align-items: center; gap: 6px; margin-top: 12px; } .spad > div { display: flex; gap: 60px; }
-  .spad button { width: 58px; height: 46px; border-radius: 10px; border: 1px solid rgba(var(--th-a),0.5); background: rgba(255,255,255,0.06); color: #fff; font-size: 18px; }
+  /* snake, premium (Ben, 2026-11-20): framed glass board, score cards, start / game-over cards, round D-pad */
+  .shud { display: flex; gap: 10px; margin: 2px 0 10px; }
+  .shud > div { min-width: 96px; padding: 6px 14px; border-radius: 12px; text-align: center; background: linear-gradient(160deg, rgba(var(--th-a),0.16), rgba(255,255,255,0.03)); border: 1px solid rgba(var(--th-a),0.3); }
+  .shud small { display: block; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--th-ink2, #c9d6ee); }
+  .shud b { display: inline-block; font-family: "Orbitron", sans-serif; font-size: 22px; text-shadow: 0 0 10px rgba(var(--th-a),0.7); }
+  .shud b.pop { animation: spop 0.35s cubic-bezier(.2,.9,.3,1.5); } @keyframes spop { 40% { transform: scale(1.45); color: var(--th-a-hex); } }
+  .swrap { position: relative; flex: none; border-radius: 16px; padding: 0; touch-action: none;
+    box-shadow: 0 0 0 1.5px rgba(var(--th-a),0.55), 0 0 0 5px rgba(255,255,255,0.03), 0 0 30px rgba(var(--th-a),0.28), 0 18px 40px rgba(0,0,0,0.5); }
+  .swrap::after { content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; background: linear-gradient(160deg, rgba(255,255,255,0.08), transparent 30%); }
+  .scv { display: block; border-radius: 16px; touch-action: none; }
+  .swrap.shake { animation: sshake 0.45s ease-out; } @keyframes sshake { 15% { transform: translate(-7px, 3px); } 30% { transform: translate(6px, -4px); } 45% { transform: translate(-4px, 2px); } 60% { transform: translate(3px, -1px); } 80% { transform: translate(-1px, 0); } }
+  .sover { position: absolute; inset: 0; z-index: 2; border-radius: inherit; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center;
+    background: radial-gradient(70% 60% at 50% 45%, rgba(10,11,30,0.55), rgba(5,6,20,0.82)); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+    opacity: 0; visibility: hidden; transform: scale(1.04); transition: opacity 0.3s ease, transform 0.3s ease, visibility 0s linear 0.3s; }
+  .sover.on { opacity: 1; visibility: visible; transform: none; transition: opacity 0.3s ease, transform 0.3s ease; }
+  .sover > b { font-family: "Orbitron", sans-serif; font-size: 28px; font-weight: 900; letter-spacing: 0.2em; background: linear-gradient(90deg, var(--th-core1-hex, #4fd8ff), var(--th-a-hex));
+    -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 10px rgba(var(--th-a),0.6)); }
+  .sover > span { font-size: 13px; color: var(--th-ink2, #c9d6ee); }
+  .sover em { font-style: normal; font-size: 12px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; padding: 3px 10px; border-radius: 10px; color: #1a1200;
+    background: linear-gradient(90deg, #ffe9a8, #ffcf3f, #fff3b0); box-shadow: 0 0 14px rgba(255,206,90,0.7); animation: pkmodpop 0.5s cubic-bezier(.2,.9,.3,1.4) both; }
+  .sfin { display: flex; gap: 18px; font-size: 13px; color: var(--th-ink2, #c9d6ee); } .sfin strong { display: block; font-family: "Orbitron", sans-serif; font-size: 26px; color: #fff; }
+  #playgame .sover .btn { flex: none; min-width: 170px; margin-top: 4px; animation: sgo 1.8s ease-in-out infinite; }
+  @keyframes sgo { 50% { box-shadow: 0 0 22px rgba(var(--th-a),0.6); } }
+  .spad { position: relative; display: grid; grid-template-columns: repeat(3, 58px); grid-template-rows: repeat(3, 52px); gap: 4px; margin-top: 14px; }
+  .spad i { grid-area: 2 / 2; border-radius: 50%; margin: 10px; background: radial-gradient(circle, rgba(var(--th-a),0.35), transparent 70%); }
+  .spad button { border-radius: 14px; border: 1px solid rgba(var(--th-a),0.45); color: #fff; padding: 0; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(160deg, rgba(255,255,255,0.1), rgba(255,255,255,0.02)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 10px rgba(0,0,0,0.35);
+    transition: transform 0.08s ease, box-shadow 0.15s ease, background 0.15s ease; -webkit-tap-highlight-color: transparent; }
+  .spad button:active { transform: scale(0.92); background: rgba(var(--th-a),0.35); box-shadow: 0 0 18px rgba(var(--th-a),0.6); }
+  .spad svg { width: 26px; height: 26px; }
+  .spad .sp-up { grid-area: 1 / 2; } .spad .sp-left { grid-area: 2 / 1; } .spad .sp-left svg { transform: rotate(-90deg); }
+  .spad .sp-right { grid-area: 2 / 3; } .spad .sp-right svg { transform: rotate(90deg); } .spad .sp-down { grid-area: 3 / 2; } .spad .sp-down svg { transform: rotate(180deg); }
   /* reactor */
   .rtop { text-align: center; } .ren { font-family: "Orbitron", sans-serif; font-size: 34px; text-shadow: 0 0 14px rgba(var(--th-a),0.7); }
   .rcore { position: relative; flex: none; width: 170px; height: 170px; border-radius: 50%; border: 0; margin: 16px 0; cursor: pointer;
@@ -6039,47 +6067,115 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
       if (S.over) note(S.won ? `Solved in ${S.rows.length}. New puzzle tomorrow.` : `It was ${answer}. New puzzle tomorrow.`);
     }
     // Snake: swipe or arrows; eat the glowing cells; walls and your tail end it.
+    // Snake, premium (Ben, 2026-11-20): smooth gliding movement (logic ticks, drawn every frame in between), a glowing
+    // tube body that fades from the core colour to the theme colour, a head with eyes, a pulsing orb for food, sparks and
+    // "+1" when eating, a shake + red flash on death, start / game-over cards with score and best, and a round D-pad.
     function snakeGame() {
-      plShow(`<div class="pghead"><button class="pgx" id="pgx">✕</button><b>Snake</b><span id="sscore">0</span></div>
-        <div class="pgnote" id="snote">Swipe or use the arrows. Tap to start.</div><canvas id="scv" class="scv"></canvas>
-        <div class="spad"><button data-d="0,-1">▲</button><div><button data-d="-1,0">◀</button><button data-d="1,0">▶</button></div><button data-d="0,1">▼</button></div>`);
+      const gb = () => Math.max(+(PS.st.games?.snakeBest?.best) || 0, (() => { try { return +localStorage.getItem("jarvis.play.snakeBest") || 0; } catch { return 0; } })());
+      plShow(`<div class="pghead"><button class="pgx" id="pgx">✕</button><b>Snake</b><span></span></div>
+        <div class="shud"><div><small>Score</small><b id="sscore">0</b></div><div><small>Best</small><b id="sbest">${gb()}</b></div></div>
+        <div class="swrap" id="swrap"><canvas id="scv" class="scv"></canvas><div class="sover on" id="sover"><b>SNAKE</b><span>Swipe or use the pad</span><button class="btn" id="sgo">Tap to start</button></div></div>
+        <div class="spad">${[["0,-1", "up", 2], ["-1,0", "left", 4], ["1,0", "right", 6], ["0,1", "down", 8]].map(([d, n, g]) =>
+          `<button data-d="${d}" class="sp-${n}" aria-label="${n}"><svg viewBox="0 0 24 24"><path d="M7 14l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>`).join("")}<i></i></div>`);
       $("pgx").onclick = plHide;
-      const cv = $("scv"), N = 18, size = Math.min(innerWidth - 32, innerHeight - 300, 520), dpr = Math.min(2, devicePixelRatio || 1);
-      cv.style.width = cv.style.height = size + "px"; cv.width = cv.height = Math.round(size * dpr);
-      const ctx = cv.getContext("2d"), cell = cv.width / N;
-      const css = getComputedStyle(document.documentElement), A = (css.getPropertyValue("--th-a-hex") || "#ff4fb8").trim(), B = (css.getPropertyValue("--th-core1-hex") || "#4fd8ff").trim();
-      let snake, dir, nextDir, food, score, timer = null, running = false, dead = false;
-      const reset = () => { snake = [[8, 9], [7, 9], [6, 9]]; dir = [1, 0]; nextDir = [1, 0]; score = 0; dead = false; place(); $("sscore").textContent = 0; };
-      const place = () => { do { food = [Math.floor(Math.random() * N), Math.floor(Math.random() * N)]; } while (snake.some(([x, y]) => x === food[0] && y === food[1])); };
-      function drawS() {
-        ctx.fillStyle = "rgba(5,6,20,0.92)"; ctx.fillRect(0, 0, cv.width, cv.height);
-        ctx.strokeStyle = "rgba(255,255,255,0.05)"; for (let i = 0; i <= N; i++) { ctx.beginPath(); ctx.moveTo(i * cell, 0); ctx.lineTo(i * cell, cv.height); ctx.moveTo(0, i * cell); ctx.lineTo(cv.width, i * cell); ctx.stroke(); }
-        ctx.shadowBlur = 14 * dpr; ctx.shadowColor = A; ctx.fillStyle = A; ctx.beginPath(); ctx.arc((food[0] + 0.5) * cell, (food[1] + 0.5) * cell, cell * 0.32, 0, 7); ctx.fill();
-        ctx.shadowColor = B; snake.forEach(([x, y], i) => { ctx.fillStyle = i ? B : "#fff"; ctx.globalAlpha = 1 - i / (snake.length * 1.6); ctx.fillRect(x * cell + 2, y * cell + 2, cell - 4, cell - 4); });
-        ctx.globalAlpha = 1; ctx.shadowBlur = 0;
-      }
-      function step() {
+      const cv = $("scv"), N = 18, size = Math.min(innerWidth - 32, innerHeight - 330, 520), dpr = Math.min(2, devicePixelRatio || 1);
+      $("swrap").style.width = $("swrap").style.height = cv.style.width = cv.style.height = size + "px"; cv.width = cv.height = Math.round(size * dpr);
+      const ctx = cv.getContext("2d"), W = cv.width, cell = W / N;
+      const css = getComputedStyle(document.documentElement), A = (css.getPropertyValue("--th-a-hex") || "#ff4fb8").trim() || "#ff4fb8", B = (css.getPropertyValue("--th-core1-hex") || "#4fd8ff").trim() || "#4fd8ff";
+      // the board, drawn once: dark glass, a soft glow in the theme colour, a dot grid, a vignette
+      const bg = document.createElement("canvas"); bg.width = bg.height = W; { const g = bg.getContext("2d");
+        g.fillStyle = "#05061a"; g.fillRect(0, 0, W, W);
+        let r = g.createRadialGradient(W / 2, W * 0.45, 0, W / 2, W * 0.45, W * 0.7); r.addColorStop(0, A + "26"); r.addColorStop(1, "transparent"); g.fillStyle = r; g.fillRect(0, 0, W, W);
+        g.fillStyle = "rgba(255,255,255,0.09)"; for (let i = 1; i < N; i++) for (let j = 1; j < N; j++) { g.beginPath(); g.arc(i * cell, j * cell, 1.1 * dpr, 0, 7); g.fill(); }
+        r = g.createRadialGradient(W / 2, W / 2, W * 0.35, W / 2, W / 2, W * 0.75); r.addColorStop(0, "transparent"); r.addColorStop(1, "rgba(0,0,0,0.55)"); g.fillStyle = r; g.fillRect(0, 0, W, W); }
+      let snake, prev, dir, nextDir, food, foodAt, score, running = false, dead = false, deadAt = 0, last = 0, spd = 140, raf = 0, parts = [], pops = [], queue = [];
+      const best0 = gb();
+      const reset = () => { snake = [[8, 9], [7, 9], [6, 9]]; prev = snake.map((s) => [...s]); dir = [1, 0]; nextDir = [1, 0]; queue = []; score = 0; spd = 140; dead = false; parts = []; pops = []; place(); $("sscore").textContent = 0; };
+      const place = () => { do { food = [Math.floor(Math.random() * N), Math.floor(Math.random() * N)]; } while (snake.some(([x, y]) => x === food[0] && y === food[1])); foodAt = performance.now(); };
+      const C = (v) => (v + 0.5) * cell;
+      function step(now) {
+        if (queue.length) { const q = queue.shift(); if (!(q[0] === -dir[0] && q[1] === -dir[1])) nextDir = q; }
         dir = nextDir;
         const head = [snake[0][0] + dir[0], snake[0][1] + dir[1]];
-        if (head[0] < 0 || head[1] < 0 || head[0] >= N || head[1] >= N || snake.some(([x, y]) => x === head[0] && y === head[1])) return over();
+        if (head[0] < 0 || head[1] < 0 || head[0] >= N || head[1] >= N || snake.slice(0, -1).some(([x, y]) => x === head[0] && y === head[1])) return over(now);
+        prev = snake.map((s) => [...s]);
         snake.unshift(head);
-        if (head[0] === food[0] && head[1] === food[1]) { score++; $("sscore").textContent = score; place(); try { navigator.vibrate && navigator.vibrate(15); } catch {} clearInterval(timer); timer = setInterval(step, Math.max(60, 140 - score * 3)); }
-        else snake.pop();
-        drawS();
+        if (head[0] === food[0] && head[1] === food[1]) {
+          score++; const el = $("sscore"); el.textContent = score; el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
+          for (let i = 0; i < 16; i++) { const a = Math.random() * 7, v = (1.5 + Math.random() * 3) * dpr; parts.push({ x: C(food[0]), y: C(food[1]), vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1, col: Math.random() < 0.5 ? A : "#fff" }); }
+          pops.push({ x: C(food[0]), y: C(food[1]), t: now, ring: true });
+          try { navigator.vibrate && navigator.vibrate(15); } catch {}
+          spd = Math.max(60, 140 - score * 3); place();
+        } else snake.pop();
       }
-      async function over() { clearInterval(timer); running = false; dead = true; $("snote").textContent = `Game over: ${score}. Tap to play again.`; try { await plcall("score", { game: "snake", score }); } catch {} }
-      const start = () => { if (running) return; if (dead || !snake) reset(); running = true; $("snote").textContent = "Go!"; timer = setInterval(step, 140); };
-      const turn = (dx, dy) => { if (dx === -dir[0] && dy === -dir[1]) return; nextDir = [dx, dy]; if (!running) start(); };
-      reset(); drawS();
-      cv.onclick = start;
-      plLayer.querySelectorAll("[data-d]").forEach((b) => (b.onclick = () => { const [x, y] = b.dataset.d.split(",").map(Number); turn(x, y); }));
+      async function over(now) {
+        running = false; dead = true; deadAt = now; try { navigator.vibrate && navigator.vibrate([60, 40, 120]); } catch {}
+        $("swrap").classList.remove("shake"); void $("swrap").offsetWidth; $("swrap").classList.add("shake");
+        const nb = score > gb();
+        if (nb) { try { localStorage.setItem("jarvis.play.snakeBest", String(score)); } catch {} PS.st.games = { ...(PS.st.games || {}), snakeBest: { best: score } }; $("sbest").textContent = score; }
+        setTimeout(() => { const o = $("sover"); if (!o) return; o.innerHTML = `<b>GAME OVER</b>${nb && score ? `<em>New best!</em>` : ""}<div class="sfin"><span>Score <strong>${score}</strong></span><span>Best <strong>${gb()}</strong></span></div><button class="btn" id="sgo">Play again</button>`;
+          o.classList.add("on"); $("sgo").onclick = (e) => { e.stopPropagation(); start(); }; }, 650);
+        try { await plcall("score", { game: "snake", score }); } catch {}
+      }
+      function draw(now) {
+        const e = running ? Math.max(0, Math.min(1, (now - last) / spd)) : 1;   // progress between ticks
+        ctx.drawImage(bg, 0, 0);
+        // food: pulsing orb with a halo and a turning dashed ring, grows in when placed
+        const born = Math.max(0, Math.min(1, (now - foodAt) / 350)), grow = Math.max(0.01, 1 - Math.pow(1 - born, 3)), pulse = 1 + Math.sin(now / 260) * 0.08, fx = C(food[0]), fy = C(food[1]);
+        let g = ctx.createRadialGradient(fx, fy, 0, fx, fy, cell * 1.1 * grow); g.addColorStop(0, A + "88"); g.addColorStop(1, A + "00");
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(fx, fy, cell * 1.1 * grow, 0, 7); ctx.fill();
+        g = ctx.createRadialGradient(fx - cell * 0.08, fy - cell * 0.1, 0, fx, fy, cell * 0.32); g.addColorStop(0, "#fff"); g.addColorStop(0.45, A); g.addColorStop(1, A);
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(fx, fy, cell * 0.3 * pulse * grow, 0, 7); ctx.fill();
+        ctx.save(); ctx.translate(fx, fy); ctx.rotate(now / 900); ctx.strokeStyle = A; ctx.globalAlpha = 0.65; ctx.lineWidth = 1.4 * dpr; ctx.setLineDash([3 * dpr, 4 * dpr]);
+        ctx.beginPath(); ctx.arc(0, 0, cell * 0.52 * grow, 0, 7); ctx.stroke(); ctx.restore();
+        // the snake: segments glide from where they were to where they are
+        const pts = snake.map((s, i) => { const f = prev[i] || prev[prev.length - 1] || s; return [C(f[0] + (s[0] - f[0]) * e), C(f[1] + (s[1] - f[1]) * e)]; });
+        const fade = dead ? Math.max(0.25, 1 - (now - deadAt) / 900) : 1, hurt = dead && now - deadAt < 500 && Math.floor((now - deadAt) / 90) % 2 === 0;
+        const hd = pts[0], tl = pts[pts.length - 1];
+        g = ctx.createLinearGradient(hd[0], hd[1], tl[0] === hd[0] && tl[1] === hd[1] ? tl[0] + 1 : tl[0], tl[1]); g.addColorStop(0, hurt ? "#ff5a5a" : B); g.addColorStop(1, hurt ? "#7a1010" : A);
+        const path = () => { ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]); };
+        ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.globalAlpha = fade;
+        ctx.save(); ctx.shadowBlur = 18 * dpr; ctx.shadowColor = hurt ? "#ff3b3b" : B; ctx.strokeStyle = g; ctx.lineWidth = cell * 0.7; path(); ctx.stroke(); ctx.restore();
+        ctx.globalAlpha = fade * 0.35; ctx.strokeStyle = "#fff"; ctx.lineWidth = cell * 0.16; ctx.save(); ctx.translate(-cell * 0.08, -cell * 0.1); path(); ctx.stroke(); ctx.restore();   // tube highlight
+        // head: a brighter bead with two eyes looking where it's going
+        ctx.globalAlpha = fade; g = ctx.createRadialGradient(hd[0] - cell * 0.1, hd[1] - cell * 0.12, 0, hd[0], hd[1], cell * 0.45); g.addColorStop(0, "#fff"); g.addColorStop(0.5, hurt ? "#ff8080" : B); g.addColorStop(1, hurt ? "#c02020" : B);
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(hd[0], hd[1], cell * 0.42, 0, 7); ctx.fill();
+        const [dx, dy] = dir, px = -dy, py = dx;
+        for (const sgn of [-1, 1]) { const ex = hd[0] + dx * cell * 0.14 + px * sgn * cell * 0.17, ey = hd[1] + dy * cell * 0.14 + py * sgn * cell * 0.17;
+          ctx.fillStyle = "#0a0b1c"; ctx.beginPath(); ctx.arc(ex, ey, cell * 0.085, 0, 7); ctx.fill();
+          ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(ex + dx * cell * 0.03, ey + dy * cell * 0.03, cell * 0.03, 0, 7); ctx.fill(); }
+        ctx.globalAlpha = 1;
+        // sparks, rings and +1s
+        parts = parts.filter((q) => (q.life -= 0.03) > 0);
+        for (const q of parts) { q.x += q.vx; q.y += q.vy; q.vx *= 0.94; q.vy *= 0.94; ctx.globalAlpha = q.life; ctx.fillStyle = q.col; ctx.beginPath(); ctx.arc(q.x, q.y, 2.2 * dpr * q.life + 0.5, 0, 7); ctx.fill(); }
+        pops = pops.filter((q) => now - q.t < 700);
+        for (const q of pops) { const k = (now - q.t) / 700;
+          ctx.globalAlpha = 1 - k; ctx.strokeStyle = A; ctx.lineWidth = 2 * dpr; ctx.beginPath(); ctx.arc(q.x, q.y, cell * (0.4 + k * 1.4), 0, 7); ctx.stroke();
+          ctx.fillStyle = "#fff"; ctx.font = `700 ${Math.round(cell * 0.55)}px Orbitron, sans-serif`; ctx.textAlign = "center"; ctx.fillText("+1", q.x, q.y - cell * (0.6 + k * 0.9)); }
+        ctx.globalAlpha = 1;
+      }
+      function loop(now) {
+        raf = requestAnimationFrame(loop);   // first, so one bad frame can never stop the game
+        if (running && now - last >= spd) { last = now; step(now); }
+        try { draw(now); } catch (e) { console.warn("snake draw", e); }
+      }
+      const start = () => { if (running) return; if (dead || !snake) reset(); running = true; last = performance.now(); $("sover").classList.remove("on"); };
+      const turn = (dx, dy) => { const lastQ = queue[queue.length - 1] || nextDir; if ((dx === lastQ[0] && dy === lastQ[1]) || (dx === -lastQ[0] && dy === -lastQ[1])) { if (!running) start(); return; }
+        if (queue.length < 2) queue.push([dx, dy]); if (!running) start(); };
+      reset(); raf = requestAnimationFrame(loop);
+      $("sgo").onclick = (e) => { e.stopPropagation(); start(); };
+      cv.onclick = () => { if (!running) start(); };
+      plLayer.querySelectorAll("[data-d]").forEach((b) => (b.onpointerdown = (ev) => { ev.preventDefault(); const [x, y] = b.dataset.d.split(",").map(Number); turn(x, y); }));
       let sx = null, sy = null;
-      cv.addEventListener("touchstart", (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
-      cv.addEventListener("touchend", (e) => { if (sx === null) return; const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy; sx = null;
-        if (Math.max(Math.abs(dx), Math.abs(dy)) < 20) return start(); Math.abs(dx) > Math.abs(dy) ? turn(Math.sign(dx), 0) : turn(0, Math.sign(dy)); });
-      const onKey = (e) => { const m = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] }[e.key]; if (m && plLayer.classList.contains("on")) { e.preventDefault(); turn(...m); } };
+      const sw = $("swrap");
+      sw.addEventListener("touchstart", (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+      sw.addEventListener("touchmove", (e) => { if (sx === null) return; const dx = e.touches[0].clientX - sx, dy = e.touches[0].clientY - sy;   // turn mid-swipe, no need to lift the finger
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 24) return; Math.abs(dx) > Math.abs(dy) ? turn(Math.sign(dx), 0) : turn(0, Math.sign(dy)); sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+      sw.addEventListener("touchend", () => { sx = null; }, { passive: true });
+      const onKey = (e) => { const m = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] }[e.key];
+        if (plLayer.classList.contains("on") && m) { e.preventDefault(); turn(...m); } else if (plLayer.classList.contains("on") && (e.key === " " || e.key === "Enter") && !running) { e.preventDefault(); start(); } };
       document.addEventListener("keydown", onKey);
-      plStop = () => { clearInterval(timer); document.removeEventListener("keydown", onKey); plStop = () => {}; };
+      plStop = () => { cancelAnimationFrame(raf); running = false; document.removeEventListener("keydown", onKey); plStop = () => {}; };
     }
     // Reactor: an incremental game. Tap the core for energy, buy parts that make energy on their own; milestones earn packs.
     const PARTS = [["Spark coil", 15, 0.1], ["Capacitor bank", 100, 1], ["Turbine", 1100, 8], ["Fusion cell", 12000, 47], ["Plasma ring", 130000, 260], ["Star forge", 1.4e6, 1400], ["Singularity", 2e7, 7800], ["Universe engine", 3.3e8, 44000]];
