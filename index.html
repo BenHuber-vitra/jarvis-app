@@ -869,17 +869,57 @@
   .spad svg { width: 26px; height: 26px; }
   .spad .sp-up { grid-area: 1 / 2; } .spad .sp-left { grid-area: 2 / 1; } .spad .sp-left svg { transform: rotate(-90deg); }
   .spad .sp-right { grid-area: 2 / 3; } .spad .sp-right svg { transform: rotate(90deg); } .spad .sp-down { grid-area: 3 / 2; } .spad .sp-down svg { transform: rotate(180deg); }
-  /* reactor */
-  .rtop { text-align: center; } .ren { font-family: "Orbitron", sans-serif; font-size: 34px; text-shadow: 0 0 14px rgba(var(--th-a),0.7); }
-  .rcore { position: relative; flex: none; width: 170px; height: 170px; border-radius: 50%; border: 0; margin: 16px 0; cursor: pointer;
-    background: radial-gradient(circle at 50% 50%, #fff 0 8%, var(--th-core1-hex, #4fd8ff) 20%, rgba(var(--th-a),0.6) 45%, transparent 70%); box-shadow: 0 0 40px rgba(var(--th-a),0.6), inset 0 0 30px rgba(255,255,255,0.3); }
-  .rcore span { position: absolute; inset: 14px; border-radius: 50%; border: 2px dashed rgba(255,255,255,0.5); animation: spin 8s linear infinite; }
-  .rcore i { position: absolute; bottom: -24px; left: 0; right: 0; font-style: normal; font-size: 13px; color: var(--th-soft); }
-  .rcore.pulse { animation: corepulse 0.18s ease-out; } @keyframes corepulse { 50% { transform: scale(0.94); } } @keyframes spin { to { transform: rotate(360deg); } }
-  .rparts { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-  .rpart { display: grid; grid-template-columns: 1fr auto; text-align: left; gap: 2px 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(var(--th-a),0.4); background: rgba(255,255,255,0.05); color: #fff; font: inherit; }
-  .rpart b { font-size: 15px; } .rpart small { color: var(--th-soft); } .rpart span { grid-column: 1; font-size: 12px; color: var(--th-ink2, #c9d6ee); } .rpart em { grid-row: 1 / 3; grid-column: 2; align-self: center; font-style: normal; color: var(--th-soft); font-weight: 700; }
-  .rpart:disabled { opacity: 0.4; }
+  /* reactor, premium (Ben, 2026-11-20): see play.js reactorGame */
+  .rtop { text-align: center; width: 100%; max-width: 520px; } .rtop > small { font-size: 10px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--th-ink2, #c9d6ee); }
+  .ren { font-family: "Orbitron", sans-serif; font-size: 40px; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, #fff 30%, var(--th-core1-hex, #4fd8ff)); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 12px rgba(var(--th-a),0.55)); }
+  .rchips { display: flex; justify-content: center; gap: 8px; margin: 6px 0 10px; }
+  .rchips span { font-size: 12px; padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(var(--th-a),0.35); background: rgba(var(--th-a),0.12); font-variant-numeric: tabular-nums; }
+  .rms { display: flex; flex-direction: column; gap: 5px; align-items: stretch; padding: 0 6px; } .rms span { font-size: 11px; color: var(--th-ink2, #c9d6ee); }
+  .rmsbar { position: relative; height: 6px; border-radius: 4px; background: rgba(255,255,255,0.08); overflow: hidden; }
+  .rmsbar i { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: inherit; background: linear-gradient(90deg, var(--th-core1-hex, #4fd8ff), var(--th-a-hex)); box-shadow: 0 0 10px rgba(var(--th-a),0.7); transition: width 0.25s linear; }
+  .rmsbar i::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent); background-size: 40% 100%; background-repeat: no-repeat; animation: rmsflow 1.6s linear infinite; }
+  @keyframes rmsflow { from { background-position: -40% 0; } to { background-position: 140% 0; } }
+  .rcorewrap { position: relative; flex: none; margin: 8px 0 6px; touch-action: manipulation; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .rcv { display: block; }
+  .rfloat { position: absolute; inset: 0; pointer-events: none; }
+  .rfloat b { position: absolute; transform: translate(-50%, -50%); font-family: "Orbitron", sans-serif; font-size: 16px; color: #fff; text-shadow: 0 0 8px var(--th-core1-hex, #4fd8ff), 0 0 2px #000;
+    animation: rfloat 0.9s ease-out forwards; }
+  @keyframes rfloat { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); } 15% { opacity: 1; transform: translate(-50%, -70%) scale(1.15); } 100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), -260%) scale(0.9); } }
+  .rparts { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+  .rpart { position: relative; overflow: hidden; display: grid; grid-template-columns: 44px 1fr auto; align-items: center; gap: 10px; text-align: left; padding: 10px 12px 12px; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.1); background: linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02)); color: #fff; font: inherit;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); transition: border-color 0.2s, box-shadow 0.2s, transform 0.08s, opacity 0.2s; -webkit-tap-highlight-color: transparent; }
+  .rpart:disabled { opacity: 0.55; cursor: default; }
+  .rpart.ok { border-color: rgba(var(--th-a),0.6); box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 0 14px rgba(var(--th-a),0.25); }
+  .rpart.ok:active { transform: scale(0.98); }
+  .rico { position: relative; width: 44px; height: 44px; border-radius: 11px; display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle at 35% 30%, rgba(var(--th-a),0.35), rgba(var(--th-a),0.08) 70%); border: 1px solid rgba(var(--th-a),0.4); }
+  .rico svg { width: 24px; height: 24px; fill: none; stroke: var(--th-core1-hex, #4fd8ff); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 4px var(--th-core1-hex, #4fd8ff)); }
+  .rpart.up .rico svg { stroke: var(--th-a-hex); filter: drop-shadow(0 0 4px var(--th-a-hex)); }
+  .rico small { position: absolute; right: -6px; bottom: -6px; min-width: 18px; padding: 0 4px; border-radius: 9px; font-size: 10px; font-weight: 800; color: var(--th-on, #fff);
+    background: var(--th-a-hex); box-shadow: 0 0 6px rgba(var(--th-a),0.7); } .rico small:empty { display: none; }
+  .rtx b { display: block; font-size: 15px; } .rtx span { font-size: 11.5px; color: var(--th-ink2, #c9d6ee); }
+  .rpart em { font-style: normal; font-family: "Orbitron", sans-serif; font-size: 13px; font-weight: 700; color: var(--th-soft); padding: 4px 9px; border-radius: 9px; background: rgba(0,0,0,0.25); font-variant-numeric: tabular-nums; }
+  .rpart.ok em { color: #fff; background: linear-gradient(90deg, rgba(var(--th-g2),0.55), rgba(var(--th-a),0.6)); }
+  .rbar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(255,255,255,0.05); }
+  .rbar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--th-core1-hex, #4fd8ff), var(--th-a-hex)); opacity: 0.8; transition: width 0.25s linear; }
+  .rpart.bought::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,0.35) 50%, transparent 80%);
+    animation: rbought 0.5s ease-out forwards; } @keyframes rbought { from { transform: translateX(-100%); } to { transform: translateX(100%); opacity: 0; } }
+  .raway { position: fixed; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(4,5,18,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0s linear 0.3s; }
+  .raway.on { opacity: 1; visibility: visible; transition: opacity 0.3s; }
+  .raway > div { width: min(320px, 100%); text-align: center; padding: 22px 18px; border-radius: 18px; display: flex; flex-direction: column; gap: 6px;
+    background: linear-gradient(160deg, var(--th-c1, #2a2470), var(--th-c2, #141238)); border: 1px solid rgba(var(--th-a),0.45); box-shadow: 0 0 40px rgba(var(--th-a),0.35); animation: rawaypop 0.45s cubic-bezier(.2,.9,.3,1.3) both; }
+  @keyframes rawaypop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: none; } }
+  .raway small { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--th-ink2, #c9d6ee); }
+  .raway b { font-family: "Orbitron", sans-serif; font-size: 34px; background: linear-gradient(180deg, #fff, var(--th-core1-hex, #4fd8ff)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .raway span { font-size: 13px; color: var(--th-ink2, #c9d6ee); margin-bottom: 8px; }
+  #playgame .raway .btn { flex: none; }
+  .rtoast { position: fixed; left: 50%; top: calc(64px + env(safe-area-inset-top)); z-index: 4; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 14px;
+    font-size: 14px; font-weight: 700; white-space: nowrap; background: linear-gradient(90deg, rgba(var(--th-g2),0.9), rgba(var(--th-a),0.9)); box-shadow: 0 0 26px rgba(var(--th-a),0.6);
+    animation: rtoast 3.6s ease forwards; } .rtoast span { font-size: 20px; }
+  @keyframes rtoast { 0% { opacity: 0; transform: translate(-50%, -20px) scale(0.9); } 10%, 85% { opacity: 1; transform: translate(-50%, 0) scale(1); } 100% { opacity: 0; transform: translate(-50%, -10px); } }
 
   /* ---------------------------------------------------------------- smooth open and close everywhere (Ben, 2026-11-20) */
   #money, #fitlive { display: flex !important; opacity: 0; visibility: hidden; transform: translateY(14px) scale(0.985); pointer-events: none;
@@ -6180,6 +6220,20 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
     // Reactor: an incremental game. Tap the core for energy, buy parts that make energy on their own; milestones earn packs.
     const PARTS = [["Spark coil", 15, 0.1], ["Capacitor bank", 100, 1], ["Turbine", 1100, 8], ["Fusion cell", 12000, 47], ["Plasma ring", 130000, 260], ["Star forge", 1.4e6, 1400], ["Singularity", 2e7, 7800], ["Universe engine", 3.3e8, 44000]];
     const MILESTONES = [1e3, 1e4, 1e5, 1e6, 1e7, 1e8, 1e9, 1e10, 1e11, 1e12];
+    // Reactor, premium (Ben, 2026-11-20): a canvas reactor that grows busier as you build (an orbit per kind of part,
+    // a mote per part owned, faster spin with more energy per second), flares + shockwave + sparks + rising "+N" on taps,
+    // a smoothly counting energy number, a progress bar to the next pack, part cards with their own icons, a "saving up"
+    // bar and a buy flash, and a "while you were away" card. The game rules are unchanged.
+    const PART_ICON = [
+      "M13 2L6 13h5l-1 9 7-12h-5l1-8z",                                                       // spark coil
+      "M8 4v16M16 4v16M3 12h5M16 12h5",                                                        // capacitor
+      "M12 12m-2 0a2 2 0 104 0a2 2 0 10-4 0M12 10C12 5 15 3 17 4M14 12c5 0 7 3 6 5M12 14c0 5-3 7-5 6M10 12C5 12 3 9 4 7", // turbine
+      "M12 12m-1.5 0a1.5 1.5 0 103 0a1.5 1.5 0 10-3 0M12 3c4 0 6 4 6 9s-2 9-6 9-6-4-6-9 2-9 6-9zM3.5 8c2-3.5 7-3 11.5 0s7 7.5 5 11M20.5 8c-2-3.5-7-3-11.5 0s-7 7.5-5 11", // fusion cell
+      "M2 12c0-3 4.5-5 10-5s10 2 10 5-4.5 5-10 5-10-2-10-5zM7 12c0-1 2.2-2 5-2s5 1 5 2-2.2 2-5 2-5-1-5-2z",                    // plasma ring
+      "M12 2l2.6 6.6L21 9.3l-5 4.4 1.6 6.8L12 17l-5.6 3.5L8 13.7l-5-4.4 6.4-.7z",              // star forge
+      "M12 12m-3 0a3 3 0 106 0a3 3 0 10-6 0M12 3a9 9 0 019 9M21 12a9 9 0 01-9 9M12 21a9 9 0 01-9-9M3 12a9 9 0 019-9", // singularity
+      "M12 12c3-1 4-4 1-6S5 6 5 11s5 9 10 8 7-6 4-10M12 12c-2 0-2 2 0 2",                       // universe engine
+    ];
     function reactorGame() {
       let S = { energy: 0, lifetime: 0, owned: PARTS.map(() => 0), click: 1, clicks: 0, ms: 0, saved: Date.now() };
       const local = (() => { try { return JSON.parse(localStorage.getItem("jarvis.play.reactor") || "null"); } catch { return null; } })();
@@ -6192,34 +6246,120 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
       const away = Math.min(8 * 3600, Math.max(0, (Date.now() - (S.saved || Date.now())) / 1000));
       const offline = away > 60 ? eps() * away : 0;
       if (offline) { S.energy += offline; S.lifetime += offline; }
+      const awayTxt = away >= 3600 ? `${Math.floor(away / 3600)} h ${Math.round((away % 3600) / 60)} min` : `${Math.round(away / 60)} min`;
       plShow(`<div class="pghead"><button class="pgx" id="pgx">✕</button><b>Reactor</b><span></span></div>
-        <div class="rtop"><div class="ren" id="ren">0</div><div class="meta" id="reps">0 per second</div>${offline ? `<div class="pgnote">While you were away: +${plFmt(offline)}</div>` : ""}</div>
-        <button class="rcore" id="rcore"><span></span><i>+${plFmt(S.click)}</i></button>
-        <div class="rparts" id="rparts"></div><div class="pgnote" id="rnote"></div>`);
+        <div class="rtop"><small>Energy</small><div class="ren" id="ren">0</div><div class="rchips"><span id="reps">0 / s</span><span id="rtap">Tap ×${plFmt(S.click)}</span></div>
+          <div class="rms"><div class="rmsbar"><i id="rmsfill"></i></div><span id="rnote"></span></div></div>
+        <div class="rcorewrap" id="rcorewrap"><canvas id="rcv" class="rcv"></canvas><div class="rfloat" id="rfloat"></div></div>
+        <div class="rparts" id="rparts"></div>
+        ${offline ? `<div class="raway on" id="raway"><div><small>While you were away · ${awayTxt}</small><b>+${plFmt(offline)}</b><span>energy made by your reactor</span><button class="btn" id="rcollect">Collect</button></div></div>` : ""}`);
       $("pgx").onclick = plHide;
-      function draw() {
-        $("ren").textContent = plFmt(S.energy); $("reps").textContent = `${plFmt(eps())} per second · lifetime ${plFmt(S.lifetime)}`;
-        const nextM = MILESTONES[S.ms || 0];
-        $("rnote").textContent = nextM ? `Next pack at ${plFmt(nextM)} lifetime energy` : "Every milestone reached.";
-        $("rparts").innerHTML = `<button class="rpart" data-up="1" ${S.energy >= upCost() ? "" : "disabled"}><b>Overclock</b><span>Tap power ×2 (now ${plFmt(S.click)})</span><em>${plFmt(upCost())}</em></button>` +
-          PARTS.map((p, i) => `<button class="rpart" data-buy="${i}" ${S.energy >= cost(i) ? "" : "disabled"}><b>${p[0]} <small>×${S.owned[i]}</small></b><span>+${plFmt(p[2])}/s each</span><em>${plFmt(cost(i))}</em></button>`).join("");
-        $("rparts").querySelectorAll("[data-buy]").forEach((b) => (b.onclick = () => { const i = +b.dataset.buy; if (S.energy >= cost(i)) { S.energy -= cost(i); S.owned[i]++; draw(); } }));
-        $("rparts").querySelector("[data-up]").onclick = () => { if (S.energy >= upCost()) { S.energy -= upCost(); S.click *= 2; $("rcore").querySelector("i").textContent = "+" + plFmt(S.click); draw(); } };
+      if (offline) $("rcollect").onclick = () => { $("raway").classList.remove("on"); flare = 1; rings.push({ t: performance.now(), big: true }); };
+      // ---- the reactor canvas
+      const cv = $("rcv"), size = Math.min(240, innerWidth - 80), dpr = Math.min(2, devicePixelRatio || 1);
+      cv.style.width = cv.style.height = size + "px"; cv.width = cv.height = Math.round(size * dpr);
+      const ctx = cv.getContext("2d"), W = cv.width, c = W / 2, R = W / 2;
+      const css = getComputedStyle(document.documentElement), col = (v, d) => (css.getPropertyValue(v) || d).trim() || d;
+      let A = col("--th-a-hex", "#ff4fb8"), B = col("--th-core1-hex", "#4fd8ff");
+      let flare = 0, rings = [], sparks = [], raf = 0, shown = S.energy, ang = 0;
+      const level = () => Math.log10(eps() + 1);
+      function drawCore(now, dt) {
+        if (document.documentElement.dataset.theme === "spectrum") { const g2 = getComputedStyle(document.documentElement); A = (g2.getPropertyValue("--th-a-hex") || A).trim(); B = (g2.getPropertyValue("--th-core1-hex") || B).trim(); }
+        const L = level(), sp = 0.25 + L * 0.18 + flare * 2; ang += sp * dt;
+        flare = Math.max(0, flare - dt * 2.2);
+        ctx.clearRect(0, 0, W, W);
+        let g = ctx.createRadialGradient(c, c, 0, c, c, R); g.addColorStop(0, A + "40"); g.addColorStop(0.6, A + "12"); g.addColorStop(1, A + "00");
+        ctx.fillStyle = g; ctx.fillRect(0, 0, W, W);
+        ctx.lineCap = "round";
+        // outer segmented arcs: more of them as the reactor grows
+        const segs = 3 + Math.min(5, Math.floor(L));
+        ctx.save(); ctx.translate(c, c); ctx.rotate(ang * 0.6); ctx.strokeStyle = B; ctx.lineWidth = 2.4 * dpr; ctx.shadowBlur = 10 * dpr; ctx.shadowColor = B;
+        for (let i = 0; i < segs; i++) { const a0 = (i / segs) * Math.PI * 2; ctx.beginPath(); ctx.arc(0, 0, R * 0.9, a0, a0 + (Math.PI * 2 / segs) * 0.62); ctx.stroke(); }
+        ctx.restore();
+        // tick ring turning the other way
+        ctx.save(); ctx.translate(c, c); ctx.rotate(-ang * 0.35); ctx.strokeStyle = A; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.2 * dpr;
+        for (let i = 0; i < 72; i++) { const a = (i / 72) * Math.PI * 2, l = i % 6 ? 0.04 : 0.08; ctx.beginPath(); ctx.moveTo(Math.cos(a) * R * 0.76, Math.sin(a) * R * 0.76); ctx.lineTo(Math.cos(a) * R * (0.76 - l), Math.sin(a) * R * (0.76 - l)); ctx.stroke(); }
+        ctx.restore();
+        // an orbit for every kind of part owned, each with a bead running round it
+        const kinds = S.owned.map((n, i) => [n, i]).filter(([n]) => n > 0);
+        kinds.forEach(([n, i], k) => { ctx.save(); ctx.translate(c, c); ctx.rotate((k / Math.max(1, kinds.length)) * Math.PI + i * 0.3);
+          const rx = R * 0.6, ry = R * (0.16 + (k % 3) * 0.06); ctx.strokeStyle = k % 2 ? A : B; ctx.globalAlpha = 0.35; ctx.lineWidth = 1 * dpr;
+          ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, 7); ctx.stroke();
+          const t = ang * (1 + k * 0.23) + k; ctx.globalAlpha = 1; ctx.fillStyle = "#fff"; ctx.shadowBlur = 8 * dpr; ctx.shadowColor = k % 2 ? A : B;
+          ctx.beginPath(); ctx.arc(Math.cos(t) * rx, Math.sin(t) * ry, 2.2 * dpr, 0, 7); ctx.fill(); ctx.restore(); });
+        // motes: one per part owned (up to 48), drifting round at different radii
+        const total = Math.min(48, S.owned.reduce((a, b) => a + b, 0));
+        for (let i = 0; i < total; i++) { const r = R * (0.48 + ((i * 37) % 30) / 100), a = ang * (0.4 + ((i * 13) % 10) / 20) + i * 2.4;
+          ctx.globalAlpha = 0.4 + ((i * 7) % 6) / 10; ctx.fillStyle = i % 3 ? B : A; ctx.beginPath(); ctx.arc(c + Math.cos(a) * r, c + Math.sin(a) * r, 1.3 * dpr, 0, 7); ctx.fill(); }
+        ctx.globalAlpha = 1;
+        // the core: breathing, flaring when tapped
+        const br = 1 + Math.sin(now / 600) * 0.04 + flare * 0.18, cr = R * 0.34 * br;
+        g = ctx.createRadialGradient(c, c, 0, c, c, cr * 1.9); g.addColorStop(0, B + "aa"); g.addColorStop(1, B + "00"); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c, c, cr * 1.9, 0, 7); ctx.fill();
+        g = ctx.createRadialGradient(c - cr * 0.2, c - cr * 0.25, 0, c, c, cr); g.addColorStop(0, "#fff"); g.addColorStop(0.35, B); g.addColorStop(0.85, A); g.addColorStop(1, A + "00");
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c, c, cr, 0, 7); ctx.fill();
+        ctx.save(); ctx.translate(c, c); ctx.rotate(ang * 1.4); ctx.strokeStyle = "#fff"; ctx.globalAlpha = 0.5 + flare * 0.5; ctx.lineWidth = 1.4 * dpr; ctx.setLineDash([4 * dpr, 5 * dpr]);
+        ctx.beginPath(); ctx.arc(0, 0, cr * 0.72, 0, 7); ctx.stroke(); ctx.restore(); ctx.globalAlpha = 1;
+        // shockwaves and sparks
+        rings = rings.filter((q) => now - q.t < (q.big ? 900 : 600));
+        for (const q of rings) { const k = (now - q.t) / (q.big ? 900 : 600); ctx.globalAlpha = (1 - k) * 0.9; ctx.strokeStyle = B; ctx.lineWidth = (q.big ? 3 : 2) * dpr;
+          ctx.beginPath(); ctx.arc(c, c, cr + k * R * (q.big ? 0.9 : 0.55), 0, 7); ctx.stroke(); }
+        sparks = sparks.filter((q) => (q.life -= dt * 1.8) > 0);
+        for (const q of sparks) { q.x += q.vx * dt; q.y += q.vy * dt; ctx.globalAlpha = q.life; ctx.fillStyle = q.col; ctx.beginPath(); ctx.arc(q.x, q.y, 2 * dpr * q.life + 0.4, 0, 7); ctx.fill(); }
+        ctx.globalAlpha = 1;
       }
-      $("rcore").onclick = () => { S.energy += S.click; S.lifetime += S.click; S.clicks++; const c = $("rcore"); c.classList.remove("pulse"); void c.offsetWidth; c.classList.add("pulse"); draw(); };
+      // ---- the numbers and the parts (built once, then only updated)
+      const fmtE = (n) => n < 1000 ? String(Math.floor(n)) : plFmt(n);
+      $("rparts").innerHTML = `<button class="rpart up" data-up="1"><div class="rico"><svg viewBox="0 0 24 24"><path d="M4 14l8-8 8 8M4 20l8-8 8 8"/></svg></div>
+          <div class="rtx"><b>Overclock</b><span id="rupd">Doubles every tap</span></div><em id="rupc"></em><div class="rbar"><i></i></div></button>` +
+        PARTS.map((pt, i) => `<button class="rpart" data-buy="${i}"><div class="rico"><svg viewBox="0 0 24 24"><path d="${PART_ICON[i]}"/></svg><small id="ro${i}"></small></div>
+          <div class="rtx"><b>${esc(pt[0])}</b><span id="rd${i}"></span></div><em id="rc${i}"></em><div class="rbar"><i></i></div></button>`).join("");
+      const flash = (b) => { b.classList.remove("bought"); void b.offsetWidth; b.classList.add("bought"); };
+      $("rparts").querySelectorAll("[data-buy]").forEach((b) => (b.onclick = () => { const i = +b.dataset.buy; if (S.energy >= cost(i)) { S.energy -= cost(i); S.owned[i]++; shown = Math.min(shown, S.energy); flash(b); flare = Math.max(flare, 0.5); update(); try { navigator.vibrate && navigator.vibrate(12); } catch {} } }));
+      $("rparts").querySelector("[data-up]").onclick = (ev) => { const b = ev.currentTarget; if (S.energy >= upCost()) { S.energy -= upCost(); S.click *= 2; shown = Math.min(shown, S.energy); flash(b); rings.push({ t: performance.now(), big: true }); flare = 1; update(); } };
+      function update() {
+        const e = eps(); $("reps").textContent = `${plFmt(e)} / s`; $("rtap").textContent = `Tap ×${plFmt(S.click)}`;
+        const k = S.ms || 0, nextM = MILESTONES[k], prevM = k ? MILESTONES[k - 1] : 0;
+        $("rmsfill").style.width = nextM ? Math.min(100, ((S.lifetime - prevM) / (nextM - prevM)) * 100).toFixed(1) + "%" : "100%";
+        $("rnote").textContent = nextM ? `Next pack at ${plFmt(nextM)} lifetime · ${plFmt(S.lifetime)} so far` : "Every milestone reached";
+        const setBtn = (b, price) => { const ok = S.energy >= price; b.classList.toggle("ok", ok); b.disabled = !ok; b.querySelector(".rbar i").style.width = Math.min(100, (S.energy / price) * 100).toFixed(1) + "%"; };
+        setBtn($("rparts").querySelector("[data-up]"), upCost()); $("rupc").textContent = plFmt(upCost());
+        PARTS.forEach((pt, i) => { const b = $("rparts").querySelector(`[data-buy="${i}"]`); setBtn(b, cost(i)); $("rc" + i).textContent = plFmt(cost(i)); $("ro" + i).textContent = S.owned[i] ? "×" + S.owned[i] : "";
+          const share = e ? Math.round((pt[2] * S.owned[i] / e) * 100) : 0; $("rd" + i).textContent = `+${plFmt(pt[2])}/s each${S.owned[i] ? ` · ${share}% of output` : ""}`; });
+      }
+      // ---- tapping the core
+      const wrap = $("rcorewrap");
+      wrap.onpointerdown = (ev) => {
+        const r = cv.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top;
+        if (Math.hypot(x - r.width / 2, y - r.height / 2) > r.width * 0.48) return;
+        S.energy += S.click; S.lifetime += S.click; S.clicks++; flare = Math.min(1, flare + 0.55); rings.push({ t: performance.now() });
+        for (let i = 0; i < 8; i++) { const a = Math.random() * 7, v = (60 + Math.random() * 120) * dpr; sparks.push({ x: x * dpr, y: y * dpr, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1, col: Math.random() < 0.5 ? B : "#fff" }); }
+        const f = document.createElement("b"); f.textContent = "+" + plFmt(S.click); f.style.left = x + "px"; f.style.top = y + "px"; f.style.setProperty("--dx", (Math.random() * 40 - 20) + "px");
+        $("rfloat").appendChild(f); setTimeout(() => f.remove(), 900);
+        try { navigator.vibrate && navigator.vibrate(6); } catch {}
+        update();
+      };
+      // ---- loops: the game ticks 4 times a second; the picture and the counter every frame
+      let lastFrame = performance.now();
+      const frame = (now) => { raf = requestAnimationFrame(frame); const dt = Math.min(0.1, (now - lastFrame) / 1000); lastFrame = now;
+        shown += (S.energy - shown) * Math.min(1, dt * 10); if (Math.abs(S.energy - shown) < 0.5) shown = S.energy;
+        const el = $("ren"); if (el) el.textContent = fmtE(shown);
+        try { drawCore(now, dt); } catch (e) { console.warn("reactor draw", e); } };
+      raf = requestAnimationFrame(frame);
       let last = Date.now(), lastCloud = 0;
       const tick = setInterval(async () => {
         const now = Date.now(), e = eps() * (now - last) / 1000; last = now; S.energy += e; S.lifetime += e;
         while (MILESTONES[S.ms || 0] && S.lifetime >= MILESTONES[S.ms || 0]) {
           S.ms = (S.ms || 0) + 1; const n = S.ms;
-          try { const r = await plcall("idle", { milestone: n }); if (r.pack) { $("rnote").textContent = `Milestone ${n}: you earned a pack! 🎁`; } } catch {}
+          try { const r = await plcall("idle", { milestone: n }); if (r.pack) toast(`Milestone ${n} reached · you earned a pack`); } catch {}
         }
         S.saved = now; try { localStorage.setItem("jarvis.play.reactor", JSON.stringify(S)); } catch {}
         if (now - lastCloud > 30000) { lastCloud = now; plcall("idle", { save: S }).catch(() => {}); }
-        draw();
+        update();
       }, 250);
-      draw();
-      plStop = () => { clearInterval(tick); S.saved = Date.now(); try { localStorage.setItem("jarvis.play.reactor", JSON.stringify(S)); } catch {} plcall("idle", { save: S }).catch(() => {}); plStop = () => {}; };
+      function toast(t) { const d = document.createElement("div"); d.className = "rtoast"; d.innerHTML = `<span>🎁</span>${esc(t)}`; plLayer.appendChild(d); rings.push({ t: performance.now(), big: true }); flare = 1;
+        try { navigator.vibrate && navigator.vibrate([60, 40, 120]); } catch {} setTimeout(() => d.remove(), 3600); }
+      update();
+      plStop = () => { clearInterval(tick); cancelAnimationFrame(raf); S.saved = Date.now(); try { localStorage.setItem("jarvis.play.reactor", JSON.stringify(S)); } catch {} plcall("idle", { save: S }).catch(() => {}); plStop = () => {}; };
     }
 
     // ---- demo (#money-demo; no network)
