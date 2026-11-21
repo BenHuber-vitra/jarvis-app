@@ -585,6 +585,38 @@
   .fbody .bm > * { stroke: rgba(8,12,32,0.55); stroke-width: 0.5; }
   .fbody .bm.on > * { stroke: rgba(255,255,255,0.5); stroke-width: 0.45; }
   .fbody .ln { fill: none; stroke: rgba(8,12,32,0.5); stroke-width: 0.55; }
+  /* Workouts Home (Phase 2) */
+  #money .hero small { font-size: 0.45em; color: var(--ink2); font-weight: 500; }
+  #money .hero.sm { font-size: 30px; }
+  #money .fgoal { cursor: pointer; } #money .fgtop { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .fgauge { width: 112px; flex: none; } .fgauge .gt { fill: none; stroke: rgba(255,255,255,0.12); stroke-width: 9; stroke-linecap: round; }
+  .fgauge .gv { fill: none; stroke: var(--th-a-hex); stroke-width: 9; stroke-linecap: round; filter: drop-shadow(0 0 4px rgba(var(--th-a),0.7)); }
+  .fgauge text { fill: #fff; font-size: 17px; font-weight: 700; font-family: "Rajdhani", sans-serif; }
+  .fspark { display: block; width: 100%; height: 54px; margin: 10px 0 6px; } .fbw .fspark { height: 44px; }
+  .fspark .ln2 { fill: none; stroke: var(--th-a-hex); stroke-width: 2.2; vector-effect: non-scaling-stroke; filter: drop-shadow(0 0 3px rgba(var(--th-a),0.6)); }
+  .fspark .ar { fill: rgba(var(--th-a),0.12); } .fspark .dt { fill: var(--th-a-hex); }
+  .fspark .tg { stroke: rgba(var(--th-g2),0.7); stroke-width: 1.2; stroke-dasharray: 5 5; vector-effect: non-scaling-stroke; }
+  #money .fvol { display: flex; gap: 14px; align-items: flex-end; } #money .fvol > div { flex: none; } .fbars { flex: 1; height: 56px; min-width: 0; }
+  .fbars .bk { fill: rgba(255,255,255,0.07); } .fbars .bv { fill: var(--th-a-hex); }
+  #money .ftr { display: inline-block; font-size: 14px; font-weight: 600; color: var(--ink2); }
+  #money .ftr.up { color: #3ddc84; } #money .ftr.down { color: #ff8a8a; }
+  #money .hero .ftr { font-size: 22px; vertical-align: middle; }
+  #money .ftiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+  #money .ftiles .card { margin: 0; padding: 12px; } #money .ftiles b { display: block; font-size: 22px; color: #fff; margin-top: 4px; font-weight: 600; }
+  #money .fstreak .fstep, #money .fstep { display: flex; align-items: center; gap: 6px; color: var(--ink); }
+  #money .fstep button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--pink2); font-size: 18px; line-height: 1; }
+  #money .fweeks { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; margin: 12px 0 8px; }
+  #money .fweeks i { height: 26px; border-radius: 6px; background: rgba(255,255,255,0.06); font-style: normal; font-size: 12px; color: var(--ink2);
+    display: flex; align-items: center; justify-content: center; }
+  #money .fweeks i.part { background: rgba(var(--th-a),0.25); } #money .fweeks i.hit { background: var(--th-a-hex); color: var(--th-on); font-weight: 700; }
+  #money .fweeks i.now { outline: 1px dashed rgba(255,255,255,0.45); outline-offset: 1px; }
+  #money .fplus { font-size: 28px; line-height: 1; padding: 0 8px; }
+  #money .row .fpr, #msheet .fhs .fpr { margin-left: 6px; font-size: 11px; padding: 1px 7px; vertical-align: 1px; }
+  .fpr { background: rgba(var(--th-a),0.16); color: var(--th-soft); border-color: rgba(var(--th-a),0.5); }
+  #money svg.fgauge { width: 108px; height: auto; flex: none; } #money svg.fbars { flex: 1; width: auto; min-width: 0; height: 56px; }
+  #money svg.fspark { width: 100%; }
+  #money .frh { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .fgauge text { font-size: 21px; }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -1631,7 +1663,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
         try { localStorage.setItem("jarvis.moneyBook", book); } catch {}
       }
       const tabs = M.book === "crm" ? CRM_TABS : M.book === "fit" ? FIT_TABS : MONEY_TABS;   // the Customers screen has its own four tabs
-      if (!tabs.some(([k]) => k === tab)) tab = tabs[0][0];
+      if (!tabs.some(([k]) => k === tab) && !(M.book === "fit" && tab === "fset")) tab = tabs[0][0];   // Workouts' Settings: reached from Home
       el.querySelectorAll("nav button").forEach((b, i) => { b.dataset.tab = tabs[i][0]; b.textContent = tabs[i][1]; });
       M.tab = tab;
       $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY", calls: "CALLS", fit: "WORKOUTS", look: "COLOURS" }[M.book];
@@ -3564,7 +3596,126 @@ function musclesWorked(workouts, musclesOf) {
   return score;
 }
 
-return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recent, stats, clock, dur, KM_PER_MI, modeOf, setDone, fmtD, fmtSet, LIFTOFF_CUSTOM, stableUuid, parseCsv, parseLiftoff, musclesWorked };
+// ---------------------------------------------------------------- Phase 2: stats and goals (2026-11-20)
+const DAY = 864e5;
+const fin = (ws) => ws.filter((w) => w.ended_at).sort((a, b) => (a.started_at < b.started_at ? -1 : 1));   // oldest first
+
+/** Best estimated 1RM per session of one exercise, oldest first: [{ t (ms), date, e1rm, w, r }]. */
+function e1rmSeries(workouts, ex) {
+  const out = [];
+  for (const w of fin(workouts)) {
+    let best = null;
+    for (const e of w.exercises || []) if (e.ex === ex) for (const s of doneSets(e)) {
+      const v = e1rm(s.w, s.r);
+      if (v > 0 && (!best || v > best.e1rm)) best = { e1rm: v, w: +s.w, r: +s.r };
+    }
+    if (best) out.push({ t: Date.parse(w.started_at), date: w.started_at, ...best });
+  }
+  return out;
+}
+
+/** Where a strength goal stands. goal = { ex, target (lbs), start? (lbs) }.
+ * current = the best estimated 1RM ever (like Ben's old app: 203 on bench); recent = best of the last 3 sessions;
+ * progress runs from the first logged session (or goal.start) to the target (his old app: 42%);
+ * trend = least-squares slope of the last 10 sessions (lbs a day);
+ * eta = the date the trend reaches the target (null if not trending up, or more than 3 years away). */
+function goalStatus(workouts, goal, now = Date.now()) {
+  const s = e1rmSeries(workouts, goal.ex);
+  if (!s.length) return { series: [], current: 0, progress: 0, eta: null, slope: 0, done: false };
+  const current = Math.max(...s.map((x) => x.e1rm)), recent = Math.max(...s.slice(-3).map((x) => x.e1rm));
+  const start = goal.start > 0 ? goal.start : s[0].e1rm;
+  const span = goal.target - start;
+  const progress = goal.target <= current ? 1 : span > 0 ? Math.max(0, Math.min(1, (current - start) / span)) : 0;
+  const pts = s.slice(-10);
+  let slope = 0;
+  if (pts.length >= 3 && pts[pts.length - 1].t - pts[0].t > 7 * DAY) {
+    const mx = pts.reduce((a, p) => a + p.t, 0) / pts.length, my = pts.reduce((a, p) => a + p.e1rm, 0) / pts.length;
+    const num = pts.reduce((a, p) => a + (p.t - mx) * (p.e1rm - my), 0), den = pts.reduce((a, p) => a + (p.t - mx) ** 2, 0);
+    slope = den ? (num / den) * DAY : 0;   // lbs per day
+  }
+  let eta = null;
+  if (current >= goal.target) eta = now;
+  else if (slope > 0.01) { const days = (goal.target - recent) / slope; if (days < 3 * 365) eta = now + Math.max(0, days) * DAY; }
+  return { series: s, current, recent, start, progress, eta, slope, done: current >= goal.target };
+}
+
+/** Personal records, in the order they happened. A set is a record when it beats what came before for
+ * that exercise: "e1rm" (best estimated 1RM), "weight" (heaviest weight), "reps" (most reps at that weight).
+ * An exercise's first session sets the baseline and isn't counted. -> { byWorkout: { id: [rec] }, all: [rec] }
+ * with rec = { workout, date, ex, type, value, w, r }. */
+function records(workouts) {
+  const best = {}, byWorkout = {}, all = [];
+  for (const w of fin(workouts)) {
+    const found = [];
+    const seenNow = new Set();
+    for (const e of w.exercises || []) {
+      const sets = doneSets(e).filter((s) => +s.r > 0);
+      if (!sets.length) continue;
+      const b = best[e.ex];
+      if (b && !seenNow.has(e.ex)) {
+        let topE = null, topW = null; const repsAt = {};
+        for (const s of sets) {
+          const v = e1rm(s.w, s.r), wt = +s.w;
+          if (v > b.e1rm && (!topE || v > topE.value)) topE = { type: "e1rm", value: v, w: wt, r: +s.r };
+          if (wt > b.weight && (!topW || wt > topW.value)) topW = { type: "weight", value: wt, w: wt, r: +s.r };
+          if (wt > 0 && b.reps[wt] !== undefined && +s.r > b.reps[wt] && (!repsAt[wt] || +s.r > repsAt[wt].value)) repsAt[wt] = { type: "reps", value: +s.r, w: wt, r: +s.r };
+        }
+        for (const rec of [topE, topW, ...Object.values(repsAt)]) if (rec) found.push({ workout: w.id, date: w.started_at, ex: e.ex, ...rec });
+      }
+      seenNow.add(e.ex);
+      const nb = best[e.ex] || { e1rm: 0, weight: 0, reps: {} };
+      for (const s of sets) { nb.e1rm = Math.max(nb.e1rm, e1rm(s.w, s.r)); nb.weight = Math.max(nb.weight, +s.w); const wt = +s.w; nb.reps[wt] = Math.max(nb.reps[wt] || 0, +s.r); }
+      best[e.ex] = nb;
+    }
+    if (found.length) { byWorkout[w.id] = found; all.push(...found); }
+  }
+  return { byWorkout, all };
+}
+
+/** Monday 00:00 (local) of the week a time falls in. */
+function weekStart(t) { const d = new Date(t); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getTime(); }
+
+/** Weekly streak: weeks in a row with at least `target` workouts. The current week counts once it's
+ * reached; until then the streak runs to last week. -> { current, best, thisWeek, weeks: [{ start, n, hit }] (last 8) } */
+function streak(workouts, target, now = Date.now()) {
+  target = Math.max(1, +target || 3);
+  const count = new Map();
+  for (const w of fin(workouts)) { const k = weekStart(Date.parse(w.started_at)); count.set(k, (count.get(k) || 0) + 1); }
+  const thisWk = weekStart(now), wk = (k, n) => { const d = new Date(k); d.setDate(d.getDate() + 7 * n); return weekStart(d.getTime()); };
+  const hit = (k) => (count.get(k) || 0) >= target;
+  let current = 0, k = hit(thisWk) ? thisWk : wk(thisWk, -1);
+  while (hit(k)) { current++; k = wk(k, -1); }
+  let bestRun = 0, run = 0;
+  const keys = [...count.keys()].sort((a, b) => a - b);
+  if (keys.length) for (let k2 = keys[0]; k2 <= thisWk; k2 = wk(k2, 1)) { run = hit(k2) ? run + 1 : 0; bestRun = Math.max(bestRun, run); }
+  const weeks = Array.from({ length: 8 }, (_, i) => { const s = wk(thisWk, i - 7); return { start: s, n: count.get(s) || 0, hit: hit(s) }; });
+  return { current, best: bestRun, thisWeek: count.get(thisWk) || 0, target, weeks };
+}
+
+/** The last n finished workouts with their totals, oldest first, and whether volume is going up or down:
+ * average volume per workout vs the n workouts before them (within 3% = steady). */
+function recentTotals(workouts, n = 14) {
+  const all = fin(workouts), ws = all.slice(-n), before = all.slice(-2 * n, -n);
+  const list = ws.map((w) => ({ id: w.id, date: w.started_at, ...stats(w) }));
+  const avg = (a) => (a.length ? a.reduce((x, y) => x + stats(y).volume, 0) / a.length : 0);
+  const newer = avg(ws), older = avg(before);
+  const trend = before.length < 4 || !older ? "steady" : newer > older * 1.03 ? "up" : newer < older * 0.97 ? "down" : "steady";
+  return { list, volume: list.reduce((a, x) => a + x.volume, 0), seconds: list.reduce((a, x) => a + x.seconds, 0), trend,
+    change: older ? newer / older - 1 : 0 };
+}
+
+/** Bodyweight trend over the last 30 days of the log [{ d: "YYYY-MM-DD", lbs }]: "up" / "down" / "steady" (within 1.5 lb). */
+function weightTrend(log, now = Date.now()) {
+  const pts = [...(log || [])].sort((a, b) => (a.d < b.d ? -1 : 1));
+  if (!pts.length) return { latest: null, change: 0, trend: "steady", pts };
+  const latest = pts[pts.length - 1];
+  const cut = new Date(now - 30 * DAY).toISOString().slice(0, 10);
+  const base = pts.find((p) => p.d >= cut) || pts[0];
+  const change = latest.lbs - base.lbs;
+  return { latest, change, trend: Math.abs(change) < 1.5 ? "steady" : change > 0 ? "up" : "down", pts };
+}
+
+return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recent, stats, clock, dur, KM_PER_MI, modeOf, setDone, fmtD, fmtSet, LIFTOFF_CUSTOM, stableUuid, parseCsv, parseLiftoff, musclesWorked, e1rmSeries, goalStatus, records, weekStart, streak, recentTotals, weightTrend };
  })();
     // -------------------------------------------------------------- body map (2026-11-20, Ben; redrawn the same day)
     // Our own front + back figure (drawn here, not copied from any app): a smooth body outline and one curved
@@ -3621,7 +3772,8 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
 
     const worked = (ws) => FC.musclesWorked(ws, (id) => exOf(id));   // { muscle: 0..1 } for the body map
     const LEGEND = `<div class="fbleg"><span><i style="background:rgba(var(--th-a),0.5)"></i>Some</span><span><i style="background:var(--th-a-hex)"></i>Most</span></div>`;
-    const FIT_TABS = [["start", "Workout"], ["hist", "History"], ["lib", "Exercises"], ["fset", "Settings"]];
+    // Phase 2 (2026-11-20): Home = the dashboard. Settings moved behind a link on Home (tab "fset", not in the bar).
+    const FIT_TABS = [["home", "Home"], ["start", "Workout"], ["hist", "History"], ["lib", "Exercises"]];
     const W = { lib: null, map: new Map(), q: "", eq: "", mus: "", shown: 60, live: null, tick: null, rest: null,
       saveT: null, unsynced: false, demo: null };
     const FD = () => M.cache.fit || null;
@@ -3673,10 +3825,17 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
     const exOf = (id) => W.map.get(id) || { id, name: "Exercise", equipment: "", primary: [], secondary: [] };
     // How an exercise is logged: weight x reps, distance + time (cardio) or time only (duration).
     const modeOf = (id) => FC.modeOf(exOf(id).category);
-    function setLine(s, i, id) {
+    function setLine(s, i, id, badges) {
       const u = unit(), str = modeOf(id) === "strength";
-      return `<div class="fhs"><span>Set ${i + 1}: ${str ? `${FC.fmtW(s.w, u)} ${u} × ${s.r}` : esc(FC.fmtSet(s, modeOf(id), u))}</span><span>${str ? fE(FC.e1rm(s.w, s.r)) : ""}</span></div>`;
+      return `<div class="fhs"><span>Set ${i + 1}: ${str ? `${FC.fmtW(s.w, u)} ${u} × ${s.r}` : esc(FC.fmtSet(s, modeOf(id), u))}${(badges || []).map((b) => ` <span class="fpr">${b}</span>`).join("")}</span><span>${str ? fE(FC.e1rm(s.w, s.r)) : ""}</span></div>`;
     }
+    // Personal records (FC.records), worked out once per change of the workout list.
+    let recMemo = null;
+    const RECS = () => { const ws = FD().workouts; const key = ws.length + ":" + ws.reduce((a, w) => a + (w.ended_at || "").length + (w.exercises || []).length, 0);
+      if (!recMemo || recMemo.key !== key || recMemo.ws !== ws) recMemo = { key, ws, r: FC.records(ws) }; return recMemo.r; };
+    const REC_LABEL = { e1rm: "Best 1RM", weight: "Heaviest", reps: "Most reps" };
+    const counted = (recs) => recs.filter((r) => r.type !== "reps");   // the "Records" count: best 1RM + heaviest weight (like Ben's old app)
+    function setBadges(recs, ex, s) { return recs.filter((r) => r.ex === ex && r.w === +s.w && r.r === +s.r).map((r) => REC_LABEL[r.type]); }
     const exName = (id) => exOf(id).name;
 
     // ---- small original line icons by equipment (Jarvis's cyan line style)
@@ -3742,7 +3901,124 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
     // ---- the screen
     function renderFit() {
       if (!W.lib) { body.innerHTML = `<div class="note">Loading exercises…</div>`; return; }
-      ({ start: renderStart, hist: renderHist, lib: renderLib, fset: renderFset }[M.tab] || renderStart)();
+      ({ home: renderHome, start: renderStart, hist: renderHist, lib: renderLib, fset: renderFset }[M.tab] || renderHome)();
+    }
+    // ---- Home: the dashboard (Phase 2)
+    const svgW = 300;
+    function gauge(p) {   // a half ring, 0..1
+      const r = 40, len = Math.PI * r, v = Math.max(0, Math.min(1, p));
+      return `<svg class="fgauge" viewBox="0 0 100 58"><path d="M10 50 A40 40 0 0 1 90 50" class="gt"/><path d="M10 50 A40 40 0 0 1 90 50" class="gv" style="stroke-dasharray:${(len * v).toFixed(1)} ${len.toFixed(1)}"/>
+        <text x="50" y="47" text-anchor="middle">${Math.round(v * 100)}%</text></svg>`;
+    }
+    function spark(vals, target, h = 54) {   // a small line chart; target = dashed line
+      if (vals.length < 2) return "";
+      const lo = Math.min(...vals, target || Infinity) * 0.97, hi = Math.max(...vals, target || 0) * 1.01, X = (i) => 6 + (i / (vals.length - 1)) * (svgW - 12),
+        Y = (v) => h - 6 - ((v - lo) / (hi - lo || 1)) * (h - 12);
+      const d = vals.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join(" ");
+      return `<svg class="fspark" viewBox="0 0 ${svgW} ${h}" preserveAspectRatio="none">${target ? `<line x1="0" x2="${svgW}" y1="${Y(target).toFixed(1)}" y2="${Y(target).toFixed(1)}" class="tg"/>` : ""}
+        <path d="${d} L${X(vals.length - 1).toFixed(1)} ${h} L${X(0).toFixed(1)} ${h} Z" class="ar"/><path d="${d}" class="ln2"/><circle cx="${X(vals.length - 1).toFixed(1)}" cy="${Y(vals[vals.length - 1]).toFixed(1)}" r="3.5" class="dt"/></svg>`;
+    }
+    function bars(vals, h = 52) {
+      const mx = Math.max(...vals, 1), bw = svgW / Math.max(vals.length, 1);
+      return `<svg class="fbars" viewBox="0 0 ${svgW} ${h}" preserveAspectRatio="none">${vals.map((v, i) => `<rect x="${(i * bw + bw * 0.18).toFixed(1)}" width="${(bw * 0.64).toFixed(1)}" y="0" height="${h}" rx="3" class="bk"/>
+        <rect x="${(i * bw + bw * 0.18).toFixed(1)}" width="${(bw * 0.64).toFixed(1)}" y="${(h - Math.max(3, (v / mx) * h)).toFixed(1)}" height="${Math.max(3, (v / mx) * h).toFixed(1)}" rx="3" class="bv"/>`).join("")}</svg>`;
+    }
+    const TREND = { up: ["↗", "Progressing"], down: ["↘", "Regressing"], steady: ["→", "Steady"] };
+    function renderHome() {
+      const d = FD(), st = d.settings, u = unit(), ws = d.workouts, goals = st.goals || [];
+      let h = setupCard();
+      if (W.live) h += `<div class="card fresume" id="fresume"><div class="label">Workout in progress</div><div class="name">${esc(W.live.name)}</div>
+        <div class="sub"><span id="fresclock">${FC.clock(FC.stats(W.live).seconds)}</span> · ${FC.stats(W.live).sets} sets done</div></div>`;
+      // strength goals
+      h += `<div class="sect"><span class="label">Strength goal${goals.length > 1 ? "s" : ""}</span><button class="linkish" id="fgadd">+ Goal</button></div>`;
+      if (!goals.length) h += `<div class="card"><div class="sub">Pick a lift and the 1RM you're chasing. Jarvis tracks your best estimated 1RM and when you'll get there.</div>
+        <div class="btns"><button class="btn" id="fgfirst">Set a goal: Bench Press 225</button></div></div>`;
+      goals.forEach((g, i) => {
+        const gs = FC.goalStatus(ws, g), t = gs.slope > 0.01 ? "up" : gs.slope < -0.01 ? "down" : "steady";
+        const eta = gs.done ? "Goal reached 🎉" : gs.eta ? `At this pace: ${new Date(gs.eta).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}` :
+          gs.series.length < 3 ? "A few more sessions and Jarvis can project a date." : "Not trending up lately, so no date yet. Recent best " + fE(gs.recent) + " " + u + ".";
+        h += `<div class="card fgoal" data-goal="${i}"><div class="fgtop"><div><div class="label">${esc(exName(g.ex))} 1RM</div>
+          <div class="hero">${gs.current ? fE(gs.current) : "–"}<small> ${u}</small> <span class="ftr ${t}">${TREND[t][0]}</span></div>
+          <div class="sub">Target ${FC.fmtW(g.target, u)} ${u}</div></div>${gauge(gs.progress)}</div>
+          ${spark(gs.series.slice(-20).map((x) => FC.shown(x.e1rm, u)), FC.shown(g.target, u))}<div class="meta">${eta}</div></div>`;
+      });
+      // the last 14 workouts
+      const T = FC.recentTotals(ws, 14), ids = new Set(T.list.map((x) => x.id));
+      const recN = counted(RECS().all.filter((r) => ids.has(r.workout))).length, S = FC.streak(ws, st.week_target || 3);
+      if (T.list.length) {
+        const [arrow, word] = TREND[T.trend];
+        h += `<div class="sect"><span class="label">Last ${T.list.length} workouts</span></div>
+          <div class="card"><div class="fvol"><div><div class="label">Volume</div><div class="hero sm">${fV(T.volume)}<small> ${u}</small></div>
+          <div class="ftr ${T.trend}">${arrow} ${word}${T.change ? ` ${T.change > 0 ? "+" : ""}${Math.round(T.change * 100)}%` : ""}</div></div>${bars(T.list.map((x) => x.volume))}</div></div>
+          <div class="ftiles"><div class="card"><div class="label">Duration</div><b>${FC.dur(T.seconds)}</b></div><div class="card"><div class="label">Records</div><b>${recN}</b></div>
+          <div class="card"><div class="label">Streak</div><b>${S.current} wk</b></div></div>`;
+      }
+      // weekly streak
+      h += `<div class="card fstreak"><div class="frh"><div><div class="label">Weekly streak</div><div class="hero sm">${S.current ? "🔥 " : ""}${S.current} week${S.current === 1 ? "" : "s"}</div>
+        <div class="sub">This week ${S.thisWeek} of ${S.target} · best ${S.best} week${S.best === 1 ? "" : "s"}</div></div>
+        <div class="fstep"><button id="fwkdn" aria-label="Fewer">−</button><span>${S.target}/wk</span><button id="fwkup" aria-label="More">+</button></div></div>
+        <div class="fweeks">${S.weeks.map((w2, k) => `<i class="${w2.hit ? "hit" : w2.n ? "part" : ""}${k === 7 ? " now" : ""}" title="${w2.n} workouts">${w2.n || ""}</i>`).join("")}</div>
+        <div class="meta">A week counts when you reach ${S.target} workout${S.target === 1 ? "" : "s"} (Monday to Sunday). Rest days never break it.</div></div>`;
+      // bodyweight
+      const BW = FC.weightTrend(d.bodyweight || []);
+      h += `<div class="card fbw"><div class="frh"><div><div class="label">Bodyweight</div>
+        <div class="hero sm">${BW.latest ? FC.fmtW(BW.latest.lbs, u) : FC.fmtW(st.bodyweight, u)}<small> ${u}</small></div>
+        <div class="sub">${BW.latest ? `${{ up: "Gaining", down: "Losing", steady: "Stable weight" }[BW.trend]}${BW.trend !== "steady" ? ` (${BW.change > 0 ? "+" : ""}${FC.fmtW(BW.change, u)} ${u} in 30 days)` : ""}` : "Log it to see your trend"}</div></div>
+        <button class="linkish fplus" id="fbwadd" aria-label="Log bodyweight">+</button></div>${spark(BW.pts.slice(-30).map((x) => FC.shown(x.lbs, u)), 0, 44)}</div>`;
+      // what this week worked
+      const week = ws.filter((w) => w.ended_at && Date.now() - Date.parse(w.started_at) < 7 * 864e5);
+      if (ws.some((w) => w.ended_at)) {
+        const sets = week.reduce((a, w) => a + FC.stats(w).sets, 0);
+        h += `<div class="card fweek"><div class="label">Last 7 days</div><div class="sub">${week.length ? `${week.length} workout${week.length === 1 ? "" : "s"} · ${sets} sets` : "Nothing yet this week"}</div>${BODY(worked(week))}${week.length ? LEGEND : ""}</div>`;
+      }
+      h += `<div class="btns"><button class="btn quiet" id="fsettings">⚙ Settings and backup</button></div>`;
+      body.innerHTML = h;
+      wireSetup();
+      const res = $("fresume"); if (res) res.onclick = () => openLive();
+      $("fgadd").onclick = () => goalSheet(null);
+      const ff = $("fgfirst"); if (ff) ff.onclick = () => goalSheet(null);
+      body.querySelectorAll("[data-goal]").forEach((c) => (c.onclick = () => goalSheet(+c.dataset.goal)));
+      const wk = async (n) => { try { FD().settings = (await fcall("settings", { week_target: Math.max(1, Math.min(14, (st.week_target || 3) + n)) })).settings; renderHome(); } catch (e) { M.error = e.message; } };
+      $("fwkdn").onclick = () => wk(-1); $("fwkup").onclick = () => wk(1);
+      $("fbwadd").onclick = bodyweightSheet;
+      $("fsettings").onclick = () => { const from = { book: M.book, tab: M.tab }; nav.push(() => show(from.book, from.tab)); show("fit", "fset"); };
+    }
+    const BENCH = "Barbell_Bench_Press_-_Medium_Grip";
+    function goalSheet(i, draft) {
+      const goals = [...(FD().settings.goals || [])], g = draft || (i === null ? { ex: BENCH, target: 225 } : { ...goals[i] }), u = unit();
+      openSheet(`<h2>${i === null ? "New strength goal" : "Strength goal"}</h2><div class="meta">Your best estimated 1RM on a lift, and the number you're chasing.</div>
+        <label>Lift</label><button class="btn quiet" id="gex" style="width:100%;text-align:left">${esc(exName(g.ex))} ›</button>
+        <label>Target 1RM (${u})</label><input id="gt" inputmode="decimal" value="${esc(FC.fmtW(g.target, u))}">
+        <div class="btns"><button class="btn" id="gsave">Save</button>${i !== null ? `<button class="btn danger" id="gdel">Remove</button>` : ""}<button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`, (box) => {
+        const keep = () => { const v = parseFloat(box.querySelector("#gt").value); if (v > 0) g.target = FC.toLbs(v, u); };
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelector("#gex").onclick = () => { keep(); pickSheet("Goal lift", (id) => { g.ex = id; goalSheet(i, g); }, () => goalSheet(i, g)); };
+        const save = async (list) => { try { FD().settings = (await fcall("settings", { goals: list })).settings; closeSheet(); renderFit(); } catch (e) { sheetErr(e.message); } };
+        box.querySelector("#gsave").onclick = () => { keep(); if (!(g.target > 0)) return sheetErr("Type the target.");
+          if (i === null) goals.push({ ex: g.ex, target: g.target }); else goals[i] = { ...goals[i], ex: g.ex, target: g.target }; save(goals); };
+        const del = box.querySelector("#gdel"); if (del) del.onclick = () => { goals.splice(i, 1); save(goals); };
+      });
+    }
+    function bodyweightSheet() {
+      const u = unit(), today = new Date(Date.now() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 10), log = FD().bodyweight || [];
+      openSheet(`<h2>Log bodyweight</h2><div class="meta">One entry a day; logging the same day again replaces it.</div>
+        <div class="search"><input id="bwv" inputmode="decimal" placeholder="Weight (${u})" value="${esc(FC.fmtW((log[log.length - 1] || {}).lbs || FD().settings.bodyweight, u))}"><input id="bwd" type="date" value="${today}"></div>
+        ${log.length ? `<div class="card">${log.slice(-6).reverse().map((x) => `<div class="row"><div class="grow"><div class="name">${FC.fmtW(x.lbs, u)} ${u}</div><div class="meta">${esc(x.d)}</div></div><button class="linkish fdel" data-bwdel="${x.d}">✕</button></div>`).join("")}</div>` : ""}
+        <div class="btns"><button class="btn" id="bwsave">Save</button><button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`, (box) => {
+        box.querySelector("#sx").onclick = closeSheet;
+        const send = async (p) => { try { FD().bodyweight = (await fcall("bodyweight", p)).log; if (!p.delete) FD().settings.bodyweight = p.lbs; closeSheet(); renderFit(); } catch (e) { sheetErr(e.message); } };
+        box.querySelector("#bwsave").onclick = () => { const v = parseFloat(box.querySelector("#bwv").value); if (!(v > 0)) return sheetErr("Type your weight.");
+          send({ d: box.querySelector("#bwd").value || today, lbs: FC.toLbs(v, u) }); };
+        box.querySelectorAll("[data-bwdel]").forEach((b) => (b.onclick = () => send({ d: b.dataset.bwdel, delete: true })));
+      });
+    }
+    function wireSetup() {   // the Quick setup card's Save (on Home and Workout)
+      const fs = $("fssave"); if (!fs) return;
+      fs.onclick = async () => {
+        const age = +$("fsage").value, bw = +$("fsbw").value;
+        if (!(age >= 10 && age <= 100)) { $("fserr").textContent = "Type your age (a number)."; return; }
+        try { FD().settings = (await fcall("settings", { age, ...(bw > 0 ? { bodyweight: FC.toLbs(bw, unit()) } : {}) })).settings; renderFit(); }
+        catch (e) { $("fserr").textContent = e.message; } };
     }
     function setupCard() {
       const s = FD().settings;
@@ -3757,11 +4033,6 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
       if (W.live) h += `<div class="card fresume" id="fresume"><div class="label">Workout in progress</div><div class="name">${esc(W.live.name)}</div>
         <div class="sub"><span id="fresclock">${FC.clock(FC.stats(W.live).seconds)}</span> · ${FC.stats(W.live).sets} sets done</div><div class="btns"><button class="btn">Resume</button></div></div>`;
       else h += `<div class="btns" style="margin:0 0 14px"><button class="btn" id="fempty">Start an empty workout</button></div>`;
-      const week = FD().workouts.filter((w) => w.ended_at && Date.now() - Date.parse(w.started_at) < 7 * 864e5);
-      if (FD().workouts.some((w) => w.ended_at)) {
-        const sets = week.reduce((a, w) => a + FC.stats(w).sets, 0);
-        h += `<div class="card fweek"><div class="frh"><div><div class="label">Last 7 days</div><div class="sub">${week.length ? `${week.length} workout${week.length === 1 ? "" : "s"} · ${sets} sets` : "Nothing yet this week"}</div></div></div>${BODY(worked(week))}${week.length ? LEGEND : ""}</div>`;
-      }
       h += `<div class="sect"><span class="label">My routines ${rs.length}</span><button class="linkish" id="fnewr">+ New routine</button></div>`;
       if (!rs.length) h += `<div class="empty">No routines yet. Make one ("Push heavy": bench press 4 sets, ...) and start it with one tap.</div>`;
       for (const r of rs) {
@@ -3771,11 +4042,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
           <div class="frf"><span class="meta">${r.items.length > 3 ? `and ${r.items.length - 3} more…` : ""}</span><button class="btn fstart" data-rstart="${r.id}">START</button></div></div>`;
       }
       body.innerHTML = h;
-      const fs = $("fssave"); if (fs) fs.onclick = async () => {
-        const age = +$("fsage").value, bw = +$("fsbw").value;
-        if (!(age >= 10 && age <= 100)) { $("fserr").textContent = "Type your age (a number)."; return; }
-        try { FD().settings = (await fcall("settings", { age, ...(bw > 0 ? { bodyweight: FC.toLbs(bw, unit()) } : {}) })).settings; renderStart(); }
-        catch (e) { $("fserr").textContent = e.message; } };
+      wireSetup();
       const res = $("fresume"); if (res) res.onclick = () => openLive();
       const em = $("fempty"); if (em) em.onclick = () => startWorkout(null);
       $("fnewr").onclick = () => routineSheet({ name: "", items: [] });
@@ -3791,7 +4058,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
         if (m !== month) { if (month) h += "</div>"; h += `<div class="day">${esc(m)}</div><div class="card">`; month = m; }
         const s = FC.stats(w);
         h += `<div class="row click" data-w="${w.id}"><div class="grow"><div class="name">${esc(w.name)}</div>
-          <div class="meta">${esc(new Date(w.started_at).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }))} · ${FC.dur(s.seconds)} · ${s.sets} sets · ${fV(s.volume)} ${unit()}</div></div>${BODY(worked([w]), "mini")}</div>`;
+          <div class="meta">${esc(new Date(w.started_at).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }))} · ${FC.dur(s.seconds)} · ${s.sets} sets · ${fV(s.volume)} ${unit()}</div>${(() => { const n = counted(RECS().byWorkout[w.id] || []).length; return n ? `<span class="fpr">🏆 ${n} record${n === 1 ? "" : "s"}</span>` : ""; })()}</div>${BODY(worked([w]), "mini")}</div>`;
       }
       body.innerHTML = h + "</div>";
       body.querySelectorAll("[data-w]").forEach((r) => (r.onclick = () => workoutSheet(ws.find((w) => w.id === r.dataset.w))));
@@ -3861,7 +4128,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
         ${BODY(worked([w]))}${LEGEND}
         ${w.notes ? `<div class="note" style="margin:0 0 10px">${esc(w.notes)}</div>` : ""}
         ${w.exercises.map((e) => `<div class="fhist"><div class="fhh"><b>${esc(exName(e.ex))}</b><span class="meta">${modeOf(e.ex) === "strength" ? "e1RM" : ""}</span></div>
-          ${e.sets.filter((x) => x.done).map((x, i) => setLine(x, i, e.ex)).join("")}</div>`).join("")}
+          ${e.sets.filter((x) => x.done).map((x, i) => setLine(x, i, e.ex, setBadges(RECS().byWorkout[w.id] || [], e.ex, x))).join("")}</div>`).join("")}
         <div class="btns"><button class="btn quiet" id="wrout">Save as a routine</button><button class="btn danger" id="wdel">Delete</button><button class="btn quiet" id="sx">Close</button></div><div class="err"></div>`,
       (box) => {
         box.querySelector("#sx").onclick = closeSheet;
@@ -4196,12 +4463,13 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
     }
     function summarySheet(w) {
       const u = unit(), s = FC.stats(w);
-      const bests = w.exercises.filter((e) => modeOf(e.ex) === "strength").map((e) => { const best = Math.max(...e.sets.map((x) => FC.e1rm(x.w, x.r)));
-        const before = FC.history(FD().workouts.filter((x) => x.id !== w.id), e.ex).reduce((m, h) => Math.max(m, h.best), 0);
-        return { name: exName(e.ex), best, before }; });
+      const recs = RECS().byWorkout[w.id] || [];
+      const bests = w.exercises.filter((e) => modeOf(e.ex) === "strength").map((e) => ({ name: exName(e.ex),
+        best: Math.max(...e.sets.map((x) => FC.e1rm(x.w, x.r))), recs: recs.filter((r) => r.ex === e.ex) }));
       openSheet(`<h2>Workout saved</h2><div class="meta">${esc(w.name)} · ${FC.dur(s.seconds)} · ${s.sets} sets · ${fV(s.volume)} ${u} lifted</div>${BODY(worked([w]))}${LEGEND}
         <div class="card" style="margin:0">${bests.map((b) => `<div class="row"><div class="grow"><div class="name">${esc(b.name)}</div><div class="meta">best set ≈ ${fE(b.best)} ${u} 1RM</div></div>
-          ${b.before && b.best > b.before ? `<span class="fpr">New best</span>` : ""}</div>`).join("")}</div>
+          ${b.recs.map((r) => `<span class="fpr">${REC_LABEL[r.type]}</span>`).join(" ")}</div>`).join("")}</div>
+        ${recs.length ? `<div class="note">🏆 ${counted(recs).length || recs.length} new record${recs.length === 1 ? "" : "s"} this workout.</div>` : ""}
         <div class="btns"><button class="btn" id="sx">Done</button></div>`, (box) => (box.querySelector("#sx").onclick = () => { closeSheet(); if (M.book === "fit") show("fit", "hist"); }));
     }
     // Coming back to the app mid-workout: open it again straight away.
@@ -4225,7 +4493,8 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
         const workouts = bench.map((b, k) => ({ id: uid(), name: "Push heavy", routine_id: null, started_at: day(3 + k * 7), ended_at: end(3 + k * 7, 62), notes: "",
           exercises: [{ ex: "Barbell_Bench_Press_-_Medium_Grip", rest: 180, sets: b.map(([w, r]) => ({ w, r, done: true })) },
             { ex: "Incline_Dumbbell_Press", rest: 120, sets: [[50, 10], [55, 8], [55, 7]].map(([w, r]) => ({ w, r, done: true })) }] }));
-        W.demo = { lib, data: { settings: { unit: "lb", rest: 180, age: null, sex: "male", bodyweight: 215 }, custom: [], workouts,
+        W.demo = { lib, data: { settings: { unit: "lb", rest: 180, age: null, sex: "male", bodyweight: 215, goals: [{ ex: "Barbell_Bench_Press_-_Medium_Grip", target: 225 }], week_target: 3 }, custom: [], workouts,
+          bodyweight: [0, 6, 13, 20, 27].map((n, k) => ({ d: new Date(Date.now() - (27 - n) * 864e5).toISOString().slice(0, 10), lbs: 218 - k * 0.8 })),
           routines: [{ id: uid(), name: "Push heavy", position: 0, items: [{ ex: "Barbell_Bench_Press_-_Medium_Grip", sets: 4 }, { ex: "Incline_Dumbbell_Press", sets: 3 }, { ex: "Butterfly", sets: 3 }, { ex: "Triceps_Pushdown_-_Rope_Attachment", sets: 3 }] },
             { id: uid(), name: "Legs heavy", position: 1, items: [{ ex: "Barbell_Squat", sets: 3 }, { ex: "Leg_Extensions", sets: 2 }, { ex: "Seated_Leg_Curl", sets: 3 }] }] } };
       }
@@ -4233,7 +4502,9 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
       if (action === "data") return ok(D);
       if (action === "library") return ok({ list: W.demo.lib });
       if (action === "exercise") return ok({ exercise: { id: p.id, instructions: ["Demo mode: the real steps come from the exercise library.", "Second step."] } });
-      if (action === "settings") { for (const k of ["unit", "rest", "age", "sex", "bodyweight"]) if (p[k] !== undefined) D.settings[k] = p[k]; return ok({ settings: D.settings }); }
+      if (action === "settings") { for (const k of ["unit", "rest", "age", "sex", "bodyweight", "goals", "week_target"]) if (p[k] !== undefined) D.settings[k] = p[k]; return ok({ settings: D.settings }); }
+      if (action === "bodyweight") { D.bodyweight = (D.bodyweight || []).filter((x) => x.d !== p.d); if (!p.delete && p.d) D.bodyweight.push({ d: p.d, lbs: p.lbs });
+        D.bodyweight.sort((a, b) => (a.d < b.d ? -1 : 1)); return ok({ log: D.bodyweight }); }
       if (action === "routine") { if (p.delete) { D.routines = D.routines.filter((r) => r.id !== p.id); return ok({}); }
         const r = { ...p, id: p.id || uid() }; const k = D.routines.findIndex((x) => x.id === r.id); k >= 0 ? (D.routines[k] = r) : D.routines.push(r); return ok({ routine: r }); }
       if (action === "custom") { const c = { id: p.id || "c-" + uid(), name: p.name, equipment: p.equipment, primary_muscles: p.primary || [], secondary_muscles: [], instructions: [], deleted: !!p.delete };
