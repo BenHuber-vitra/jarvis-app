@@ -950,6 +950,7 @@
         }
       }
       flush(true); voice.end();
+      window.dispatchEvent(new Event("jarvis:reply"));   // e.g. the Workouts screen checks whether he started or logged a workout by voice
       await voice.finished;
     } catch (e) {
       if (e.name !== "AbortError" && e.message !== "signed out") info(e.message);
@@ -4402,13 +4403,14 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
     let liveStep = null;
     function keepLocal() { try { if (W.live) localStorage.setItem("jarvis.fitLive", JSON.stringify({ ...W.live, _touched: Date.now() })); else localStorage.removeItem("jarvis.fitLive"); } catch {} }
     function changed(now) {   // after every edit: this device at once, the cloud a moment later
+      W.lastLocal = Date.now(); W.dirty = true;   // dirty: not yet in the cloud
       keepLocal(); clearTimeout(W.saveT);
       W.saveT = setTimeout(syncLive, now ? 0 : 1200);
     }
     async function syncLive() {
       if (!W.live) return;
       const w = W.live;
-      try { await fcall("workout", w); W.unsynced = false; } catch { W.unsynced = true; clearTimeout(W.saveT); W.saveT = setTimeout(syncLive, 15000); }
+      try { await fcall("workout", w); W.unsynced = false; if (W.live === w) W.dirty = false; } catch { W.unsynced = true; clearTimeout(W.saveT); W.saveT = setTimeout(syncLive, 15000); }
       const n = live.querySelector("#lsync"); if (n) n.textContent = W.unsynced ? "Not saved to the cloud yet (kept on this phone)" : "";
     }
     // The unfinished workout from the cloud vs. the one kept here: the newer wins.
@@ -4626,6 +4628,34 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
         ${recs.length ? `<div class="note">🏆 ${counted(recs).length || recs.length} new record${recs.length === 1 ? "" : "s"} this workout.</div>` : ""}
         <div class="btns"><button class="btn" id="sx">Done</button></div>`, (box) => (box.querySelector("#sx").onclick = () => { closeSheet(); if (M.book === "fit") show("fit", "hist"); }));
     }
+    // ---- voice (Phase 4): Jarvis can start a workout, log sets and finish it from the cloud. After each of his
+    // replies, and every few seconds while Workouts is on screen, the app asks the cloud for the workout in
+    // progress and takes the cloud's version when it's newer than this device's last edit.
+    let liveCheck = false;
+    async function checkLive(fromReply) {
+      if (liveCheck || DEMO) return;
+      liveCheck = true;
+      try {
+        const r = await fcall("live", { id: W.live ? W.live.id : null });
+        const c = r.live;
+        if (c && (!W.live || W.live.id !== c.id)) {   // started by voice (or on the other device)
+          if (!M.cache.fit) { try { M.cache.fit = await fcall("data"); addCustom(); } catch {} }
+          await ensureLib().catch(() => {});
+          W.live = c; delete W.live.updated_at; keepLocal(); startClock();
+          if (fromReply) openLive(); else if (M.book === "fit" && el.classList.contains("on")) renderFit();
+        } else if (c && W.live && Date.parse(c.updated_at) > (W.lastLocal || 0) + 1500 && !W.unsynced && !W.dirty
+          && JSON.stringify(c.exercises) !== JSON.stringify(W.live.exercises)) {   // sets logged by voice
+          const typing = live.contains(document.activeElement) && document.activeElement.tagName === "INPUT";
+          if (!typing) { const at = W.live.started_at; W.live = { ...c, started_at: at }; delete W.live.updated_at; keepLocal(); if (live.classList.contains("on")) drawLive(); else if (M.book === "fit" && el.classList.contains("on")) renderFit(); }
+        } else if (!c && W.live && r.ended && !W.unsynced && Date.now() - (W.lastLocal || 0) > 5000) {   // finished (or thrown away) elsewhere
+          W.live = null; keepLocal(); clearInterval(W.tick); stopRest();
+          if (live.classList.contains("on")) hideLive();
+          if (M.book === "fit" && el.classList.contains("on")) loadFit(); else M.cache.fit = null;
+        }
+      } catch {} finally { liveCheck = false; }
+    }
+    window.addEventListener("jarvis:reply", () => setTimeout(() => checkLive(true), 400));
+    setInterval(() => { if (!document.hidden && (live.classList.contains("on") || (M.book === "fit" && el.classList.contains("on")))) checkLive(false); }, 5000);
     // Coming back to the app mid-workout: open it again straight away.
     try { const k = JSON.parse(localStorage.getItem("jarvis.fitLive") || "null"); if (k && !k.ended_at) { W.live = k; delete W.live._touched;
       setTimeout(async () => { try { await ensureLib(); if (!M.cache.fit) M.cache.fit = await fcall("data"); addCustom(); } catch {} if (W.live) openLive(); }, 600); } } catch {}
