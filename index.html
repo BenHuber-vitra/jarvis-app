@@ -646,6 +646,16 @@
   #msheet .nscan { position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4 / 3; }
   #msheet .nscan video { width: 100%; height: 100%; object-fit: cover; display: block; }
   #msheet .nscan i { position: absolute; left: 12%; right: 12%; top: 45%; height: 2px; background: var(--th-a-hex); box-shadow: 0 0 10px var(--th-a-hex); }
+  /* calorie & macro calculator */
+  #money .nlab { flex: 1; display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink3); letter-spacing: 0.06em; min-width: 0; }
+  #money .nlab input { width: 100%; }
+  #money .search select { flex: 1; width: 100%; }
+  #money .crow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+  #money .crow > div { background: rgba(255,255,255,0.05); border-radius: 10px; padding: 10px; }
+  #money .crow span { display: block; font-size: 12px; color: var(--ink3); } #money .crow b { display: block; font-size: 20px; color: #fff; margin-top: 2px; }
+  #money .crow b.hl { color: var(--th-soft); text-shadow: 0 0 10px rgba(var(--th-a),0.6); }
+  #money .cmac { display: flex; height: 10px; border-radius: 5px; overflow: hidden; gap: 2px; }
+  #money .cmac i { display: block; } #money .cmac .p { background: var(--th-a-hex); } #money .cmac .c { background: rgba(var(--th-g2),1); } #money .cmac .f { background: var(--th-a2-hex); }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -1695,7 +1705,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
         try { localStorage.setItem("jarvis.moneyBook", book); } catch {}
       }
       const tabs = M.book === "crm" ? CRM_TABS : M.book === "fit" ? FIT_TABS : M.book === "food" ? FOOD_TABS : MONEY_TABS;   // the Customers screen has its own four tabs
-      if (!tabs.some(([k]) => k === tab) && !(M.book === "fit" && (tab === "fset" || tab === "ranks"))) tab = tabs[0][0];   // Workouts' Settings: reached from Home
+      if (!tabs.some(([k]) => k === tab) && !(M.book === "fit" && (tab === "fset" || tab === "ranks")) && !(M.book === "food" && tab === "calc")) tab = tabs[0][0];   // Workouts' Settings: reached from Home
       el.querySelectorAll("nav button").forEach((b, i) => { b.dataset.tab = tabs[i][0]; b.textContent = tabs[i][1]; });
       M.tab = tab;
       $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY", calls: "CALLS", fit: "WORKOUTS", food: "NUTRITION", look: "COLOURS" }[M.book];
@@ -4756,7 +4766,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
     window.addEventListener("jarvis:reply", () => { if (M.book === "food" && el.classList.contains("on")) setTimeout(refreshDay, 500); });   // he logged food by voice
 
     function renderFood() {
-      ({ today: renderToday, add: renderAdd, meals: renderMeals, fhist: renderFoodHist }[M.tab] || renderToday)();
+      ({ today: renderToday, add: renderAdd, meals: renderMeals, fhist: renderFoodHist, calc: renderCalc }[M.tab] || renderToday)();
     }
     // ---- Today
     function ring(eaten, target) {
@@ -4784,11 +4794,12 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
           <div style="text-align:right;margin:2px 0 6px"><button class="linkish" data-savemeal="${m}">Save as a meal</button></div></div>`;
       }
       h += `<div class="note">Tip: tell Jarvis "I had two eggs and toast for breakfast" and he logs it. Numbers from Jarvis are estimates; tap an entry to change it.</div>
-        <div class="btns"><button class="btn quiet" id="ntargets">Daily targets${has ? `: ${tg.kcal} kcal · P ${tg.protein} · C ${tg.carbs} · F ${tg.fat}` : ""}</button></div>`;
+        <div class="btns"><button class="btn quiet" id="ntargets">Daily targets${has ? `: ${tg.kcal} kcal · P ${tg.protein} · C ${tg.carbs} · F ${tg.fat}` : ""}</button><button class="btn" id="ncalc">🧮 Calorie &amp; macro calculator</button></div>`;
       body.innerHTML = h;
       $("nprev").onclick = () => { N.day = addDays(N.day, -1); refreshDay(); };
       $("nnext").onclick = () => { if (N.day < localToday()) { N.day = addDays(N.day, 1); refreshDay(); } };
       $("ntargets").onclick = targetsSheet; const t1 = $("ntargets1"); if (t1) t1.onclick = targetsSheet;
+      $("ncalc").onclick = () => goTab("calc");
       body.querySelectorAll("[data-addmeal]").forEach((b) => (b.onclick = () => { N.meal = b.dataset.addmeal; goTab("add"); }));
       body.querySelectorAll("[data-entry]").forEach((r) => (r.onclick = () => entrySheet(d.entries.find((e) => e.id === r.dataset.entry))));
       body.querySelectorAll("[data-savemeal]").forEach((b) => (b.onclick = () => saveMealSheet(d.entries.filter((e) => e.meal === b.dataset.savemeal), MEAL_NAMES[b.dataset.savemeal])));
@@ -4800,8 +4811,9 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
         <label>Calories</label><input id="tk" inputmode="numeric" value="${tg.kcal || ""}" placeholder="e.g. 2800">
         <div class="search" style="margin-top:12px"><input id="tp" inputmode="numeric" placeholder="Protein g" value="${tg.protein || ""}"><input id="tc" inputmode="numeric" placeholder="Carbs g" value="${tg.carbs || ""}"><input id="tf" inputmode="numeric" placeholder="Fat g" value="${tg.fat || ""}"></div>
         <div class="note" id="tcalc"></div>
-        <div class="btns"><button class="btn" id="tsave">Save</button><button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`, (box) => {
+        <div class="btns"><button class="btn" id="tsave">Save</button><button class="btn quiet" id="tcalcgo">Work them out for me</button><button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`, (box) => {
         const q = (id) => +box.querySelector(id).value || 0;
+        box.querySelector("#tcalcgo").onclick = () => { closeSheet(); goTab("calc"); };
         const calc = () => { const m = q("#tp") * 4 + q("#tc") * 4 + q("#tf") * 9; box.querySelector("#tcalc").textContent = m ? `Your macros add up to ${m.toLocaleString()} kcal.` : ""; };
         box.querySelectorAll("input").forEach((i) => (i.oninput = calc)); calc();
         box.querySelector("#sx").onclick = closeSheet;
@@ -4827,6 +4839,71 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
         box.querySelector("#sx").onclick = closeSheet;
         box.querySelector("#msave").onclick = async () => { try { N.meals = (await ncall("meals", { save: { name: box.querySelector("#mn").value, items: entries } })).meals; closeSheet(); } catch (x) { sheetErr(x.message); } };
       });
+    }
+    // ---- Calorie & macro calculator (2026-11-20, Ben): Mifflin-St Jeor BMR x activity = maintenance, plus the goal's
+    // daily change; protein by bodyweight, fat as a share of calories, carbs the rest. Prefilled from Workouts
+    // (sex, age, bodyweight); the last inputs are kept with the targets (kv "fit_nutrition".calc).
+    const ACT = [[1.2, "Mostly sitting", "Desk job, little exercise"], [1.375, "Lightly active", "Training 1-3 days, desk job"],
+      [1.55, "Moderately active", "Training 3-5 days, desk job"], [1.725, "Very active", "Training 3-5 days and on your feet at work"],
+      [1.9, "Extremely active", "Hard physical work every day plus training"]];
+    const CALC_GOALS = [[-1000, "Lose 2 lb a week"], [-500, "Lose 1 lb a week"], [-250, "Lose ½ lb a week"], [0, "Maintain"], [250, "Lean gain (½ lb a week)"], [500, "Gain 1 lb a week"]];
+    let CALC = null;
+    function calcDefaults() {
+      const fs = (M.cache.fit && M.cache.fit.settings) || {}, saved = (N.data && N.data.targets && N.data.targets.calc) || {};
+      return { sex: fs.sex || "male", age: fs.age || 25, lbs: fs.bodyweight || 180, inches: 70, act: 1.725, goal: 0, ppl: 1, fatPct: 25, ...saved };
+    }
+    function calcNumbers(c) {
+      const kg = c.lbs / 2.20462, cm = c.inches * 2.54;
+      const bmr = 10 * kg + 6.25 * cm - 5 * c.age + (c.sex === "female" ? -161 : 5);
+      const tdee = bmr * c.act, kcal = Math.round((tdee + c.goal) / 10) * 10;
+      const protein = Math.round(c.lbs * c.ppl), fat = Math.round((kcal * c.fatPct / 100) / 9);
+      const carbs = Math.round((kcal - protein * 4 - fat * 9) / 4);
+      return { bmr: Math.round(bmr), tdee: Math.round(tdee / 10) * 10, kcal, protein, fat, carbs };
+    }
+    function renderCalc() {
+      if (!CALC) CALC = calcDefaults();
+      const c = CALC, kgU = unit && typeof unit === "function" && unit() === "kg";
+      const ft = Math.floor(c.inches / 12), inch = Math.round(c.inches - ft * 12);
+      body.innerHTML = `<div class="card ncalc">
+        <div class="label">You</div>
+        <div class="seg" style="margin:8px 0 10px"><button data-sex="male" class="${c.sex !== "female" ? "on" : ""}">Male</button><button data-sex="female" class="${c.sex === "female" ? "on" : ""}">Female</button></div>
+        <div class="search"><label class="nlab">Age<input id="ca" inputmode="numeric" value="${c.age}"></label>
+          <label class="nlab">Weight (${kgU ? "kg" : "lb"})<input id="cw" inputmode="decimal" value="${kgU ? Math.round(c.lbs / 2.20462 * 10) / 10 : Math.round(c.lbs * 10) / 10}"></label></div>
+        <div class="search">${kgU ? `<label class="nlab">Height (cm)<input id="ccm" inputmode="numeric" value="${Math.round(c.inches * 2.54)}"></label>`
+          : `<label class="nlab">Height (ft)<input id="cft" inputmode="numeric" value="${ft}"></label><label class="nlab">(in)<input id="cin" inputmode="numeric" value="${inch}"></label>`}</div>
+        <div class="label" style="margin-top:6px">Activity</div>
+        <div class="search"><select id="cact">${ACT.map(([v, n, d]) => `<option value="${v}" ${+c.act === v ? "selected" : ""}>${n}: ${d}</option>`).join("")}</select></div>
+        <div class="label">Goal</div>
+        <div class="search"><select id="cgoal">${CALC_GOALS.map(([v, n]) => `<option value="${v}" ${+c.goal === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+        <div class="label">Protein</div>
+        <div class="search"><select id="cppl">${[[0.7, "0.7 g per lb of bodyweight"], [0.8, "0.8 g per lb"], [1, "1 g per lb (a lifter's standard)"], [1.2, "1.2 g per lb (high, good when cutting)"]].map(([v, n]) => `<option value="${v}" ${+c.ppl === v ? "selected" : ""}>${n}</option>`).join("")}</select></div>
+        <div class="label">Fat: <span id="cfp">${c.fatPct}</span>% of calories</div>
+        <input id="cfat" type="range" min="15" max="40" step="5" value="${c.fatPct}" style="width:100%;accent-color:var(--th-a-hex)">
+      </div><div class="card" id="cres"></div>
+      <div class="note">How it works: your resting burn (BMR) from the Mifflin-St Jeor equation, times your activity level = maintenance. The goal adds or takes away calories each day (about 3,500 kcal ≈ 1 lb). Protein comes from your bodyweight, fat from the share you pick, carbs fill the rest. It's an estimate: weigh in for 2-3 weeks and adjust by 100-200 kcal if the scale isn't moving the way you want.</div>`;
+      const read = () => {
+        const v = (id) => { const x = $(id); return x ? parseFloat(x.value) : NaN; };
+        if (v("ca") > 0) c.age = v("ca");
+        if (v("cw") > 0) c.lbs = kgU ? v("cw") * 2.20462 : v("cw");
+        if (kgU) { if (v("ccm") > 0) c.inches = v("ccm") / 2.54; } else if (v("cft") >= 0) c.inches = (v("cft") || 0) * 12 + (v("cin") || 0);
+        c.act = +$("cact").value; c.goal = +$("cgoal").value; c.ppl = +$("cppl").value; c.fatPct = +$("cfat").value; $("cfp").textContent = c.fatPct;
+        draw();
+      };
+      const draw = () => {
+        const r = calcNumbers(c), tot = r.protein * 4 + r.fat * 9 + Math.max(0, r.carbs) * 4 || 1;
+        $("cres").innerHTML = `<div class="label">Your numbers</div>
+          <div class="crow"><div><span>Resting burn</span><b>${r.bmr.toLocaleString()}</b></div><div><span>Maintenance</span><b>${r.tdee.toLocaleString()}</b></div><div><span>Daily target</span><b class="hl">${r.kcal.toLocaleString()}</b></div></div>
+          <div class="cmac"><i class="p" style="flex:${r.protein * 4 / tot}"></i><i class="c" style="flex:${Math.max(0, r.carbs) * 4 / tot}"></i><i class="f" style="flex:${r.fat * 9 / tot}"></i></div>
+          <div class="crow"><div><span>Protein</span><b>${r.protein} g</b></div><div><span>Carbs</span><b>${Math.max(0, r.carbs)} g</b></div><div><span>Fat</span><b>${r.fat} g</b></div></div>
+          ${r.carbs < 0 ? `<div class="note err">Protein and fat already use up all the calories; lower one of them.</div>` : ""}
+          <div class="btns"><button class="btn" id="cuse">Use as my daily targets</button></div><div class="note" id="cnote"></div>`;
+        $("cuse").onclick = async () => { try { N.data.targets = (await ncall("settings", { kcal: r.kcal, protein: r.protein, carbs: Math.max(0, r.carbs), fat: r.fat,
+          calc: { sex: c.sex, age: c.age, lbs: Math.round(c.lbs * 10) / 10, inches: Math.round(c.inches * 10) / 10, act: c.act, goal: c.goal, ppl: c.ppl, fatPct: c.fatPct } })).targets;
+          $("cnote").textContent = `Saved: ${r.kcal.toLocaleString()} kcal, ${r.protein} g protein, ${Math.max(0, r.carbs)} g carbs, ${r.fat} g fat.`; } catch (e) { $("cnote").textContent = "Couldn't save: " + e.message; } };
+      };
+      body.querySelectorAll("[data-sex]").forEach((b) => (b.onclick = () => { c.sex = b.dataset.sex; body.querySelectorAll("[data-sex]").forEach((x) => x.classList.toggle("on", x === b)); draw(); }));
+      body.querySelectorAll(".ncalc input, .ncalc select").forEach((x) => (x.oninput = x.onchange = read));
+      draw();
     }
     // ---- Add food: search, barcode, recent, quick add
     function mealSeg() { return `<div class="seg">${Object.entries(MEAL_NAMES).map(([k, v]) => `<button data-nm="${k}" class="${N.meal === k ? "on" : ""}">${v}</button>`).join("")}</div>`; }
