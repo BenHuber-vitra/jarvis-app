@@ -884,14 +884,24 @@
   .cseg { display: flex; gap: 4px; padding: 4px; border-radius: 14px; background: rgba(255,255,255,0.06); border: 1px solid rgba(var(--th-a),0.25); margin: 0 0 10px; }
   .cseg button { border: 0; font: inherit; font-size: 14px; font-weight: 700; color: var(--th-ink2, #c9d6ee); background: none; padding: 7px 14px; border-radius: 10px; transition: background 0.2s, color 0.2s; white-space: nowrap; }
   .cseg button.on { color: #fff; background: linear-gradient(90deg, rgba(var(--th-g2),0.6), rgba(var(--th-a),0.65)); box-shadow: 0 0 14px rgba(var(--th-a),0.35); }
-  .cgame { width: 100%; display: flex; flex-direction: column; align-items: center; } .cgame.off { display: none; }
-  .cinfo { width: 100%; max-width: 440px; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 15px; }
+  /* size: the board fills the phone's width, or most of the height on a wide window with the side panel beside it */
+  .cgame { --bs: min(calc(100vw - 24px), calc(var(--app-h, 100vh) - 250px)); width: 100%; display: flex; flex-direction: column; align-items: center; } .cgame.off { display: none; }
+  .cgame.playing { --bs: min(calc(100vw - 24px), calc(var(--app-h, 100vh) - 290px)); }
+  .cmain { display: flex; flex-direction: column; align-items: center; } .cside { width: var(--bs); display: flex; flex-direction: column; align-items: center; }
+  .cside > * { max-width: 100%; }
+  @media (min-width: 700px) and (min-aspect-ratio: 1/1) {
+    .cgame, .cgame.playing { --bs: min(calc(var(--app-h, 100vh) - 150px), calc(100vw - 400px)); flex-direction: row; justify-content: center; align-items: flex-start; gap: 24px; }
+    .cgame.playing { --bs: min(calc(var(--app-h, 100vh) - 200px), calc(100vw - 400px)); }
+    .cside { width: 320px; padding-top: 36px; } .cside .cstat { margin-top: 0; }
+    .cside .cmoves { width: 100%; flex-wrap: wrap; white-space: normal; overflow: visible; row-gap: 6px; max-height: 40vh; overflow-y: auto; }
+  }
+  .cinfo { width: var(--bs); display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 15px; }
   .cinfo i, .cpme > i { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.6); flex: none; }
   .cinfo i.w, .cpme > i.w, .cchips i.w { background: linear-gradient(160deg, #fff, #c3c9d8); } .cinfo i.b, .cpme > i.b, .cchips i.b { background: linear-gradient(160deg, #565d7a, #0e1018); }
   .cinfo span { margin-left: auto; font-size: 12px; color: var(--th-ink2, #c9d6ee); }
   .cgame.playing .cinfo { display: none; } .cgame:not(.playing) .cpbar, .cgame:not(.playing) .cmoves { display: none; }
   .cbwrap { --bz: clamp(14px, 4.4vw, 20px); --sqL: color-mix(in srgb, var(--th-a-hex) 10%, #eef0f6); --sqD: color-mix(in srgb, var(--th-a-hex) 36%, #4b5373);
-    position: relative; width: min(calc(100vw - 24px), 460px, calc(100vh - 300px)); aspect-ratio: 1; flex: none; border-radius: 16px; touch-action: none; user-select: none; -webkit-user-select: none;
+    position: relative; width: var(--bs); aspect-ratio: 1; flex: none; border-radius: 16px; touch-action: none; user-select: none; -webkit-user-select: none;
     background: linear-gradient(150deg, #3a3f58, #191b29 45%, #262a3d 70%, #12131d); box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), inset 0 -2px 4px rgba(0,0,0,0.5),
       0 0 0 1px rgba(var(--th-a),0.5), 0 0 34px rgba(var(--th-a),0.28), 0 22px 44px rgba(0,0,0,0.55); transition: box-shadow 0.4s; }
   .cbwrap::before { content: ""; position: absolute; inset: 2px; border-radius: 14px; pointer-events: none; background: linear-gradient(160deg, rgba(255,255,255,0.12), transparent 30%, transparent 70%, rgba(var(--th-a),0.12)); }
@@ -907,21 +917,26 @@
   .cranks { top: var(--bz); bottom: var(--bz); left: 0; width: var(--bz); flex-direction: column; }
   .cfiles span, .cranks span { flex: 1; display: flex; align-items: center; justify-content: center; }
   .csq { position: relative; } .csq.l { background: linear-gradient(135deg, var(--sqL), color-mix(in srgb, var(--sqL) 88%, #9aa3bd)); } .csq.d { background: linear-gradient(135deg, var(--sqD), color-mix(in srgb, var(--sqD) 82%, #0d0f1a)); }
-  .csq.last::before, .csq.sel::before, .csq.check::before, .csq.hint::before, .csq.good::before, .csq.bad::before { content: ""; position: absolute; inset: 0; }
-  .csq.last::before { background: rgba(255,206,84,0.34); box-shadow: inset 0 0 0 2px rgba(255,214,110,0.45); }
-  .csq.sel::before { background: rgba(var(--th-a),0.42); box-shadow: inset 0 0 12px rgba(var(--th-a),0.9); }
-  .csq.check::before { background: radial-gradient(circle, rgba(255,50,50,0.95) 0%, rgba(255,40,40,0.55) 42%, transparent 74%); animation: ccheck 1.2s ease-in-out infinite; } @keyframes ccheck { 50% { opacity: 0.6; } }
-  .csq.hint::before { background: radial-gradient(circle, rgba(var(--th-g2),0.85), transparent 75%); animation: chint 1s ease-in-out infinite; } @keyframes chint { 50% { opacity: 0.35; } }
-  .csq.good::before { background: rgba(62,214,138,0.6); animation: cflash 0.7s ease-out forwards; } .csq.bad::before { background: rgba(255,70,70,0.65); animation: cflash 0.6s ease-out forwards; }
+  .csq.s-last::before, .csq.s-sel::before, .csq.s-check::before, .csq.s-hint::before, .csq.s-good::before, .csq.s-bad::before, .csq.s-to::before, .csq.s-cap::before { content: ""; position: absolute; inset: 0; }
+  .csq.s-last::before { background: rgba(255,206,84,0.36); box-shadow: inset 0 0 0 2px rgba(255,214,110,0.5); }
+  .csq.s-sel::before { background: rgba(var(--th-a),0.45); box-shadow: inset 0 0 0 3px rgba(var(--th-a),0.95), inset 0 0 16px rgba(var(--th-a),0.8); }
+  .csq.s-to::before { background: rgba(var(--th-a),0.2); box-shadow: inset 0 0 14px rgba(var(--th-a),0.35); }
+  .csq.s-to::after { content: ""; position: absolute; left: 37%; top: 37%; width: 26%; height: 26%; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff, var(--th-a-hex) 70%);
+    box-shadow: 0 0 10px var(--th-a-hex), 0 1px 2px rgba(0,0,0,0.35); opacity: 0.9; }
+  .csq.s-cap::before { background: rgba(var(--th-a),0.3); box-shadow: inset 0 0 0 3px rgba(var(--th-a),0.9), inset 0 0 18px rgba(var(--th-a),0.6); }
+  .csq.s-to:hover::before, .csq.s-cap:hover::before { background: rgba(var(--th-a),0.42); }
+  /* highlights always lighten the square (screen blend), so dark squares glow instead of going muddy */
+  .csq.d.s-last::before, .csq.d.s-sel::before, .csq.d.s-to::before, .csq.d.s-cap::before { mix-blend-mode: screen; }
+  .csq.d.s-last::before { background: rgba(255,200,90,0.42); }
+  .csq.s-check::before { background: radial-gradient(circle, rgba(255,50,50,0.95) 0%, rgba(255,40,40,0.55) 42%, transparent 74%); animation: ccheck 1.2s ease-in-out infinite; } @keyframes ccheck { 50% { opacity: 0.6; } }
+  .csq.s-hint::before { background: radial-gradient(circle, rgba(var(--th-a),0.85), transparent 75%); animation: chint 1s ease-in-out infinite; } @keyframes chint { 50% { opacity: 0.35; } }
+  .csq.s-good::before { background: rgba(62,214,138,0.6); animation: cflash 0.7s ease-out forwards; } .csq.s-bad::before { background: rgba(255,70,70,0.65); animation: cflash 0.6s ease-out forwards; }
   @keyframes cflash { to { opacity: 0; } }
-  .csq.dot::after { content: ""; position: absolute; left: 35%; top: 35%; width: 30%; height: 30%; border-radius: 50%; background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.75), rgba(var(--th-g2),0.75) 60%);
-    box-shadow: 0 0 10px rgba(var(--th-g2),0.7), 0 1px 2px rgba(0,0,0,0.4); }
-  .csq.cap::after { content: ""; position: absolute; inset: 5%; border-radius: 50%; border: 3.5px solid rgba(var(--th-g2),0.75); box-shadow: 0 0 10px rgba(var(--th-g2),0.6), inset 0 0 8px rgba(var(--th-g2),0.4); }
   .cpcs, .cfx { pointer-events: none; }
   .cpc { position: absolute; left: 0; top: 0; width: 12.5%; height: 12.5%; transition: transform 0.26s cubic-bezier(.3,.7,.25,1), opacity 0.3s; will-change: transform; }
   .cpc svg { width: 100%; height: 100%; transform: scale(0.94); filter: drop-shadow(0 3px 2px rgba(0,0,0,0.45)) drop-shadow(0 0 1px rgba(0,0,0,0.5)); transition: transform 0.2s, filter 0.2s; }
   .cpc.moving svg { transform: scale(1.06); filter: drop-shadow(0 8px 6px rgba(0,0,0,0.45)); }
-  .cpc.drag { transition: none; z-index: 3; } .cpc.drag svg { filter: drop-shadow(0 12px 10px rgba(0,0,0,0.55)) drop-shadow(0 0 10px rgba(var(--th-a),0.6)); }
+  .cpc.drag { transition: none; z-index: 3; } .cpc.drag svg { transform: scale(1.06); filter: drop-shadow(0 10px 8px rgba(0,0,0,0.5)); }
   .cpc.gone { opacity: 0; } .cpc.gone svg { transform: scale(0.6); } .cpc.promo svg { animation: gpop 0.3s ease-out; }
   .cpc svg path { stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; }
   .cpc svg.pw path, .cpromo svg.pw path { fill: url(#chW); stroke: #1a1d2b; } .cpc svg.pw path.pd, .cpromo svg.pw path.pd { fill: none; stroke: #2a2e40; }
@@ -934,7 +949,7 @@
   .cpromo button { border: 0; background: none; padding: 0; aspect-ratio: 1; } .cpromo button:hover, .cpromo button:active { background: rgba(var(--th-a),0.35); }
   .cpromo svg { width: 100%; height: 100%; }
   /* Play Jarvis: player bars, clocks, the move list, the setup card */
-  .cpbar { width: min(calc(100vw - 24px), 460px); display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0; }
+  .cpbar { width: var(--bs); display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0; }
   .cpme { display: flex; align-items: center; gap: 8px; min-width: 0; } .cpme b { font-size: 15px; } .cpme span { font-size: 12px; color: var(--th-ink2, #c9d6ee); white-space: nowrap; }
   .cthink { display: none; font-style: normal; font-size: 11px; color: var(--th-soft); } .cthink.on { display: inline; animation: chint 1s ease-in-out infinite; }
   .cthink.on::after { content: "…"; }
@@ -946,7 +961,7 @@
   .cclock.on { color: #10121f; background: linear-gradient(180deg, #ffffff, #d9deea); box-shadow: 0 0 16px rgba(255,255,255,0.35); }
   .cclock.on.low { color: #fff; background: linear-gradient(180deg, #ff5a5a, #b81f2f); box-shadow: 0 0 18px rgba(255,70,70,0.6); animation: chint 1s ease-in-out infinite; }
   .cclock.none { font-family: inherit; font-size: 11px; min-width: 0; letter-spacing: 0.1em; text-transform: uppercase; }
-  .cmoves { width: min(calc(100vw - 24px), 460px); display: flex; gap: 4px; align-items: baseline; overflow-x: auto; white-space: nowrap; padding: 6px 2px; margin-top: 4px; scrollbar-width: none; }
+  .cmoves { width: 100%; display: flex; gap: 4px; align-items: baseline; overflow-x: auto; white-space: nowrap; padding: 6px 2px; margin-top: 4px; scrollbar-width: none; }
   .cmoves::-webkit-scrollbar { display: none; }
   .cmn { font-size: 12px; color: var(--th-ink2, #c9d6ee); opacity: 0.7; margin-left: 4px; } .cmv { font-size: 14px; font-weight: 700; padding: 2px 6px; border-radius: 6px; }
   .cmv.cur { background: rgba(var(--th-a),0.35); box-shadow: 0 0 10px rgba(var(--th-a),0.35); } .cmv0 { font-size: 13px; color: var(--th-ink2, #c9d6ee); }
@@ -971,7 +986,7 @@
   #playgame .cset .cstart { margin-top: 6px; padding: 13px; font-size: 16px; font-weight: 800; letter-spacing: 0.04em; }
   .cstat { min-height: 22px; margin: 8px 0 4px; font-size: 15px; font-weight: 700; text-align: center; color: var(--th-ink2, #c9d6ee); }
   .cstat.good { color: #5cf0a8; } .cstat.bad { color: #ff8a8a; }
-  .cbtns { display: flex; gap: 8px; width: 100%; max-width: 440px; margin-bottom: 8px; } .cbtns:empty { display: none; }
+  .cbtns { display: flex; gap: 8px; width: 100%; margin-bottom: 8px; } .cbtns:empty { display: none; }
   #playgame .cbtns .btn { padding: 9px; font-size: 14px; }
   .cmis { font-size: 13px; color: var(--th-ink2, #c9d6ee); }
   .cthemes { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; } .cthemes:empty { display: none; }
@@ -6346,17 +6361,17 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
       plShow(`<div class="pghead"><button class="pgx" id="pgx">✕</button><b>Chess</b><span class="gdate" id="crate"></span></div>
         <div class="cseg"><button data-m="daily">Daily</button><button data-m="practice">Practice</button><button data-m="play">Play Jarvis</button></div>
         <div class="csetup" id="csetup"></div>
-        <div class="cgame" id="cgame">
+        <div class="cgame" id="cgame"><div class="cmain">
           <div class="cinfo"><i id="cdot"></i><b id="cturn"></b><span id="cmeta"></span></div>
           <div class="cpbar" id="cptop"></div>
           <div class="cbwrap" id="cbwrap"><div class="cfiles top" id="cft"></div><div class="cranks" id="crk"></div>
             <div class="cboard" id="cboard">${Array.from({ length: 64 }, (_, i) => `<div class="csq" data-v="${i}"></div>`).join("")}</div><div class="cpcs" id="cpcs"></div><div class="cfx" id="cfx"></div>
             <div class="cfiles" id="cfb"></div><div class="cpromo" id="cpromo"></div><div class="gconf" id="cconf"></div></div>
-          <div class="cpbar" id="cpbot"></div>
-          <div class="cmoves" id="cmoves"></div>
+          <div class="cpbar" id="cpbot"></div></div>
+          <div class="cside"><div class="cmoves" id="cmoves"></div>
           <div class="cstat" id="cstat"></div>
           <div class="cbtns" id="cbtns"></div>
-          <div class="gres" id="cres"></div>
+          <div class="gres" id="cres"></div></div>
         </div>
         <div class="csrc" id="csrc"></div>`);
       $("pgx").onclick = plHide;
@@ -6372,7 +6387,7 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
       function paintSquares() {
         const chk = CH.inCheck(pos) ? CH.kingSq(pos, pos.turn) : -1;
         sqs.forEach((sq, v) => { const i = iOf(v), light = (Math.floor(i / 8) + (i % 8)) % 2 === 0;
-          sq.className = `csq ${light ? "l" : "d"}${last && (i === last.from || i === last.to) ? " last" : ""}${i === sel ? " sel" : ""}${legalTo.includes(i) ? (pos.b[i] || (pos.ep === i && pos.b[sel] && pos.b[sel].toLowerCase() === "p") ? " cap" : " dot") : ""}${i === chk ? " check" : ""}${i === hintSq ? " hint" : ""}`; });
+          sq.className = `csq ${light ? "l" : "d"}${last && (i === last.from || i === last.to) ? " s-last" : ""}${i === sel ? " s-sel" : ""}${legalTo.includes(i) ? (pos.b[i] || (pos.ep === i && pos.b[sel] && pos.b[sel].toLowerCase() === "p") ? " s-cap" : " s-to") : ""}${i === chk ? " s-check" : ""}${i === hintSq ? " s-hint" : ""}`; });
       }
       function drawPieces() {
         layer.innerHTML = ""; pcs = new Array(64).fill(null); labels();
@@ -6435,13 +6450,13 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
         if (!ok) {
           mistakes++; if (!failed) fail();
           const el = pcs[from]; if (el) { el.classList.remove("drag"); place(el, from); }
-          const sq = sqs[vOf(to)]; sq.classList.add("bad"); setTimeout(() => sq.classList.remove("bad"), 600);
+          const sq = sqs[vOf(to)]; sq.classList.add("s-bad"); setTimeout(() => sq.classList.remove("s-bad"), 600);
           $("cbwrap").classList.remove("shake"); void $("cbwrap").offsetWidth; $("cbwrap").classList.add("shake");
           try { navigator.vibrate && navigator.vibrate([30, 40, 30]); } catch {}
           say(mode === "practice" ? "Not the move. Try again, or ask to be shown." : "Not the move. Try again.", "bad"); buttons(); return;
         }
         hintSq = -1; play(uci); ply++;
-        const sq = sqs[vOf(to)]; later(() => { sq.classList.add("good"); setTimeout(() => sq.classList.remove("good"), 700); }, 200);
+        const sq = sqs[vOf(to)]; later(() => { sq.classList.add("s-good"); setTimeout(() => sq.classList.remove("s-good"), 700); }, 200);
         if (ply >= moves().length) return finish(true);
         busy = true; say("Correct. Keep going…", "good"); paintSquares();
         later(() => { play(moves()[ply]); ply++; busy = false; paintSquares(); say("Your move", ""); }, 600);
@@ -6702,7 +6717,7 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
       });
       $("cbwrap").addEventListener("pointermove", (ev) => {
         if (!drag) return; const dx = ev.clientX - drag.x0, dy = ev.clientY - drag.y0; if (Math.hypot(dx, dy) > 4) drag.moved = true;
-        const v = vOf(drag.i); drag.el.style.transform = `translate(calc(${(v % 8) * 100}% + ${dx}px), calc(${Math.floor(v / 8) * 100}% + ${dy}px)) scale(1.18)`;
+        const v = vOf(drag.i); drag.el.style.transform = `translate(calc(${(v % 8) * 100}% + ${dx}px), calc(${Math.floor(v / 8) * 100}% + ${dy}px))`;
       });
       const up = (ev) => { if (!drag) return; const d = drag; drag = null; d.el.classList.remove("drag");
         const i = sqAt(ev); if (d.moved && i >= 0 && i !== d.i && legalTo.includes(i)) return mover(d.i, i); place(d.el, d.i); };
