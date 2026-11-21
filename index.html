@@ -1587,33 +1587,39 @@
   <div id="dmain">
   <div class="dsect">Screens</div>
   <a href="#" id="navJarvis" class="ditem"><span>Jarvis<small>Talk to Jarvis</small></span><em>›</em></a>
-  <a href="#" id="navMoney" class="ditem" aria-expanded="false"><span>Money<small>Business and personal accounts, spending</small></span><em class="dchev">▸</em></a>
+  <a href="#" id="navMoney" class="ditem" aria-expanded="false"><span>Money<small>Business, personal and customers</small></span><em class="dchev">▸</em></a>
   <div id="moneySub" class="dsub">
     <a href="#" id="moneyBiz" class="ditem"><span>Business<small>Accounts, spending, invoices</small></span><em>›</em></a>
     <a href="#" id="moneyPers" class="ditem"><span>Personal<small>Your own accounts, spending</small></span><em>›</em></a>
+    <a href="#" id="navCrm" class="ditem"><span>Customers<small>The Customer Factor: jobs, invoices, estimates</small></span><em>›</em></a>
+  </div>
+  <a href="#" id="navHealth" class="ditem" aria-expanded="false"><span>Health<small>Workouts, nutrition, bad habits</small></span><em class="dchev">▸</em></a>
+  <div id="healthSub" class="dsub">
+    <a href="#" id="navFit" class="ditem"><span>Workouts<small>Routines, live logging, history</small></span><em>›</em></a>
+    <a href="#" id="navFood" class="ditem"><span>Nutrition<small>Calories, protein, carbs and fat</small></span><em>›</em></a>
+    <a href="#" id="navDope" class="ditem"><span>Dopamine hole<small>Bad habits, slips and clean streaks</small></span><em>›</em></a>
   </div>
   <a href="#" id="navGoals" class="ditem" aria-expanded="false"><span>Goals<small>Business and personal goals</small></span><em class="dchev">▸</em></a>
   <div id="goalsSub" class="dsub">
     <a href="#" id="goalsBiz" class="ditem"><span>Business goals</span><em>›</em></a>
     <a href="#" id="goalsPers" class="ditem"><span>Personal goals</span><em>›</em></a>
   </div>
-  <a href="#" id="navFit" class="ditem"><span>Workouts<small>Routines, live logging, history</small></span><em>›</em></a>
-  <a href="#" id="navFood" class="ditem"><span>Nutrition<small>Calories, protein, carbs and fat</small></span><em>›</em></a>
-  <a href="#" id="navDope" class="ditem"><span>Dopamine hole<small>Bad habits, slips and clean streaks</small></span><em>›</em></a>
   <a href="#" id="navPlay" class="ditem"><span>Play<small>Games, quests and card packs</small></span><em>›</em></a>
   <a href="#" id="navCalls" class="ditem"><span>Calls<small>Calls Jarvis made for you, with transcripts</small></span><em>›</em></a>
-  <a href="#" id="navCrm" class="ditem"><span>Customers<small>The Customer Factor: jobs, invoices, estimates</small></span><em>›</em></a>
   </div>
   <!-- Settings (the cog next to the name, Ben 2026-11-19): Jarvis costs, then this device's own rows -->
   <div id="dset">
   <a href="#" id="dback" class="ditem dback"><span>‹ Menu</span><em></em></a>
   <div class="dsect">Jarvis</div>
   <a href="#" id="navLook" class="ditem"><span>Colours<small>Pick the app's colour theme</small></span><em>›</em></a>
-  <a href="#" id="navAlerts" class="ditem"><span>Alerts &amp; schedule<small>Briefing, recap, heads-up alerts, quiet hours</small></span><em>›</em></a>
-  <a href="#" id="navRules" class="ditem"><span>Ask-first rules<small>What Jarvis does without asking</small></span><em>›</em></a>
-  <a href="#" id="navMemory" class="ditem"><span>Memory<small>What Jarvis remembers about you</small></span><em>›</em></a>
-  <a href="#" id="navVoice" class="ditem"><span>Voice &amp; listening<small>Speed, spoken replies, wake word, weather town</small></span><em>›</em></a>
-  <a href="#" id="navPersona" class="ditem"><span>Personality<small>Humor, formality, detail and more</small></span><em>›</em></a>
+  <a href="#" id="navBehave" class="ditem" aria-expanded="false"><span>How Jarvis behaves<small>Personality, voice, memory, rules, alerts</small></span><em class="dchev">▸</em></a>
+  <div id="behaveSub" class="dsub">
+    <a href="#" id="navPersona" class="ditem"><span>Personality<small>Humor, formality, detail and more</small></span><em>›</em></a>
+    <a href="#" id="navVoice" class="ditem"><span>Voice &amp; listening<small>Speed, spoken replies, wake word, weather town</small></span><em>›</em></a>
+    <a href="#" id="navMemory" class="ditem"><span>Memory<small>What Jarvis remembers about you</small></span><em>›</em></a>
+    <a href="#" id="navRules" class="ditem"><span>Ask-first rules<small>What Jarvis does without asking</small></span><em>›</em></a>
+    <a href="#" id="navAlerts" class="ditem"><span>Alerts &amp; schedule<small>Briefing, recap, heads-up alerts, quiet hours</small></span><em>›</em></a>
+  </div>
   <a href="#" id="navCosts" class="ditem"><span>Jarvis costs<small>What Jarvis costs to run this month</small></span><em>›</em></a>
   <div class="dsect">This phone</div>
   <a href="#" id="auto" class="ditem"><span>Listen on open<small>Start listening when the app opens</small></span><em id="autoState">On</em></a>
@@ -2134,7 +2140,9 @@
       const m = $("money").classList.contains("on") && $("mtitle").textContent;
       for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["navLook", m === "COLOURS"], ["navAlerts", m === "ALERTS"], ["navRules", m === "ASK FIRST"], ["navMemory", m === "MEMORY"], ["navVoice", m === "VOICE"], ["navCalls", m === "CALLS"], ["navFit", m === "WORKOUTS"], ["navFood", m === "NUTRITION"], ["navDope", m === "DOPAMINE HOLE"], ["navPlay", m === "PLAY"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || / BINGO$/.test(m)]]) $(id).classList.toggle("cur", on);
       showSettings(["JARVIS COSTS", "PERSONALITY", "COLOURS", "ALERTS", "ASK FIRST", "MEMORY", "VOICE"].includes(m));   // the cog's page holds Jarvis costs, so open there from it
-      subOpen("Money", m === "BUSINESS" || m === "PERSONAL");   // on one of their screens, show the group open
+      subOpen("Money", m === "BUSINESS" || m === "PERSONAL" || m === "CUSTOMERS");   // on one of their screens, show the group open
+      subOpen("Health", m === "WORKOUTS" || m === "NUTRITION" || m === "DOPAMINE HOLE");
+      subOpen("Behave", ["PERSONALITY", "ALERTS", "ASK FIRST", "MEMORY", "VOICE"].includes(m));
       subOpen("Goals", m === "BUSINESS GOALS" || m === "PERSONAL GOALS" || / BINGO$/.test(m));
       menuStep = nav.push(() => setMenu(false));
     }
@@ -2151,7 +2159,15 @@
   $("dback").onclick = (e) => { e.preventDefault(); showSettings(false); };
   // Goals works the same way (Business goals / Personal goals; just the menu for now, 2026-11-19).
   function subOpen(name, on) { $("nav" + name).setAttribute("aria-expanded", on); $(name.toLowerCase() + "Sub").classList.toggle("on", on); }
-  for (const name of ["Money", "Goals"]) $("nav" + name).onclick = (e) => { e.preventDefault(); subOpen(name, $("nav" + name).getAttribute("aria-expanded") !== "true"); };
+  // Fewer buttons (Ben, 2026-11-21): Money also holds Customers; Health = Workouts, Nutrition, Dopamine hole;
+  // the cog's page has "How Jarvis behaves" over Personality, Voice, Memory, Ask-first rules, Alerts.
+  const GROUPS = ["Money", "Health", "Goals", "Behave"];
+  for (const name of GROUPS) $("nav" + name).onclick = (e) => {   // one group open at a time, so the list stays short
+    e.preventDefault();
+    const open = $("nav" + name).getAttribute("aria-expanded") !== "true";
+    if (open) for (const other of GROUPS) if (other !== name) subOpen(other, false);
+    subOpen(name, open);
+  };
   // money.js wires the money screens.
   // "Jarvis" = the talk screen: close whatever screen is on top of it.
   $("navJarvis").onclick = (e) => { e.preventDefault(); nav.home(); };
