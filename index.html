@@ -1130,7 +1130,9 @@
   // Colour theme (Settings > Colours, app/themes.css): chosen per device, applied before anything is drawn.
   // Spectrum (Ben, 2026-11-20: "black and white with a colour-changing rainbow that slowly fades, like a
   // Logitech mouse"): its accent colours go round the colour wheel once every SPECTRUM_S seconds.
-  const SPECTRUM_S = 30, SPECTRUM_VARS = ["--th-a", "--th-a-hex", "--th-a2", "--th-a2-hex", "--th-g2", "--th-soft", "--th-line",
+  // Primary and secondary drift at slightly different speeds (Ben: "almost the same but not quite"), so they
+  // slide past each other around the wheel instead of keeping a fixed gap.
+  const SPECTRUM_S = 30, SPECTRUM_S2 = 26, SPECTRUM_S3 = 34, SPECTRUM_VARS = ["--th-a", "--th-a-hex", "--th-a2", "--th-a2-hex", "--th-g2", "--th-soft", "--th-line",
     "--th-core1", "--th-core2", "--th-core1-hex", "--magenta", "--magenta-dim"];
   let spectrumTimer = null;
   const hslRgb = (h, s, l) => { h = ((h % 360) + 360) % 360; const a = s * Math.min(l, 1 - l);
@@ -1143,12 +1145,12 @@
     if (!on) { for (const k of SPECTRUM_VARS) st.removeProperty(k); return; }
     const tick = () => {
       if (document.hidden) return;
-      const h = ((Date.now() / 1000) / SPECTRUM_S) * 360;
-      const c1 = hslRgb(h, 1, 0.6), c2 = hslRgb(h + 60, 1, 0.6), c3 = hslRgb(h + 150, 1, 0.62), soft = hslRgb(h, 1, 0.8);
+      const t = Date.now() / 1000, h = (t / SPECTRUM_S) * 360, h2 = (t / SPECTRUM_S2) * 360 + 60, h3 = (t / SPECTRUM_S3) * 360 + 150;
+      const c1 = hslRgb(h, 1, 0.6), c2 = hslRgb(h2, 1, 0.6), c3 = hslRgb(h3, 1, 0.62), soft = hslRgb(h, 1, 0.8);
       const set = (k, v) => st.setProperty(k, v);
       set("--th-a", c1.join(",")); set("--th-a-hex", hex(c1)); set("--th-a2", c2.join(",")); set("--th-a2-hex", hex(c2));
       set("--th-g2", c3.join(",")); set("--th-soft", hex(soft)); set("--th-line", c1.join(","));
-      set("--th-core1", c1.join(",")); set("--th-core2", c3.join(",")); set("--th-core1-hex", hex(c1));
+      set("--th-core1", c1.join(",")); set("--th-core2", c2.join(",")); set("--th-core1-hex", hex(c1));
       set("--magenta", hex(c2)); set("--magenta-dim", `rgba(${c2.join(",")},0.6)`);
     };
     tick(); spectrumTimer = setInterval(tick, 120);
