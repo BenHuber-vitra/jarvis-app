@@ -43,6 +43,7 @@
      jarvis.theme). Every screen reads these variables: --th-* are "r,g,b" triplets (for rgba()) or hex.
      Neon = the default. The talk screen's own variables (--bg0, --panel, --line, ...) follow the theme too. */
   html:root, html:root[data-theme="neon"] {
+    --th-core1: 79,216,255; --th-core2: 214,64,168; --th-core1-hex: #4fd8ff;   /* the spinning core + menu button */
     --th-a: 255,79,184; --th-a-hex: #ff4fb8; --th-a2: 155,107,255; --th-a2-hex: #9b6bff; --th-g2: 79,216,255;
     --th-soft: #ff8fd6; --th-pale: #ffe0f3; --th-label: #c2a9ef; --th-ink2: #c9d6ee; --th-ink3: #9eb0d4;
     --th-bgA: #171a46; --th-bgB: #101636; --th-c1: 64,52,130; --th-c2: 30,42,92; --th-s1: #232056; --th-s2: #151a42;
@@ -50,28 +51,32 @@
     --th-on: #fff;   /* text on the main colour (light themes use dark text) */
     --bg0: #0e1033; --bg1: #241f5e; --panel: rgba(36,34,92,0.58); --muted: #9aa9d0; --magenta: #ff4fb8; --magenta-dim: rgba(255,79,184,0.6);
   }
-  html:root[data-theme="classic"] {   /* the original dark blue */
+  html:root[data-theme="classic"] {
+    --th-core1: 79,216,255; --th-core2: 214,64,168; --th-core1-hex: #4fd8ff;   /* the spinning core + menu button */   /* the original dark blue */
     --th-a: 79,216,255; --th-a-hex: #4fd8ff; --th-a2: 42,127,255; --th-a2-hex: #2a7fff; --th-g2: 214,64,168;
     --th-soft: #8fe6ff; --th-pale: #dff7ff; --th-label: #6f93ad; --th-ink2: #9fbcd1; --th-ink3: #6f93ad;
     --th-bgA: #06101f; --th-bgB: #020309; --th-c1: 8,24,43; --th-c2: 8,24,43; --th-s1: #08182b; --th-s2: #08182b;
     --th-input: 2,10,20; --th-nav: 8,24,43; --th-line: 79,216,255;
     --bg0: #020309; --bg1: #07112a; --panel: rgba(8,26,46,0.62); --muted: #6f93ad; --magenta: #d640a8; --magenta-dim: rgba(214,64,168,0.55);
   }
-  html:root[data-theme="sunset"] {    /* orange and pink on plum */
+  html:root[data-theme="sunset"] {
+    --th-core1: 255,170,90; --th-core2: 255,61,127; --th-core1-hex: #ffaa5a;   /* the spinning core + menu button */    /* orange and pink on plum */
     --th-a: 255,122,69; --th-a-hex: #ff7a45; --th-a2: 255,61,127; --th-a2-hex: #ff3d7f; --th-g2: 255,181,71;
     --th-soft: #ffb38a; --th-pale: #ffe6d9; --th-label: #ffb59a; --th-ink2: #ecd3dc; --th-ink3: #c49aae;
     --th-bgA: #2b1636; --th-bgB: #170c22; --th-c1: 92,40,78; --th-c2: 48,24,62; --th-s1: #3a1a40; --th-s2: #200f2c;
     --th-input: 26,10,30; --th-nav: 40,18,48; --th-line: 255,150,120;
     --bg0: #160b20; --bg1: #3a1840; --panel: rgba(70,30,70,0.55); --muted: #c49aae; --magenta: #ff7a45; --magenta-dim: rgba(255,122,69,0.6);
   }
-  html:root[data-theme="emerald"] {   /* green and sky blue on deep teal */
+  html:root[data-theme="emerald"] {
+    --th-core1: 46,229,157; --th-core2: 31,182,255; --th-core1-hex: #2ee59d;   /* the spinning core + menu button */   /* green and sky blue on deep teal */
     --th-a: 46,229,157; --th-a-hex: #2ee59d; --th-a2: 31,182,255; --th-a2-hex: #1fb6ff; --th-g2: 31,182,255;
     --th-soft: #8ef5cb; --th-pale: #dcfff1; --th-label: #8fd9c4; --th-ink2: #cdebe4; --th-ink3: #8fbcb4;
     --th-bgA: #0f2b33; --th-bgB: #08181f; --th-c1: 24,70,78; --th-c2: 14,44,58; --th-s1: #12343c; --th-s2: #0b222a;
     --th-input: 6,22,28; --th-nav: 12,36,44; --th-line: 80,230,180;
     --bg0: #061a1f; --bg1: #10393f; --panel: rgba(20,60,66,0.55); --muted: #8fbcb4; --magenta: #2ee59d; --magenta-dim: rgba(46,229,157,0.6);
   }
-  html:root[data-theme="royal"] {     /* gold and violet */
+  html:root[data-theme="royal"] {
+    --th-core1: 255,200,69; --th-core2: 139,92,246; --th-core1-hex: #ffc845;   /* the spinning core + menu button */     /* gold and violet */
     --th-a: 255,200,69; --th-a-hex: #ffc845; --th-a2: 139,92,246; --th-a2-hex: #8b5cf6; --th-g2: 139,92,246;
     --th-soft: #ffe08a; --th-pale: #fff3d1; --th-label: #d9c48f; --th-ink2: #e0d9f0; --th-ink3: #a99fc8;
     --th-bgA: #1f1846; --th-bgB: #110d2a; --th-c1: 70,52,120; --th-c2: 36,30,80; --th-s1: #261d55; --th-s2: #15112f;
@@ -79,46 +84,53 @@
     --bg0: #0f0b26; --bg1: #2c2160; --panel: rgba(44,34,96,0.55); --muted: #a99fc8; --magenta: #ffc845; --magenta-dim: rgba(255,200,69,0.6);
   }
   /* Ben's pairs (2026-11-20), each with a third colour added */
-  html:root[data-theme="maroon"] {    /* maroon + gold, cream */
+  html:root[data-theme="maroon"] {
+    --th-core1: 240,196,96; --th-core2: 200,40,90; --th-core1-hex: #f0c460;   /* the spinning core + menu button */    /* maroon + gold, cream */
     --th-a: 230,184,76; --th-a-hex: #e6b84c; --th-a2: 176,30,72; --th-a2-hex: #b01e48; --th-g2: 255,236,200;
     --th-soft: #f3d58b; --th-pale: #fff3d6; --th-label: #e8b9a0; --th-ink2: #f0dcd8; --th-ink3: #c8a0a0;
     --th-bgA: #2a0c16; --th-bgB: #14060b; --th-c1: 110,24,48; --th-c2: 60,14,30; --th-s1: #3a1020; --th-s2: #1c070f;
     --th-input: 24,6,12; --th-nav: 44,10,22; --th-line: 230,184,76;
     --bg0: #16060c; --bg1: #4a1226; --panel: rgba(80,20,40,0.55); --muted: #c8a0a0; --magenta: #e6b84c; --magenta-dim: rgba(230,184,76,0.6);
   }
-  html:root[data-theme="cyansilver"] { /* cyan + silver, electric blue */
+  html:root[data-theme="cyansilver"] {
+    --th-core1: 79,216,255; --th-core2: 200,208,220; --th-core1-hex: #4fd8ff;   /* the spinning core + menu button */ /* cyan + silver, electric blue */
     --th-a: 79,216,255; --th-a-hex: #4fd8ff; --th-a2: 192,200,212; --th-a2-hex: #c0c8d4; --th-g2: 90,120,255;
     --th-soft: #9cecff; --th-pale: #e8fbff; --th-label: #b7c2cf; --th-ink2: #dbe3ea; --th-ink3: #9aa6b2;
     --th-bgA: #1a1f26; --th-bgB: #0d1014; --th-c1: 52,60,72; --th-c2: 30,36,44; --th-s1: #262c35; --th-s2: #14181d;
     --th-input: 10,12,16; --th-nav: 24,28,34; --th-line: 170,220,240; --th-on: #0b1620;
     --bg0: #0b0e12; --bg1: #283039; --panel: rgba(50,58,70,0.55); --muted: #9aa6b2; --magenta: #c0c8d4; --magenta-dim: rgba(192,200,212,0.6);
   }
-  html:root[data-theme="forest"] {    /* forest green + sapphire, seafoam */
+  html:root[data-theme="forest"] {
+    --th-core1: 70,200,130; --th-core2: 70,120,240; --th-core1-hex: #46c882;   /* the spinning core + menu button */    /* forest green + sapphire, seafoam */
     --th-a: 60,179,113; --th-a-hex: #3cb371; --th-a2: 40,100,220; --th-a2-hex: #2864dc; --th-g2: 140,230,200;
     --th-soft: #8fe0b0; --th-pale: #e2fbe9; --th-label: #9cc9b0; --th-ink2: #d6eadf; --th-ink3: #95b8a6;
     --th-bgA: #0e2418; --th-bgB: #08140e; --th-c1: 30,72,52; --th-c2: 16,40,58; --th-s1: #143022; --th-s2: #0a1a14;
     --th-input: 6,16,12; --th-nav: 12,32,24; --th-line: 110,200,150;
     --bg0: #07140d; --bg1: #163a2a; --panel: rgba(24,60,44,0.55); --muted: #95b8a6; --magenta: #5b8cf0; --magenta-dim: rgba(40,100,220,0.6);
   }
-  html:root[data-theme="goldsilver"] { /* gold + silver, bronze */
+  html:root[data-theme="goldsilver"] {
+    --th-core1: 222,186,70; --th-core2: 205,205,205; --th-core1-hex: #deba46;   /* the spinning core + menu button */ /* gold + silver, bronze */
     --th-a: 212,175,55; --th-a-hex: #d4af37; --th-a2: 192,192,192; --th-a2-hex: #c0c0c0; --th-g2: 205,127,50;
     --th-soft: #ecd27a; --th-pale: #fff6dc; --th-label: #cfc3a0; --th-ink2: #e8e2d4; --th-ink3: #aaa290;
     --th-bgA: #22201c; --th-bgB: #111010; --th-c1: 64,58,46; --th-c2: 36,34,32; --th-s1: #2c2924; --th-s2: #161513;
     --th-input: 12,11,10; --th-nav: 28,26,22; --th-line: 220,190,110; --th-on: #1a1408;
     --bg0: #0f0e0c; --bg1: #33302a; --panel: rgba(60,56,48,0.55); --muted: #aaa290; --magenta: #d4af37; --magenta-dim: rgba(212,175,55,0.6);
   }
-  html:root[data-theme="mono"] {      /* black + white, a red touch */
+  html:root[data-theme="mono"] {
+    --th-core1: 245,245,245; --th-core2: 150,150,150; --th-core1-hex: #f5f5f5;   /* the spinning core + menu button */      /* black + white, a red touch */
     --th-a: 240,240,240; --th-a-hex: #f0f0f0; --th-a2: 140,140,140; --th-a2-hex: #8c8c8c; --th-g2: 255,59,59;
     --th-soft: #ffffff; --th-pale: #ffffff; --th-label: #bdbdbd; --th-ink2: #e0e0e0; --th-ink3: #9e9e9e;
     --th-bgA: #1a1a1a; --th-bgB: #050505; --th-c1: 44,44,44; --th-c2: 24,24,24; --th-s1: #222222; --th-s2: #111111;
     --th-input: 0,0,0; --th-nav: 18,18,18; --th-line: 220,220,220; --th-on: #000;
     --bg0: #050505; --bg1: #2a2a2a; --panel: rgba(40,40,40,0.6); --muted: #9e9e9e; --magenta: #ff3b3b; --magenta-dim: rgba(255,59,59,0.6);
   }
-  html:root { --line: rgba(var(--th-line),0.26); }
+  html:root { --line: rgba(var(--th-line),0.26);
+    /* the talk screen's cyan (brand, Talk button, modes, inputs) = the theme's core colour */
+    --cyan: var(--th-core1-hex); --cyan-dim: rgba(var(--th-core1),0.55); --cyan-faint: rgba(var(--th-core1),0.14); }
   /* Shared by the phone app and the laptop window. */
   .menubtn { width: 34px; height: 30px; margin-left: -6px; padding: 6px; background: none; border: 0; display: flex; flex-direction: column;
     justify-content: space-between; cursor: pointer; }
-  .menubtn i { display: block; height: 2px; border-radius: 1px; background: var(--cyan); box-shadow: 0 0 6px var(--cyan-dim); }
+  .menubtn i { display: block; height: 2px; border-radius: 1px; background: var(--th-core1-hex, var(--cyan)); box-shadow: 0 0 6px rgba(var(--th-core1, 79,216,255),0.6); }   /* follows the theme */
   /* menu drawer (slides in from the left) */
   #scrim { position: fixed; inset: 0; z-index: 20; background: rgba(2,6,13,0.6); opacity: 0; pointer-events: none; transition: opacity .2s; }
   #drawer { position: fixed; top: 0; bottom: 0; left: 0; z-index: 21; width: min(300px, 82vw); background: linear-gradient(180deg, var(--th-s1) 0%, var(--th-s2) 100%); border-right: 1px solid rgba(var(--th-line),0.3);
@@ -3169,11 +3181,11 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       ["emerald", "Emerald", "Green and sky blue", ["#2ee59d", "#1fb6ff", "#8ef5cb"], "linear-gradient(150deg, #134049, #08181f)"],
       ["royal", "Royal", "Gold and violet", ["#ffc845", "#8b5cf6", "#ffe08a"], "linear-gradient(150deg, #33276b, #110d2a)"],
       ["classic", "Classic", "The original dark blue", ["#4fd8ff", "#2a7fff", "#d640a8"], "linear-gradient(150deg, #0b1a30, #020309)"],
-      ["maroon", "Maroon & Gold", "With a cream touch", ["#b01e48", "#e6b84c", "#ffecc8"], "linear-gradient(150deg, #5a1630, #1c070f)"],
-      ["cyansilver", "Cyan & Silver", "With electric blue", ["#4fd8ff", "#c0c8d4", "#5a78ff"], "linear-gradient(150deg, #323a45, #0d1014)"],
-      ["forest", "Forest & Sapphire", "With seafoam", ["#3cb371", "#2864dc", "#8ce6c8"], "linear-gradient(150deg, #1c4a34, #0a1a20)"],
-      ["goldsilver", "Gold & Silver", "With bronze", ["#d4af37", "#c0c0c0", "#cd7f32"], "linear-gradient(150deg, #3d3830, #111010)"],
-      ["mono", "Black & White", "With a red touch", ["#f0f0f0", "#111111", "#ff3b3b"], "linear-gradient(150deg, #2e2e2e, #050505)"],
+      ["maroon", "Crimson Crown", "Maroon and gold, a cream touch", ["#b01e48", "#e6b84c", "#ffecc8"], "linear-gradient(150deg, #5a1630, #1c070f)"],
+      ["cyansilver", "Chrome", "Cyan and silver, electric blue", ["#4fd8ff", "#c0c8d4", "#5a78ff"], "linear-gradient(150deg, #323a45, #0d1014)"],
+      ["forest", "Evergreen", "Forest green and sapphire, seafoam", ["#3cb371", "#2864dc", "#8ce6c8"], "linear-gradient(150deg, #1c4a34, #0a1a20)"],
+      ["goldsilver", "Trophy", "Gold and silver, bronze", ["#d4af37", "#c0c0c0", "#cd7f32"], "linear-gradient(150deg, #3d3830, #111010)"],
+      ["mono", "Noir", "Black and white, a red touch", ["#f0f0f0", "#111111", "#ff3b3b"], "linear-gradient(150deg, #2e2e2e, #050505)"],
     ];
     function renderLook() {
       const now = document.documentElement.dataset.theme || "neon";
@@ -4387,9 +4399,9 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
   // side of the shape is cyan and the far side fades to magenta; Ben's voice (listening) is magenta,
   // Jarvis's (speaking) cyan. Lines and dots are drawn in a few batched paths (by depth band), so
   // the denser "HD" mesh costs fewer draw calls than the old 72-point one did.
-  const CY = [79, 216, 255], MG = [214, 64, 168];
+  let CY = [79, 216, 255], MG = [214, 64, 168];   // replaced by the colour theme's core colours (themeCore below)
   const mix = (a, b, f) => a.map((v, i) => Math.round(v + (b[i] - v) * f)).join(",");
-  const CYS = CY.join(","), MGS = MG.join(",");
+  let CYS = CY.join(","), MGS = MG.join(",");
   const N = 180;            // the phone build lowers this (Ben: more points)
   const K = 4;              // neighbours per point
   const fibSphere = (n) => Array.from({ length: n }, (_, i) => {
@@ -4572,6 +4584,17 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
   const SEGS = [[0, 0.9], [1.15, 0.35], [1.7, 1.3], [3.3, 0.2], [3.7, 1.0], [5.0, 0.7]];  // [start, length] radians
   const BANDS = 4;                                    // depth bands for batched drawing: 0 = nearest
   const bandCol = Array.from({ length: BANDS }, (_, b) => mix(CY, MG, Math.pow(b / (BANDS - 1), 1.3)));
+  // The core follows the colour theme (Settings > Colours; Ben, 2026-11-20): --th-core1 = the near side and
+  // Jarvis's voice, --th-core2 = the far side and Ben's voice ("r,g,b" in app/themes.css). Re-read on a theme change.
+  function themeCore() {
+    const css = getComputedStyle(document.documentElement);
+    const rd = (n, d) => { const v = css.getPropertyValue(n).split(",").map((x) => Number(x)); return v.length === 3 && v.every((x) => x >= 0 && x <= 255) ? v : d; };
+    CY = rd("--th-core1", [79, 216, 255]); MG = rd("--th-core2", [214, 64, 168]);
+    CYS = CY.join(","); MGS = MG.join(",");
+    for (let b = 0; b < BANDS; b++) bandCol[b] = mix(CY, MG, Math.pow(b / (BANDS - 1), 1.3));
+  }
+  themeCore();
+  new MutationObserver(themeCore).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   const bandOf = (z) => Math.max(0, Math.min(BANDS - 1, Math.floor((z + 1.05) / 2.1 * BANDS)));
   const paths = Array.from({ length: BANDS }, () => []);
 
@@ -4654,7 +4677,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
     if (st !== hud.state) { hud.state = st; ripples.push({ r: 1.05, a: 0.55, c: st === "listening" ? MGS : null }); }
     if (lvl - hud.peak > 0.18 && ripples.length < 6) ripples.push({ r: 1.25, a: 0.25 + lvl * 0.35, c: st === "listening" ? MGS : null });
     hud.peak = Math.max(lvl, hud.peak - dt * 0.8);
-    const tint = st === "thinking" ? "170,240,255" : CYS;
+    const tint = st === "thinking" ? mix(CY, [255, 255, 255], 0.55) : CYS;
     const voice = st === "listening" ? MGS : tint;    // whose voice the equalizer shows
 
     // ripples
@@ -4669,7 +4692,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
 
     // circular equalizer: 96 bars just outside the shape
     const NB = 96, eqR = Rb * 1.3, live = st === "speaking" || st === "listening";
-    const hot = st === "listening" ? "235,175,215" : "200,245,255";
+    const hot = st === "listening" ? mix(MG, [255, 255, 255], 0.6) : mix(CY, [255, 255, 255], 0.65);
     cx.lineWidth = 1.6;
     for (let b = 0; b < NB; b++) {
       const target = live ? lvl * (0.35 + 0.65 * Math.abs(Math.sin(b * 0.73 + t * 6.5) * Math.cos(b * 0.21 - t * 2.9))) : 0;
