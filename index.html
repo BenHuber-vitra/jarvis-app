@@ -537,6 +537,13 @@
   #money .llogo { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); height: 52%; max-width: 92%; filter: drop-shadow(0 0 10px rgba(var(--th-a),0.45)); }
   #money .llogo i { position: absolute; inset: 0; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-position: center; mask-position: center; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }   /* contain: never stretched, whatever the box */
   @media (min-width: 760px) { #money .llogo { height: 46%; bottom: 24px; } #money .ltext { right: 40%; top: 22px; left: 24px; } #money .ltext h3 { font-size: 22px; } }
+  /* body map, redrawn (smooth outline + muscle shapes) */
+  .fbody .bb > * { fill: rgba(200,218,240,0.12); stroke: none; }
+  .fbody .bb { filter: drop-shadow(0 0 0.7px rgba(200,218,240,0.7)); }   /* the outline, without a seam down the middle */
+  .fbody .bm { fill: rgba(200,218,240,0.22); }
+  .fbody .bm > * { stroke: rgba(8,12,32,0.55); stroke-width: 0.5; }
+  .fbody .bm.on > * { stroke: rgba(255,255,255,0.5); stroke-width: 0.45; }
+  .fbody .ln { fill: none; stroke: rgba(8,12,32,0.5); stroke-width: 0.55; }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -3481,58 +3488,55 @@ function musclesWorked(workouts, musclesOf) {
 
 return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recent, stats, clock, dur, KM_PER_MI, modeOf, setDone, fmtD, fmtSet, LIFTOFF_CUSTOM, stableUuid, parseCsv, parseLiftoff, musclesWorked };
  })();
-    // -------------------------------------------------------------- body map (2026-11-20, Ben)
-    // Our own simple front + back figure (drawn here, not copied from any app). Each muscle group of the
-    // exercise library (chest, lats, quadriceps, ...) is a shape; bodyMap(levels) colours them from
-    // levels { muscle: 0..1 } (0 = not worked: pale; 1 = worked hardest: hot pink). Inlined into fit.js
-    // at /*FIT_BODY*/ by app/build.py.
+    // -------------------------------------------------------------- body map (2026-11-20, Ben; redrawn the same day)
+    // Our own front + back figure (drawn here, not copied from any app): a smooth body outline and one curved
+    // shape per muscle group of the exercise library (chest, lats, quadriceps, ...). Each figure is drawn as
+    // its right half and mirrored, so both sides always match. BODY(levels) colours the muscles from
+    // levels { muscle: 0..1 } (0 = not worked: pale; 1 = worked hardest: the theme's main colour).
+    // Inlined into fit.js at /*FIT_BODY*/ by app/build.py.
     const BODY = (() => {
-      const E = (cx, cy, rx, ry, rot) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}"${rot ? ` transform="rotate(${rot} ${cx} ${cy})"` : ""}/>`;
-      const both = (f) => f(1) + f(-1);   // left and right (mirror around x = 50)
-      const X = (s, x) => 50 + s * (x - 50);
-      // the figure itself: capsules for limbs, a torso, head
-      const base = (back) => `<g class="bb">
-        <ellipse cx="50" cy="13" rx="8.5" ry="10.5"/><rect x="45" y="21" width="10" height="9" rx="3"/>
-        <path d="M30 32 Q50 27 70 32 L68 58 Q64 76 63 88 L66 100 Q50 106 34 100 L37 88 Q36 76 32 58 Z"/>
-        ${both((s) => `<line x1="${X(s, 31)}" y1="35" x2="${X(s, 27)}" y2="70" stroke-width="11"/><line x1="${X(s, 27)}" y1="71" x2="${X(s, 23)}" y2="97" stroke-width="8.5"/>
-          ${E(X(s, 22.5), 102, 4, 5.5)}<line x1="${X(s, 42)}" y1="100" x2="${X(s, 41)}" y2="142" stroke-width="15"/>
-          <line x1="${X(s, 41)}" y1="146" x2="${X(s, 40.5)}" y2="186" stroke-width="10.5"/>${E(X(s, 40), 194, 5, 3.5)}`)}
-        ${back ? "" : `<path d="M44 21 Q50 25 56 21" class="bl"/>`}</g>`;
-      const FRONT = {
-        neck: `<rect x="46" y="22" width="8" height="8" rx="2.5"/>`,
-        traps: both((s) => `<path d="M${X(s, 45)} 29 L${X(s, 36)} 33 L${X(s, 45)} 33 Z"/>`),
-        shoulders: both((s) => E(X(s, 31), 38, 6.5, 7.5, s * -12)),
-        chest: both((s) => `<path d="M${X(s, 50.8)} 35 L${X(s, 38)} 35 Q${X(s, 34)} 43 ${X(s, 37)} 50 Q${X(s, 44)} 54 ${X(s, 50.8)} 51 Z"/>`),
-        biceps: both((s) => E(X(s, 28.8), 55, 4.6, 9.5, s * 6)),
-        forearms: both((s) => E(X(s, 25.3), 82, 4, 11.5, s * 9)),
-        abdominals: `<rect x="43.5" y="54" width="13" height="33" rx="4"/><path class="ln" d="M50 55 V86 M44 63 H56 M44 71 H56 M44.5 79 H55.5"/>`,
-        abductors: both((s) => E(X(s, 36), 97, 3, 7, s * 10)),
-        adductors: both((s) => `<path d="M${X(s, 49)} 101 L${X(s, 44)} 103 Q${X(s, 45)} 116 ${X(s, 48.5)} 124 Z"/>`),
-        quadriceps: both((s) => E(X(s, 41.3), 121, 6.3, 18)),
-        calves: both((s) => E(X(s, 39.5), 163, 3.6, 12)),
+      // half body outline (x >= 50), mirrored for the other half
+      const OUTLINE = "M49.4 4 L50 4 C56 4 59.5 9 59.5 15 C59.5 21 57 25 54.5 27 L54.5 30 C58 31 64 32 69 34 C75 36 78.5 41 78.5 47 " +
+        "C79.5 55 80.5 62 80.5 68 C81.5 76 83.5 84 84.5 92 C85.5 98 85.5 102 84.5 106 C83.5 110 80.5 111 79.5 107 " +
+        "C78.5 102 78.5 98 77.5 94 C75.5 86 73.5 78 72.5 72 C71.5 66 70.5 60 69.5 56 C68.5 64 67.5 72 66.5 80 " +
+        "C66 88 68 96 68.5 102 C69.5 120 66.5 140 64.5 150 C63.5 160 64.5 172 62.5 184 C62.5 190 63.5 194 65 197.5 " +
+        "C61 199 56 199 54 197.5 C54 192 54 188 54 184 C53 172 54 162 53 152 C52 138 52 124 51 112 L50 108 L49.4 108 Z";   // halves overlap a hair: no seam
+      const FOREARM = "M74.2 73.5 C77.2 72.5 80.2 76.5 81.2 82.5 C82.2 89 82.2 95 81.4 100 C79.6 99 78.4 96 77.4 92 C75.6 86 74.6 80 73.8 76 Z";
+      const DELT = "M66.5 34.5 C73 34.5 78 40 78 47 C76.5 50 73.5 51 71.5 50.5 C70.5 44.5 68.5 39.5 62.5 36.5 Z";
+      const FRONT = {   // the right half of each muscle
+        traps: "M54.5 30.5 C58 31 63 32 66 34 C62 35 58 34.5 54.5 33 Z",
+        shoulders: DELT,
+        chest: "M50.8 37.5 C56 36.5 62 36.5 66.5 38.5 C69.5 42.5 70 47.5 68.5 52 C63 55.5 56 55.5 50.8 53.5 Z",
+        biceps: "M70.5 53.5 C73.5 52.5 76.5 54.5 77.2 58.5 C78.2 64 77.2 69 74.5 71 C72.5 69 70.8 64 70 58.5 Z",
+        forearms: FOREARM,
+        abdominals: "M50.8 56.5 C55 56.5 57.8 57.5 59 59.5 L59 87.5 C57.5 91.5 54.5 94.5 50.8 95.5 Z " +
+          "M60.2 58.5 C63 58 64.8 60.5 65.6 66 C65.8 76 65.6 86 64.8 91.5 C63 90 61.2 88 60.2 86 Z",
+        abductors: "M66.4 94 C68 97 68.2 102 67.6 108 C65.6 106 64.6 101 64.8 97 Z",
+        adductors: "M51 104.5 C53 106.5 55 110.5 55.8 116 C55.2 124 53.5 130 52.2 134 C51.2 126 51 116 51 108.5 Z",
+        quadriceps: "M56.6 104.5 C61 103 65.8 106 66.8 112 C67.8 124 66 138 63 148 C60 151.5 56.5 151 55.5 146 C54.8 136 55.4 122 56.4 110.5 Z",
+        calves: "M56.5 160 C59.5 158 62.2 160 63 166 C63.2 174 62.2 182 60.2 186 C58.2 184 57 178 56.3 172 Z",
       };
       const BACK = {
-        neck: `<rect x="46" y="22" width="8" height="8" rx="2.5"/>`,
-        traps: `<path d="M50 25 L38 33 L50 54 L62 33 Z"/>`,
-        shoulders: both((s) => E(X(s, 31), 38, 6.5, 7.5, s * -12)),
-        triceps: both((s) => E(X(s, 28.8), 56, 4.6, 10, s * 6)),
-        forearms: both((s) => E(X(s, 25.3), 82, 4, 11.5, s * 9)),
-        lats: both((s) => `<path d="M${X(s, 37.5)} 42 Q${X(s, 33)} 58 ${X(s, 41)} 76 L${X(s, 47)} 70 L${X(s, 45.5)} 50 Z"/>`),
-        "middle back": both((s) => `<path d="M${X(s, 49)} 52 L${X(s, 45.5)} 50 L${X(s, 46.5)} 68 L${X(s, 49)} 67 Z"/>`),
-        "lower back": `<rect x="44.5" y="71" width="11" height="16" rx="3"/>`,
-        glutes: both((s) => E(X(s, 43.2), 97, 7.6, 8)),
-        hamstrings: both((s) => E(X(s, 41.3), 125, 6, 17)),
-        calves: both((s) => E(X(s, 40.3), 160, 4.8, 11)),
+        traps: "M50 28.5 C54 29.5 60 31.5 66 34.5 C60.5 37.5 56.5 42 54.5 48 L50 56.5 Z",
+        shoulders: DELT,
+        triceps: "M70.5 51 C74.5 51 77.2 54.5 77.8 59.5 C78.2 65 76.4 69 73.6 70.5 C71.6 66.5 70.6 60.5 69.8 55.5 Z",
+        forearms: FOREARM,
+        lats: "M57.5 46.5 C62 44.5 67 46.5 68.2 52 C68.2 62 66 72 62 80 C58.5 78 55.5 72 54.6 66 Z",
+        "middle back": "M50.8 40 C53.5 41 55.5 43.5 56.8 46.5 L54 64 C52.5 62 51.2 60 50.8 58 Z",
+        "lower back": "M50.8 69.5 C54.5 71.5 58.5 75.5 61 81.5 C60 86 58 90 55 92 L50.8 92 Z",
+        glutes: "M50.8 95.5 C57 92.5 64 94 66.8 100 C68.6 108 66 114 60 115 C55 115.5 52 112.5 50.8 108.5 Z",
+        hamstrings: "M53.5 118 C58 116 63 118 64.8 124 C65.8 134 64 144 61 150 C58 150.5 55 146.5 54.2 140.5 C53.4 132 53.2 124 53.5 118 Z",
+        calves: "M54.5 156 C58.5 152 63 155 64 162 C64.8 170 63 176 60 178.5 C57 178.5 55.2 174 55 168 Z",
       };
-      // colour for a level: pale (not worked) -> soft pink -> hot pink
-      const fill = (v) => {
-        if (!(v > 0)) return "";
-        const a = 0.3 + 0.7 * Math.min(1, Math.max(0, v));   // the theme's main colour, stronger = worked harder
-        return ` style="fill:rgba(var(--th-a),${a.toFixed(2)})"`;
-      };
-      const side = (parts, levels) => Object.entries(parts).map(([mu, d]) => `<g class="bm${levels[mu] > 0 ? " on" : ""}"${fill(levels[mu])}><title>${mu}</title>${d}</g>`).join("");
+      const NECK = "M45.5 27 L54.5 27 L54.5 31 C52 32.5 48 32.5 45.5 31 Z";
+      const both = (d) => `<path d="${d}"/><path d="${d}" transform="matrix(-1 0 0 1 100 0)"/>`;
+      const fill = (v) => (v > 0 ? ` style="fill:rgba(var(--th-a),${(0.3 + 0.7 * Math.min(1, v)).toFixed(2)})"` : "");
+      const fig = (parts, levels, front) => `<g class="bb">${both(OUTLINE)}</g>` +
+        Object.entries(parts).map(([mu, d]) => `<g class="bm${levels[mu] > 0 ? " on" : ""}"${fill(levels[mu])}><title>${mu}</title>${both(d)}</g>`).join("") +
+        `<g class="bm${levels.neck > 0 ? " on" : ""}"${fill(levels.neck)}><title>neck</title><path d="${NECK}"/></g>` +
+        (front ? `<path class="ln" d="M50 57 V95 M44.2 66 H55.8 M44 75 H56 M44.4 84 H55.6"/>` : `<path class="ln" d="M50 58 V92"/>`);
       return (levels, cls) => `<svg class="fbody ${cls || ""}" viewBox="0 0 200 204" role="img" aria-label="Muscles worked">
-        <g>${base(false)}${side(FRONT, levels || {})}</g><g transform="translate(100 0)">${base(true)}${side(BACK, levels || {})}</g></svg>`;
+        <g>${fig(FRONT, levels || {}, true)}</g><g transform="translate(100 0)">${fig(BACK, levels || {}, false)}</g></svg>`;
     })();
     // levels for one exercise: primary 1, secondary 0.45
     const exLevels = (x) => Object.fromEntries([...(x.secondary || []).map((m) => [m, 0.45]), ...(x.primary || []).map((m) => [m, 1])]);
