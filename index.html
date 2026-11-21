@@ -13,16 +13,17 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <style>
   :root {
-    --magenta: #d640a8; --magenta-dim: rgba(214,64,168,0.55); --magenta-faint: rgba(214,64,168,0.12);
-    --bg0: #020309; --bg1: #07112a; --cyan: #4fd8ff; --cyan-dim: rgba(79,216,255,0.55);
-    --cyan-faint: rgba(79,216,255,0.14); --text: #cfeeff; --muted: #6f93ad; --amber: #ffb547;
-    --panel: rgba(8,26,46,0.62); --line: rgba(79,216,255,0.22); --red: #ff5a6a;
+    --magenta: #ff4fb8; --magenta-dim: rgba(255,79,184,0.6); --magenta-faint: rgba(214,64,168,0.12);
+    --bg0: #0e1033; --bg1: #241f5e; --cyan: #4fd8ff; --cyan-dim: rgba(79,216,255,0.55);
+    --cyan-faint: rgba(79,216,255,0.14); --text: #cfeeff; --muted: #9aa9d0; --amber: #ffb547;
+    --panel: rgba(36,34,92,0.58); --line: rgba(255,140,215,0.26); --red: #ff5a6a;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; height: 100%; overflow: hidden; }
   body {
-    background: radial-gradient(ellipse at 100% 100%, rgba(214,64,168,0.09) 0%, transparent 45%),
-      radial-gradient(ellipse at 50% 30%, var(--bg1) 0%, var(--bg0) 70%);
+    background: radial-gradient(ellipse at 100% 0%, rgba(255,79,184,0.26) 0%, transparent 50%),
+      radial-gradient(ellipse at 0% 100%, rgba(79,216,255,0.16) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 40%, var(--bg1) 0%, var(--bg0) 75%);   /* brighter, more pink (Ben, 2026-11-20) */
     background-color: var(--bg0);
     color: var(--text); font-family: "Rajdhani", "Segoe UI", system-ui, sans-serif;
     display: flex; flex-direction: column; height: 100dvh; height: var(--app-h, 100dvh);
@@ -43,20 +44,20 @@
   .menubtn i { display: block; height: 2px; border-radius: 1px; background: var(--cyan); box-shadow: 0 0 6px var(--cyan-dim); }
   /* menu drawer (slides in from the left) */
   #scrim { position: fixed; inset: 0; z-index: 20; background: rgba(2,6,13,0.6); opacity: 0; pointer-events: none; transition: opacity .2s; }
-  #drawer { position: fixed; top: 0; bottom: 0; left: 0; z-index: 21; width: min(300px, 82vw); background: #06142a; border-right: 1px solid var(--line);
+  #drawer { position: fixed; top: 0; bottom: 0; left: 0; z-index: 21; width: min(300px, 82vw); background: linear-gradient(180deg, #221f5c 0%, #141841 100%); border-right: 1px solid rgba(255,130,210,0.3);
     padding: calc(14px + env(safe-area-inset-top)) 0 calc(14px + env(safe-area-inset-bottom)); overflow-y: auto;
-    transform: translateX(-102%); transition: transform .22s ease-out; box-shadow: 8px 0 30px rgba(0,0,0,0.5); }
+    transform: translateX(-102%); transition: transform .22s ease-out; box-shadow: 8px 0 30px rgba(255,79,184,0.15), 8px 0 30px rgba(0,0,0,0.45); }
   body.menu #scrim { opacity: 1; pointer-events: auto; } body.menu #drawer { transform: none; }
   #drawer .dhead { font-family: "Orbitron", sans-serif; font-weight: 700; letter-spacing: 0.36em; font-size: 15px; color: var(--cyan);
-    padding: 4px 20px 14px; text-shadow: 0 0 12px var(--cyan-dim); border-bottom: 1px solid var(--line); }
-  #drawer .dsect { font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--muted); padding: 18px 20px 6px; }
+    padding: 4px 20px 14px; text-shadow: 0 0 12px var(--cyan-dim); border-bottom: 1px solid rgba(255,130,210,0.3); }
+  #drawer .dsect { font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: #c2a9ef; padding: 18px 20px 6px; }
   #drawer .ditem { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #e6f7ff; text-decoration: none; font-size: 18px; }
   #drawer .ditem:active { background: rgba(79,216,255,0.08); }
   #drawer .ditem span { flex: 1; min-width: 0; }
   #drawer .ditem small { display: block; font-size: 13px; color: var(--muted); margin-top: 1px; }
   #drawer .ditem em { font-style: normal; font-size: 14px; color: var(--muted); letter-spacing: 0.06em; }
   #drawer .ditem.on em { color: var(--cyan); }
-  #drawer .ditem.cur { background: rgba(214,64,168,0.07); box-shadow: inset 3px 0 0 var(--magenta); }
+  #drawer .ditem.cur { background: linear-gradient(90deg, rgba(255,79,184,0.22), transparent); box-shadow: inset 3px 0 0 #ff4fb8; }
   /* Money opens its two books underneath (one menu item) */
   #drawer .dsub { display: none; }
   #drawer .dsub.on { display: block; }
@@ -364,33 +365,33 @@
   .fbody.mini .bm.on > * { filter: none; }
   .fbleg { display: flex; justify-content: center; gap: 14px; font-size: 13px; color: var(--ink2, #9fbcd1); margin: 4px 0 10px; }
   .fbleg i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
-  /* ---------------------------------------------------------------- Workouts: brighter, with more pink (Ben, 2026-11-20) */
-  #money.fit, #fitlive { --pink: #ff4fb8; --pink2: #ff8fd6; --violet: #9b6bff; --ink2: #c9d6ee; --ink3: #9eb0d4; --line: rgba(255,130,210,0.26); --grid: rgba(255,160,220,0.12);
+  /* ---------------------------------------------------------------- the whole app: brighter, with more pink (Ben, 2026-11-20; started on Workouts) */
+  #money, #fitlive { --pink: #ff4fb8; --pink2: #ff8fd6; --violet: #9b6bff; --ink2: #c9d6ee; --ink3: #9eb0d4; --line: rgba(255,130,210,0.26); --grid: rgba(255,160,220,0.12);
     --surface: rgba(38,42,96,0.78);
     background: radial-gradient(130% 55% at 100% 0%, rgba(255,79,184,0.30), transparent 62%), radial-gradient(110% 50% at 0% 100%, rgba(79,216,255,0.20), transparent 60%),
       linear-gradient(180deg, #171a46 0%, #101636 100%); }
-  #money.fit .mhead h1 { color: var(--pink2); text-shadow: 0 0 14px rgba(255,79,184,0.7); }
-  #money.fit .card, #fitlive .lex { background: linear-gradient(155deg, rgba(64,52,130,0.70), rgba(30,42,92,0.72)); border: 1px solid var(--line); border-radius: 14px;
+  #money .mhead h1 { color: var(--pink2); text-shadow: 0 0 14px rgba(255,79,184,0.7); }
+  #money .card, #fitlive .lex { background: linear-gradient(155deg, rgba(64,52,130,0.70), rgba(30,42,92,0.72)); border: 1px solid var(--line); border-radius: 14px;
     box-shadow: 0 8px 22px rgba(5,6,25,0.35), inset 0 1px 0 rgba(255,255,255,0.06); }
-  #money.fit .label, #fitlive .lsets th { color: #c2a9ef; }
-  #money.fit .sub, #money.fit .meta, #money.fit .row .meta { color: var(--ink2); }
-  #money.fit .linkish { color: var(--pink2); }
-  #money.fit .row { border-top-color: var(--grid); }
-  #money.fit .day { color: #c2a9ef; }
-  #money.fit nav { background: rgba(26,26,70,0.96); border-top-color: var(--line); }
-  #money.fit nav button { color: #a9b6d6; } #money.fit nav button.on { color: var(--pink2); border-top-color: var(--pink); text-shadow: 0 0 10px rgba(255,79,184,0.6); }
-  #money.fit .btn, #fitlive .btn { border-color: rgba(255,143,214,0.55); color: #ffe0f3; background: linear-gradient(90deg, rgba(79,216,255,0.22), rgba(255,79,184,0.30)); }
-  #money.fit .btn.quiet { background: rgba(255,255,255,0.04); color: var(--ink2); border-color: var(--line); }
-  #money.fit .btn.fstart { background: linear-gradient(90deg, var(--pink), var(--violet)); color: #fff; border: 0; box-shadow: 0 4px 14px rgba(255,79,184,0.45); }
-  #money.fit .seg button.on { background: var(--pink); border-color: var(--pink); color: #fff; }
-  #money.fit .search input, #money.fit .search select { background: rgba(12,14,46,0.6); border-color: var(--line); }
-  #money.fit .fresume { border-color: var(--pink); box-shadow: 0 0 18px rgba(255,79,184,0.35); }
-  #money.fit .fico, #fitlive .fico, body.fitui #msheet .fico { color: #fff; border-color: rgba(255,143,214,0.5);
+  #money .label, #fitlive .lsets th { color: #c2a9ef; }
+  #money .sub, #money .meta, #money .row .meta { color: var(--ink2); }
+  #money .linkish { color: var(--pink2); }
+  #money .row { border-top-color: var(--grid); }
+  #money .day { color: #c2a9ef; }
+  #money nav { background: rgba(26,26,70,0.96); border-top-color: var(--line); }
+  #money nav button { color: #a9b6d6; } #money nav button.on { color: var(--pink2); border-top-color: var(--pink); text-shadow: 0 0 10px rgba(255,79,184,0.6); }
+  #money .btn, #fitlive .btn { border-color: rgba(255,143,214,0.55); color: #ffe0f3; background: linear-gradient(90deg, rgba(79,216,255,0.22), rgba(255,79,184,0.30)); }
+  #money .btn.quiet { background: rgba(255,255,255,0.04); color: var(--ink2); border-color: var(--line); }
+  #money .btn.fstart { background: linear-gradient(90deg, var(--pink), var(--violet)); color: #fff; border: 0; box-shadow: 0 4px 14px rgba(255,79,184,0.45); }
+  #money .seg button.on { background: var(--pink); border-color: var(--pink); color: #fff; }
+  #money .search input, #money .search select { background: rgba(12,14,46,0.6); border-color: var(--line); }
+  #money .fresume { border-color: var(--pink); box-shadow: 0 0 18px rgba(255,79,184,0.35); }
+  #money .fico, #fitlive .fico, #msheet .fico { color: #fff; border-color: rgba(255,143,214,0.5);
     background: radial-gradient(circle at 35% 30%, rgba(79,216,255,0.45), rgba(255,79,184,0.40) 65%, rgba(155,107,255,0.25)); }
-  #money.fit .fico svg, #fitlive .fico svg { filter: drop-shadow(0 0 3px rgba(255,200,240,0.8)); }
-  #money.fit .froutine .name { color: #fff; }
-  #money.fit .fweek .fbody { max-width: 240px; margin-top: 6px; }
-  #money.fit .row .fbody.mini { width: 58px; }
+  #money .fico svg, #fitlive .fico svg { filter: drop-shadow(0 0 3px rgba(255,200,240,0.8)); }
+  #money .froutine .name { color: #fff; }
+  #money .fweek .fbody { max-width: 240px; margin-top: 6px; }
+  #money .row .fbody.mini { width: 58px; }
   /* the live workout */
   #fitlive .lhead { background: linear-gradient(90deg, rgba(79,216,255,0.28), rgba(255,79,184,0.42) 60%, rgba(155,107,255,0.40)); border-bottom-color: var(--line); }
   #fitlive #lmin { color: #fff; } #fitlive #lclock { color: #fff; text-shadow: 0 0 12px rgba(255,79,184,0.8); }
@@ -403,13 +404,13 @@
   #fitlive .laddset { color: var(--pink2); border-color: rgba(255,143,214,0.4); }
   #fitlive #lrestbar { background: rgba(30,26,74,0.98); }
   /* sheets opened from Workouts */
-  body.fitui #msheet .box, body.fitlive-on #msheet .box { background: linear-gradient(180deg, #232056 0%, #151a42 100%); border-color: rgba(255,130,210,0.35);
+  #msheet .box{ background: linear-gradient(180deg, #232056 0%, #151a42 100%); border-color: rgba(255,130,210,0.35);
     box-shadow: 0 -6px 30px rgba(255,79,184,0.18); }
-  body.fitui #msheet h2, body.fitlive-on #msheet h2 { color: #fff; }
-  body.fitui #msheet .seg button.on, body.fitlive-on #msheet .seg button.on { background: #ff4fb8; border-color: #ff4fb8; color: #fff; }
-  body.fitui #msheet .btn, body.fitlive-on #msheet .btn { border-color: rgba(255,143,214,0.55); color: #ffe0f3; background: linear-gradient(90deg, rgba(79,216,255,0.2), rgba(255,79,184,0.28)); }
-  body.fitui #msheet .btn.quiet, body.fitlive-on #msheet .btn.quiet { background: rgba(255,255,255,0.04); color: #c9d6ee; border-color: rgba(255,130,210,0.26); }
-  body.fitui #msheet .fhist, body.fitlive-on #msheet .fhist, body.fitui #msheet .card, body.fitlive-on #msheet .card { background: rgba(255,255,255,0.04); border-color: rgba(255,130,210,0.26); }
+  #msheet h2{ color: #fff; }
+  #msheet .seg button.on{ background: #ff4fb8; border-color: #ff4fb8; color: #fff; }
+  #msheet .btn{ border-color: rgba(255,143,214,0.55); color: #ffe0f3; background: linear-gradient(90deg, rgba(79,216,255,0.2), rgba(255,79,184,0.28)); }
+  #msheet .btn.quiet{ background: rgba(255,255,255,0.04); color: #c9d6ee; border-color: rgba(255,130,210,0.26); }
+  #msheet .fhist, #msheet .card{ background: rgba(255,255,255,0.04); border-color: rgba(255,130,210,0.26); }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
