@@ -820,6 +820,14 @@
   @keyframes prism { to { background-position: 0 0, 400% 0; } }
   .pcard.r-legendary .prar, .pcard.r-mythic .prar, .pcard.r-godlike .prar { background: linear-gradient(90deg, var(--c1), #fff, var(--c1)); -webkit-background-clip: text; background-clip: text; color: transparent; font-weight: 800; }
   .pcard.r-godlike .prar { background: linear-gradient(90deg, #ff4fd8, #ffd36a, #4fffb0, #4fd8ff, #b46bff); -webkit-background-clip: text; background-clip: text; }
+  /* pack odds info card */
+  #money .plbar { display: flex; justify-content: flex-end; margin: -4px 0 8px; }
+  #money .plinfo { border: 1px solid var(--line); background: rgba(255,255,255,0.05); color: var(--th-soft); font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 14px; cursor: pointer; }
+  #msheet .oddtab { width: 100%; border-collapse: collapse; font-size: 14px; color: #fff; font-variant-numeric: tabular-nums; }
+  #msheet .oddtab th { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--th-ink3); font-weight: 500; text-align: left; padding: 8px 4px; }
+  #msheet .oddtab td { padding: 8px 4px; border-top: 1px solid rgba(var(--th-line),0.15); } #msheet .oddtab .r { text-align: right; }
+  #msheet .oddot { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; box-shadow: 0 0 6px rgba(255,255,255,0.25); }
+  #msheet .row .amt { font-size: 14px; color: var(--th-soft); white-space: nowrap; }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -5654,11 +5662,35 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
       body.querySelectorAll("[data-claim]").forEach((b) => (b.onclick = async () => { b.disabled = true;
         try { await plcall("claim", { quest: b.dataset.claim }); await plRefresh(); plGo("packs"); } catch (e) { M.error = e.message; render(); } }));
     }
+    // ---- the odds, on a little info card (Ben, 2026-11-20). Worked out from the same numbers the cloud rolls with.
+    function oddsSheet() {
+      const tot = PL.RARITIES.reduce((a, r) => a + r[2], 0), n = PL.PACKS.standard.cards;
+      const pct = (x) => x >= 10 ? x.toFixed(0) + "%" : x >= 1 ? x.toFixed(1) + "%" : x >= 0.1 ? x.toFixed(2) + "%" : x.toFixed(3) + "%";
+      const one = (p) => "1 in " + Math.round(1 / p).toLocaleString();
+      const rows = PL.RARITIES.map(([id, name, w, c]) => { const p = w / tot, pack = 1 - Math.pow(1 - p, n), inSet = PL.CARDS.filter((x) => x.rarity === id).length;
+        return `<tr><td><span class="oddot" style="background:linear-gradient(135deg, ${c[0]}, ${c[1]})"></span>${name}</td><td class="r">${pct(p * 100)}</td><td class="r">${pct(pack * 100)}</td><td class="r">${inSet}</td></tr>`; }).join("");
+      const floorOdds = (floor) => { const pool = PL.RARITIES.slice(PL.RARITIES.findIndex((r) => r[0] === floor)), t = pool.reduce((a, r) => a + r[2], 0);
+        return pool.map(([, name, w]) => `${name} ${pct((w / t) * 100)}`).join(" · "); };
+      openSheet(`<h2>Pack odds</h2><div class="meta">Every card is rolled on its own, so any pack can hold anything.</div>
+        <div class="card"><table class="oddtab"><tr><th>Rarity</th><th class="r">Per card</th><th class="r">Per pack</th><th class="r">Cards</th></tr>${rows}</table>
+        <div class="meta" style="margin:8px 0 4px">"Per pack" = at least one in a ${n}-card Standard pack. "Cards" = how many in the set (${PL.CARDS.length} in all).</div></div>
+        <div class="label" style="margin:14px 0 6px">Modifiers (per card, at most one)</div>
+        <div class="card">${(() => { let left = 1; const eff = {};   // the cloud checks shiny, then holo, then foil: the real chance of each
+          for (const [id, , q] of [...PL.MODS].reverse()) { eff[id] = left * q; left *= 1 - q; }
+          return PL.MODS.map(([id, name]) => [id, name, eff[id]]); })().map(([id, name, p]) => `<div class="row"><div class="grow"><div class="name">${name}</div><div class="meta">${{ foil: "A metallic sheen sweeps across", holo: "A moving rainbow", shiny: "Twinkling sparkles, the rarest" }[id]}</div></div><span class="amt">${pct(p * 100)} · ${one(p)}</span></div>`).join("")}</div>
+        <div class="label" style="margin:14px 0 6px">Packs</div>
+        <div class="card"><div class="row"><div class="grow"><div class="name">Standard pack</div><div class="meta">${PL.PACKS.standard.cards} cards, odds above</div></div></div>
+          <div class="row"><div class="grow"><div class="name">Rare pack</div><div class="meta" style="white-space:normal">${PL.PACKS.rare.cards} cards; the last is Rare or better: ${floorOdds("rare")}</div></div></div>
+          <div class="row"><div class="grow"><div class="name">Epic pack</div><div class="meta" style="white-space:normal">${PL.PACKS.epic.cards} cards; the last is Epic or better: ${floorOdds("epic")}</div></div></div></div>
+        <div class="btns"><button class="btn quiet" id="sx">Close</button></div>`, (box) => (box.querySelector("#sx").onclick = closeSheet));
+    }
+    const oddsBtn = `<button class="plinfo" id="plodds" aria-label="Pack odds">ⓘ Odds</button>`;
     function plPacks() {
       const ps = PS.st.packs;
-      body.innerHTML = ps.length ? `<div class="plpackgrid">${ps.map((p) => `<button class="plpack k-${p.kind}" data-open="${p.id}">${packHTML(p)}<b>${esc(PL.PACKS[p.kind].name)}</b><span class="meta">${esc(p.source)}</span></button>`).join("")}</div>
+      body.innerHTML = `<div class="plbar">${oddsBtn}</div>` + (ps.length ? `<div class="plpackgrid">${ps.map((p) => `<button class="plpack k-${p.kind}" data-open="${p.id}">${packHTML(p)}<b>${esc(PL.PACKS[p.kind].name)}</b><span class="meta">${esc(p.source)}</span></button>`).join("")}</div>
         ${ps.length > 1 ? `<div class="btns"><button class="btn" id="plall">Open all ${ps.length}</button></div>` : ""}`
-        : `<div class="empty">No packs waiting. Win today's puzzles or finish a quest.</div>`;
+        : `<div class="empty">No packs waiting. Win today's puzzles or finish a quest.</div>`);
+      $("plodds").onclick = oddsSheet;
       body.querySelectorAll("[data-open]").forEach((b) => (b.onclick = () => openPack([ps.find((p) => p.id === b.dataset.open)])));
       const all = $("plall"); if (all) all.onclick = () => openPack(ps.slice());
     }
@@ -5667,12 +5699,13 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
       for (const x of PS.st.cards) { const o = own.get(x.card) || { n: 0, mods: new Set() }; o.n++; if (x.mod) o.mods.add(x.mod); own.set(x.card, o); }
       const list = PL.CARDS.filter((c) => !PS.rar || c.rarity === PS.rar);
       const best = (mods) => ["shiny", "holo", "foil"].find((m) => mods.has(m)) || null;
-      body.innerHTML = `<div class="card"><div class="frh"><div><div class="label">Collection</div><div class="hero sm">${own.size} / ${PL.CARDS.length}</div><div class="sub">${PS.st.cards.length} cards opened</div></div></div>
+      body.innerHTML = `<div class="plbar">${oddsBtn}</div><div class="card"><div class="frh"><div><div class="label">Collection</div><div class="hero sm">${own.size} / ${PL.CARDS.length}</div><div class="sub">${PS.st.cards.length} cards opened</div></div></div>
         <div class="fbar"><i style="width:${(own.size / PL.CARDS.length) * 100}%"></i></div></div>
         <div class="plrars"><button data-rar="" class="${!PS.rar ? "on" : ""}">All</button>${PL.RARITIES.map(([id, n, , c]) => `<button data-rar="${id}" class="${PS.rar === id ? "on" : ""}" style="--c1:${c[0]}">${n}</button>`).join("")}</div>
         <div class="plcards">${list.map((c) => { const o = own.get(c.id);
           return o ? cardHTML({ card: c.id, rarity: c.rarity, mod: best(o.mods) }, { n: o.n, attr: `data-card="${c.id}"` })
             : `<div class="pcard locked" style="--c1:${rarOf(c.rarity)[3][0]};--c2:${rarOf(c.rarity)[3][1]}"><div class="pctop"><b>???</b><span>#${String(c.no).padStart(2, "0")}</span></div><div class="pcq">?</div><div class="pcbot"><span class="prar">${rarOf(c.rarity)[1]}</span></div></div>`; }).join("")}</div>`;
+      $("plodds").onclick = oddsSheet;
       body.querySelectorAll("[data-rar]").forEach((b) => (b.onclick = () => { PS.rar = b.dataset.rar; plCards(); }));
       body.querySelectorAll("[data-card]").forEach((b) => (b.onclick = () => { const c = cardOf(b.dataset.card), o = own.get(c.id);
         openSheet(`<div class="plbig">${cardHTML({ card: c.id, rarity: c.rarity, mod: best(o.mods) }, { big: true })}</div>
