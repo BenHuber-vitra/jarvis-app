@@ -522,8 +522,10 @@
     #money .lookwrap { flex-direction: row; }
     #money .lookprev { flex: 0 0 50%; border-bottom: 0; border-right: 1px solid var(--line); }
   }
-  #money .lgrad { position: absolute; top: -20%; right: -20%; width: 70%; aspect-ratio: 1; border-radius: 50%;
-    background: radial-gradient(circle at 35% 65%, var(--th-a-hex) 0%, var(--th-a2-hex) 55%, transparent 72%); opacity: 0.85; filter: blur(4px); }
+  /* a soft corner glow (like the page's own, a little stronger): primary in the corner, secondary blending in beside it */
+  #money .lgrad { position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(55% 42% at 100% 0%, rgba(var(--th-a),0.55), transparent 72%),
+      radial-gradient(70% 55% at 78% 0%, rgba(var(--th-a2),0.38), transparent 70%); }
   #money .ltext { position: absolute; top: 14px; left: 16px; right: 42%; z-index: 1; }
   #money .ltext h3 { margin: 4px 0 4px; font-family: "Orbitron", sans-serif; font-size: 18px; letter-spacing: 0.12em; color: var(--th-soft); text-shadow: 0 0 12px rgba(var(--th-a),0.6); }
   #money .ltext p { margin: 0 0 10px; font-size: 14px; line-height: 1.35; color: var(--th-ink2); }
