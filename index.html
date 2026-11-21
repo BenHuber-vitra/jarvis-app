@@ -1344,6 +1344,105 @@
   #money .plpackgrid .plpk { animation: plbob 3.4s ease-in-out infinite; animation-delay: calc(var(--i, 0) * -0.45s); }
   @keyframes plbob { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-6px) rotate(1deg); } }
   @media (prefers-reduced-motion: reduce) { #money .mhead h1, #money .pltile::after, #money .plpacks, #money .plgift, #money .plpackgrid .plpk, #money .plq .btn.fstart { animation: none !important; } }
+  /* ================================================================ the talk screen, premium (Ben, 2026-11-21)
+     Shared by the phone app (index.template.html) and the laptop window (jarvis/ui/static/index.html): build.py puts it in
+     the shared CSS. The shared CSS sits in the middle of each page's own styles, so these rules start with "body" to win.
+     Jarvis = the theme's core colour (--th-core1 / --cyan), Ben = the accent (--th-a / --magenta). */
+  body .brand { color: transparent; background: linear-gradient(90deg, var(--th-core1-hex, var(--cyan)), #fff 55%, var(--th-soft, var(--magenta))); background-size: 200% 100%;
+    -webkit-background-clip: text; background-clip: text; text-shadow: none; filter: drop-shadow(0 0 10px rgba(var(--th-core1, 79,216,255),0.5)); animation: tkbrand 9s linear infinite; }
+  body .brand small { -webkit-text-fill-color: var(--muted); }
+  @keyframes tkbrand { to { background-position: -200% 0; } }
+  body .hud > span, body .hud > div:not(:empty) { padding: 3px 9px; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+  body #status { color: rgba(var(--th-core1, 79,216,255),0.85); text-shadow: 0 0 14px rgba(var(--th-core1, 79,216,255),0.55); }
+
+  /* the transcript: a frosted glass panel with a light-catching edge */
+  body #log, body aside { border-radius: 18px; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(12px) saturate(1.2); -webkit-backdrop-filter: blur(12px) saturate(1.2);
+    background: linear-gradient(180deg, rgba(255,255,255,0.05), transparent 30%), var(--panel);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.1), 0 0 0 1px rgba(var(--th-a, 255,79,184),0.18), 0 0 30px rgba(var(--th-a, 255,79,184),0.1); }
+  body aside { overflow: hidden; } body aside::before, body aside::after { display: none; }
+  body .panel-title { border-bottom-color: rgba(255,255,255,0.08); background: linear-gradient(90deg, rgba(var(--th-core1, 79,216,255),0.10), transparent); }
+  body #log::-webkit-scrollbar { width: 6px; } body #log::-webkit-scrollbar-thumb { background: rgba(var(--th-a, 255,79,184),0.35); border-radius: 3px; }
+
+  /* messages as bubbles: Jarvis on the left in his colour, Ben on the right in the accent */
+  body #log { display: flex; flex-direction: column; padding-top: 12px; }
+  body .msg { max-width: 88%; padding: 9px 13px 10px; border-radius: 16px; position: relative; margin-bottom: 10px; }
+  body .msg.jarvis { align-self: flex-start; border-bottom-left-radius: 6px;
+    background: linear-gradient(160deg, rgba(var(--th-core1, 79,216,255),0.16), rgba(var(--th-core1, 79,216,255),0.05)); border: 1px solid rgba(var(--th-core1, 79,216,255),0.28);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.08); }
+  body .msg.user { align-self: flex-end; border-bottom-right-radius: 6px; text-align: left;
+    background: linear-gradient(160deg, rgba(var(--th-a, 255,79,184),0.28), rgba(var(--th-a2, 160,90,255),0.14)); border: 1px solid rgba(var(--th-a, 255,79,184),0.38);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1); }
+  body .msg.user .body { color: #fff; } body .msg.jarvis .body { color: #eef9ff; text-shadow: none; }
+  body .msg .who { font-size: 9.5px; letter-spacing: 0.24em; margin-bottom: 3px; opacity: 0.9; }
+  body .msg.jarvis .who { color: var(--th-core1-hex, var(--cyan)); } body .msg.user .who { color: var(--th-pale, var(--magenta)); }
+  body .msg.user.live { background: rgba(var(--th-a, 255,79,184),0.10); border-style: dashed; box-shadow: none; }
+  body .msg.info { align-self: center; max-width: 92%; padding: 4px 12px; text-align: center; border-radius: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); }
+  body .msg.info .body { font-size: 13px; }
+  body .msg .dial { border-radius: 20px; border-color: transparent; color: #fff; background: linear-gradient(90deg, rgba(var(--th-core1, 79,216,255),0.55), rgba(var(--th-a, 255,79,184),0.5)); box-shadow: 0 0 14px rgba(var(--th-core1, 79,216,255),0.35); }
+
+  /* the talk-mode switch and the model picker */
+  body #modes { gap: 4px; padding: 5px; margin: 8px 12px 0; border-radius: 14px; background: rgba(0,0,0,0.24); border: 1px solid rgba(255,255,255,0.07); box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+  body aside #modes { margin: 10px 12px 0; border-top: 1px solid rgba(255,255,255,0.07); }
+  body #modes button { border: 0; border-radius: 10px; padding: 7px 0; color: var(--muted); background: transparent; transition: background 0.2s, color 0.2s, box-shadow 0.2s; }
+  body #modes button.on { color: var(--th-on, #fff); font-weight: 700; background: linear-gradient(180deg, color-mix(in srgb, var(--th-core1-hex, #4fd8ff) 80%, #fff), var(--th-core1-hex, #4fd8ff));
+    box-shadow: 0 2px 10px rgba(var(--th-core1, 79,216,255),0.45), inset 0 1px 0 rgba(255,255,255,0.4); }
+  body #brainSel { border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(var(--th-input, 10,14,40),0.6); box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); }
+  body #brainSel.opus { border-color: rgba(var(--th-a, 255,79,184),0.7); box-shadow: 0 0 10px rgba(var(--th-a, 255,79,184),0.35); }
+
+  /* typing: a glass pill with a glow, and a gradient send button */
+  body form input { border-radius: 14px; background: rgba(var(--th-input, 10,14,40),0.55); border: 1px solid rgba(255,255,255,0.12); box-shadow: inset 0 2px 6px rgba(0,0,0,0.25);
+    transition: border-color 0.2s, box-shadow 0.2s; }
+  body form input:focus { border-color: rgba(var(--th-core1, 79,216,255),0.9); box-shadow: inset 0 2px 6px rgba(0,0,0,0.25), 0 0 0 3px rgba(var(--th-core1, 79,216,255),0.2), 0 0 16px rgba(var(--th-core1, 79,216,255),0.3); }
+  body aside form, body aside #modes + form { border-top-color: rgba(255,255,255,0.07); }
+  body form button.small, body aside form button { border-radius: 14px; border: 0; color: var(--th-on, #04101c); font-weight: 700;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--th-core1-hex, #4fd8ff) 85%, #fff), var(--th-core1-hex, #4fd8ff) 55%, color-mix(in srgb, var(--th-core1-hex, #4fd8ff) 60%, var(--magenta)));
+    box-shadow: 0 4px 14px rgba(var(--th-core1, 79,216,255),0.4), inset 0 1px 0 rgba(255,255,255,0.45); transition: transform 0.08s, filter 0.2s; }
+  body form button.small:active, body aside form button:active { transform: scale(0.95); filter: brightness(1.15); }
+  body aside form button.stop { color: #2a1500; background: linear-gradient(135deg, #ffd48a, var(--amber)); box-shadow: 0 4px 14px rgba(255,181,71,0.45); }
+  body #f.review input { border-color: rgba(var(--th-a, 255,79,184),0.9); box-shadow: 0 0 0 3px rgba(var(--th-a, 255,79,184),0.22), 0 0 16px rgba(var(--th-a, 255,79,184),0.3); }
+
+  /* the phone's Talk button: a glowing orb with a slowly turning ring; recording pulses rings outward in Ben's colour */
+  body #talk { position: relative; border: 0; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    background: radial-gradient(circle at 35% 28%, rgba(255,255,255,0.85) 0 6%, rgba(var(--th-core1, 79,216,255),0.95) 26%, rgba(var(--th-core1, 79,216,255),0.55) 55%, rgba(var(--th-a, 255,79,184),0.45) 100%);
+    box-shadow: 0 0 22px rgba(var(--th-core1, 79,216,255),0.55), inset 0 -6px 14px rgba(0,0,0,0.25), inset 0 2px 4px rgba(255,255,255,0.35); transition: transform 0.1s; }
+  body #talk::before { content: ""; position: absolute; inset: -6px; border-radius: 50%; padding: 2px; pointer-events: none;
+    background: conic-gradient(from 0deg, rgba(var(--th-core1, 79,216,255),0.9), transparent 30%, rgba(var(--th-a, 255,79,184),0.8) 55%, transparent 80%, rgba(var(--th-core1, 79,216,255),0.9));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    animation: tkspin 6s linear infinite; }
+  body #talk:active { transform: scale(0.95); }
+  body #talk.rec { background: radial-gradient(circle at 35% 28%, rgba(255,255,255,0.85) 0 6%, rgba(var(--th-a, 255,79,184),0.95) 28%, rgba(var(--th-a, 255,79,184),0.6) 60%, rgba(var(--th-a2, 160,90,255),0.5) 100%);
+    box-shadow: 0 0 30px rgba(var(--th-a, 255,79,184),0.7), inset 0 -6px 14px rgba(0,0,0,0.25); animation: none; }
+  body #talk.rec, body #talk.busy { color: #fff; }
+  body #talk.rec::before { animation-duration: 1.6s; }
+  body #talk.rec::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(var(--th-a, 255,79,184),0.8); animation: tkring 1.3s ease-out infinite; pointer-events: none; }
+  body #talk.busy { background: radial-gradient(circle at 35% 28%, rgba(255,255,255,0.8) 0 6%, rgba(255,181,71,0.95) 28%, rgba(255,140,60,0.55) 70%); box-shadow: 0 0 22px rgba(255,181,71,0.55); }
+  @keyframes tkspin { to { transform: rotate(360deg); } }
+  @keyframes tkring { from { transform: scale(1); opacity: 0.9; } to { transform: scale(1.55); opacity: 0; } }
+
+  /* laptop: timer and music cards, the full-screen button, the footer keys */
+  body .timer, body #music { border-radius: 16px; border: 1px solid rgba(255,255,255,0.09); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), transparent 40%), var(--panel); box-shadow: 0 12px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.1), 0 0 0 1px rgba(var(--th-core1, 79,216,255),0.16); }
+  body .timer::before, body #music::after { display: none; }
+  body .timer .left { color: var(--th-core1-hex, var(--cyan)); text-shadow: 0 0 16px rgba(var(--th-core1, 79,216,255),0.6); }
+  body .timer .bar, body #music .bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.08); }
+  body .timer .bar i, body #music .bar i { background: linear-gradient(90deg, var(--th-core1-hex, var(--cyan)), var(--magenta)); box-shadow: 0 0 10px rgba(var(--th-core1, 79,216,255),0.6); }
+  body .timer.done { box-shadow: 0 0 0 1px rgba(255,181,71,0.7), 0 0 26px rgba(255,181,71,0.45); }
+  body .timer.done .bar i { background: var(--amber); }
+  body #music img { border-radius: 10px; box-shadow: 0 6px 14px rgba(0,0,0,0.4); }
+  body #music .ctl button { border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); }
+  body #music .ctl button.main { border: 0; color: var(--th-on, #04101c); background: linear-gradient(135deg, color-mix(in srgb, var(--th-core1-hex, #4fd8ff) 85%, #fff), var(--th-core1-hex, #4fd8ff)); box-shadow: 0 0 12px rgba(var(--th-core1, 79,216,255),0.45); }
+  body .fsbtn { border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); }
+  body .fsbtn:hover { background: rgba(var(--th-core1, 79,216,255),0.14); box-shadow: 0 0 12px rgba(var(--th-core1, 79,216,255),0.3); }
+  body footer kbd { border-radius: 6px; border-color: rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); box-shadow: 0 2px 0 rgba(0,0,0,0.3); }
+
+  /* phone overlays: pairing, sign-in, "tap to talk" */
+  body #unpaired .box, body #signin form { border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), transparent 40%), var(--panel); box-shadow: 0 20px 50px rgba(0,0,0,0.5), 0 0 30px rgba(var(--th-a, 255,79,184),0.2); }
+  body #tapany div { border-radius: 30px; border: 0; color: #fff; background: linear-gradient(90deg, rgba(var(--th-core1, 79,216,255),0.55), rgba(var(--th-a, 255,79,184),0.55));
+    box-shadow: 0 0 26px rgba(var(--th-core1, 79,216,255),0.45); backdrop-filter: blur(8px); }
+  @media (prefers-reduced-motion: reduce) { body .brand, body #talk::before, body #talk.rec::after { animation: none !important; } }
+  /* laptop: the transcript sits inside the side panel, which is already the glass panel */
+  body aside #log { background: none; border: 0; border-radius: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
