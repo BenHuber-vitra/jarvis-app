@@ -883,6 +883,19 @@
     -webkit-mask-image: linear-gradient(160deg, transparent 5%, #000 35%, #000 60%, transparent 95%); mask-image: linear-gradient(160deg, transparent 5%, #000 35%, #000 60%, transparent 95%);
     -webkit-mask-size: 100% 220%; mask-size: 100% 220%; animation: holodrift 6s ease-in-out infinite alternate, holomask 6s ease-in-out infinite alternate; }
   @keyframes holomask { from { -webkit-mask-position: 0 0%; mask-position: 0 0%; } to { -webkit-mask-position: 0 100%; mask-position: 0 100%; } }
+  /* Holographic, take 3 (Ben: "a soft rainbow sheen on the icon and the highlights"): no overlay on the card any more.
+     The icon is drawn in a slowly sliding pastel rainbow (play.js cardArt), and the highlights pick it up: a thin rainbow
+     rim around the card, and the name and rarity text in the same soft rainbow. */
+  .pcard.m-holo::after { background: none !important; -webkit-mask: none !important; mask: none !important; animation: none !important; }
+  .pcard.m-holo::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 2px; pointer-events: none; z-index: 2;
+    background: linear-gradient(120deg, #ffc4ec, #c4e4ff, #c8ffe4, #fff2c4, #e6ccff, #ffc4ec); background-size: 300% 300%; animation: holorim 7s linear infinite;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+  @keyframes holorim { to { background-position: 300% 0; } }
+  .pcard.m-holo { box-shadow: 0 0 14px rgba(210,200,255,0.4), 0 4px 14px rgba(0,0,0,0.45) !important; }
+  .pcard.m-holo.r-common, .pcard.m-holo.r-uncommon { border-color: rgba(220,215,255,0.35); }
+  .pcard.m-holo .pcart { background: rgba(0,0,0,0.35); }
+  .pcard.m-holo .pctop b, .pcard.m-holo .prar { background: linear-gradient(90deg, #ff9ad8, #8fd0ff, #93f5c4, #ffe28f, #c9a4ff, #ff9ad8); background-size: 200% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent; animation: holorim 7s linear infinite; }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -5665,23 +5678,28 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
       const ps = packStyle(p);
       return `<div class="plpk" style="${ps.style}"><span>J</span><em>${esc(ps.tag)}</em>${p.kind !== "standard" ? `<i class="pkrib">${p.kind === "epic" ? "EPIC" : "RARE"}</i>` : ""}</div>${extra || ""}`;
     }
-    function cardArt(icon, rar) {
+    function cardArt(icon, rar, mod) {
       const lines = ci[icon] || ci.gem; let [c1, c2] = rarOf(rar)[3];
       const path = (dx, dy) => lines.map((pl) => "M" + pl.map(([x, y]) => `${(50 + (x + dx) * 36).toFixed(1)} ${(50 + (y + dy) * 36).toFixed(1)}`).join(" L")).join(" ");
       const G = { legendary: ["#fff3b0", "#ffcf3f", "#ff8c00"], mythic: ["#ffd0a0", "#ff4d2e", "#8b0000"], godlike: ["#ff4fd8", "#ffd36a", "#4fffb0", "#4fd8ff", "#b46bff"] }[rar];
       const gid = "pa" + rar + Math.random().toString(36).slice(2, 7);
       if (G) c1 = `url(#${gid})`;
+      // Holographic (Ben, 2026-11-20): a soft rainbow sheen on the icon itself, sliding slowly along it.
+      const holo = mod === "holo", hid = gid + "h";
+      if (holo) c1 = `url(#${hid})`;
       return `<svg viewBox="0 0 100 100" class="pcart"><defs><pattern id="pg" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M10 0H0V10" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/></pattern>
-        ${G ? `<linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1">${G.map((c, i) => `<stop offset="${i / (G.length - 1)}" stop-color="${c}"/>`).join("")}</linearGradient>` : ""}</defs>
+        ${G ? `<linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1">${G.map((c, i) => `<stop offset="${i / (G.length - 1)}" stop-color="${c}"/>`).join("")}</linearGradient>` : ""}
+        ${holo ? `<linearGradient id="${hid}" x1="0" y1="0" x2="1" y2="1" spreadMethod="reflect">${["#ffc4ec", "#c4e4ff", "#c8ffe4", "#fff2c4", "#e6ccff"].map((c, i) => `<stop offset="${i / 4}" stop-color="${c}"/>`).join("")}
+          <animateTransform attributeName="gradientTransform" type="translate" values="-1 -1; 1 1" dur="7s" repeatCount="indefinite"/></linearGradient>` : ""}</defs>
         <rect width="100" height="100" fill="url(#pg)"/><circle cx="50" cy="50" r="40" fill="none" stroke="${c2}" stroke-opacity="0.35" stroke-dasharray="2 3"/>
         <path d="${path(0.06, 0.06)}" fill="none" stroke="${c2}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="0.7"/>
-        <path d="${path(0, 0)}" fill="none" stroke="${c1}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" style="filter:drop-shadow(0 0 2px ${rarOf(rar)[3][0]})"/></svg>`;
+        <path d="${path(0, 0)}" fill="none" stroke="${c1}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" style="filter:drop-shadow(0 0 ${holo ? "3px #e6d4ff" : "2px " + rarOf(rar)[3][0]})"/></svg>`;
     }
     function cardHTML(x, opts = {}) {
       const c = cardOf(x.card); if (!c) return "";
       const r = rarOf(x.rarity || c.rarity);
       return `<div class="pcard r-${r[0]}${x.mod ? " m-" + x.mod : ""}${opts.big ? " big" : ""}" style="--c1:${r[3][0]};--c2:${r[3][1]}" ${opts.attr || ""}>
-        <div class="pctop"><b>${esc(c.name)}</b><span>#${String(c.no).padStart(2, "0")}</span></div>${cardArt(c.icon, r[0])}
+        <div class="pctop"><b>${esc(c.name)}</b><span>#${String(c.no).padStart(2, "0")}</span></div>${cardArt(c.icon, r[0], x.mod)}
         <div class="pcbot"><span class="prar">${r[1]}${x.mod ? " · " + MOD_NAME[x.mod] : ""}</span>${opts.big ? `<i>${esc(c.flavor)}</i>` : ""}</div>${opts.n > 1 ? `<em class="pcn">×${opts.n}</em>` : ""}</div>`;
     }
 
