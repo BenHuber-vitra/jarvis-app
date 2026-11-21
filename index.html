@@ -259,6 +259,99 @@
   #msheet .ctrans { max-height: 40vh; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
   #msheet .cline { padding: 5px 0; font-size: 15px; line-height: 1.35; color: #cfe3f0; }
   #msheet .cline b { color: var(--cyan); margin-right: 4px; } #msheet .cline.them b { color: #f0a6d8; }
+  /* ---------------------------------------------------------------- Workouts (fit.js) */
+  #msheet, #fitlive { --surface: #08182b; --ink: #e6f7ff; --ink2: #9fbcd1; --ink3: #6f93ad; --grid: rgba(79,216,255,0.10); }
+  #msheet .card { background: rgba(2,10,20,0.45); border: 1px solid var(--line); border-radius: 8px; padding: 4px 12px; margin: 0 0 12px; }
+  #msheet .row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--grid); }
+  #msheet .row:first-child { border-top: 0; } #msheet .row.click { cursor: pointer; }
+  #msheet .row .grow { flex: 1; min-width: 0; }
+  #msheet .row .name { font-size: 16px; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #msheet .row .meta { font-size: 13px; color: var(--ink3); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #msheet .chev { color: var(--ink3); font-size: 13px; }
+  #msheet .label, #fitlive .label { font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink3); }
+  #msheet .sect { display: flex; align-items: center; justify-content: space-between; margin: 14px 2px 6px; }
+  #msheet .seg { display: flex; gap: 6px; margin: 0 0 12px; }
+  #msheet .seg button { flex: 1; padding: 8px 0; border-radius: 18px; border: 1px solid var(--line); background: transparent; color: var(--ink2); font: inherit; font-size: 14px; }
+  #msheet .seg button.on { background: var(--cyan); color: #02060d; border-color: var(--cyan); font-weight: 600; }
+  #msheet .search { display: flex; gap: 8px; margin: 0 0 8px; } #msheet .search input, #msheet .search select { flex: 1; width: auto; }
+  #msheet .empty { text-align: center; color: var(--ink3); padding: 14px 8px; font-size: 15px; }
+  #msheet .note { font-size: 13px; color: var(--ink3); margin: 6px 2px; }
+  #msheet .linkish, #money .linkish { color: var(--cyan); font-size: 15px; background: none; border: 0; font-family: inherit; padding: 4px 6px; cursor: pointer; }
+  #msheet .linkish:disabled { opacity: 0.3; } #msheet .fdel { color: #ff8a8a; }
+  .fico { flex: none; width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+    color: var(--cyan); background: radial-gradient(circle at 35% 30%, rgba(79,216,255,0.22), rgba(214,64,168,0.14) 70%, transparent);
+    border: 1px solid var(--line); box-shadow: inset 0 0 8px rgba(79,216,255,0.15); }
+  .fico svg { width: 22px; height: 22px; filter: drop-shadow(0 0 3px rgba(79,216,255,0.6)); }
+  #money .froutine .frh { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+  #money .froutine .name { font-size: 19px; color: var(--ink); font-weight: 600; }
+  #money .froutine .meta { font-size: 14px; color: var(--ink3); }
+  #money .frx { display: flex; align-items: center; gap: 12px; padding: 6px 0; font-size: 16px; color: var(--ink); }
+  #money .frf { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+  #money .btn.fstart { flex: none; min-width: 0; padding: 8px 22px; font-weight: 700; letter-spacing: 0.12em; background: linear-gradient(90deg, rgba(79,216,255,0.25), rgba(214,64,168,0.25)); }
+  #money .fresume { cursor: pointer; border-color: var(--cyan-dim); box-shadow: 0 0 14px rgba(79,216,255,0.18); }
+  #money .fresume .name { font-size: 19px; color: var(--ink); margin: 4px 0 2px; }
+  #msheet .fchips { margin: 6px 0; color: var(--ink); font-size: 15px; } #msheet .fchips .label { margin-right: 6px; }
+  .fchip { display: inline-block; font-size: 13px; padding: 2px 9px; border-radius: 11px; border: 1px solid var(--line); color: var(--ink2); margin: 2px 4px 2px 0; }
+  .fchip.p { border-color: var(--magenta-dim, #d640a8); color: #f2a6da; background: rgba(214,64,168,0.12); }
+  #msheet .fsteps { margin: 0; padding-left: 22px; color: #cfe3f0; line-height: 1.45; font-size: 15px; } #msheet .fsteps li { margin: 0 0 8px; }
+  #msheet .fhist { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin: 0 0 10px; }
+  #msheet .fhh { display: flex; justify-content: space-between; color: var(--ink); margin-bottom: 4px; } #msheet .fhh b { font-weight: 600; }
+  #msheet .fhs { display: flex; justify-content: space-between; font-size: 15px; color: var(--ink2); padding: 2px 0; font-variant-numeric: tabular-nums; }
+  #msheet .fstep { display: flex; align-items: center; gap: 6px; color: var(--ink); font-variant-numeric: tabular-nums; }
+  #msheet .fstep button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--cyan); font-size: 18px; line-height: 1; }
+  #msheet .fpick { max-height: 52dvh; overflow-y: auto; }
+  #msheet .fgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; } #msheet .fgrid .btn { padding: 10px 0; }
+  .fpr { font-size: 12px; padding: 3px 9px; border-radius: 10px; background: rgba(46,204,113,0.15); color: #2ecc71; border: 1px solid rgba(46,204,113,0.5); white-space: nowrap; }
+  /* the live workout: full screen over the app, under the sheets */
+  #fitlive { position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column; background: var(--bg0); color: var(--ink);
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); font-family: "Rajdhani", system-ui, sans-serif; }
+  #fitlive.on { display: flex; }
+  #fitlive .lhead { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line);
+    background: linear-gradient(90deg, rgba(79,216,255,0.10), rgba(214,64,168,0.16)); }
+  #fitlive #lmin { width: 40px; height: 36px; border: 0; background: none; color: var(--cyan); font-size: 26px; line-height: 1; }
+  #fitlive #lclock { flex: 1; text-align: center; font-family: "Orbitron", sans-serif; font-size: 24px; letter-spacing: 0.08em; color: var(--ink); text-shadow: 0 0 10px var(--cyan-dim); font-variant-numeric: tabular-nums; }
+  #fitlive #lfin { border: 1px solid var(--cyan); background: var(--cyan); color: #02060d; font: inherit; font-weight: 700; font-size: 15px; padding: 8px 16px; border-radius: 18px; }
+  #fitlive .lbody { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 12px 12px 24px; min-height: 0; }
+  #fitlive input, #fitlive textarea { font: inherit; color: var(--ink); background: rgba(2,10,20,0.7); border: 1px solid var(--line); border-radius: 8px; outline: none; }
+  #fitlive .lname { width: 100%; font-size: 20px; font-weight: 600; padding: 8px 10px; margin-bottom: 8px; background: transparent; border-color: transparent; }
+  #fitlive .lname:focus { border-color: var(--line); }
+  #fitlive textarea { width: 100%; font-size: 16px; padding: 10px; resize: none; overflow: hidden; margin-bottom: 12px; min-height: 44px; }
+  #fitlive .lex { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; margin: 0 0 14px; overflow: hidden; }
+  #fitlive .lexh { display: flex; align-items: center; gap: 10px; padding: 10px 10px 6px 12px; }
+  #fitlive .lexn { flex: 1; text-align: left; background: none; border: 0; color: var(--cyan); font: inherit; font-size: 18px; font-weight: 600; padding: 0; }
+  #fitlive .lmore { width: 34px; height: 34px; background: none; border: 0; color: var(--ink2); font-size: 22px; }
+  #fitlive .lrest { display: flex; align-items: center; gap: 10px; padding: 4px 12px 8px; color: var(--ink2); font-size: 15px; border-bottom: 1px solid var(--grid); }
+  #fitlive .lrt { flex: 1; text-align: left; background: none; border: 0; color: var(--ink); font: inherit; font-size: 15px; padding: 4px 0; }
+  #fitlive .lsw { position: relative; width: 44px; height: 24px; flex: none; }
+  #fitlive .lsw input { position: absolute; inset: 0; opacity: 0; margin: 0; }
+  #fitlive .lsw i { position: absolute; inset: 0; border-radius: 12px; background: rgba(111,147,173,0.35); transition: background 0.2s; pointer-events: none; }
+  #fitlive .lsw i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #cfeeff; transition: left 0.2s; }
+  #fitlive .lsw input:checked + i { background: var(--magenta, #d640a8); } #fitlive .lsw input:checked + i::after { left: 23px; }
+  #fitlive .lsets { width: 100%; border-collapse: separate; border-spacing: 0 6px; padding: 0 8px; font-variant-numeric: tabular-nums; }
+  #fitlive .lsets th { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink3); padding: 6px 2px 0; text-align: center; }
+  #fitlive .lsets td { text-align: center; padding: 0 3px; }
+  #fitlive .lno { width: 30px; color: var(--ink2); font-size: 16px; }
+  #fitlive .lprev { color: var(--ink3); font-size: 14px; white-space: nowrap; }
+  #fitlive .lsets input { width: 100%; max-width: 76px; text-align: center; font-size: 18px; padding: 9px 2px; }
+  #fitlive .lsets input::placeholder { color: rgba(159,188,209,0.45); }
+  #fitlive .lsets input.need { border-color: #ff8a8a; }
+  #fitlive .ltick { width: 40px; height: 38px; border-radius: 10px; border: 1px solid var(--line); background: transparent; color: var(--ink3); font-size: 18px; font-weight: 700; }
+  #fitlive tr.done td { background: rgba(79,216,255,0.07); }
+  #fitlive tr.done td:first-child { border-radius: 8px 0 0 8px; } #fitlive tr.done td:last-child { border-radius: 0 8px 8px 0; }
+  #fitlive tr.done .ltick { background: var(--cyan); border-color: var(--cyan); color: #02060d; box-shadow: 0 0 10px var(--cyan-dim); }
+  #fitlive tr.done input { border-color: transparent; background: transparent; }
+  #fitlive .laddset { display: block; width: calc(100% - 20px); margin: 4px 10px 12px; padding: 9px; border-radius: 8px; border: 1px dashed var(--line);
+    background: transparent; color: var(--cyan); font: inherit; font-size: 15px; letter-spacing: 0.08em; }
+  #fitlive .btn { display: block; width: 100%; margin: 0 0 10px; padding: 12px; border-radius: 8px; border: 1px solid var(--cyan-dim); background: rgba(79,216,255,0.08); color: var(--cyan); font: inherit; font-size: 16px; }
+  #fitlive .btn.danger { border-color: rgba(208,59,59,0.5); color: #ff8a8a; background: transparent; }
+  #fitlive .note { font-size: 13px; color: var(--amber, #ffb547); text-align: center; }
+  #lrestbar { display: none; border-top: 1px solid var(--line); background: rgba(8,24,43,0.98); }
+  #lrestbar.on { display: block; } #lrestbar.up { background: rgba(214,64,168,0.22); }
+  #lrestbar .lrb { height: 4px; background: rgba(79,216,255,0.12); } #lrestbar .lrb i { display: block; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--magenta, #d640a8)); transition: width 0.25s linear; }
+  #lrestbar .lrrow { display: flex; align-items: center; gap: 8px; padding: 8px 12px 10px; }
+  #lrestbar .lrrow > div { flex: 1; text-align: center; color: var(--ink2); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #lrestbar b { font-family: "Orbitron", sans-serif; color: var(--ink); font-size: 18px; }
+  #lrestbar button { border: 1px solid var(--line); background: transparent; color: var(--cyan); font: inherit; font-size: 14px; padding: 7px 10px; border-radius: 16px; }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -346,6 +439,7 @@
     <a href="#" id="goalsBiz" class="ditem"><span>Business goals</span><em>›</em></a>
     <a href="#" id="goalsPers" class="ditem"><span>Personal goals</span><em>›</em></a>
   </div>
+  <a href="#" id="navFit" class="ditem"><span>Workouts<small>Routines, live logging, history</small></span><em>›</em></a>
   <a href="#" id="navCalls" class="ditem"><span>Calls<small>Calls Jarvis made for you, with transcripts</small></span><em>›</em></a>
   <a href="#" id="navCrm" class="ditem"><span>Customers<small>The Customer Factor: jobs, invoices, estimates</small></span><em>›</em></a>
   </div>
@@ -838,7 +932,7 @@
     menuBtn.setAttribute("aria-expanded", open); drawer.setAttribute("aria-hidden", !open);
     if (open && !was) {   // show which screen you're on
       const m = $("money").classList.contains("on") && $("mtitle").textContent;
-      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["navCalls", m === "CALLS"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || / BINGO$/.test(m)]]) $(id).classList.toggle("cur", on);
+      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["navCalls", m === "CALLS"], ["navFit", m === "WORKOUTS"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || / BINGO$/.test(m)]]) $(id).classList.toggle("cur", on);
       showSettings(m === "JARVIS COSTS" || m === "PERSONALITY");   // the cog's page holds Jarvis costs, so open there from it
       subOpen("Money", m === "BUSINESS" || m === "PERSONAL");   // on one of their screens, show the group open
       subOpen("Goals", m === "BUSINESS GOALS" || m === "PERSONAL GOALS" || / BINGO$/.test(m));
@@ -1247,6 +1341,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       if (M.book === "goalsPers" || M.book === "bingo") return loadGoals();
       if (M.book === "persona") return loadPersona();
       if (M.book === "calls") return loadCalls();
+      if (M.book === "fit") return loadFit();
       if (M.book === "goalsBiz") return loadBiz();
       M.busy = refresh === "force" ? "Syncing with your bank…" : (refresh ? "Checking for new transactions…" : "Loading…");
       M.error = ""; render();
@@ -1268,11 +1363,11 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
         M.book = book; M.data = M.cache[book] || null; M.open = {}; M.q = ""; M.cat = ""; M.error = "";
         try { localStorage.setItem("jarvis.moneyBook", book); } catch {}
       }
-      const tabs = M.book === "crm" ? CRM_TABS : MONEY_TABS;   // the Customers screen has its own four tabs
+      const tabs = M.book === "crm" ? CRM_TABS : M.book === "fit" ? FIT_TABS : MONEY_TABS;   // the Customers screen has its own four tabs
       if (!tabs.some(([k]) => k === tab)) tab = tabs[0][0];
       el.querySelectorAll("nav button").forEach((b, i) => { b.dataset.tab = tabs[i][0]; b.textContent = tabs[i][1]; });
       M.tab = tab;
-      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY", calls: "CALLS" }[M.book];
+      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY", calls: "CALLS", fit: "WORKOUTS" }[M.book];
       el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book] || M.book === "bingo" || M.book === "persona" || M.book === "calls");   // no Dashboard/Spending/... tabs there
       body.scrollTop = 0; hideTip(); el.classList.add("on");
       if (!fresh) render(); else if (!M.data) load(true); else { render(); load(true); }
@@ -1296,6 +1391,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     $("goalsBiz").onclick = (e) => { e.preventDefault(); goBook("goalsBiz"); };
     $("goalsPers").onclick = (e) => { e.preventDefault(); goBook("goalsPers"); };
     $("navCrm").onclick = (e) => { e.preventDefault(); goBook("crm"); };
+    $("navFit").onclick = (e) => { e.preventDefault(); goBook("fit"); };
     $("mmenu").onclick = (e) => { e.preventDefault(); setMenu(true); };
     el.querySelectorAll("nav button").forEach((b) => (b.onclick = () => {
       if (b.dataset.tab === M.tab) return;
@@ -2910,6 +3006,670 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       body.querySelectorAll("[data-call]").forEach((r) => (r.onclick = () => showCall(r.dataset.call)));
     }
 
+    // -------------------------------------------------------------- Workouts (2026-11-20, Ben; Phase 1 = logging)
+    // A "book" of the money screen called fit, with tabs Workout / History / Exercises / Settings, plus a
+    // full-screen live workout (#fitlive) that sits above the screens and below the sheets. Data: cloud
+    // /jarvis/fit/* (tools_fit.ts; tables in supabase/fit.sql). Maths: FC = fit_calc.js (shared with cloud
+    // Jarvis). Weights are POUNDS inside; FC.shown / FC.toLbs convert for kg. The live workout is also kept
+    // on this device (localStorage jarvis.fitLive) after every change, so bad gym signal never loses a set;
+    // the cloud copy is saved a moment later and retried. Inserted into money.js by app/build.py.
+    const FC = (() => { // Workout maths (2026-11-20), shared like money_calc.js: imported by cloud Jarvis and inlined into the
+// app by app/build.py, so the screen and Jarvis's voice always agree.
+// A workout = { id, name, started_at, ended_at (null = in progress), notes,
+//   exercises: [{ ex, rest, sets: [{ w (lbs), r (reps), done }] }] }. Weights are POUNDS internally.
+
+const LB_PER_KG = 2.20462;
+
+/** Estimated one-rep max (Epley): weight x (1 + reps / 30); one rep = the weight itself. */
+function e1rm(w, r) {
+  w = +w; r = +r;
+  if (!(w > 0) || !(r > 0)) return 0;
+  return r === 1 ? w : w * (1 + r / 30);
+}
+
+/** Pounds -> what Ben sees (lb or kg), rounded sensibly. */
+function shown(lbs, unit) {
+  const v = unit === "kg" ? +lbs / LB_PER_KG : +lbs;
+  return Math.round(v * 10) / 10;
+}
+/** What Ben typed (lb or kg) -> pounds. */
+function toLbs(v, unit) {
+  v = +v;
+  return unit === "kg" ? v * LB_PER_KG : v;
+}
+function fmtW(lbs, unit) {
+  const v = shown(lbs, unit);
+  return (Number.isInteger(v) ? String(v) : v.toFixed(1)) ;
+}
+
+const doneSets = (e) => (e.sets || []).filter((s) => s.done && +s.r > 0);
+const finished = (ws) => ws.filter((w) => w.ended_at).sort((a, b) => (a.started_at < b.started_at ? 1 : -1));
+
+/** The sets from the last finished workout with this exercise (for PREV), or []. */
+function prevSets(workouts, ex, beforeId) {
+  for (const w of finished(workouts)) {
+    if (w.id === beforeId) continue;
+    const e = (w.exercises || []).find((x) => x.ex === ex && doneSets(x).length);
+    if (e) return doneSets(e).map((s) => ({ w: +s.w || 0, r: +s.r }));
+  }
+  return [];
+}
+
+/** Every finished session of one exercise, newest first: [{ id, date, name, sets: [{ w, r, e1rm }], best }]. */
+function history(workouts, ex) {
+  const out = [];
+  for (const w of finished(workouts)) {
+    const sets = (w.exercises || []).filter((x) => x.ex === ex).flatMap(doneSets).map((s) => ({ w: +s.w || 0, r: +s.r, e1rm: e1rm(s.w, s.r) }));
+    if (sets.length) out.push({ id: w.id, date: w.started_at, name: w.name, sets, best: Math.max(...sets.map((s) => s.e1rm)) });
+  }
+  return out;
+}
+
+/** Best estimated 1RM ever for an exercise (0 if none), with the set it came from. */
+function bestE1rm(workouts, ex) {
+  let best = { e1rm: 0 };
+  for (const h of history(workouts, ex)) for (const s of h.sets) if (s.e1rm > best.e1rm) best = { ...s, date: h.date };
+  return best;
+}
+
+/** Exercise ids, most recently done first. */
+function recent(workouts, n = 8) {
+  const seen = [];
+  for (const w of [...workouts].sort((a, b) => (a.started_at < b.started_at ? 1 : -1)))
+    for (const e of w.exercises || []) if (!seen.includes(e.ex)) seen.push(e.ex);
+  return seen.slice(0, n);
+}
+
+/** Totals for one workout: ticked sets, volume (lbs x reps), duration in seconds. */
+function stats(w, now = Date.now()) {
+  let sets = 0, volume = 0;
+  for (const e of w.exercises || []) for (const s of doneSets(e)) { sets++; volume += (+s.w || 0) * +s.r; }
+  const end = w.ended_at ? Date.parse(w.ended_at) : now;
+  return { sets, volume, seconds: Math.max(0, Math.round((end - Date.parse(w.started_at)) / 1000)) };
+}
+
+/** 3725 -> "1:02:05"; 125 -> "2:05". */
+function clock(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return (h ? h + ":" + String(m).padStart(2, "0") : String(m)) + ":" + String(s).padStart(2, "0");
+}
+/** 4380 -> "1h 13m"; 300 -> "5m". */
+function dur(sec) {
+  const h = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60);
+  return h ? `${h}h ${m}m` : `${m}m`;
+}
+
+return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recent, stats, clock, dur };
+ })();
+    const FIT_TABS = [["start", "Workout"], ["hist", "History"], ["lib", "Exercises"], ["fset", "Settings"]];
+    const W = { lib: null, map: new Map(), q: "", eq: "", mus: "", shown: 60, live: null, tick: null, rest: null,
+      saveT: null, unsynced: false, demo: null };
+    const FD = () => M.cache.fit || null;
+    const unit = () => (FD() && FD().settings.unit) || "lb";
+    const U = () => (unit() === "kg" ? "KG" : "LBS");
+    const uid = () => (crypto.randomUUID ? crypto.randomUUID() : "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) => (c ^ (Math.random() * 16) >> (c / 4)).toString(16)));
+    const EQUIP = ["barbell", "dumbbell", "cable", "machine", "body only", "kettlebells", "bands", "e-z curl bar", "medicine ball", "exercise ball", "foam roll", "other"];
+    const MUSCLES = [["Upper body", ["chest", "shoulders", "biceps", "triceps", "forearms", "lats", "middle back", "traps", "neck"]],
+      ["Core", ["abdominals", "lower back"]], ["Lower body", ["quadriceps", "hamstrings", "glutes", "calves", "adductors", "abductors"]]];
+    const fE = (lbs) => String(Math.round(FC.shown(lbs, unit())));   // an estimated 1RM, whole number
+    const fV = (lbs) => Math.round(FC.shown(lbs, unit())).toLocaleString();   // volume
+    const cap = (s) => String(s || "").replace(/\b\w/g, (c) => c.toUpperCase());
+
+    // ---- network
+    async function fcall(action, payload) {
+      if (DEMO) return fitDemo(action, payload || {});
+      const auth = await authHeaders();
+      if (!auth) { showSignin(true); throw new Error("This phone isn't paired."); }
+      const r = await fetch(FN + "/fit/" + action, { method: "POST",
+        headers: { ...auth, apikey: PUBLISHABLE_KEY, "content-type": "application/json" }, body: JSON.stringify(payload || {}) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || `Workouts service error (${r.status})`);
+      return j;
+    }
+    async function loadFit() {
+      M.busy = M.data ? "" : "Loading…"; M.error = ""; render();
+      try {
+        const [got] = await Promise.all([fcall("data"), ensureLib()]);
+        M.cache.fit = got; addCustom();
+        adoptLive(got.workouts.find((w) => !w.ended_at));
+        if (M.book !== "fit") return; M.data = got;
+      } catch (e) { if (M.book !== "fit") return; M.error = e.message; }
+      M.busy = ""; render();
+    }
+    // The library (~870 exercises, no instructions) is kept on the device for a week.
+    async function ensureLib() {
+      if (W.lib) return;
+      let list = null;
+      try { const c = JSON.parse(localStorage.getItem("jarvis.fitLib") || "null"); if (c && Date.now() - c.at < 7 * 864e5 && !DEMO) list = c.list; } catch {}
+      if (!list) { list = (await fcall("library")).list; try { if (!DEMO) localStorage.setItem("jarvis.fitLib", JSON.stringify({ at: Date.now(), list })); } catch {} }
+      W.lib = list.map(([id, name, equipment, primary, secondary, category, aka]) => ({ id, name, aka: aka || "", equipment: equipment || "", primary: primary || [], secondary: secondary || [], category: category || "" }));
+      for (const x of W.lib) W.map.set(x.id, x);
+      addCustom();
+    }
+    function addCustom() {
+      for (const c of (FD() && FD().custom) || []) W.map.set(c.id, { id: c.id, name: c.name, aka: "", equipment: c.equipment || "", primary: c.primary_muscles || [],
+        secondary: c.secondary_muscles || [], instructions: c.instructions || [], category: "custom", custom: true, deleted: c.deleted });
+    }
+    const exOf = (id) => W.map.get(id) || { id, name: "Exercise", equipment: "", primary: [], secondary: [] };
+    const exName = (id) => exOf(id).name;
+
+    // ---- small original line icons by equipment (Jarvis's cyan line style)
+    const ICON = {
+      barbell: '<path d="M2 12h20M5 8v8M8 6v12M16 6v12M19 8v8"/>',
+      dumbbell: '<path d="M7 12h10M4 9v6M7 7v10M17 7v10M20 9v6"/>',
+      kettlebells: '<path d="M9 8a3 3 0 0 1 6 0"/><circle cx="12" cy="15" r="5"/>',
+      cable: '<path d="M5 3v18M19 3v18M5 4h14M12 4v9"/><rect x="10" y="13" width="4" height="5" rx="1"/>',
+      machine: '<rect x="4" y="3" width="6" height="18" rx="1"/><path d="M10 9h8M18 6v6M7 7h0M7 11h0M7 15h0"/>',
+      "body only": '<circle cx="12" cy="4.5" r="2"/><path d="M12 7v7M7 10l5-1 5 1M12 14l-3 7M12 14l3 7"/>',
+      bands: '<path d="M4 16c4-8 12-8 16 0M4 12c4-6 12-6 16 0"/>',
+      cardio: '<path d="M3 12h4l2-5 4 10 2-5h6"/>',
+      other: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/>',
+    };
+    ICON["e-z curl bar"] = ICON.barbell; ICON["medicine ball"] = ICON["exercise ball"] = '<circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c3 3 3 13 0 16"/>';
+    const icon = (id) => { const x = exOf(id); const k = x.category === "cardio" ? "cardio" : ICON[x.equipment] ? x.equipment : "other";
+      return `<span class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg></span>`; };
+
+    // ---- search the library
+    function findEx(q, eq, mus) {
+      const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+      const pool = [...W.map.values()].filter((x) => !x.deleted);
+      const hit = pool.filter((x) => (!eq || x.equipment === eq) && (!mus || x.primary.includes(mus))
+        && words.every((w) => (x.name + " " + x.aka).toLowerCase().includes(w)));
+      const ql = q.toLowerCase().trim();
+      const score = (x) => (x.name.toLowerCase() === ql ? 0 : x.name.toLowerCase().startsWith(ql) ? 1 : 2) * 1000 + x.name.length;
+      return hit.sort((a, b) => score(a) - score(b) || a.name.localeCompare(b.name));
+    }
+    function filterBar(prefix) {
+      return `<div class="search"><input id="${prefix}q" placeholder="Search exercises" value="${esc(W.q)}" autocomplete="off"></div>
+        <div class="search"><select id="${prefix}eq"><option value="">All equipment</option>${EQUIP.map((e) => `<option value="${e}" ${W.eq === e ? "selected" : ""}>${cap(e)}</option>`).join("")}</select>
+        <select id="${prefix}mus"><option value="">All muscles</option>${MUSCLES.map(([g, ms]) => `<optgroup label="${g}">${ms.map((m) => `<option value="${m}" ${W.mus === m ? "selected" : ""}>${cap(m)}</option>`).join("")}</optgroup>`).join("")}</select></div>`;
+    }
+    function exRow(id, extra) {
+      const x = exOf(id);
+      return `<div class="row click" data-ex="${esc(id)}">${icon(id)}<div class="grow"><div class="name">${esc(x.name)}</div>
+        <div class="meta">${esc(cap(x.primary.join(", ") || x.category || ""))}${x.custom ? " · yours" : ""}</div></div>${extra || '<span class="chev">›</span>'}</div>`;
+    }
+    // The list part (recent, yours, results), redrawn on each keystroke without touching the search box.
+    function exList() {
+      const filtered = W.q || W.eq || W.mus, ws = (FD() && FD().workouts) || [];
+      let h = "";
+      if (!filtered) {
+        const rec = FC.recent(ws, 6).filter((id) => W.map.has(id) && !exOf(id).deleted);
+        if (rec.length) h += `<div class="sect"><span class="label">Recent</span></div><div class="card">${rec.map((id) => exRow(id)).join("")}</div>`;
+        const mine = [...W.map.values()].filter((x) => x.custom && !x.deleted);
+        if (mine.length) h += `<div class="sect"><span class="label">Your exercises</span></div><div class="card">${mine.map((x) => exRow(x.id)).join("")}</div>`;
+      }
+      const res = findEx(W.q, W.eq, W.mus);
+      h += `<div class="sect"><span class="label">${filtered ? res.length + " found" : "All exercises"}</span></div>`;
+      h += res.length ? `<div class="card">${res.slice(0, W.shown).map((x) => exRow(x.id)).join("")}</div>` +
+        (res.length > W.shown ? `<div class="btns"><button class="btn quiet" data-more="1">Show more (${res.length - W.shown})</button></div>` : "")
+        : `<div class="empty">Nothing matches. You can add it as your own exercise.</div>`;
+      return h;
+    }
+    function wireFilters(root, prefix, redraw) {
+      const q = root.querySelector("#" + prefix + "q");
+      q.oninput = () => { W.q = q.value; W.shown = 60; redraw(); };
+      root.querySelector("#" + prefix + "eq").onchange = (e) => { W.eq = e.target.value; W.shown = 60; redraw(); };
+      root.querySelector("#" + prefix + "mus").onchange = (e) => { W.mus = e.target.value; W.shown = 60; redraw(); };
+    }
+
+    // ---- the screen
+    function renderFit() {
+      if (!W.lib) { body.innerHTML = `<div class="note">Loading exercises…</div>`; return; }
+      ({ start: renderStart, hist: renderHist, lib: renderLib, fset: renderFset }[M.tab] || renderStart)();
+    }
+    function setupCard() {
+      const s = FD().settings;
+      if (s.age) return "";
+      return `<div class="card"><div class="label">Quick setup</div><div class="sub" style="margin:6px 0 10px">A couple of facts for your stats and ranks later on. Change them any time in Settings.</div>
+        <div class="search"><input id="fsage" inputmode="numeric" placeholder="Your age"><input id="fsbw" inputmode="decimal" placeholder="Bodyweight (${unit()})" value="${esc(FC.fmtW(s.bodyweight, unit()))}"></div>
+        <div class="btns" style="margin-top:0"><button class="btn" id="fssave">Save</button></div><div class="note err" id="fserr"></div></div>`;
+    }
+    function renderStart() {
+      const rs = FD().routines;
+      let h = setupCard();
+      if (W.live) h += `<div class="card fresume" id="fresume"><div class="label">Workout in progress</div><div class="name">${esc(W.live.name)}</div>
+        <div class="sub"><span id="fresclock">${FC.clock(FC.stats(W.live).seconds)}</span> · ${FC.stats(W.live).sets} sets done</div><div class="btns"><button class="btn">Resume</button></div></div>`;
+      else h += `<div class="btns" style="margin:0 0 14px"><button class="btn" id="fempty">Start an empty workout</button></div>`;
+      h += `<div class="sect"><span class="label">My routines ${rs.length}</span><button class="linkish" id="fnewr">+ New routine</button></div>`;
+      if (!rs.length) h += `<div class="empty">No routines yet. Make one ("Push heavy": bench press 4 sets, ...) and start it with one tap.</div>`;
+      for (const r of rs) {
+        const sets = r.items.reduce((a, i) => a + i.sets, 0);
+        h += `<div class="card froutine"><div class="frh"><div><div class="name">${esc(r.name)}</div><div class="meta">${sets} sets</div></div><button class="linkish" data-redit="${r.id}">Edit</button></div>
+          ${r.items.slice(0, 3).map((i) => `<div class="frx">${icon(i.ex)}<div><div>${esc(exName(i.ex))}</div><div class="meta">${i.sets} sets</div></div></div>`).join("")}
+          <div class="frf"><span class="meta">${r.items.length > 3 ? `and ${r.items.length - 3} more…` : ""}</span><button class="btn fstart" data-rstart="${r.id}">START</button></div></div>`;
+      }
+      body.innerHTML = h;
+      const fs = $("fssave"); if (fs) fs.onclick = async () => {
+        const age = +$("fsage").value, bw = +$("fsbw").value;
+        if (!(age >= 10 && age <= 100)) { $("fserr").textContent = "Type your age (a number)."; return; }
+        try { FD().settings = (await fcall("settings", { age, ...(bw > 0 ? { bodyweight: FC.toLbs(bw, unit()) } : {}) })).settings; renderStart(); }
+        catch (e) { $("fserr").textContent = e.message; } };
+      const res = $("fresume"); if (res) res.onclick = () => openLive();
+      const em = $("fempty"); if (em) em.onclick = () => startWorkout(null);
+      $("fnewr").onclick = () => routineSheet({ name: "", items: [] });
+      body.querySelectorAll("[data-redit]").forEach((b) => (b.onclick = () => routineSheet(JSON.parse(JSON.stringify(rs.find((r) => r.id === b.dataset.redit))))));
+      body.querySelectorAll("[data-rstart]").forEach((b) => (b.onclick = () => startWorkout(rs.find((r) => r.id === b.dataset.rstart))));
+    }
+    function renderHist() {
+      const ws = FD().workouts.filter((w) => w.ended_at).sort((a, b) => (a.started_at < b.started_at ? 1 : -1));
+      if (!ws.length) { body.innerHTML = `<div class="empty">No finished workouts yet. They show up here with every set.</div>`; return; }
+      let h = "", month = "";
+      for (const w of ws) {
+        const m = new Date(w.started_at).toLocaleDateString([], { month: "long", year: "numeric" });
+        if (m !== month) { if (month) h += "</div>"; h += `<div class="day">${esc(m)}</div><div class="card">`; month = m; }
+        const s = FC.stats(w);
+        h += `<div class="row click" data-w="${w.id}"><div class="grow"><div class="name">${esc(w.name)}</div>
+          <div class="meta">${esc(new Date(w.started_at).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }))} · ${FC.dur(s.seconds)} · ${s.sets} sets · ${fV(s.volume)} ${unit()}</div></div><span class="chev">›</span></div>`;
+      }
+      body.innerHTML = h + "</div>";
+      body.querySelectorAll("[data-w]").forEach((r) => (r.onclick = () => workoutSheet(ws.find((w) => w.id === r.dataset.w))));
+    }
+    function renderLib() {
+      body.innerHTML = filterBar("fl") + `<div class="btns" style="margin:0 0 4px"><button class="btn quiet" id="fcust">+ Your own exercise</button></div><div id="flist">${exList()}</div>`;
+      const wire = () => { body.querySelectorAll("#flist [data-ex]").forEach((r) => (r.onclick = () => exerciseSheet(r.dataset.ex)));
+        const mo = body.querySelector("#flist [data-more]"); if (mo) mo.onclick = () => { W.shown += 100; redraw(); }; };
+      const redraw = () => { $("flist").innerHTML = exList(); wire(); };
+      wireFilters(body, "fl", redraw); wire();
+      $("fcust").onclick = () => customSheet(null);
+    }
+    function renderFset() {
+      const s = FD().settings;
+      const rests = [0, 30, 60, 90, 120, 150, 180, 240, 300];
+      body.innerHTML = `<div class="card"><div class="label">Units</div><div class="seg" style="margin:10px 0 0">${[["lb", "Pounds (lb)"], ["kg", "Kilograms (kg)"]].map(([v, l]) => `<button data-unit="${v}" class="${s.unit === v ? "on" : ""}">${l}</button>`).join("")}</div></div>
+        <div class="card"><div class="label">Rest timer</div><div class="sub" style="margin:6px 0 8px">Starts when you tick a set. Each exercise can have its own in the workout.</div>
+          <div class="search"><select id="fsrest">${rests.map((r) => `<option value="${r}" ${s.rest === r ? "selected" : ""}>${r ? FC.clock(r) + " default" : "Off by default"}</option>`).join("")}</select></div></div>
+        <div class="card"><div class="label">About you</div><div class="sub" style="margin:6px 0 8px">For stats and strength ranks (coming next).</div>
+          <div class="search"><input id="fsage2" inputmode="numeric" placeholder="Age" value="${esc(s.age ?? "")}"><input id="fsbw2" inputmode="decimal" placeholder="Bodyweight" value="${esc(FC.fmtW(s.bodyweight, s.unit))}"></div>
+          <div class="search"><select id="fssex"><option value="male" ${s.sex === "male" ? "selected" : ""}>Male</option><option value="female" ${s.sex === "female" ? "selected" : ""}>Female</option></select></div>
+          <div class="btns" style="margin-top:0"><button class="btn" id="fssave2">Save</button></div><div class="note" id="fsnote"></div></div>
+        <div class="card"><div class="label">Backup</div><div class="sub" style="margin:6px 0 8px">Everything (workouts, routines, your exercises, settings) as one file you can keep, and load back in.</div>
+          <div class="btns" style="margin-top:0"><button class="btn" id="fexport">Export</button><button class="btn quiet" id="fimport">Import a file</button></div><div class="note" id="fbnote"></div></div>`;
+      const save = async (p, note) => { try { FD().settings = (await fcall("settings", p)).settings; if (note) $("fsnote").textContent = note; renderFit(); if (W.live) drawLive(); }
+        catch (e) { $("fsnote").textContent = "Couldn't save: " + e.message; } };
+      body.querySelectorAll("[data-unit]").forEach((b) => (b.onclick = () => save({ unit: b.dataset.unit })));
+      $("fsrest").onchange = (e) => save({ rest: +e.target.value });
+      $("fssave2").onclick = () => { const bw = +$("fsbw2").value; save({ age: $("fsage2").value === "" ? null : +$("fsage2").value, sex: $("fssex").value,
+        ...(bw > 0 ? { bodyweight: FC.toLbs(bw, unit()) } : {}) }, "Saved."); };
+      $("fexport").onclick = exportFile;
+      $("fimport").onclick = importFile;
+    }
+
+    // ---- sheets: one exercise (About / History), a finished workout, a routine, your own exercise
+    async function exerciseSheet(id, tab) {
+      const x = exOf(id), hist = FC.history(FD().workouts, id), best = FC.bestE1rm(FD().workouts, id), u = unit();
+      const draw = (t, info) => {
+        const about = `${info === null ? `<div class="note">Loading…</div>` : ""}
+          <div class="fchips"><span class="label">Equipment</span> ${esc(cap(x.equipment || "none"))}</div>
+          <div class="fchips"><span class="label">Primary</span> ${x.primary.map((m) => `<span class="fchip p">${esc(cap(m))}</span>`).join("") || "–"}</div>
+          ${x.secondary.length ? `<div class="fchips"><span class="label">Secondary</span> ${x.secondary.map((m) => `<span class="fchip">${esc(cap(m))}</span>`).join("")}</div>` : ""}
+          ${info && info.length ? `<div class="label" style="margin:14px 0 6px">How to do it</div><ol class="fsteps">${info.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>` : ""}`;
+        const histH = hist.length ? hist.map((h) => `<div class="fhist"><div class="fhh"><b>${esc(new Date(h.date).toLocaleDateString([], { year: "numeric", month: "short", day: "numeric" }))}</b><span class="meta">e1RM</span></div>
+          ${h.sets.map((s, i) => `<div class="fhs"><span>Set ${i + 1}: ${FC.fmtW(s.w, u)} ${u} × ${s.r}</span><span>${fE(s.e1rm)}</span></div>`).join("")}</div>`).join("")
+          : `<div class="empty">You haven't logged this one yet.</div>`;
+        openSheet(`<h2>${esc(x.name)}</h2><div class="meta">${best.e1rm ? `Best estimated 1RM ${fE(best.e1rm)} ${u} (${FC.fmtW(best.w, u)} × ${best.r})` : "No sets logged yet"}${x.aka ? ` · also called ${esc(x.aka)}` : ""}</div>
+          <div class="seg"><button data-t="about" class="${t === "about" ? "on" : ""}">About</button><button data-t="hist" class="${t === "hist" ? "on" : ""}">History ${hist.length}</button></div>
+          ${t === "about" ? about : histH}
+          <div class="btns">${x.custom ? `<button class="btn quiet" id="cedit">Edit</button>` : ""}<button class="btn quiet" id="sx">Close</button></div>`,
+        (box) => {
+          box.querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => draw(b.dataset.t, info)));
+          box.querySelector("#sx").onclick = closeSheet;
+          const ce = box.querySelector("#cedit"); if (ce) ce.onclick = () => customSheet(x);
+        });
+      };
+      if (x.instructions) return draw(tab || "about", x.instructions);
+      draw(tab || "about", null);
+      try { const got = (await fcall("exercise", { id })).exercise; x.instructions = (got && got.instructions) || [];
+        if (sheet.classList.contains("on") && sheet.querySelector("h2") && sheet.querySelector("h2").textContent === x.name && sheet.querySelector('[data-t="about"].on')) draw("about", x.instructions); } catch {}
+    }
+    function workoutSheet(w) {
+      const u = unit(), s = FC.stats(w);
+      openSheet(`<h2>${esc(w.name)}</h2><div class="meta">${esc(new Date(w.started_at).toLocaleString([], { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))}
+        <br>${FC.dur(s.seconds)} · ${s.sets} sets · ${fV(s.volume)} ${u} lifted</div>
+        ${w.notes ? `<div class="note" style="margin:0 0 10px">${esc(w.notes)}</div>` : ""}
+        ${w.exercises.map((e) => `<div class="fhist"><div class="fhh"><b>${esc(exName(e.ex))}</b><span class="meta">e1RM</span></div>
+          ${e.sets.filter((x) => x.done).map((x, i) => `<div class="fhs"><span>Set ${i + 1}: ${FC.fmtW(x.w, u)} ${u} × ${x.r}</span><span>${fE(FC.e1rm(x.w, x.r))}</span></div>`).join("")}</div>`).join("")}
+        <div class="btns"><button class="btn quiet" id="wrout">Save as a routine</button><button class="btn danger" id="wdel">Delete</button><button class="btn quiet" id="sx">Close</button></div><div class="err"></div>`,
+      (box) => {
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelector("#wrout").onclick = () => routineSheet({ name: w.name, items: w.exercises.map((e) => ({ ex: e.ex, sets: Math.max(1, e.sets.filter((x) => x.done).length) })) });
+        box.querySelector("#wdel").onclick = async () => { if (!confirm("Delete this workout and all its sets?")) return;
+          try { await fcall("workout", { id: w.id, delete: true }); FD().workouts = FD().workouts.filter((x) => x.id !== w.id); closeSheet(); renderFit(); } catch (e) { sheetErr(e.message); } };
+      });
+    }
+    // Pick an exercise (from a routine or the live workout). back() reopens what was there before.
+    function pickSheet(title, onPick, back) {
+      openSheet(`<h2>${esc(title)}</h2>${filterBar("fp")}<div id="fplist" class="fpick">${exList()}</div>
+        <div class="btns"><button class="btn quiet" id="fpcust">+ Your own exercise</button><button class="btn quiet" id="sx">Back</button></div>`, (box) => {
+        const wire = () => { box.querySelectorAll("#fplist [data-ex]").forEach((r) => (r.onclick = () => onPick(r.dataset.ex)));
+          const mo = box.querySelector("#fplist [data-more]"); if (mo) mo.onclick = () => { W.shown += 100; redraw(); }; };
+        const redraw = () => { box.querySelector("#fplist").innerHTML = exList(); wire(); };
+        wireFilters(box, "fp", redraw); wire();
+        box.querySelector("#sx").onclick = back;
+        box.querySelector("#fpcust").onclick = () => customSheet(null, (id) => onPick(id), () => pickSheet(title, onPick, back));
+      });
+    }
+    function routineSheet(r) {
+      const draw = () => openSheet(`<h2>${r.id ? "Edit routine" : "New routine"}</h2>
+        <label>Name</label><input id="rname" value="${esc(r.name)}" placeholder="Push heavy">
+        <label>Exercises</label><div class="card" style="margin:0">${r.items.length ? r.items.map((i, k) => `<div class="row"><div class="grow"><div class="name">${esc(exName(i.ex))}</div></div>
+          <div class="fstep"><button data-dn="${k}">−</button><span>${i.sets}</span><button data-up="${k}">+</button></div>
+          <button class="linkish" data-mv="${k}" ${k ? "" : "disabled"}>↑</button><button class="linkish fdel" data-rm="${k}">✕</button></div>`).join("") : `<div class="empty">No exercises yet.</div>`}</div>
+        <div class="btns"><button class="btn quiet" id="radd">+ Add exercise</button></div>
+        <div class="btns"><button class="btn" id="rsave">Save</button>${r.id ? `<button class="btn danger" id="rdel">Delete</button>` : ""}<button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`,
+      (box) => {
+        const keep = () => { r.name = box.querySelector("#rname").value; };
+        box.querySelectorAll("[data-dn]").forEach((b) => (b.onclick = () => { keep(); const i = r.items[+b.dataset.dn]; i.sets = Math.max(1, i.sets - 1); draw(); }));
+        box.querySelectorAll("[data-up]").forEach((b) => (b.onclick = () => { keep(); const i = r.items[+b.dataset.up]; i.sets = Math.min(20, i.sets + 1); draw(); }));
+        box.querySelectorAll("[data-mv]").forEach((b) => (b.onclick = () => { keep(); const k = +b.dataset.mv; [r.items[k - 1], r.items[k]] = [r.items[k], r.items[k - 1]]; draw(); }));
+        box.querySelectorAll("[data-rm]").forEach((b) => (b.onclick = () => { keep(); r.items.splice(+b.dataset.rm, 1); draw(); }));
+        box.querySelector("#radd").onclick = () => { keep(); pickSheet("Add to " + (r.name || "routine"), (id) => { r.items.push({ ex: id, sets: 3 }); draw(); }, draw); };
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelector("#rsave").onclick = async () => { keep();
+          if (!r.name.trim()) return sheetErr("Give the routine a name.");
+          if (!r.items.length) return sheetErr("Add at least one exercise.");
+          try { const saved = (await fcall("routine", { ...r, position: r.id ? r.position : FD().routines.length })).routine;
+            const rs = FD().routines, k = rs.findIndex((x) => x.id === saved.id); if (k >= 0) rs[k] = saved; else rs.push(saved);
+            closeSheet(); if (M.book === "fit") { if (M.tab !== "start") show("fit", "start"); else renderFit(); } } catch (e) { sheetErr(e.message); } };
+        const d = box.querySelector("#rdel"); if (d) d.onclick = async () => { if (!confirm(`Delete the routine "${r.name}"? Past workouts stay.`)) return;
+          try { await fcall("routine", { id: r.id, delete: true }); FD().routines = FD().routines.filter((x) => x.id !== r.id); closeSheet(); renderFit(); } catch (e) { sheetErr(e.message); } };
+      });
+      draw();
+    }
+    function customSheet(x, onSaved, back) {
+      const all = MUSCLES.flatMap(([, ms]) => ms);
+      openSheet(`<h2>${x ? "Edit exercise" : "Your own exercise"}</h2>
+        <label>Name</label><input id="cname" value="${esc(x ? x.name : W.q)}" placeholder="Moving a washing machine">
+        <label>Main muscle</label><select id="cmus"><option value="">None / other</option>${all.map((m) => `<option value="${m}" ${x && x.primary[0] === m ? "selected" : ""}>${cap(m)}</option>`).join("")}</select>
+        <label>Equipment</label><select id="ceq">${EQUIP.map((e) => `<option value="${e}" ${(x ? x.equipment : "other") === e ? "selected" : ""}>${cap(e)}</option>`).join("")}</select>
+        <div class="btns"><button class="btn" id="csave">Save</button>${x ? `<button class="btn danger" id="cdel">Delete</button>` : ""}<button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`,
+      (box) => {
+        box.querySelector("#sx").onclick = back || closeSheet;
+        box.querySelector("#csave").onclick = async () => {
+          const m = box.querySelector("#cmus").value;
+          try { const ex = (await fcall("custom", { id: x && x.id, name: box.querySelector("#cname").value, equipment: box.querySelector("#ceq").value, primary: m ? [m] : [] })).exercise;
+            const list = FD().custom, k = list.findIndex((c) => c.id === ex.id); if (k >= 0) list[k] = ex; else list.push(ex);
+            addCustom(); if (onSaved) onSaved(ex.id); else { closeSheet(); renderFit(); } } catch (e) { sheetErr(e.message); } };
+        const d = box.querySelector("#cdel"); if (d) d.onclick = async () => { if (!confirm(`Delete "${x.name}"? Workouts you've logged with it keep it.`)) return;
+          try { await fcall("custom", { id: x.id, delete: true }); const c = FD().custom.find((c) => c.id === x.id); if (c) c.deleted = true; addCustom(); closeSheet(); renderFit(); } catch (e) { sheetErr(e.message); } };
+      });
+    }
+
+    // ---- export / import (a JSON file Ben keeps)
+    function exportFile() {
+      const d = FD(), day = new Date().toISOString().slice(0, 10);
+      const file = { app: "jarvis-workouts", version: 1, exported_at: new Date().toISOString(), units_note: "weights are in pounds",
+        settings: d.settings, routines: d.routines, workouts: d.workouts.filter((w) => w.ended_at), custom: d.custom };
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([JSON.stringify(file, null, 1)], { type: "application/json" }));
+      a.download = `jarvis-workouts-${day}.json`; document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+      $("fbnote").textContent = `Saved ${file.workouts.length} workouts, ${file.routines.length} routines (jarvis-workouts-${day}.json).`;
+    }
+    function importFile() {
+      let inp = $("fitfile");   // in the page, no type filter (Android greys out unknown types)
+      if (!inp) { inp = document.createElement("input"); inp.type = "file"; inp.id = "fitfile"; inp.style.display = "none"; document.body.appendChild(inp); }
+      inp.value = "";
+      inp.onchange = async () => {
+        const f = inp.files && inp.files[0]; if (!f) return;
+        const note = $("fbnote");
+        try { const data = JSON.parse(await f.text());
+          if (!confirm(`Load ${(data.workouts || []).length} workouts and ${(data.routines || []).length} routines from this file? Ones you already have are updated, nothing is deleted.`)) return;
+          note.textContent = "Loading…";
+          const r = await fcall("import", { data });
+          note.textContent = `Loaded ${r.imported.workouts} workouts, ${r.imported.routines} routines, ${r.imported.custom} of your exercises.`;
+          await loadFit(); } catch (e) { note.textContent = "Couldn't load it: " + e.message; }
+      };
+      inp.click();
+    }
+
+    // -------------------------------------------------------------- the live workout
+    const live = document.createElement("div"); live.id = "fitlive"; document.body.appendChild(live);
+    let liveStep = null;
+    function keepLocal() { try { if (W.live) localStorage.setItem("jarvis.fitLive", JSON.stringify({ ...W.live, _touched: Date.now() })); else localStorage.removeItem("jarvis.fitLive"); } catch {} }
+    function changed(now) {   // after every edit: this device at once, the cloud a moment later
+      keepLocal(); clearTimeout(W.saveT);
+      W.saveT = setTimeout(syncLive, now ? 0 : 1200);
+    }
+    async function syncLive() {
+      if (!W.live) return;
+      const w = W.live;
+      try { await fcall("workout", w); W.unsynced = false; } catch { W.unsynced = true; clearTimeout(W.saveT); W.saveT = setTimeout(syncLive, 15000); }
+      const n = live.querySelector("#lsync"); if (n) n.textContent = W.unsynced ? "Not saved to the cloud yet (kept on this phone)" : "";
+    }
+    // The unfinished workout from the cloud vs. the one kept here: the newer wins.
+    function adoptLive(cloud) {
+      let local = null; try { local = JSON.parse(localStorage.getItem("jarvis.fitLive") || "null"); } catch {}
+      if (local && FD() && FD().workouts.some((w) => w.id === local.id && w.ended_at)) local = null;   // finished on the other device
+      let pick = local || cloud || null;
+      if (local && cloud && local.id === cloud.id && Date.parse(cloud.updated_at || 0) > (local._touched || 0)) pick = cloud;
+      if (pick) delete pick._touched;
+      W.live = pick;
+      if (pick && pick === local) changed(); else keepLocal();
+      startClock();
+    }
+    function restFor(ex) { let m = {}; try { m = JSON.parse(localStorage.getItem("jarvis.fitRest") || "{}"); } catch {}
+      return ex in m ? m[ex] : (FD() ? FD().settings.rest : 180); }
+    function rememberRest(ex, s) { try { const m = JSON.parse(localStorage.getItem("jarvis.fitRest") || "{}"); m[ex] = s; localStorage.setItem("jarvis.fitRest", JSON.stringify(m)); } catch {} }
+    function newExercise(ex, n) { return { ex, rest: restFor(ex), sets: Array.from({ length: n || 3 }, () => ({ w: "", r: "", done: false })) }; }
+    function startWorkout(r) {
+      if (W.live && !confirm(`"${W.live.name}" is still going. Finish it where it stands and start a new one?`)) return;
+      if (W.live) { finishNow(false); }
+      W.live = { id: uid(), name: r ? r.name : "Workout", routine_id: r ? r.id : null, started_at: new Date().toISOString(), ended_at: null, notes: "",
+        exercises: r ? r.items.map((i) => newExercise(i.ex, i.sets)) : [] };
+      changed(true); openLive();
+    }
+    function openLive() {
+      if (!W.live) return;
+      if (!live.classList.contains("on")) liveStep = nav.push(hideLive);
+      live.classList.add("on"); drawLive(); startClock();
+    }
+    function hideLive() { live.classList.remove("on"); const id = liveStep; liveStep = null; if (id) nav.drop(id); if (M.book === "fit" && el.classList.contains("on")) renderFit(); }
+    function startClock() {
+      clearInterval(W.tick);
+      if (!W.live) return;
+      W.tick = setInterval(() => {
+        const t = FC.clock(FC.stats(W.live).seconds);
+        const c = live.querySelector("#lclock"); if (c) c.textContent = t;
+        const r = $("fresclock"); if (r) r.textContent = t;
+        drawRest();
+      }, 250);
+    }
+    const prevOf = (ex) => FC.prevSets((FD() && FD().workouts) || [], ex, W.live.id);
+    function drawLive() {
+      const w = W.live, u = unit();
+      if (!w) return;
+      let h = `<div class="lhead"><button id="lmin" aria-label="Minimise">⌄</button><div id="lclock">${FC.clock(FC.stats(w).seconds)}</div><button id="lfin">Finish</button></div>
+        <div class="lbody"><input id="lname" class="lname" value="${esc(w.name)}" aria-label="Workout name"><textarea id="lnotes" rows="1" placeholder="Workout notes…">${esc(w.notes)}</textarea>`;
+      w.exercises.forEach((e, i) => {
+        const prev = prevOf(e.ex);
+        h += `<div class="lex"><div class="lexh">${icon(e.ex)}<button class="lexn" data-info="${i}">${esc(exName(e.ex))}</button><button class="lmore" data-exm="${i}" aria-label="More">⋮</button></div>
+          <div class="lrest"><span>⏱ Rest</span><button class="lrt" data-rt="${i}">${e.rest ? FC.clock(e.rest) : "off"} ✎</button><label class="lsw"><input type="checkbox" data-ron="${i}" ${e.rest ? "checked" : ""}><i></i></label></div>
+          <table class="lsets"><tr><th>Set</th><th>Prev</th><th>${U()}</th><th>Reps</th><th></th></tr>
+          ${e.sets.map((s, j) => { const p = prev[j];
+            return `<tr class="${s.done ? "done" : ""}"><td class="lno">${j + 1}</td><td class="lprev">${p ? `${FC.fmtW(p.w, u)} × ${p.r}` : "–"}</td>
+              <td><input inputmode="decimal" data-w="${i}:${j}" value="${s.w === "" ? "" : esc(FC.fmtW(s.w, u))}" placeholder="${p ? esc(FC.fmtW(p.w, u)) : ""}"></td>
+              <td><input inputmode="numeric" data-r="${i}:${j}" value="${esc(s.r)}" placeholder="${p ? p.r : ""}"></td>
+              <td><button class="ltick" data-t="${i}:${j}" aria-label="Done">✓</button></td></tr>`; }).join("")}</table>
+          <button class="laddset" data-add="${i}">+ Add set</button></div>`;
+      });
+      h += `<button class="btn" id="laddex">+ Add exercise</button><button class="btn danger" id="ldisc">Discard workout</button><div class="note" id="lsync">${W.unsynced ? "Not saved to the cloud yet (kept on this phone)" : ""}</div></div>
+        <div id="lrestbar"></div>`;
+      const top = live.querySelector(".lbody") ? live.querySelector(".lbody").scrollTop : 0;
+      live.innerHTML = h; live.querySelector(".lbody").scrollTop = top;
+      wireLive(); drawRest();
+    }
+    function wireLive() {
+      const w = W.live, u = unit(), at = (k) => k.split(":").map(Number);
+      live.querySelector("#lmin").onclick = hideLive;
+      live.querySelector("#lfin").onclick = finishSheet;
+      live.querySelector("#lname").onchange = (e) => { w.name = e.target.value.trim() || "Workout"; changed(); };
+      const notes = live.querySelector("#lnotes");
+      const grow = () => { notes.style.height = "auto"; notes.style.height = notes.scrollHeight + "px"; }; grow();
+      notes.oninput = () => { w.notes = notes.value; grow(); changed(); };
+      live.querySelectorAll("[data-w]").forEach((inp) => (inp.oninput = () => { const [i, j] = at(inp.dataset.w); const v = inp.value.replace(",", ".");
+        w.exercises[i].sets[j].w = v === "" || isNaN(+v) ? "" : FC.toLbs(+v, u); changed(); }));
+      live.querySelectorAll("[data-r]").forEach((inp) => (inp.oninput = () => { const [i, j] = at(inp.dataset.r); const v = parseInt(inp.value, 10);
+        w.exercises[i].sets[j].r = isNaN(v) ? "" : v; changed(); }));
+      live.querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => {
+        const [i, j] = at(b.dataset.t), e = w.exercises[i], s = e.sets[j], p = prevOf(e.ex)[j];
+        if (!s.done) {   // an empty box takes what you did last time (the grey number)
+          if (s.w === "" && p) s.w = p.w;
+          if (s.r === "" && p) s.r = p.r;
+          if (!(+s.r > 0)) { const inp = live.querySelector(`[data-r="${i}:${j}"]`); inp.focus(); inp.classList.add("need"); return; }
+          if (s.w === "") s.w = 0;
+          s.done = true; s.at = new Date().toISOString();
+          if (e.rest) startRest(e.rest, exName(e.ex));
+        } else s.done = false;
+        changed(); drawLive();
+      }));
+      live.querySelectorAll("[data-add]").forEach((b) => (b.onclick = () => { const e = w.exercises[+b.dataset.add], last = e.sets[e.sets.length - 1];
+        e.sets.push({ w: last && last.w !== "" ? last.w : "", r: last && last.r !== "" ? last.r : "", done: false }); changed(); drawLive(); }));
+      live.querySelectorAll("[data-ron]").forEach((c) => (c.onchange = () => { const e = w.exercises[+c.dataset.ron];
+        e.rest = c.checked ? (restFor(e.ex) || FD().settings.rest || 180) : 0; changed(); drawLive(); }));
+      live.querySelectorAll("[data-rt]").forEach((b) => (b.onclick = () => restSheet(w.exercises[+b.dataset.rt])));
+      live.querySelectorAll("[data-info]").forEach((b) => (b.onclick = () => exerciseSheet(w.exercises[+b.dataset.info].ex)));
+      live.querySelectorAll("[data-exm]").forEach((b) => (b.onclick = () => exMenu(+b.dataset.exm)));
+      live.querySelector("#laddex").onclick = () => pickSheet("Add exercise", (id) => { w.exercises.push(newExercise(id, 3)); changed(); closeSheet(); drawLive();
+        setTimeout(() => { const b = live.querySelector(".lbody"); b.scrollTop = b.scrollHeight; }, 50); }, closeSheet);
+      live.querySelector("#ldisc").onclick = async () => {
+        if (!confirm("Throw this workout away? Nothing from it is kept.")) return;
+        const id = w.id; W.live = null; keepLocal(); clearInterval(W.tick); stopRest(); hideLive();
+        try { await fcall("workout", { id, delete: true }); } catch {}
+        FD().workouts = FD().workouts.filter((x) => x.id !== id); renderFit();
+      };
+    }
+    function exMenu(i) {
+      const w = W.live, e = w.exercises[i];
+      openSheet(`<h2>${esc(exName(e.ex))}</h2><div class="btns" style="flex-direction:column">
+        <button class="btn quiet" data-a="info">About and history</button>
+        ${e.sets.length > 1 ? `<button class="btn quiet" data-a="pop">Remove the last set</button>` : ""}
+        ${i ? `<button class="btn quiet" data-a="up">Move up</button>` : ""}${i < w.exercises.length - 1 ? `<button class="btn quiet" data-a="down">Move down</button>` : ""}
+        <button class="btn quiet" data-a="swap">Swap for another exercise</button>
+        <button class="btn danger" data-a="rm">Remove from this workout</button><button class="btn quiet" id="sx">Close</button></div>`, (box) => {
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelectorAll("[data-a]").forEach((b) => (b.onclick = () => {
+          const a = b.dataset.a;
+          if (a === "info") return exerciseSheet(e.ex);
+          if (a === "swap") return pickSheet("Swap " + exName(e.ex), (id) => { e.ex = id; e.rest = restFor(id); changed(); closeSheet(); drawLive(); }, () => exMenu(i));
+          if (a === "pop") e.sets.pop();
+          if (a === "up") [w.exercises[i - 1], w.exercises[i]] = [w.exercises[i], w.exercises[i - 1]];
+          if (a === "down") [w.exercises[i + 1], w.exercises[i]] = [w.exercises[i], w.exercises[i + 1]];
+          if (a === "rm") w.exercises.splice(i, 1);
+          changed(); closeSheet(); drawLive();
+        }));
+      });
+    }
+    function restSheet(e) {
+      const opts = [30, 45, 60, 90, 120, 150, 180, 210, 240, 300];
+      openSheet(`<h2>Rest for ${esc(exName(e.ex))}</h2><div class="meta">Starts when you tick a set. Remembered for this exercise.</div>
+        <div class="fgrid">${opts.map((s) => `<button class="btn ${e.rest === s ? "" : "quiet"}" data-s="${s}">${FC.clock(s)}</button>`).join("")}<button class="btn ${e.rest ? "quiet" : ""}" data-s="0">Off</button></div>
+        <div class="btns"><button class="btn quiet" id="sx">Close</button></div>`, (box) => {
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelectorAll("[data-s]").forEach((b) => (b.onclick = () => { e.rest = +b.dataset.s; if (e.rest) rememberRest(e.ex, e.rest); changed(); closeSheet(); drawLive(); }));
+      });
+    }
+    // ---- rest timer: a bar at the bottom of the live workout; buzz + beep when it's up
+    function startRest(sec, label) { W.rest = { end: Date.now() + sec * 1000, total: sec, label, rang: false }; drawRest(); }
+    function stopRest() { W.rest = null; drawRest(); }
+    function drawRest() {
+      const bar = live.querySelector("#lrestbar"); if (!bar) return;
+      const r = W.rest;
+      if (!r) { bar.className = ""; bar.innerHTML = ""; return; }
+      const left = Math.ceil((r.end - Date.now()) / 1000);
+      if (left <= 0 && !r.rang) { r.rang = true; buzz(); }
+      if (left <= -6) return stopRest();
+      if (!bar.firstChild) {
+        bar.innerHTML = `<div class="lrb"><i></i></div><div class="lrrow"><button data-rs="-15">−15</button><div><span class="lrl"></span><b class="lrt2"></b></div><button data-rs="15">+15</button><button data-rs="x">Skip</button></div>`;
+        bar.querySelectorAll("[data-rs]").forEach((b) => (b.onclick = () => { if (b.dataset.rs === "x") return stopRest();
+          r.end += +b.dataset.rs * 1000; r.total = Math.max(5, r.total + +b.dataset.rs); r.rang = false; drawRest(); }));
+      }
+      bar.className = "on" + (left <= 0 ? " up" : "");
+      bar.querySelector(".lrl").textContent = left <= 0 ? "Rest's up · " : `Rest · ${r.label} · `;
+      bar.querySelector(".lrt2").textContent = left <= 0 ? "go" : FC.clock(left);
+      bar.querySelector(".lrb i").style.width = Math.max(0, Math.min(100, (left / r.total) * 100)) + "%";
+    }
+    function buzz() {
+      try { navigator.vibrate && navigator.vibrate([250, 120, 250, 120, 400]); } catch {}
+      try { const A = window.AudioContext || window.webkitAudioContext, ctx = new A(), now = ctx.currentTime;
+        for (const [t, f] of [[0, 880], [0.18, 880], [0.36, 1320]]) { const o = ctx.createOscillator(), g = ctx.createGain();
+          o.frequency.value = f; o.connect(g); g.connect(ctx.destination); g.gain.setValueAtTime(0.0001, now + t);
+          g.gain.exponentialRampToValueAtTime(0.3, now + t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, now + t + 0.15); o.start(now + t); o.stop(now + t + 0.16); }
+        setTimeout(() => ctx.close(), 1000); } catch {}
+    }
+    // ---- finish
+    function finishSheet() {
+      const w = W.live, s = FC.stats(w), open = w.exercises.reduce((a, e) => a + e.sets.filter((x) => !x.done).length, 0);
+      if (!s.sets) return openSheet(`<h2>Nothing ticked yet</h2><div class="meta">Tick the sets you've done (✓), or discard the workout.</div><div class="btns"><button class="btn quiet" id="sx">Back</button></div>`, (b) => (b.querySelector("#sx").onclick = closeSheet));
+      openSheet(`<h2>Finish ${esc(w.name)}?</h2><div class="meta">${FC.dur(s.seconds)} · ${s.sets} sets · ${fV(s.volume)} ${unit()} lifted${open ? `<br>${open} unticked set${open === 1 ? " is" : "s are"} left out.` : ""}</div>
+        <div class="btns"><button class="btn" id="fdone">Finish</button><button class="btn quiet" id="sx">Keep going</button></div><div class="err"></div>`, (box) => {
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelector("#fdone").onclick = async () => { box.querySelector("#fdone").disabled = true;
+          try { const w2 = await finishNow(true); closeSheet(); hideLive(); summarySheet(w2); } catch (e) { box.querySelector("#fdone").disabled = false; sheetErr("Couldn't save: " + e.message + ". It's still kept on this phone; try again."); } };
+      });
+    }
+    async function finishNow(wait) {
+      const w = W.live;
+      w.exercises = w.exercises.map((e) => ({ ...e, sets: e.sets.filter((x) => x.done) })).filter((e) => e.sets.length);
+      w.ended_at = new Date().toISOString();
+      clearTimeout(W.saveT);
+      const p = fcall("workout", w);
+      if (wait) await p; else p.catch(() => {});
+      const ws = FD().workouts, k = ws.findIndex((x) => x.id === w.id); if (k >= 0) ws[k] = w; else ws.push(w);
+      W.live = null; keepLocal(); clearInterval(W.tick); stopRest();
+      return w;
+    }
+    function summarySheet(w) {
+      const u = unit(), s = FC.stats(w);
+      const bests = w.exercises.map((e) => { const best = Math.max(...e.sets.map((x) => FC.e1rm(x.w, x.r)));
+        const before = FC.history(FD().workouts.filter((x) => x.id !== w.id), e.ex).reduce((m, h) => Math.max(m, h.best), 0);
+        return { name: exName(e.ex), best, before }; });
+      openSheet(`<h2>Workout saved</h2><div class="meta">${esc(w.name)} · ${FC.dur(s.seconds)} · ${s.sets} sets · ${fV(s.volume)} ${u} lifted</div>
+        <div class="card" style="margin:0">${bests.map((b) => `<div class="row"><div class="grow"><div class="name">${esc(b.name)}</div><div class="meta">best set ≈ ${fE(b.best)} ${u} 1RM</div></div>
+          ${b.before && b.best > b.before ? `<span class="fpr">New best</span>` : ""}</div>`).join("")}</div>
+        <div class="btns"><button class="btn" id="sx">Done</button></div>`, (box) => (box.querySelector("#sx").onclick = () => { closeSheet(); if (M.book === "fit") show("fit", "hist"); }));
+    }
+    // Coming back to the app mid-workout: open it again straight away.
+    try { const k = JSON.parse(localStorage.getItem("jarvis.fitLive") || "null"); if (k && !k.ended_at) { W.live = k; delete W.live._touched;
+      setTimeout(async () => { try { await ensureLib(); if (!M.cache.fit) M.cache.fit = await fcall("data"); addCustom(); } catch {} if (W.live) openLive(); }, 600); } } catch {}
+
+    // -------------------------------------------------------------- demo data (#money-demo; no network)
+    function fitDemo(action, p) {
+      if (!W.demo) {
+        const lib = [["Barbell_Bench_Press_-_Medium_Grip", "Bench Press", "barbell", ["chest"], ["shoulders", "triceps"], "strength", "Barbell Bench Press - Medium Grip"],
+          ["Incline_Dumbbell_Press", "Incline Dumbbell Bench Press", "dumbbell", ["chest"], ["shoulders", "triceps"], "strength", "Incline Dumbbell Press"],
+          ["Butterfly", "Butterfly", "machine", ["chest"], [], "strength"], ["Barbell_Squat", "Squat", "barbell", ["quadriceps"], ["glutes", "hamstrings"], "strength", "Barbell Squat"],
+          ["Barbell_Deadlift", "Deadlift", "barbell", ["lower back"], ["glutes", "hamstrings"], "strength", "Barbell Deadlift"],
+          ["Leg_Extensions", "Leg Extension", "machine", ["quadriceps"], [], "strength", "Leg Extensions"], ["Seated_Leg_Curl", "Seated Leg Curl", "machine", ["hamstrings"], [], "strength"],
+          ["Wide-Grip_Lat_Pulldown", "Wide-Grip Lat Pulldown", "cable", ["lats"], ["biceps"], "strength"], ["Barbell_Shrug", "Barbell Shrug", "barbell", ["traps"], [], "strength"],
+          ["Triceps_Pushdown_-_Rope_Attachment", "Tricep Rope Pushdown", "cable", ["triceps"], [], "strength"], ["Preacher_Curl", "Preacher Curl", "barbell", ["biceps"], [], "strength"],
+          ["Dumbbell_Side_Bend", "Dumbbell Side Bend", "dumbbell", ["abdominals"], [], "strength"], ["Treadmill", "Jogging, Treadmill", "machine", ["quadriceps"], [], "cardio"]];
+        const day = (n) => new Date(Date.now() - n * 864e5).toISOString();
+        const end = (n, m) => new Date(Date.parse(day(n)) + m * 60000).toISOString();
+        const bench = [[[135, 8], [165, 5], [155, 8], [155, 4]], [[135, 12], [135, 12], [155, 6], [155, 6]], [[135, 10], [135, 10], [155, 5]]];
+        const workouts = bench.map((b, k) => ({ id: uid(), name: "Push heavy", routine_id: null, started_at: day(3 + k * 7), ended_at: end(3 + k * 7, 62), notes: "",
+          exercises: [{ ex: "Barbell_Bench_Press_-_Medium_Grip", rest: 180, sets: b.map(([w, r]) => ({ w, r, done: true })) },
+            { ex: "Incline_Dumbbell_Press", rest: 120, sets: [[50, 10], [55, 8], [55, 7]].map(([w, r]) => ({ w, r, done: true })) }] }));
+        W.demo = { lib, data: { settings: { unit: "lb", rest: 180, age: null, sex: "male", bodyweight: 215 }, custom: [], workouts,
+          routines: [{ id: uid(), name: "Push heavy", position: 0, items: [{ ex: "Barbell_Bench_Press_-_Medium_Grip", sets: 4 }, { ex: "Incline_Dumbbell_Press", sets: 3 }, { ex: "Butterfly", sets: 3 }, { ex: "Triceps_Pushdown_-_Rope_Attachment", sets: 3 }] },
+            { id: uid(), name: "Legs heavy", position: 1, items: [{ ex: "Barbell_Squat", sets: 3 }, { ex: "Leg_Extensions", sets: 2 }, { ex: "Seated_Leg_Curl", sets: 3 }] }] } };
+      }
+      const D = W.demo.data, ok = (x) => Promise.resolve(JSON.parse(JSON.stringify(x)));
+      if (action === "data") return ok(D);
+      if (action === "library") return ok({ list: W.demo.lib });
+      if (action === "exercise") return ok({ exercise: { id: p.id, instructions: ["Demo mode: the real steps come from the exercise library.", "Second step."] } });
+      if (action === "settings") { for (const k of ["unit", "rest", "age", "sex", "bodyweight"]) if (p[k] !== undefined) D.settings[k] = p[k]; return ok({ settings: D.settings }); }
+      if (action === "routine") { if (p.delete) { D.routines = D.routines.filter((r) => r.id !== p.id); return ok({}); }
+        const r = { ...p, id: p.id || uid() }; const k = D.routines.findIndex((x) => x.id === r.id); k >= 0 ? (D.routines[k] = r) : D.routines.push(r); return ok({ routine: r }); }
+      if (action === "custom") { const c = { id: p.id || "c-" + uid(), name: p.name, equipment: p.equipment, primary_muscles: p.primary || [], secondary_muscles: [], instructions: [], deleted: !!p.delete };
+        return ok({ exercise: c }); }
+      if (action === "workout") { if (p.delete) D.workouts = D.workouts.filter((w) => w.id !== p.id);
+        else { const k = D.workouts.findIndex((w) => w.id === p.id); k >= 0 ? (D.workouts[k] = JSON.parse(JSON.stringify(p))) : D.workouts.push(JSON.parse(JSON.stringify(p))); } return ok({ ok: true }); }
+      if (action === "import") return ok({ imported: { workouts: 0, routines: 0, custom: 0 } });
+      return ok({});
+    }
+
     const MONEY_TABS = [["dash", "Dashboard"], ["spend", "Spending"], ["recur", "Recurring"], ["tx", "Transactions"]];
     function render() {
       el.querySelectorAll("nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === M.tab));
@@ -2921,6 +3681,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
         else if (M.book === "bingo") renderBingo();
         else if (M.book === "persona") renderPersona();
         else if (M.book === "calls") renderCalls();
+        else if (M.book === "fit") renderFit();
         else if (M.book === "costs") renderCosts();
         else if (M.book === "crm") renderCrm();
         else ({ dash: renderDash, spend: renderSpending, recur: renderRecurring, tx: renderTx }[M.tab] || renderDash)();
