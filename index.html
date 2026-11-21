@@ -828,6 +828,13 @@
   #msheet .oddtab td { padding: 8px 4px; border-top: 1px solid rgba(var(--th-line),0.15); } #msheet .oddtab .r { text-align: right; }
   #msheet .oddot { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; box-shadow: 0 0 6px rgba(255,255,255,0.25); }
   #msheet .row .amt { font-size: 14px; color: var(--th-soft); white-space: nowrap; }
+  /* one card's versions, with counts */
+  #msheet .plvars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  #msheet .plvar { border: 0; background: none; padding: 4px; border-radius: 10px; font: inherit; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; }
+  #msheet .plvar .pcard { pointer-events: none; padding: 3px; } #msheet .plvar .pcard .pctop, #msheet .plvar .pcard .pcbot { display: none; }
+  #msheet .plvar b { font-size: 12px; margin-top: 4px; } #msheet .plvar span { font-size: 12px; color: var(--th-soft); }
+  #msheet .plvar.on { background: rgba(var(--th-a),0.18); box-shadow: 0 0 0 1px rgba(var(--th-a),0.6); }
+  #msheet .plvar.none { opacity: 0.3; filter: grayscale(0.8); cursor: default; } #msheet .plvar.none span { color: var(--th-ink3); }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -5695,8 +5702,9 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
       const all = $("plall"); if (all) all.onclick = () => openPack(ps.slice());
     }
     function plCards() {
-      const own = new Map();   // card -> { n, mods: Set }
-      for (const x of PS.st.cards) { const o = own.get(x.card) || { n: 0, mods: new Set() }; o.n++; if (x.mod) o.mods.add(x.mod); own.set(x.card, o); }
+      const own = new Map();   // card -> { n, mods: Set, by: { none, foil, holo, shiny } }
+      for (const x of PS.st.cards) { const o = own.get(x.card) || { n: 0, mods: new Set(), by: {} }; o.n++; if (x.mod) o.mods.add(x.mod);
+        const k = x.mod || "none"; o.by[k] = (o.by[k] || 0) + 1; own.set(x.card, o); }
       const list = PL.CARDS.filter((c) => !PS.rar || c.rarity === PS.rar);
       const best = (mods) => ["shiny", "holo", "foil"].find((m) => mods.has(m)) || null;
       body.innerHTML = `<div class="plbar">${oddsBtn}</div><div class="card"><div class="frh"><div><div class="label">Collection</div><div class="hero sm">${own.size} / ${PL.CARDS.length}</div><div class="sub">${PS.st.cards.length} cards opened</div></div></div>
@@ -5707,10 +5715,23 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
             : `<div class="pcard locked" style="--c1:${rarOf(c.rarity)[3][0]};--c2:${rarOf(c.rarity)[3][1]}"><div class="pctop"><b>???</b><span>#${String(c.no).padStart(2, "0")}</span></div><div class="pcq">?</div><div class="pcbot"><span class="prar">${rarOf(c.rarity)[1]}</span></div></div>`; }).join("")}</div>`;
       $("plodds").onclick = oddsSheet;
       body.querySelectorAll("[data-rar]").forEach((b) => (b.onclick = () => { PS.rar = b.dataset.rar; plCards(); }));
+      // Tap a card: the showcase (your rarest version) big, and every version underneath with how many you have of each (Ben, 2026-11-20).
       body.querySelectorAll("[data-card]").forEach((b) => (b.onclick = () => { const c = cardOf(b.dataset.card), o = own.get(c.id);
-        openSheet(`<div class="plbig">${cardHTML({ card: c.id, rarity: c.rarity, mod: best(o.mods) }, { big: true })}</div>
-          <div class="meta" style="text-align:center">You have ${o.n}${o.mods.size ? " · " + [...o.mods].map((m) => MOD_NAME[m]).join(", ") : ""}</div>
-          <div class="btns"><button class="btn quiet" id="sx">Close</button></div>`, (box) => (box.querySelector("#sx").onclick = closeSheet)); }));
+        const VARS = [["shiny", "Shiny"], ["holo", "Holographic"], ["foil", "Foil"], ["none", "Normal"]];
+        let pick = best(o.mods) || "none";
+        const draw = (box) => {
+          box.querySelector("#plbig").innerHTML = cardHTML({ card: c.id, rarity: c.rarity, mod: pick === "none" ? null : pick }, { big: true });
+          box.querySelectorAll("[data-var]").forEach((v) => v.classList.toggle("on", v.dataset.var === pick));
+        };
+        openSheet(`<div class="plbig" id="plbig"></div>
+          <div class="meta" style="text-align:center;margin-bottom:10px">You have ${o.n} in all</div>
+          <div class="plvars">${VARS.map(([k, n]) => { const have = o.by[k] || 0;
+            return `<button class="plvar${have ? "" : " none"}" data-var="${k}" ${have ? "" : "disabled"}>${cardHTML({ card: c.id, rarity: c.rarity, mod: k === "none" ? null : k })}<b>${n}</b><span>${have ? "×" + have : "not yet"}</span></button>`; }).join("")}</div>
+          <div class="btns"><button class="btn quiet" id="sx">Close</button></div>`, (box) => {
+          box.querySelector("#sx").onclick = closeSheet;
+          box.querySelectorAll("[data-var]").forEach((v) => (v.onclick = () => { pick = v.dataset.var; draw(box); }));
+          draw(box);
+        }); }));
     }
 
     // ---- opening packs: the pack wobbles, bursts, and the cards flip over one by one
@@ -5898,7 +5919,7 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
     function playDemo(action, p) {
       PS.demo = PS.demo || { packs: [{ id: "p1", kind: "standard", source: "Daily word game" }, { id: "p2", kind: "rare", source: "Work out 3 times this week" },
           { id: "p3", kind: "standard", source: "Daily number game" }, { id: "p4", kind: "epic", source: "Finish every daily quest on 3 days" }, { id: "p5", kind: "standard", source: "Reactor milestone 2" }, { id: "p6", kind: "standard", source: "Log 3 meals" }],
-        cards: [{ card: "c01", rarity: "common", mod: null }, { card: "u05", rarity: "uncommon", mod: "foil" }, { card: "r02", rarity: "rare", mod: "holo" }, { card: "e03", rarity: "epic", mod: null },
+        cards: [{ card: "c01", rarity: "common", mod: null }, { card: "c01", rarity: "common", mod: null }, { card: "c01", rarity: "common", mod: "foil" }, { card: "c01", rarity: "common", mod: "shiny" }, { card: "u05", rarity: "uncommon", mod: "foil" }, { card: "r02", rarity: "rare", mod: "holo" }, { card: "e03", rarity: "epic", mod: null },
           { card: "l01", rarity: "legendary", mod: "shiny" }, { card: "m03", rarity: "mythic", mod: null }, { card: "g01", rarity: "godlike", mod: null }],
         games: {}, idle: null };
       const D = PS.demo, ok = (x) => Promise.resolve(JSON.parse(JSON.stringify(x)));
