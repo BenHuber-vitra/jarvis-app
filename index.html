@@ -1402,6 +1402,15 @@
   #money .dlimbar { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.1); overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.35); }
   #money .dlimbar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--hc) 70%, #fff), var(--hc)); box-shadow: 0 0 8px var(--hc); transition: width 0.4s; }
   #money .dlim.over .dlimbar i { background: linear-gradient(90deg, #ff9a6a, #ff4d4d); box-shadow: 0 0 10px #ff4d4d; } #money .dlim.over span { color: #ff9a8a; }
+  /* phone screen-time setup sheet */
+  #msheet .dcopy { display: flex; gap: 8px; } #msheet .dcopy input { flex: 1; min-width: 0; font-size: 12px; font-family: ui-monospace, Consolas, monospace; }
+  #msheet .dcopy .btn { flex: none; min-width: 84px; }
+  #msheet .dsteps { display: flex; flex-direction: column; gap: 10px; margin: 14px 0 6px; }
+  #msheet .dstep { display: flex; gap: 10px; font-size: 14px; line-height: 1.4; color: var(--th-ink2, #c9d6ee); }
+  #msheet .dstep > b { flex: none; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--th-on, #fff);
+    background: linear-gradient(145deg, var(--th-a-hex), rgb(var(--th-g2))); box-shadow: 0 0 10px rgba(var(--th-a),0.45); }
+  #msheet .dstep div b { color: #fff; } #msheet .dstep i { color: var(--th-pale); font-style: normal; }
+  #msheet .dstep code { font-family: ui-monospace, Consolas, monospace; font-size: 12px; padding: 1px 6px; border-radius: 6px; background: rgba(0,0,0,0.35); color: #fff; }
   /* ================================================================ the talk screen, premium (Ben, 2026-11-21)
      Shared by the phone app (index.template.html) and the laptop window (jarvis/ui/static/index.html): build.py puts it in
      the shared CSS. The shared CSS sits in the middle of each page's own styles, so these rules start with "body" to win.
@@ -6231,7 +6240,14 @@ return { addDays, dayDiff, weekStart, defaultHabits, HABIT_COLOURS, JUNK_WORDS, 
     const slipText = (h, s) => h && h.unit === "minutes" ? DC.fmtMins(s.amount) : (+s.amount > 1 ? `${s.amount} times` : "");
     const limText = (h, n) => h.unit === "minutes" ? shortMins(n) : `${n}×`;
     const shortMins = (m) => { m = Math.round(+m || 0); return m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ""}` : `${m}m`; };
-    const srcChip = (s) => s.source === "auto" ? `<span class="chip">auto</span>` : s.source === "jarvis" ? `<span class="chip">Jarvis</span>` : "";
+    const srcChip = (s) => s.source === "auto" ? `<span class="chip">auto</span>` : s.source === "jarvis" ? `<span class="chip">Jarvis</span>` : s.source === "phone" ? `<span class="chip">phone</span>` : "";
+    const phoneHabit = () => liveHabits().find((h) => h.phone) || liveHabits().find((h) => h.id === "scroll");
+    const ago2 = (iso) => { const m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : `${Math.round(m / 1440)} days ago`; };
+    function phoneStatus() {   // one line: is the phone reporting, and what did it last say
+      const ph = DH.data.phone || {}, st = ph.state;
+      if (!ph.setUp || !st || !st.last) return "Not connected yet";
+      return st.open ? `${esc(st.open.app && st.open.app !== "phone" ? st.open.app : "An app")} is open now (since ${ago2(st.open.at)})` : `Last signal ${ago2(st.last.at)}${st.last.app ? ` · ${esc(st.last.app)} ${st.last.event === "open" ? "opened" : "closed"}` : ""}`;
+    }
 
     // ---- Today: the overall clean streak, one card per habit with a one-tap Log, today's slips
     function dopeToday() {
@@ -6245,7 +6261,7 @@ return { addDays, dayDiff, weekStart, defaultHabits, HABIT_COLOURS, JUNK_WORDS, 
         return `<div class="card dcard${st.slippedToday ? " hit" : ""}" style="--hc:${col}"><div class="dch"><div class="dico">${dIcon(x.icon)}</div><button class="dlog" data-log="${x.id}">+ Log</button></div>
           <b class="dname">${esc(x.name)}</b><span class="dst">${st.slippedToday ? (st.limit ? `Over by ${limText(x, st.overBy)}` : `Slipped today${x.unit === "minutes" ? " · " + DC.fmtMins(st.todayAmount) : st.today > 1 ? ` · ${st.today}×` : ""}`) : `<b>${st.streak}</b> day${st.streak === 1 ? "" : "s"} clean`}</span>
           ${st.limit ? `<div class="dlim${st.overToday ? " over" : ""}"><div class="dlimbar"><i style="width:${Math.min(100, (st.todayUsed / st.limit) * 100).toFixed(1)}%"></i></div><span>${limText(x, st.todayUsed)} of ${limText(x, st.limit)} today${st.overToday ? "" : ` · ${limText(x, st.left)} left`}</span></div>` : ""}
-          <div class="dweek">${last7.map((dd) => `<i class="${st.map[dd] ? "on" : ""}${dd === today ? " t" : ""}" title="${dd}"></i>`).join("")}</div>${x.auto ? `<span class="dauto">auto</span>` : ""}</div>`; }).join("")}</div>`;
+          <div class="dweek">${last7.map((dd) => `<i class="${st.map[dd] ? "on" : ""}${dd === today ? " t" : ""}" title="${dd}"></i>`).join("")}</div>${x.auto ? `<span class="dauto">auto</span>` : (d.phone && d.phone.setUp && phoneHabit() && phoneHabit().id === x.id) ? `<span class="dauto">phone</span>` : ""}</div>`; }).join("")}</div>`;
       const todays = d.slips.filter((s) => s.day === today).slice().reverse();
       h += `<div class="sect"><span class="label">Logged today</span><span class="meta">${todays.length || ""}</span></div>`;
       h += todays.length ? `<div class="card">${todays.map((s) => { const x = d.habits.find((y) => y.id === s.habit);
@@ -6325,6 +6341,10 @@ return { addDays, dayDiff, weekStart, defaultHabits, HABIT_COLOURS, JUNK_WORDS, 
       let h = `<div class="card">${live.map((x) => `<div class="row click" data-edit="${x.id}"><div class="dico sm" style="--hc:${hCol(x)}">${dIcon(x.icon)}</div><div class="grow"><div class="name">${esc(x.name)}</div>
         <div class="meta">${x.unit === "minutes" ? "Logged in minutes" : "Logged as times"}${+x.limit > 0 ? ` · limit ${limText(x, +x.limit)} a day` : ""}${x.cost ? ` · $${x.cost} a slip` : ""}${x.auto ? " · fills in automatically" : ""}</div></div><span class="chev">›</span></div>`).join("")}</div>
         <div class="btns"><button class="btn" id="dadd">+ Add a habit</button></div>`;
+      const ph = phoneHabit();
+      if (ph) h += `<div class="sect"><span class="label">Phone screen time</span><span class="meta">counts toward ${esc(ph.name)}</span></div>
+        <div class="card"><div class="row click" id="dphone"><div class="dico sm" style="--hc:${hCol(ph)}">${dIcon("phone")}</div><div class="grow"><div class="name">${d.phone && d.phone.setUp ? "Timed automatically" : "Time TikTok, Instagram, YouTube automatically"}</div>
+          <div class="meta">${phoneStatus()}</div></div><span class="chev">›</span></div></div>`;
       const gym = live.find((x) => x.auto === "gym"), junk = live.find((x) => x.auto === "junk");
       if (gym) h += `<div class="sect"><span class="label">Gym days</span><span class="meta">${d.gymDaysSet ? "your choice" : "from your workouts"}</span></div><div class="card"><div class="dchips days">${DC.WEEKDAYS.map((w, i) => `<button data-gd="${i}" class="${(d.gymDays || []).includes(i) ? "on" : ""}">${w}</button>`).join("")}</div>
         <div class="meta" style="margin-top:8px;white-space:normal">A gym day counts as skipped only if you're behind on the week's workouts by the end of the next day, so moving a session is fine.</div>
@@ -6336,6 +6356,7 @@ return { addDays, dayDiff, weekStart, defaultHabits, HABIT_COLOURS, JUNK_WORDS, 
       body.innerHTML = h;
       body.querySelectorAll("[data-edit]").forEach((r) => (r.onclick = () => habitSheet(d.habits.find((x) => x.id === r.dataset.edit))));
       $("dadd").onclick = () => habitSheet(null);
+      const dp = $("dphone"); if (dp) dp.onclick = phoneSheet;
       body.querySelectorAll("[data-gd]").forEach((b) => (b.onclick = () => b.classList.toggle("on")));
       const gs = $("dgsave"); if (gs) gs.onclick = async () => { const days = [...body.querySelectorAll("[data-gd].on")].map((b) => +b.dataset.gd); try { await dcall("habits", { gymDays: days.length ? days : null }); await dRefresh(); } catch (e) { M.error = e.message; render(); } };
       const ga = $("dgauto"); if (ga) ga.onclick = async () => { try { await dcall("habits", { gymDays: null }); await dRefresh(); } catch (e) { M.error = e.message; render(); } };
@@ -6369,6 +6390,31 @@ return { addDays, dayDiff, weekStart, defaultHabits, HABIT_COLOURS, JUNK_WORDS, 
       });
     }
 
+    // ---- phone screen time setup: MacroDroid on the phone tells Jarvis when the apps open and close
+    async function phoneSheet() {
+      let info;
+      try { info = await dcall("phone"); } catch (e) { M.error = e.message; return render(); }
+      const full = `${info.url}?k=${info.key}`, ph = phoneHabit();
+      const step = (n, t) => `<div class="dstep"><b>${n}</b><div>${t}</div></div>`;
+      openSheet(`<h2>Phone screen time</h2><div class="meta">${phoneStatus()}</div>
+        <div class="note" style="white-space:normal">MacroDroid on your phone tells Jarvis when the apps you pick open and close. Jarvis times each session and adds it to <b>${esc(ph ? ph.name : "Scrolling")}</b>${ph && +ph.limit > 0 ? `, against your ${esc(DC.fmtMins(ph.limit))} a day` : ""}.</div>
+        <label>Your phone's address (keep it private: it only reports app opens and closes)</label>
+        <div class="dcopy"><input id="dpurl" readonly value="${esc(full)}"><button class="btn" id="dpcopy">Copy</button></div>
+        <div class="dsteps">
+          ${step(1, `<b>Macro "Jarvis app opened".</b> Trigger: <i>Applications › Application Launched/Closed › Launched</i>, and tick TikTok, Instagram, YouTube (any apps you want timed).`)}
+          ${step(2, `Action: <i>Connectivity › HTTP Request</i>. Method <b>POST</b>, URL = the address above. Body (JSON): <code>{"event":"open","app":"TikTok"}</code>. If the <i>{…}</i> button offers the app's name for this trigger, use it for app; otherwise leave <code>"app"</code> out.`)}
+          ${step(3, `<b>Macro "Jarvis app closed".</b> Triggers: <i>Application Launched/Closed › Closed</i> with the same apps, <b>and</b> <i>Screen On/Off › Screen Off</i>. Action: the same HTTP Request with <code>{"event":"close"}</code>.`)}
+          ${step(4, `Test: open TikTok for a minute, close it, and come back here. The line at the top shows the last signal, and the time appears under ${esc(ph ? ph.name : "Scrolling")}.`)}
+        </div>
+        <div class="err"></div><div class="btns"><button class="btn quiet" id="dpnew">New address</button><button class="btn quiet" id="dpx">Close</button></div>`, (box) => {
+        box.querySelector("#dpx").onclick = closeSheet;
+        box.querySelector("#dpcopy").onclick = async () => { const i = box.querySelector("#dpurl"); try { await navigator.clipboard.writeText(full); } catch { i.select(); document.execCommand && document.execCommand("copy"); }
+          box.querySelector("#dpcopy").textContent = "Copied"; };
+        box.querySelector("#dpnew").onclick = async () => { const b = box.querySelector("#dpnew"); if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again: the old one stops working"; return; }
+          try { await dcall("phone", { reset: true }); closeSheet(); phoneSheet(); } catch (e) { sheetErr(e.message); } };
+      });
+    }
+
     // ---- the demo (#money-demo): made-up slips over the last 8 weeks, no network
     let DOPE_DEMO = null;
     function dopeDemo(action, p) {
@@ -6382,7 +6428,9 @@ return { addDays, dayDiff, weekStart, defaultHabits, HABIT_COLOURS, JUNK_WORDS, 
         DOPE_DEMO = { habits, gymDays: [0, 2, 4], gymDaysSet: false, junkWords: DC.JUNK_WORDS, slips, today };
       }
       const D0 = DOPE_DEMO, ok = (x) => Promise.resolve(JSON.parse(JSON.stringify(x)));
-      if (action === "data") return ok({ ...D0, today });
+      if (action === "data") return ok({ ...D0, today, phone: D0.phone || { setUp: false, state: null } });
+      if (action === "phone") { D0.phone = { setUp: true, state: { open: null, last: { event: "close", app: "TikTok", at: new Date(Date.now() - 4 * 60000).toISOString() } } };
+        return ok({ key: "demo0key0not0real", url: "https://example.supabase.co/functions/v1/jarvis/screen", state: D0.phone.state }); }
       if (action === "log") { const h = D0.habits.find((x) => x.id === p.habit); const s = { id: "s" + Date.now(), habit: h.id, day: today, at: new Date().toISOString(), amount: p.amount || 1, note: p.note || null, source: "tap" }; D0.slips.push(s); return ok({ slip: s }); }
       if (action === "delete") { D0.slips = D0.slips.filter((s) => s.id !== p.id); return ok({ ok: true }); }
       if (action === "habits") { if (p.habits) D0.habits = p.habits.map((h) => ({ ...h, id: h.id || "h" + Date.now() })); if (p.gymDays !== undefined) { D0.gymDays = p.gymDays || [0, 2, 4]; D0.gymDaysSet = !!p.gymDays; } if (p.junkWords !== undefined) D0.junkWords = p.junkWords || DC.JUNK_WORDS; return ok({}); }
