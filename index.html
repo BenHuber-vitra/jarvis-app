@@ -938,9 +938,11 @@
   .cpc.moving svg { transform: scale(1.06); filter: drop-shadow(0 8px 6px rgba(0,0,0,0.45)); }
   .cpc.drag { transition: none; z-index: 3; } .cpc.drag svg { transform: scale(1.06); filter: drop-shadow(0 10px 8px rgba(0,0,0,0.5)); }
   .cpc.gone { opacity: 0; } .cpc.gone svg { transform: scale(0.6); } .cpc.promo svg { animation: gpop 0.3s ease-out; }
-  .cpc svg path { stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; }
-  .cpc svg.pw path, .cpromo svg.pw path { fill: url(#chW); stroke: #1a1d2b; } .cpc svg.pw path.pd, .cpromo svg.pw path.pd { fill: none; stroke: #2a2e40; }
-  .cpc svg.pb path, .cpromo svg.pb path { fill: url(#chB); stroke: #07080e; } .cpc svg.pb path.pd, .cpromo svg.pb path.pd { fill: none; stroke: #b9c1d8; stroke-opacity: 0.85; }
+  .cpc svg path, .cpromo svg path { stroke-linejoin: round; stroke-linecap: round; }
+  .cpc svg .pf, .cpromo svg .pf { stroke-width: 1.1; } .cpc svg .ps, .cpromo svg .ps { fill: url(#chS); stroke: none; } .cpc svg .pd, .cpromo svg .pd { fill: none; stroke-width: 1; }
+  .cpc svg.pw .pf, .cpromo svg.pw .pf { fill: url(#chW); stroke: #2a2e3f; } .cpc svg.pw .pd, .cpromo svg.pw .pd { stroke: #5a6178; stroke-opacity: 0.75; }
+  .cpc svg.pb .pf, .cpromo svg.pb .pf { fill: url(#chB); stroke: #020306; } .cpc svg.pb .pd, .cpromo svg.pb .pd { stroke: #a9b2cc; stroke-opacity: 0.55; }
+  .cpc svg.pb { filter: drop-shadow(0 3px 2px rgba(0,0,0,0.5)) drop-shadow(0 0 1.5px rgba(var(--th-a),0.55)); }   /* a faint theme rim light on the dark pieces */
   .cfx i { position: absolute; width: 12.5%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; border: 2px solid rgba(255,214,110,0.9); animation: cfxring 0.55s ease-out forwards; }
   @keyframes cfxring { from { opacity: 1; scale: 0.4; } to { opacity: 0; scale: 1.5; } }
   .cpromo { position: absolute; top: var(--bz); width: calc((100% - 2 * var(--bz)) / 8); margin-left: var(--bz); z-index: 6; display: none; flex-direction: column; border-radius: 8px; overflow: hidden;
@@ -6304,21 +6306,27 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
       const key = (pos) => pos.b.map((p) => p || ".").join("") + pos.turn + pos.cast + pos.ep;
       return { idx, nm, parse, fen, apply, legal, inCheck, mated, colorOf, kingSq, allMoves, san, insufficient, key };
     })();
-    // Our own piece drawings (45 x 45). Bodies are filled with shaded gradients (CH_DEFS), details drawn on top.
+    // Our own piece drawings (45 x 45), redrawn premium (Ben, 2026-11-21): smoother classical silhouettes on a two-tier
+    // base, shaded like turned pieces: the body is filled with a sideways "lathe" gradient (#chW porcelain / #chB ebony),
+    // then the same shape again with a soft top-light / bottom-shadow overlay (#chS), then the carved details.
+    const PC_BASE = "M11.6 33.4h21.8l1.7 2.6H9.9zM9 36.6h27c.8 0 1.5.7 1.5 1.5V40h-30v-1.9c0-.8.7-1.5 1.5-1.5z";
     const PIECE = {
-      p: ["M22.5 9a5 5 0 0 0-3 9c-3.2 1.8-4.6 5-4 9h14c.6-4-.8-7.2-4-9a5 5 0 0 0-3-9zM13 37c0-5 4-9 9.5-9s9.5 4 9.5 9zM11 37h23v3H11z", ""],
-      r: ["M12 37h21v3H12zM14 33h17l-1-3H15zM16 30h13l-1-13H17zM13 17h19v-7h-4v3h-3v-3h-5v3h-3v-3h-4z", "M15 17h15M15.5 30h14"],
-      n: ["M13 39h21c.5-9-2-15-1.5-21 .3-5-1.5-8-4.5-10l-1-3-2.5 3.2c-4.5.3-8.5 3.3-11 7.3-1.8 2.8-3.5 4.6-3.5 7.3 0 2.2 2.2 3.2 4.2 2l3-2c1.2-.2 2.3-1 3.3-2.2 1 4-2.2 7-5.2 11.2-1.5 2.2-2.6 4.6-2.3 7.2z", "M18.5 15.5h.01M28 12c1 2.5 1.6 6.5 1 11"],
-      b: ["M22.5 5a2.6 2.6 0 1 0 .01 0zM22.5 9.5c-6 4.5-8.5 9.5-6.5 15h13c2-5.5-.5-10.5-6.5-15zM16 26h13l1 3H15zM14 31h17v3H14zM10 37c4.5-1 8.5-1 12.5-3 4 2 8 2 12.5 3v3c-4.5-1-8.5-1-12.5-2.5-4 1.5-8 1.5-12.5 2.5z", "M20 18.5l5-4.5M19.5 20h6"],
-      q: ["M9 12.5a2.2 2.2 0 1 0 .01 0zM16 9.5a2.2 2.2 0 1 0 .01 0zM22.5 8a2.2 2.2 0 1 0 .01 0zM29 9.5a2.2 2.2 0 1 0 .01 0zM36 12.5a2.2 2.2 0 1 0 .01 0zM11 17l4 14h15l4-14-6.5 7.5-1.5-11-3.5 10-3.5-10-1.5 11zM14 31h17l1 3H13zM12 36h21v3.5H12z", "M14.5 31h16"],
-      k: ["M21 3.5h3v4h3.5v3H24v3.5h-3V10.5h-3.5v-3H21zM13 33c-2.5-6-3.5-12 1.5-15.5 3.3-2.2 6.7-.4 8 3 1.3-3.4 4.7-5.2 8-3 5 3.5 4 9.5 1.5 15.5zM12 35h21v2H12zM11 38h23v2.5H11z", "M22.5 20.5V31M14 26.5c5-2 12-2 17 0"],
+      p: ["M22.5 6.4a5 5 0 0 0-3.1 8.9c-1.6.9-2.4 2-2.4 3.2h11c0-1.2-.8-2.3-2.4-3.2a5 5 0 0 0-3.1-8.9zM18.2 19.4h8.6c-.2 4.4 1.8 8.2 5.4 11H12.8c3.6-2.8 5.6-6.6 5.4-11zM12.2 30.9h20.6v2.5H12.2z", "M17.6 18.5h9.8"],
+      r: ["M12.4 14.6h20.2V8.4h-4.3v2.7h-3.5V8.4h-4.6v2.7h-3.5V8.4h-4.3zM13.4 15.2h18.2l-1.3 2.6H14.7zM15.3 18.3h14.4l1.4 12.6H13.9zM12.4 30.9h20.2v2.5H12.4z", "M14.9 17.8h15.2M15.6 24.6h13.8M13.9 30.9h17.2"],
+      n: ["M14.6 33.4c-.3-4.5 1.6-8.2 5.2-11.3 1.6-1.4 2.1-2.9 1.7-4.6-1.7 1.9-3.9 2.8-6 2.7l-2.4 2c-1.5 1.2-3.8.2-3.8-1.8 0-2.7 1.7-4.6 3.5-7.3 2.5-3.8 5.8-6.8 9.8-7.8l1.8-3.1 1.7 3.2c4.6 1.5 8 5.6 8.8 11.6.9 6.6-.6 12.6-1.3 16.4z", "M18 13.6a1.1 1.1 0 1 0 .01 0M27.6 8.2c2.7 2.6 3.9 7 3.6 12.2M11.3 19.6l1.2-.6M24.5 16.5c1.2 2.4 1 5-.8 7.6"],
+      b: ["M22.5 3.4a2.4 2.4 0 1 0 .01 0zM22.5 7.6c-5.4 3.7-8 8.5-6.9 13.1.5 2.1 1.8 3.6 3.2 4.6h7.4c1.4-1 2.7-2.5 3.2-4.6 1.1-4.6-1.5-9.4-6.9-13.1zM17.3 25.8h10.4l.9 2.6H16.4zM18.1 28.9h8.8c0 2.1.8 3.6 2.4 4.5H15.7c1.6-.9 2.4-2.4 2.4-4.5z", "M20.8 12.8l4.6 4.6M19.6 22.6h5.8"],
+      q: ["M9.6 9a2.1 2.1 0 1 0 .01 0zM15.8 6a2.1 2.1 0 1 0 .01 0zM22.5 4.4a2.1 2.1 0 1 0 .01 0zM29.2 6a2.1 2.1 0 1 0 .01 0zM35.4 9a2.1 2.1 0 1 0 .01 0zM9.6 12.6l5.2 15.3h15.4l5.2-15.3-3.8 8.2-2.4-11.2-3.8 9.4-2.9-10.6-2.9 10.6-3.8-9.4-2.4 11.2zM14.2 28.4h16.6l.9 2.7H13.3zM14.9 31.5h15.2c0 .8.4 1.4 1.1 1.9H13.8c.7-.5 1.1-1.1 1.1-1.9z", "M14.8 27.9h15.4M14.2 24.4c5.4-1.4 11.2-1.4 16.6 0"],
+      k: ["M21.2 2.6h2.6v3.2H27v2.6h-3.2v3.4h-2.6V8.4H18V5.8h3.2zM22.5 12.4c-2.4 0-3.6 1.5-3.6 3.4 0 1.3.7 2.5 1.5 3.3h4.2c.8-.8 1.5-2 1.5-3.3 0-1.9-1.2-3.4-3.6-3.4zM12.6 28.9c-3.6-4.5-4.1-10.3.2-12.7 3.4-1.9 7.3-.3 9.7 3.5 2.4-3.8 6.3-5.4 9.7-3.5 4.3 2.4 3.8 8.2.2 12.7zM12.3 29.4h20.4l.9 2.7H11.4zM13.6 32.4h17.8l.6 1H13z", "M22.5 19.8v9M14.2 24.3c5.4-2.1 11.2-2.1 16.6 0M18.6 15.8h7.8"],
     };
-    const pieceSVG = (p) => `<svg viewBox="0 0 45 45" class="${p === p.toUpperCase() ? "pw" : "pb"}"><path d="${PIECE[p.toLowerCase()][0]}"/>${PIECE[p.toLowerCase()][1] ? `<path class="pd" d="${PIECE[p.toLowerCase()][1]}"/>` : ""}</svg>`;
-    function chDefs() {   // shaded fills for the pieces, once per page
+    const pieceSVG = (p) => { const [body, det] = PIECE[p.toLowerCase()], d = body + PC_BASE;
+      return `<svg viewBox="0 0 45 45" class="${p === p.toUpperCase() ? "pw" : "pb"}"><path class="pf" d="${d}"/><path class="ps" d="${d}"/><path class="pd" d="${det} M11.6 33.4h21.8M9.6 36.6h25.8"/></svg>`; };
+    function chDefs() {   // the shading, once per page
       if (document.getElementById("chdefs")) return;
       document.body.insertAdjacentHTML("beforeend", `<svg id="chdefs" width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-        <linearGradient id="chW" x1="0.15" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.55" stop-color="#eef0f6"/><stop offset="1" stop-color="#b9c0d2"/></linearGradient>
-        <linearGradient id="chB" x1="0.15" y1="0" x2="0.7" y2="1"><stop offset="0" stop-color="#5d6482"/><stop offset="0.45" stop-color="#2a2e40"/><stop offset="1" stop-color="#0e1018"/></linearGradient></defs></svg>`);
+        <linearGradient id="chW" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9ea6bb"/><stop offset="0.16" stop-color="#eef1f7"/><stop offset="0.3" stop-color="#ffffff"/><stop offset="0.52" stop-color="#e9ecf3"/><stop offset="0.8" stop-color="#c2c8d7"/><stop offset="1" stop-color="#868ea4"/></linearGradient>
+        <linearGradient id="chB" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#06070c"/><stop offset="0.17" stop-color="#3f4660"/><stop offset="0.31" stop-color="#6d7594"/><stop offset="0.5" stop-color="#2b3045"/><stop offset="0.8" stop-color="#13151f"/><stop offset="1" stop-color="#040508"/></linearGradient>
+        <linearGradient id="chS" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0.22"/><stop offset="0.42" stop-color="#fff" stop-opacity="0"/><stop offset="0.75" stop-color="#000" stop-opacity="0.05"/><stop offset="1" stop-color="#000" stop-opacity="0.32"/></linearGradient>
+      </defs></svg>`);
     }
     const CH_THEME = { mateIn1: "Mate in 1", mateIn2: "Mate in 2", mateIn3: "Mate in 3", smotheredMate: "Smothered mate", backRankMate: "Back-rank mate", doubleCheck: "Double check",
       fork: "Fork", pin: "Pin", skewer: "Skewer", discoveredAttack: "Discovered attack", hangingPiece: "Hanging piece", trappedPiece: "Trapped piece", sacrifice: "Sacrifice",
