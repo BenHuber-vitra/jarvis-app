@@ -21,8 +21,8 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin: 0; height: 100%; overflow: hidden; }
   body {
-    background: radial-gradient(ellipse at 100% 0%, rgba(255,79,184,0.26) 0%, transparent 50%),
-      radial-gradient(ellipse at 0% 100%, rgba(79,216,255,0.16) 0%, transparent 50%),
+    background: radial-gradient(ellipse at 100% 0%, rgba(var(--th-a),0.26) 0%, transparent 50%),
+      radial-gradient(ellipse at 0% 100%, rgba(var(--th-g2),0.16) 0%, transparent 50%),
       radial-gradient(ellipse at 50% 40%, var(--bg1) 0%, var(--bg0) 75%);   /* brighter, more pink (Ben, 2026-11-20) */
     background-color: var(--bg0);
     color: var(--text); font-family: "Rajdhani", "Segoe UI", system-ui, sans-serif;
@@ -38,26 +38,66 @@
   .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); margin-right: 5px; }
   .dot.on { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); } .dot.off { background: var(--red); box-shadow: 0 0 8px var(--red); }
   header .left { display: flex; align-items: center; gap: 12px; }
+  /* ---------------------------------------------------------------- colour themes (Ben, 2026-11-20)
+     Settings > Colours sets <html data-theme="...">; the choice is saved on each device (localStorage
+     jarvis.theme). Every screen reads these variables: --th-* are "r,g,b" triplets (for rgba()) or hex.
+     Neon = the default. The talk screen's own variables (--bg0, --panel, --line, ...) follow the theme too. */
+  html:root, html:root[data-theme="neon"] {
+    --th-a: 255,79,184; --th-a-hex: #ff4fb8; --th-a2: 155,107,255; --th-a2-hex: #9b6bff; --th-g2: 79,216,255;
+    --th-soft: #ff8fd6; --th-pale: #ffe0f3; --th-label: #c2a9ef; --th-ink2: #c9d6ee; --th-ink3: #9eb0d4;
+    --th-bgA: #171a46; --th-bgB: #101636; --th-c1: 64,52,130; --th-c2: 30,42,92; --th-s1: #232056; --th-s2: #151a42;
+    --th-input: 12,14,46; --th-nav: 26,26,70; --th-line: 255,130,210;
+    --bg0: #0e1033; --bg1: #241f5e; --panel: rgba(36,34,92,0.58); --muted: #9aa9d0; --magenta: #ff4fb8; --magenta-dim: rgba(255,79,184,0.6);
+  }
+  html:root[data-theme="classic"] {   /* the original dark blue */
+    --th-a: 79,216,255; --th-a-hex: #4fd8ff; --th-a2: 42,127,255; --th-a2-hex: #2a7fff; --th-g2: 214,64,168;
+    --th-soft: #8fe6ff; --th-pale: #dff7ff; --th-label: #6f93ad; --th-ink2: #9fbcd1; --th-ink3: #6f93ad;
+    --th-bgA: #06101f; --th-bgB: #020309; --th-c1: 8,24,43; --th-c2: 8,24,43; --th-s1: #08182b; --th-s2: #08182b;
+    --th-input: 2,10,20; --th-nav: 8,24,43; --th-line: 79,216,255;
+    --bg0: #020309; --bg1: #07112a; --panel: rgba(8,26,46,0.62); --muted: #6f93ad; --magenta: #d640a8; --magenta-dim: rgba(214,64,168,0.55);
+  }
+  html:root[data-theme="sunset"] {    /* orange and pink on plum */
+    --th-a: 255,122,69; --th-a-hex: #ff7a45; --th-a2: 255,61,127; --th-a2-hex: #ff3d7f; --th-g2: 255,181,71;
+    --th-soft: #ffb38a; --th-pale: #ffe6d9; --th-label: #ffb59a; --th-ink2: #ecd3dc; --th-ink3: #c49aae;
+    --th-bgA: #2b1636; --th-bgB: #170c22; --th-c1: 92,40,78; --th-c2: 48,24,62; --th-s1: #3a1a40; --th-s2: #200f2c;
+    --th-input: 26,10,30; --th-nav: 40,18,48; --th-line: 255,150,120;
+    --bg0: #160b20; --bg1: #3a1840; --panel: rgba(70,30,70,0.55); --muted: #c49aae; --magenta: #ff7a45; --magenta-dim: rgba(255,122,69,0.6);
+  }
+  html:root[data-theme="emerald"] {   /* green and sky blue on deep teal */
+    --th-a: 46,229,157; --th-a-hex: #2ee59d; --th-a2: 31,182,255; --th-a2-hex: #1fb6ff; --th-g2: 31,182,255;
+    --th-soft: #8ef5cb; --th-pale: #dcfff1; --th-label: #8fd9c4; --th-ink2: #cdebe4; --th-ink3: #8fbcb4;
+    --th-bgA: #0f2b33; --th-bgB: #08181f; --th-c1: 24,70,78; --th-c2: 14,44,58; --th-s1: #12343c; --th-s2: #0b222a;
+    --th-input: 6,22,28; --th-nav: 12,36,44; --th-line: 80,230,180;
+    --bg0: #061a1f; --bg1: #10393f; --panel: rgba(20,60,66,0.55); --muted: #8fbcb4; --magenta: #2ee59d; --magenta-dim: rgba(46,229,157,0.6);
+  }
+  html:root[data-theme="royal"] {     /* gold and violet */
+    --th-a: 255,200,69; --th-a-hex: #ffc845; --th-a2: 139,92,246; --th-a2-hex: #8b5cf6; --th-g2: 139,92,246;
+    --th-soft: #ffe08a; --th-pale: #fff3d1; --th-label: #d9c48f; --th-ink2: #e0d9f0; --th-ink3: #a99fc8;
+    --th-bgA: #1f1846; --th-bgB: #110d2a; --th-c1: 70,52,120; --th-c2: 36,30,80; --th-s1: #261d55; --th-s2: #15112f;
+    --th-input: 14,10,36; --th-nav: 30,22,64; --th-line: 255,210,110;
+    --bg0: #0f0b26; --bg1: #2c2160; --panel: rgba(44,34,96,0.55); --muted: #a99fc8; --magenta: #ffc845; --magenta-dim: rgba(255,200,69,0.6);
+  }
+  html:root { --line: rgba(var(--th-line),0.26); }
   /* Shared by the phone app and the laptop window. */
   .menubtn { width: 34px; height: 30px; margin-left: -6px; padding: 6px; background: none; border: 0; display: flex; flex-direction: column;
     justify-content: space-between; cursor: pointer; }
   .menubtn i { display: block; height: 2px; border-radius: 1px; background: var(--cyan); box-shadow: 0 0 6px var(--cyan-dim); }
   /* menu drawer (slides in from the left) */
   #scrim { position: fixed; inset: 0; z-index: 20; background: rgba(2,6,13,0.6); opacity: 0; pointer-events: none; transition: opacity .2s; }
-  #drawer { position: fixed; top: 0; bottom: 0; left: 0; z-index: 21; width: min(300px, 82vw); background: linear-gradient(180deg, #221f5c 0%, #141841 100%); border-right: 1px solid rgba(255,130,210,0.3);
+  #drawer { position: fixed; top: 0; bottom: 0; left: 0; z-index: 21; width: min(300px, 82vw); background: linear-gradient(180deg, var(--th-s1) 0%, var(--th-s2) 100%); border-right: 1px solid rgba(var(--th-line),0.3);
     padding: calc(14px + env(safe-area-inset-top)) 0 calc(14px + env(safe-area-inset-bottom)); overflow-y: auto;
-    transform: translateX(-102%); transition: transform .22s ease-out; box-shadow: 8px 0 30px rgba(255,79,184,0.15), 8px 0 30px rgba(0,0,0,0.45); }
+    transform: translateX(-102%); transition: transform .22s ease-out; box-shadow: 8px 0 30px rgba(var(--th-a),0.15), 8px 0 30px rgba(0,0,0,0.45); }
   body.menu #scrim { opacity: 1; pointer-events: auto; } body.menu #drawer { transform: none; }
   #drawer .dhead { font-family: "Orbitron", sans-serif; font-weight: 700; letter-spacing: 0.36em; font-size: 15px; color: var(--cyan);
-    padding: 4px 20px 14px; text-shadow: 0 0 12px var(--cyan-dim); border-bottom: 1px solid rgba(255,130,210,0.3); }
-  #drawer .dsect { font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: #c2a9ef; padding: 18px 20px 6px; }
+    padding: 4px 20px 14px; text-shadow: 0 0 12px var(--cyan-dim); border-bottom: 1px solid rgba(var(--th-line),0.3); }
+  #drawer .dsect { font-size: 11px; letter-spacing: 0.24em; text-transform: uppercase; color: var(--th-label); padding: 18px 20px 6px; }
   #drawer .ditem { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: #e6f7ff; text-decoration: none; font-size: 18px; }
   #drawer .ditem:active { background: rgba(79,216,255,0.08); }
   #drawer .ditem span { flex: 1; min-width: 0; }
   #drawer .ditem small { display: block; font-size: 13px; color: var(--muted); margin-top: 1px; }
   #drawer .ditem em { font-style: normal; font-size: 14px; color: var(--muted); letter-spacing: 0.06em; }
   #drawer .ditem.on em { color: var(--cyan); }
-  #drawer .ditem.cur { background: linear-gradient(90deg, rgba(255,79,184,0.22), transparent); box-shadow: inset 3px 0 0 #ff4fb8; }
+  #drawer .ditem.cur { background: linear-gradient(90deg, rgba(var(--th-a),0.22), transparent); box-shadow: inset 3px 0 0 var(--th-a-hex); }
   /* Money opens its two books underneath (one menu item) */
   #drawer .dsub { display: none; }
   #drawer .dsub.on { display: block; }
@@ -365,52 +405,64 @@
   .fbody.mini .bm.on > * { filter: none; }
   .fbleg { display: flex; justify-content: center; gap: 14px; font-size: 13px; color: var(--ink2, #9fbcd1); margin: 4px 0 10px; }
   .fbleg i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
-  /* ---------------------------------------------------------------- the whole app: brighter, with more pink (Ben, 2026-11-20; started on Workouts) */
-  #money, #fitlive { --pink: #ff4fb8; --pink2: #ff8fd6; --violet: #9b6bff; --ink2: #c9d6ee; --ink3: #9eb0d4; --line: rgba(255,130,210,0.26); --grid: rgba(255,160,220,0.12);
-    --surface: rgba(38,42,96,0.78);
-    background: radial-gradient(130% 55% at 100% 0%, rgba(255,79,184,0.30), transparent 62%), radial-gradient(110% 50% at 0% 100%, rgba(79,216,255,0.20), transparent 60%),
-      linear-gradient(180deg, #171a46 0%, #101636 100%); }
-  #money .mhead h1 { color: var(--pink2); text-shadow: 0 0 14px rgba(255,79,184,0.7); }
-  #money .card, #fitlive .lex { background: linear-gradient(155deg, rgba(64,52,130,0.70), rgba(30,42,92,0.72)); border: 1px solid var(--line); border-radius: 14px;
+  /* ---------------------------------------------------------------- the whole app: brighter, more colour (Ben, 2026-11-20).
+     Colours come from the theme (app/themes.css, Settings > Colours). */
+  #money, #fitlive { --pink: var(--th-a-hex); --pink2: var(--th-soft); --violet: var(--th-a2-hex); --ink2: var(--th-ink2); --ink3: var(--th-ink3);
+    --line: rgba(var(--th-line),0.26); --grid: rgba(var(--th-line),0.12); --surface: rgba(var(--th-c1),0.78);
+    background: radial-gradient(130% 55% at 100% 0%, rgba(var(--th-a),0.30), transparent 62%), radial-gradient(110% 50% at 0% 100%, rgba(var(--th-g2),0.20), transparent 60%),
+      linear-gradient(180deg, var(--th-bgA) 0%, var(--th-bgB) 100%); }
+  #money .mhead h1 { color: var(--pink2); text-shadow: 0 0 14px rgba(var(--th-a),0.7); }
+  #money .card, #fitlive .lex { background: linear-gradient(155deg, rgba(var(--th-c1),0.70), rgba(var(--th-c2),0.72)); border: 1px solid var(--line); border-radius: 14px;
     box-shadow: 0 8px 22px rgba(5,6,25,0.35), inset 0 1px 0 rgba(255,255,255,0.06); }
-  #money .label, #fitlive .lsets th { color: #c2a9ef; }
+  #money .label, #fitlive .lsets th { color: var(--th-label); }
   #money .sub, #money .meta, #money .row .meta { color: var(--ink2); }
   #money .linkish { color: var(--pink2); }
   #money .row { border-top-color: var(--grid); }
-  #money .day { color: #c2a9ef; }
-  #money nav { background: rgba(26,26,70,0.96); border-top-color: var(--line); }
-  #money nav button { color: #a9b6d6; } #money nav button.on { color: var(--pink2); border-top-color: var(--pink); text-shadow: 0 0 10px rgba(255,79,184,0.6); }
-  #money .btn, #fitlive .btn { border-color: rgba(255,143,214,0.55); color: #ffe0f3; background: linear-gradient(90deg, rgba(79,216,255,0.22), rgba(255,79,184,0.30)); }
+  #money .day { color: var(--th-label); }
+  #money nav { background: rgba(var(--th-nav),0.96); border-top-color: var(--line); }
+  #money nav button { color: var(--ink3); } #money nav button.on { color: var(--pink2); border-top-color: var(--pink); text-shadow: 0 0 10px rgba(var(--th-a),0.6); }
+  #money .btn, #fitlive .btn { border-color: rgba(var(--th-a),0.55); color: var(--th-pale); background: linear-gradient(90deg, rgba(var(--th-g2),0.22), rgba(var(--th-a),0.30)); }
   #money .btn.quiet { background: rgba(255,255,255,0.04); color: var(--ink2); border-color: var(--line); }
-  #money .btn.fstart { background: linear-gradient(90deg, var(--pink), var(--violet)); color: #fff; border: 0; box-shadow: 0 4px 14px rgba(255,79,184,0.45); }
+  #money .btn.fstart { background: linear-gradient(90deg, var(--pink), var(--violet)); color: #fff; border: 0; box-shadow: 0 4px 14px rgba(var(--th-a),0.45); }
   #money .seg button.on { background: var(--pink); border-color: var(--pink); color: #fff; }
-  #money .search input, #money .search select { background: rgba(12,14,46,0.6); border-color: var(--line); }
-  #money .fresume { border-color: var(--pink); box-shadow: 0 0 18px rgba(255,79,184,0.35); }
-  #money .fico, #fitlive .fico, #msheet .fico { color: #fff; border-color: rgba(255,143,214,0.5);
-    background: radial-gradient(circle at 35% 30%, rgba(79,216,255,0.45), rgba(255,79,184,0.40) 65%, rgba(155,107,255,0.25)); }
-  #money .fico svg, #fitlive .fico svg { filter: drop-shadow(0 0 3px rgba(255,200,240,0.8)); }
+  #money .search input, #money .search select { background: rgba(var(--th-input),0.6); border-color: var(--line); }
+  #money .fresume { border-color: var(--pink); box-shadow: 0 0 18px rgba(var(--th-a),0.35); }
+  #money .fico, #fitlive .fico, #msheet .fico { color: #fff; border-color: rgba(var(--th-a),0.5);
+    background: radial-gradient(circle at 35% 30%, rgba(var(--th-g2),0.45), rgba(var(--th-a),0.40) 65%, rgba(var(--th-a2),0.25)); }
+  #money .fico svg, #fitlive .fico svg { filter: drop-shadow(0 0 3px rgba(255,255,255,0.6)); }
   #money .froutine .name { color: #fff; }
   #money .fweek .fbody { max-width: 240px; margin-top: 6px; }
   #money .row .fbody.mini { width: 58px; }
   /* the live workout */
-  #fitlive .lhead { background: linear-gradient(90deg, rgba(79,216,255,0.28), rgba(255,79,184,0.42) 60%, rgba(155,107,255,0.40)); border-bottom-color: var(--line); }
-  #fitlive #lmin { color: #fff; } #fitlive #lclock { color: #fff; text-shadow: 0 0 12px rgba(255,79,184,0.8); }
+  #fitlive .lhead { background: linear-gradient(90deg, rgba(var(--th-g2),0.28), rgba(var(--th-a),0.42) 60%, rgba(var(--th-a2),0.40)); border-bottom-color: var(--line); }
+  #fitlive #lmin { color: #fff; } #fitlive #lclock { color: #fff; text-shadow: 0 0 12px rgba(var(--th-a),0.8); }
   #fitlive #lfin { background: linear-gradient(90deg, #ffb547, #ff7a59); border: 0; color: #2a0f05; box-shadow: 0 3px 12px rgba(255,140,80,0.45); }
   #fitlive .lexn { color: var(--pink2); }
-  #fitlive input, #fitlive textarea { background: rgba(12,14,46,0.6); border-color: var(--line); }
-  #fitlive .lprev { color: #a9b6d6; }
-  #fitlive tr.done td { background: rgba(255,79,184,0.14); }
-  #fitlive tr.done .ltick { background: linear-gradient(135deg, var(--pink), var(--violet)); border-color: transparent; color: #fff; box-shadow: 0 0 12px rgba(255,79,184,0.6); }
-  #fitlive .laddset { color: var(--pink2); border-color: rgba(255,143,214,0.4); }
-  #fitlive #lrestbar { background: rgba(30,26,74,0.98); }
-  /* sheets opened from Workouts */
-  #msheet .box{ background: linear-gradient(180deg, #232056 0%, #151a42 100%); border-color: rgba(255,130,210,0.35);
-    box-shadow: 0 -6px 30px rgba(255,79,184,0.18); }
-  #msheet h2{ color: #fff; }
-  #msheet .seg button.on{ background: #ff4fb8; border-color: #ff4fb8; color: #fff; }
-  #msheet .btn{ border-color: rgba(255,143,214,0.55); color: #ffe0f3; background: linear-gradient(90deg, rgba(79,216,255,0.2), rgba(255,79,184,0.28)); }
-  #msheet .btn.quiet{ background: rgba(255,255,255,0.04); color: #c9d6ee; border-color: rgba(255,130,210,0.26); }
-  #msheet .fhist, #msheet .card{ background: rgba(255,255,255,0.04); border-color: rgba(255,130,210,0.26); }
+  #fitlive input, #fitlive textarea { background: rgba(var(--th-input),0.6); border-color: var(--line); }
+  #fitlive .lprev { color: var(--ink3); }
+  #fitlive tr.done td { background: rgba(var(--th-a),0.14); }
+  #fitlive tr.done .ltick { background: linear-gradient(135deg, var(--pink), var(--violet)); border-color: transparent; color: #fff; box-shadow: 0 0 12px rgba(var(--th-a),0.6); }
+  #fitlive .laddset { color: var(--pink2); border-color: rgba(var(--th-a),0.4); }
+  #fitlive #lrestbar { background: rgba(var(--th-nav),0.98); }
+  #lrestbar .lrb i { background: linear-gradient(90deg, rgba(var(--th-g2),1), var(--th-a-hex)); } #lrestbar.up { background: rgba(var(--th-a),0.22); }
+  #fitlive .lsw input:checked + i { background: var(--th-a-hex); }
+  /* sheets (edit dialogs) */
+  #msheet .box { background: linear-gradient(180deg, var(--th-s1) 0%, var(--th-s2) 100%); border-color: rgba(var(--th-line),0.35); box-shadow: 0 -6px 30px rgba(var(--th-a),0.18); }
+  #msheet h2 { color: #fff; }
+  #msheet .seg button.on { background: var(--th-a-hex); border-color: var(--th-a-hex); color: #fff; }
+  #msheet .btn { border-color: rgba(var(--th-a),0.55); color: var(--th-pale); background: linear-gradient(90deg, rgba(var(--th-g2),0.2), rgba(var(--th-a),0.28)); }
+  #msheet .btn.quiet { background: rgba(255,255,255,0.04); color: var(--th-ink2); border-color: rgba(var(--th-line),0.26); }
+  #msheet .fhist, #msheet .card { background: rgba(255,255,255,0.04); border-color: rgba(var(--th-line),0.26); }
+  /* body map follows the theme's main colour */
+  .fbody .bm.on > * { filter: drop-shadow(0 0 2.5px rgba(var(--th-a),0.75)); stroke: rgba(255,255,255,0.45); }
+  .fbody.mini .bm.on > * { filter: none; }
+  /* Settings > Colours */
+  #money .themes { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  #money .theme { position: relative; border-radius: 14px; border: 2px solid rgba(255,255,255,0.12); padding: 12px; cursor: pointer; text-align: left; font: inherit; color: #fff; min-height: 118px; }
+  #money .theme.on { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.25), 0 6px 20px rgba(0,0,0,0.35); }
+  #money .theme b { display: block; font-size: 17px; margin-bottom: 2px; } #money .theme small { font-size: 13px; opacity: 0.8; }
+  #money .theme .tsw { display: flex; gap: 6px; margin-top: 12px; } #money .theme .tsw i { width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); }
+  #money .theme .tck { position: absolute; top: 10px; right: 12px; font-size: 16px; }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -506,6 +558,7 @@
   <div id="dset">
   <a href="#" id="dback" class="ditem dback"><span>‹ Menu</span><em></em></a>
   <div class="dsect">Jarvis</div>
+  <a href="#" id="navLook" class="ditem"><span>Colours<small>Pick the app's colour theme</small></span><em>›</em></a>
   <a href="#" id="navPersona" class="ditem"><span>Personality<small>Humor, formality, detail and more</small></span><em>›</em></a>
   <a href="#" id="navCosts" class="ditem"><span>Jarvis costs<small>What Jarvis costs to run this month</small></span><em>›</em></a>
   <div class="dsect">This phone</div>
@@ -952,6 +1005,8 @@
   // ------------------------------------------------------------------ menu drawer
   // One menu (top left) instead of a row of header buttons, so new screens have somewhere to go.
   const menuBtn = $("menuBtn"), drawer = $("drawer");
+  // Colour theme (Settings > Colours, app/themes.css): chosen per device, applied before anything is drawn.
+  try { document.documentElement.dataset.theme = localStorage.getItem("jarvis.theme") || "neon"; } catch { document.documentElement.dataset.theme = "neon"; }
   // ------------------------------------------------------------------ back gesture = step history
   // Android's swipe-from-the-edge "back" walks back through what Ben did, one step at a time
   // (2026-11-16: "it always goes back to where I was"). Every step (open the menu, open a money
@@ -991,8 +1046,8 @@
     menuBtn.setAttribute("aria-expanded", open); drawer.setAttribute("aria-hidden", !open);
     if (open && !was) {   // show which screen you're on
       const m = $("money").classList.contains("on") && $("mtitle").textContent;
-      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["navCalls", m === "CALLS"], ["navFit", m === "WORKOUTS"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || / BINGO$/.test(m)]]) $(id).classList.toggle("cur", on);
-      showSettings(m === "JARVIS COSTS" || m === "PERSONALITY");   // the cog's page holds Jarvis costs, so open there from it
+      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["navLook", m === "COLOURS"], ["navCalls", m === "CALLS"], ["navFit", m === "WORKOUTS"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || / BINGO$/.test(m)]]) $(id).classList.toggle("cur", on);
+      showSettings(m === "JARVIS COSTS" || m === "PERSONALITY" || m === "COLOURS");   // the cog's page holds Jarvis costs, so open there from it
       subOpen("Money", m === "BUSINESS" || m === "PERSONAL");   // on one of their screens, show the group open
       subOpen("Goals", m === "BUSINESS GOALS" || m === "PERSONAL GOALS" || / BINGO$/.test(m));
       menuStep = nav.push(() => setMenu(false));
@@ -1401,6 +1456,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       if (M.book === "persona") return loadPersona();
       if (M.book === "calls") return loadCalls();
       if (M.book === "fit") return loadFit();
+      if (M.book === "look") { M.data = { look: true }; return render(); }
       if (M.book === "goalsBiz") return loadBiz();
       M.busy = refresh === "force" ? "Syncing with your bank…" : (refresh ? "Checking for new transactions…" : "Loading…");
       M.error = ""; render();
@@ -1426,8 +1482,8 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       if (!tabs.some(([k]) => k === tab)) tab = tabs[0][0];
       el.querySelectorAll("nav button").forEach((b, i) => { b.dataset.tab = tabs[i][0]; b.textContent = tabs[i][1]; });
       M.tab = tab;
-      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY", calls: "CALLS", fit: "WORKOUTS" }[M.book];
-      el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book] || M.book === "bingo" || M.book === "persona" || M.book === "calls");   // no Dashboard/Spending/... tabs there
+      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY", calls: "CALLS", fit: "WORKOUTS", look: "COLOURS" }[M.book];
+      el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book] || M.book === "bingo" || M.book === "persona" || M.book === "calls" || M.book === "look");   // no Dashboard/Spending/... tabs there
       el.classList.toggle("fit", M.book === "fit"); document.body.classList.toggle("fitui", M.book === "fit");   // Workouts' brighter, pinker look
       body.scrollTop = 0; hideTip(); el.classList.add("on");
       if (!fresh) render(); else if (!M.data) load(true); else { render(); load(true); }
@@ -1452,6 +1508,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     $("goalsPers").onclick = (e) => { e.preventDefault(); goBook("goalsPers"); };
     $("navCrm").onclick = (e) => { e.preventDefault(); goBook("crm"); };
     $("navFit").onclick = (e) => { e.preventDefault(); goBook("fit"); };
+    $("navLook").onclick = (e) => { e.preventDefault(); goBook("look"); };
     $("mmenu").onclick = (e) => { e.preventDefault(); setMenu(true); };
     el.querySelectorAll("nav button").forEach((b) => (b.onclick = () => {
       if (b.dataset.tab === M.tab) return;
@@ -3066,6 +3123,28 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       body.querySelectorAll("[data-call]").forEach((r) => (r.onclick = () => showCall(r.dataset.call)));
     }
 
+    // -------------------------------------------------------------- Settings > Colours (Ben, 2026-11-20)
+    // Colour themes from app/themes.css. Tapping one switches the whole app at once (talk screen, menu,
+    // every screen); saved on this device (localStorage jarvis.theme). The spinning core keeps its own colours.
+    const THEMES = [
+      ["neon", "Neon", "Pink and cyan on violet", ["#ff4fb8", "#9b6bff", "#4fd8ff"], "linear-gradient(150deg, #2a2468, #12163a)"],
+      ["sunset", "Sunset", "Orange and pink on plum", ["#ff7a45", "#ff3d7f", "#ffb547"], "linear-gradient(150deg, #4a1c48, #1a0d26)"],
+      ["emerald", "Emerald", "Green and sky blue", ["#2ee59d", "#1fb6ff", "#8ef5cb"], "linear-gradient(150deg, #134049, #08181f)"],
+      ["royal", "Royal", "Gold and violet", ["#ffc845", "#8b5cf6", "#ffe08a"], "linear-gradient(150deg, #33276b, #110d2a)"],
+      ["classic", "Classic", "The original dark blue", ["#4fd8ff", "#2a7fff", "#d640a8"], "linear-gradient(150deg, #0b1a30, #020309)"],
+    ];
+    function renderLook() {
+      const now = document.documentElement.dataset.theme || "neon";
+      body.innerHTML = `<div class="note" style="margin-top:0">Tap a theme to switch the whole app. Saved on this device.</div><div class="themes">` +
+        THEMES.map(([id, name, sub, sw, bg]) => `<button class="theme ${id === now ? "on" : ""}" data-theme-id="${id}" style="background:${bg}">
+          ${id === now ? `<span class="tck">✓</span>` : ""}<b>${name}</b><small>${sub}</small><div class="tsw">${sw.map((c) => `<i style="background:${c}"></i>`).join("")}</div></button>`).join("") + `</div>`;
+      body.querySelectorAll("[data-theme-id]").forEach((b) => (b.onclick = () => {
+        document.documentElement.dataset.theme = b.dataset.themeId;
+        try { localStorage.setItem("jarvis.theme", b.dataset.themeId); } catch {}
+        renderLook();
+      }));
+    }
+
     // -------------------------------------------------------------- Workouts (2026-11-20, Ben; Phase 1 = logging)
     // A "book" of the money screen called fit, with tabs Workout / History / Exercises / Settings, plus a
     // full-screen live workout (#fitlive) that sits above the screens and below the sheets. Data: cloud
@@ -3349,9 +3428,8 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
       // colour for a level: pale (not worked) -> soft pink -> hot pink
       const fill = (v) => {
         if (!(v > 0)) return "";
-        const t = Math.min(1, Math.max(0, v)), a = 0.35 + 0.65 * t;
-        const r = Math.round(255), g = Math.round(150 - 90 * t), b = Math.round(210 - 30 * t);
-        return ` style="fill:rgba(${r},${g},${b},${a.toFixed(2)})"`;
+        const a = 0.3 + 0.7 * Math.min(1, Math.max(0, v));   // the theme's main colour, stronger = worked harder
+        return ` style="fill:rgba(var(--th-a),${a.toFixed(2)})"`;
       };
       const side = (parts, levels) => Object.entries(parts).map(([mu, d]) => `<g class="bm${levels[mu] > 0 ? " on" : ""}"${fill(levels[mu])}><title>${mu}</title>${d}</g>`).join("");
       return (levels, cls) => `<svg class="fbody ${cls || ""}" viewBox="0 0 200 204" role="img" aria-label="Muscles worked">
@@ -3361,7 +3439,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
     const exLevels = (x) => Object.fromEntries([...(x.secondary || []).map((m) => [m, 0.45]), ...(x.primary || []).map((m) => [m, 1])]);
 
     const worked = (ws) => FC.musclesWorked(ws, (id) => exOf(id));   // { muscle: 0..1 } for the body map
-    const LEGEND = `<div class="fbleg"><span><i style="background:rgba(255,120,200,0.55)"></i>Some</span><span><i style="background:#ff3cb4"></i>Most</span></div>`;
+    const LEGEND = `<div class="fbleg"><span><i style="background:rgba(var(--th-a),0.5)"></i>Some</span><span><i style="background:var(--th-a-hex)"></i>Most</span></div>`;
     const FIT_TABS = [["start", "Workout"], ["hist", "History"], ["lib", "Exercises"], ["fset", "Settings"]];
     const W = { lib: null, map: new Map(), q: "", eq: "", mus: "", shown: 60, live: null, tick: null, rest: null,
       saveT: null, unsynced: false, demo: null };
@@ -3571,7 +3649,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
     async function exerciseSheet(id, tab) {
       const x = exOf(id), hist = FC.history(FD().workouts, id), best = FC.bestE1rm(FD().workouts, id), u = unit();
       const draw = (t, info) => {
-        const about = `${BODY(exLevels(x))}<div class="fbleg"><span><i style="background:#ff3cb4"></i>Primary</span><span><i style="background:rgba(255,120,200,0.6)"></i>Secondary</span></div>${info === null ? `<div class="note">Loading…</div>` : ""}
+        const about = `${BODY(exLevels(x))}<div class="fbleg"><span><i style="background:var(--th-a-hex)"></i>Primary</span><span><i style="background:rgba(var(--th-a),0.5)"></i>Secondary</span></div>${info === null ? `<div class="note">Loading…</div>` : ""}
           <div class="fchips"><span class="label">Equipment</span> ${esc(cap(x.equipment || "none"))}</div>
           <div class="fchips"><span class="label">Primary</span> ${x.primary.map((m) => `<span class="fchip p">${esc(cap(m))}</span>`).join("") || "–"}</div>
           ${x.secondary.length ? `<div class="fchips"><span class="label">Secondary</span> ${x.secondary.map((m) => `<span class="fchip">${esc(cap(m))}</span>`).join("")}</div>` : ""}
@@ -3997,6 +4075,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
         else if (M.book === "persona") renderPersona();
         else if (M.book === "calls") renderCalls();
         else if (M.book === "fit") renderFit();
+        else if (M.book === "look") renderLook();
         else if (M.book === "costs") renderCosts();
         else if (M.book === "crm") renderCrm();
         else ({ dash: renderDash, spend: renderSpending, recur: renderRecurring, tx: renderTx }[M.tab] || renderDash)();
