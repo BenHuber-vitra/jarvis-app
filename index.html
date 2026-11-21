@@ -1397,6 +1397,11 @@
   #msheet .dicons button.on { border-color: var(--th-a-hex); background: rgba(var(--th-a),0.3); box-shadow: 0 0 10px rgba(var(--th-a),0.4); }
   #msheet .dicons svg { width: 100%; height: 100%; fill: none; stroke: #fff; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
   @media (prefers-reduced-motion: reduce) { #money .dflame svg { animation: none; } }
+  /* daily limit on a habit card: today's use against the limit */
+  #money .dlim { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; } #money .dlim span { font-size: 11.5px; color: var(--ink2); }
+  #money .dlimbar { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.1); overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.35); }
+  #money .dlimbar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, color-mix(in srgb, var(--hc) 70%, #fff), var(--hc)); box-shadow: 0 0 8px var(--hc); transition: width 0.4s; }
+  #money .dlim.over .dlimbar i { background: linear-gradient(90deg, #ff9a6a, #ff4d4d); box-shadow: 0 0 10px #ff4d4d; } #money .dlim.over span { color: #ff9a8a; }
   /* ================================================================ the talk screen, premium (Ben, 2026-11-21)
      Shared by the phone app (index.template.html) and the laptop window (jarvis/ui/static/index.html): build.py puts it in
      the shared CSS. The shared CSS sits in the middle of each page's own styles, so these rules start with "body" to win.
@@ -6078,7 +6083,7 @@ function weekStart(day) { const d = new Date(day + "T12:00:00Z"); return ago(day
 
 function defaultHabits(today) {
   return [
-    { id: "junk", name: "Junk food", icon: "junk", unit: "times", cost: 0, auto: "junk", words: ["junk", "fast food", "candy", "sweets", "snack", "soda", "pizza", "burger", "fries"], since: ago(today, 28) },
+    { id: "junk", name: "Junk food", icon: "junk", unit: "times", cost: 0, auto: "junk", words: ["junk", "fast food", "candy", "sweets", "snack", "soda", "pizza", "burger", "fries"], since: today },   // from now: streaks are only honest from when tracking starts
     { id: "scroll", name: "Scrolling", icon: "phone", unit: "minutes", cost: 0, auto: null, words: ["scroll", "scrolled", "scrolling", "tiktok", "instagram", "reels", "shorts", "reddit", "twitter", "phone", "screen time", "social media", "youtube"], since: today },
     { id: "games", name: "Games during work", icon: "game", unit: "minutes", cost: 0, auto: null, words: ["game", "games", "gaming", "video game", "xbox", "playstation", "switch", "fortnite", "steam"], since: today },
     { id: "gym", name: "Skipped the gym", icon: "gym", unit: "times", cost: 0, auto: "gym", words: ["gym", "workout", "skipped", "lift", "lifting"], since: today },   // from now: older days may not have been logged in Jarvis
@@ -6127,38 +6132,52 @@ function missedGymDays(plan, workoutDays, from, today) {
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const weekdayOf = (day) => (new Date(day + "T12:00:00Z").getUTCDay() + 6) % 7;
 
+// ---- daily limits (Ben, 2026-11-21: "my limit is 1 hr of scrolling a day"): h.limit = minutes (or times) allowed per day,
+// 0 = no limit. Under the limit the day is still clean; a day only counts as a slip once it goes OVER. No limit = any log.
+/** How much he used each day: minutes for a minutes habit, times for a times habit. */
+function usageByDay(h, slips) {
+  const use = {};
+  for (const s of slips) if (s.habit === h.id) use[s.day] = (use[s.day] || 0) + (h.unit === "minutes" ? +s.amount || 0 : Math.max(1, +s.amount || 1));
+  return use;
+}
+const hasLimit = (h) => +h.limit > 0;
+const isOver = (h, used) => used > 0 && (!hasLimit(h) || used > +h.limit);
+
 // ---- stats for the screen and for Jarvis
 function habitStats(h, slips, today) {
-  const mine = slips.filter((s) => s.habit === h.id), days = [...new Set(mine.map((s) => s.day))].sort();
+  const mine = slips.filter((s) => s.habit === h.id), use = usageByDay(h, mine), lim = hasLimit(h);
+  const days = Object.keys(use).filter((d) => isOver(h, use[d])).sort();   // the slip days
   const start = h.since && h.since < today ? h.since : (days[0] && days[0] < today ? days[0] : today);
   const last = days[days.length - 1] || null;
   const streak = last ? Math.max(0, dayDiff(today, last)) : dayDiff(today, start);   // whole clean days since the last slip
   let best = streak, prev = start;
   for (const d of days) { best = Math.max(best, dayDiff(d, prev) - (prev === start ? 0 : 1)); prev = d; }
   const wk = weekStart(today), lwk = ago(wk, 7), mo = today.slice(0, 7) + "-01";
-  const sum = (from, to) => mine.filter((s) => s.day >= from && s.day <= to);
-  const amt = (xs) => xs.reduce((a, s) => a + (+s.amount || 0), 0);
-  const thisWeek = sum(wk, today), lastWeek = sum(lwk, ago(wk, 1)), month = sum(mo, today), todays = sum(today, today);
-  const map = {}; for (const s of mine) map[s.day] = (map[s.day] || 0) + (h.unit === "minutes" ? +s.amount || 0 : 1);
+  // "slips" in a period: with a limit, the days that went over; without one, every log (as before)
+  const count = (from, to) => lim ? days.filter((d) => d >= from && d <= to).length : mine.filter((s) => s.day >= from && s.day <= to).length;
+  const used = (from, to) => Object.entries(use).filter(([d]) => d >= from && d <= to).reduce((a, [, v]) => a + v, 0);
+  const todayUsed = use[today] || 0, overToday = isOver(h, todayUsed);
   return {
-    id: h.id, streak, best, slippedToday: todays.length > 0, today: todays.length, todayAmount: amt(todays),
-    week: thisWeek.length, lastWeek: lastWeek.length, weekAmount: amt(thisWeek), lastWeekAmount: amt(lastWeek),
-    month: month.length, monthAmount: amt(month), monthCost: (+h.cost || 0) * month.length, map, last,
+    id: h.id, streak, best, limit: lim ? +h.limit : 0, todayUsed, overToday, slippedToday: overToday,
+    today: count(today, today), todayAmount: todayUsed, left: lim ? Math.max(0, +h.limit - todayUsed) : null, overBy: lim ? Math.max(0, todayUsed - +h.limit) : 0,
+    week: count(wk, today), lastWeek: count(lwk, ago(wk, 1)), weekAmount: used(wk, today), lastWeekAmount: used(lwk, ago(wk, 1)),
+    month: count(mo, today), monthAmount: used(mo, today), monthCost: (+h.cost || 0) * count(mo, today), map: use, overDays: days, last,
   };
 }
 function overall(habits, slips, today) {
-  const live = new Set(habits.filter((h) => !h.archived).map((h) => h.id)), mine = slips.filter((s) => live.has(s.habit));
-  const days = [...new Set(mine.map((s) => s.day))].sort(), last = days[days.length - 1] || null;
+  const live = habits.filter((h) => !h.archived), stats = live.map((h) => habitStats(h, slips, today));
+  const days = [...new Set(stats.flatMap((st) => st.overDays))].sort(), last = days[days.length - 1] || null;
   const start = habits.reduce((a, h) => (h.since && h.since < a ? h.since : a), today);
   const streak = last ? Math.max(0, dayDiff(today, last)) : dayDiff(today, start);
   let best = streak, prev = start;
   for (const d of days) { best = Math.max(best, dayDiff(d, prev) - (prev === start ? 0 : 1)); prev = d; }
   const wk = weekStart(today), lwk = ago(wk, 7), mo = today.slice(0, 7) + "-01";
   const monthDays = dayDiff(today, mo < start ? start : mo) + 1, slipDaysMonth = days.filter((d) => d >= mo).length;
-  const minutes = (from, to) => mine.filter((s) => s.day >= from && s.day <= to && (habits.find((h) => h.id === s.habit) || {}).unit === "minutes").reduce((a, s) => a + (+s.amount || 0), 0);
-  const weeks = []; for (let k = 7; k >= 0; k--) { const a = ago(wk, 7 * k), b = ago(a, -6); weeks.push({ start: a, by: Object.fromEntries([...live].map((id) => [id, mine.filter((s) => s.habit === id && s.day >= a && s.day <= b).length])) }); }
-  return { streak, best, today: mine.filter((s) => s.day === today).length, week: mine.filter((s) => s.day >= wk).length,
-    lastWeek: mine.filter((s) => s.day >= lwk && s.day < wk).length, minutesWeek: minutes(wk, today), minutesLastWeek: minutes(lwk, ago(wk, 1)),
+  const sumOf = (k) => stats.reduce((a, st) => a + st[k], 0);
+  const minutes = (key) => live.reduce((a, h, i) => a + (h.unit === "minutes" ? stats[i][key] : 0), 0);
+  const weeks = []; for (let k = 7; k >= 0; k--) { const a = ago(wk, 7 * k), b = ago(a, -6);
+    weeks.push({ start: a, by: Object.fromEntries(live.map((h, i) => [h.id, hasLimit(h) ? stats[i].overDays.filter((d) => d >= a && d <= b).length : slips.filter((s) => s.habit === h.id && s.day >= a && s.day <= b).length])) }); }
+  return { streak, best, today: sumOf("today"), week: sumOf("week"), lastWeek: sumOf("lastWeek"), minutesWeek: minutes("weekAmount"), minutesLastWeek: minutes("lastWeekAmount"),
     cleanDaysMonth: Math.max(0, monthDays - slipDaysMonth), monthDays, weeks };
 }
 /** Find a habit from what Ben said: id, name, or one of its words. */
@@ -6171,7 +6190,7 @@ function findHabit(habits, text) {
 }
 function fmtMins(m) { m = Math.round(+m || 0); return m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}` : `${m} min`; }
 
-return { addDays, dayDiff, weekStart, defaultHabits, HABIT_COLOURS, JUNK_WORDS, isJunk, gymDays, missedGymDays, WEEKDAYS, weekdayOf, habitStats, overall, findHabit, fmtMins };
+return { addDays, dayDiff, weekStart, defaultHabits, HABIT_COLOURS, JUNK_WORDS, isJunk, gymDays, missedGymDays, WEEKDAYS, weekdayOf, usageByDay, hasLimit, isOver, habitStats, overall, findHabit, fmtMins };
  })();
     const DH = { data: null, last: null, err: "" };
     const DICON = {
@@ -6210,6 +6229,7 @@ return { addDays, dayDiff, weekStart, defaultHabits, HABIT_COLOURS, JUNK_WORDS, 
 
     function renderDope() { ({ dtoday: dopeToday, dstats: dopeStats, dhabits: dopeHabits }[M.tab] || dopeToday)(); }
     const slipText = (h, s) => h && h.unit === "minutes" ? DC.fmtMins(s.amount) : (+s.amount > 1 ? `${s.amount} times` : "");
+    const limText = (h, n) => h.unit === "minutes" ? shortMins(n) : `${n}×`;
     const shortMins = (m) => { m = Math.round(+m || 0); return m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ""}` : `${m}m`; };
     const srcChip = (s) => s.source === "auto" ? `<span class="chip">auto</span>` : s.source === "jarvis" ? `<span class="chip">Jarvis</span>` : "";
 
@@ -6223,14 +6243,15 @@ return { addDays, dayDiff, weekStart, defaultHabits, HABIT_COLOURS, JUNK_WORDS, 
         <div class="sub">Best ${o.best} · ${o.today ? `<b class="dbad">${o.today} slip${o.today === 1 ? "" : "s"} today</b>` : `<b class="dgood">no slips today</b>`}</div></div></div>`;
       h += `<div class="dgrid">${liveHabits().map((x) => { const st = DC.habitStats(x, d.slips, today), col = hCol(x);
         return `<div class="card dcard${st.slippedToday ? " hit" : ""}" style="--hc:${col}"><div class="dch"><div class="dico">${dIcon(x.icon)}</div><button class="dlog" data-log="${x.id}">+ Log</button></div>
-          <b class="dname">${esc(x.name)}</b><span class="dst">${st.slippedToday ? `Slipped today${x.unit === "minutes" ? " · " + DC.fmtMins(st.todayAmount) : st.today > 1 ? ` · ${st.today}×` : ""}` : `<b>${st.streak}</b> day${st.streak === 1 ? "" : "s"} clean`}</span>
+          <b class="dname">${esc(x.name)}</b><span class="dst">${st.slippedToday ? (st.limit ? `Over by ${limText(x, st.overBy)}` : `Slipped today${x.unit === "minutes" ? " · " + DC.fmtMins(st.todayAmount) : st.today > 1 ? ` · ${st.today}×` : ""}`) : `<b>${st.streak}</b> day${st.streak === 1 ? "" : "s"} clean`}</span>
+          ${st.limit ? `<div class="dlim${st.overToday ? " over" : ""}"><div class="dlimbar"><i style="width:${Math.min(100, (st.todayUsed / st.limit) * 100).toFixed(1)}%"></i></div><span>${limText(x, st.todayUsed)} of ${limText(x, st.limit)} today${st.overToday ? "" : ` · ${limText(x, st.left)} left`}</span></div>` : ""}
           <div class="dweek">${last7.map((dd) => `<i class="${st.map[dd] ? "on" : ""}${dd === today ? " t" : ""}" title="${dd}"></i>`).join("")}</div>${x.auto ? `<span class="dauto">auto</span>` : ""}</div>`; }).join("")}</div>`;
       const todays = d.slips.filter((s) => s.day === today).slice().reverse();
-      h += `<div class="sect"><span class="label">Today's slips</span><span class="meta">${todays.length || ""}</span></div>`;
+      h += `<div class="sect"><span class="label">Logged today</span><span class="meta">${todays.length || ""}</span></div>`;
       h += todays.length ? `<div class="card">${todays.map((s) => { const x = d.habits.find((y) => y.id === s.habit);
         return `<div class="row click" data-slip="${s.id}"><span class="dsw" style="background:${x ? hCol(x) : "#888"}"></span><div class="grow"><div class="name">${esc(x ? x.name : s.habit)}${srcChip(s)}</div>
           <div class="meta">${s.source === "auto" ? "" : new Date(s.at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}${slipText(x, s) ? " · " + esc(slipText(x, s)) : ""}${s.note ? " · " + esc(s.note) : ""}</div></div><span class="chev">›</span></div>`; }).join("")}</div>`
-        : `<div class="empty">No slips today. Keep it that way.</div>`;
+        : `<div class="empty">Nothing logged today. Keep it that way.</div>`;
       h += `<div class="note">Tap + Log when it happens, or just tell Jarvis ("I scrolled for an hour"). Junk food and missed gym days fill in by themselves from Nutrition and Workouts.</div>`;
       body.innerHTML = h;
       const u = $("dundo"); if (u) u.onclick = async () => { const id = DH.last.id; DH.last = null; try { await dcall("delete", { id }); } catch (e) { M.error = e.message; } dRefresh(); };
@@ -6286,13 +6307,14 @@ return { addDays, dayDiff, weekStart, defaultHabits, HABIT_COLOURS, JUNK_WORDS, 
       for (const x of live) {
         const st = DC.habitStats(x, d.slips, today), col = hCol(x), vals = Object.values(st.map), top = Math.max(1, ...vals);
         let cells = "";
-        for (let wk = 0; wk < weeks; wk++) for (let i = 0; i < 7; i++) { const dd = DC.addDays(start, wk * 7 + i), v = st.map[dd] || 0, fut = dd > today;
-          cells += `<i style="grid-column:${wk + 1};grid-row:${i + 1};${v ? `background:${col};opacity:${(0.35 + 0.65 * v / top).toFixed(2)};box-shadow:0 0 6px ${col}` : ""}" class="${fut ? "fut" : ""}" title="${dd}${v ? ": " + (x.unit === "minutes" ? DC.fmtMins(v) : v) : ""}"></i>`; }
+        for (let wk = 0; wk < weeks; wk++) for (let i = 0; i < 7; i++) { const dd = DC.addDays(start, wk * 7 + i), v = st.map[dd] || 0, fut = dd > today, over = st.overDays.includes(dd);
+          const look = !v ? "" : st.limit && !over ? `background:${col};opacity:0.22` : `background:${col};opacity:${(0.45 + 0.55 * v / top).toFixed(2)};box-shadow:0 0 6px ${col}`;   // under the limit: faint
+          cells += `<i style="grid-column:${wk + 1};grid-row:${i + 1};${look}" class="${fut ? "fut" : ""}" title="${dd}${v ? ": " + (x.unit === "minutes" ? DC.fmtMins(v) : v) + (st.limit ? (over ? " (over)" : " (within limit)") : "") : ""}"></i>`; }
         h += `<div class="card dhabit" style="--hc:${col}"><div class="dhh"><div class="dico sm">${dIcon(x.icon)}</div><div class="grow"><b>${esc(x.name)}</b>
           <div class="meta">${st.slippedToday ? "Slipped today" : `${st.streak} day${st.streak === 1 ? "" : "s"} clean`} · best ${st.best}</div></div>
           <div class="dwk"><b>${st.week}</b><span>vs ${st.lastWeek}</span></div></div>
           <div class="dheat"><div class="dheatd">${DC.WEEKDAYS.map((w, i) => `<span style="grid-row:${i + 1}">${i % 2 ? "" : w[0]}</span>`).join("")}</div><div class="dheatg">${cells}</div></div>
-          <div class="meta">This month: ${st.month} slip${st.month === 1 ? "" : "s"}${x.unit === "minutes" ? ` · ${DC.fmtMins(st.monthAmount)}` : ""}${st.monthCost ? ` · $${st.monthCost.toFixed(0)}` : ""}</div></div>`;
+          <div class="meta">This month: ${st.month} ${st.limit ? "over-limit day" : "slip"}${st.month === 1 ? "" : "s"}${x.unit === "minutes" ? ` · ${DC.fmtMins(st.monthAmount)}` : ""}${st.monthCost ? ` · $${st.monthCost.toFixed(0)}` : ""}${st.limit ? ` · limit ${limText(x, st.limit)} a day` : ""}</div></div>`;
       }
       body.innerHTML = h;
     }
@@ -6301,7 +6323,7 @@ return { addDays, dayDiff, weekStart, defaultHabits, HABIT_COLOURS, JUNK_WORDS, 
     function dopeHabits() {
       const d = DH.data, live = liveHabits(), arch = d.habits.filter((h) => h.archived);
       let h = `<div class="card">${live.map((x) => `<div class="row click" data-edit="${x.id}"><div class="dico sm" style="--hc:${hCol(x)}">${dIcon(x.icon)}</div><div class="grow"><div class="name">${esc(x.name)}</div>
-        <div class="meta">${x.unit === "minutes" ? "Logged in minutes" : "Logged as times"}${x.cost ? ` · $${x.cost} a slip` : ""}${x.auto ? " · fills in automatically" : ""}</div></div><span class="chev">›</span></div>`).join("")}</div>
+        <div class="meta">${x.unit === "minutes" ? "Logged in minutes" : "Logged as times"}${+x.limit > 0 ? ` · limit ${limText(x, +x.limit)} a day` : ""}${x.cost ? ` · $${x.cost} a slip` : ""}${x.auto ? " · fills in automatically" : ""}</div></div><span class="chev">›</span></div>`).join("")}</div>
         <div class="btns"><button class="btn" id="dadd">+ Add a habit</button></div>`;
       const gym = live.find((x) => x.auto === "gym"), junk = live.find((x) => x.auto === "junk");
       if (gym) h += `<div class="sect"><span class="label">Gym days</span><span class="meta">${d.gymDaysSet ? "your choice" : "from your workouts"}</span></div><div class="card"><div class="dchips days">${DC.WEEKDAYS.map((w, i) => `<button data-gd="${i}" class="${(d.gymDays || []).includes(i) ? "on" : ""}">${w}</button>`).join("")}</div>
@@ -6326,17 +6348,19 @@ return { addDays, dayDiff, weekStart, defaultHabits, HABIT_COLOURS, JUNK_WORDS, 
         <label>Name</label><input id="hn" maxlength="40" value="${esc(x.name)}" placeholder="e.g. Energy drinks">
         <label>Icon</label><div class="dicons">${Object.keys(DICON).map((k) => `<button data-ic="${k}" class="${k === x.icon ? "on" : ""}">${dIcon(k)}</button>`).join("")}</div>
         <label>Log it as</label><div class="seg"><button data-u="times" class="${x.unit !== "minutes" ? "on" : ""}">Times</button><button data-u="minutes" class="${x.unit === "minutes" ? "on" : ""}">Minutes</button></div>
+        <label>Daily limit (<span id="hlu">${x.unit === "minutes" ? "minutes" : "times"}</span>, optional)</label><input id="hl" type="number" min="0" max="1440" inputmode="numeric" value="${+x.limit > 0 ? +x.limit : ""}" placeholder="No limit: every log is a slip">
+        <div class="meta" style="white-space:normal;margin-top:4px">Under the limit the day stays clean; only going over counts as a slip.</div>
         <label>What a slip costs you ($, optional)</label><input id="hc" type="number" min="0" step="1" inputmode="decimal" value="${x.cost || ""}" placeholder="0">
         <label>Words Jarvis should recognise (comma separated)</label><input id="hw" maxlength="400" value="${esc((x.words || []).join(", "))}" placeholder="e.g. red bull, monster">
         ${x.auto ? `<div class="note">${x.auto === "gym" ? "Fills in from Workouts: a gym day you were behind on." : "Fills in from Nutrition: entries with a junk-food word."}</div>` : ""}
         <div class="err"></div><div class="btns"><button class="btn" id="hs">Save</button>${fresh ? "" : x.archived ? `<button class="btn quiet" id="ha">Restore</button>` : `<button class="btn danger" id="ha">Archive</button>`}<button class="btn quiet" id="hx">Cancel</button></div>`, (box) => {
         let icon = x.icon, unit = x.unit;
         box.querySelectorAll("[data-ic]").forEach((b) => (b.onclick = () => { icon = b.dataset.ic; box.querySelectorAll("[data-ic]").forEach((y) => y.classList.toggle("on", y === b)); }));
-        box.querySelectorAll("[data-u]").forEach((b) => (b.onclick = () => { unit = b.dataset.u; box.querySelectorAll("[data-u]").forEach((y) => y.classList.toggle("on", y === b)); }));
+        box.querySelectorAll("[data-u]").forEach((b) => (b.onclick = () => { unit = b.dataset.u; box.querySelectorAll("[data-u]").forEach((y) => y.classList.toggle("on", y === b)); box.querySelector("#hlu").textContent = unit === "minutes" ? "minutes" : "times"; }));
         box.querySelector("#hx").onclick = closeSheet;
         const save = async (patch) => {
           const name = box.querySelector("#hn").value.trim(); if (!name) return sheetErr("Give it a name.");
-          const next = { ...x, name, icon, unit, cost: +box.querySelector("#hc").value || 0, words: box.querySelector("#hw").value.split(",").map((w) => w.trim()).filter(Boolean), ...patch };
+          const next = { ...x, name, icon, unit, limit: Math.max(0, Math.round(+box.querySelector("#hl").value || 0)), cost: +box.querySelector("#hc").value || 0, words: box.querySelector("#hw").value.split(",").map((w) => w.trim()).filter(Boolean), ...patch };
           const list = fresh ? [...DH.data.habits, next] : DH.data.habits.map((y) => (y.id === x.id ? next : y));
           try { await dcall("habits", { habits: list }); closeSheet(); await dRefresh(); } catch (e) { sheetErr(e.message); }
         };
