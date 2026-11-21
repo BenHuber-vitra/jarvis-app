@@ -3042,7 +3042,7 @@ function fmtW(lbs, unit) {
   return (Number.isInteger(v) ? String(v) : v.toFixed(1)) ;
 }
 
-const doneSets = (e) => (e.sets || []).filter((s) => s.done && +s.r > 0);
+const doneSets = (e) => (e.sets || []).filter((s) => !!s.done && (+s.r > 0 || +s.d > 0 || +s.t > 0));
 const finished = (ws) => ws.filter((w) => w.ended_at).sort((a, b) => (a.started_at < b.started_at ? 1 : -1));
 
 /** The sets from the last finished workout with this exercise (for PREV), or []. */
@@ -3050,7 +3050,7 @@ function prevSets(workouts, ex, beforeId) {
   for (const w of finished(workouts)) {
     if (w.id === beforeId) continue;
     const e = (w.exercises || []).find((x) => x.ex === ex && doneSets(x).length);
-    if (e) return doneSets(e).map((s) => ({ w: +s.w || 0, r: +s.r }));
+    if (e) return doneSets(e).map((s) => ({ w: +s.w || 0, r: +s.r || 0, d: +s.d || 0, t: +s.t || 0 }));
   }
   return [];
 }
@@ -3059,7 +3059,7 @@ function prevSets(workouts, ex, beforeId) {
 function history(workouts, ex) {
   const out = [];
   for (const w of finished(workouts)) {
-    const sets = (w.exercises || []).filter((x) => x.ex === ex).flatMap(doneSets).map((s) => ({ w: +s.w || 0, r: +s.r, e1rm: e1rm(s.w, s.r) }));
+    const sets = (w.exercises || []).filter((x) => x.ex === ex).flatMap(doneSets).map((s) => ({ w: +s.w || 0, r: +s.r || 0, d: +s.d || 0, t: +s.t || 0, e1rm: e1rm(s.w, s.r) }));
     if (sets.length) out.push({ id: w.id, date: w.started_at, name: w.name, sets, best: Math.max(...sets.map((s) => s.e1rm)) });
   }
   return out;
@@ -3083,7 +3083,7 @@ function recent(workouts, n = 8) {
 /** Totals for one workout: ticked sets, volume (lbs x reps), duration in seconds. */
 function stats(w, now = Date.now()) {
   let sets = 0, volume = 0;
-  for (const e of w.exercises || []) for (const s of doneSets(e)) { sets++; volume += (+s.w || 0) * +s.r; }
+  for (const e of w.exercises || []) for (const s of doneSets(e)) { sets++; volume += (+s.w || 0) * (+s.r || 0); }
   const end = w.ended_at ? Date.parse(w.ended_at) : now;
   return { sets, volume, seconds: Math.max(0, Math.round((end - Date.parse(w.started_at)) / 1000)) };
 }
@@ -3100,7 +3100,131 @@ function dur(sec) {
   return h ? `${h}h ${m}m` : `${m}m`;
 }
 
-return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recent, stats, clock, dur };
+// ---------------------------------------------------------------- distance / time exercises (2026-11-20)
+// A set can also hold d = distance in MILES and t = time in SECONDS (treadmill, running, golf...).
+// How an exercise is logged follows its category: "cardio" = distance + time, "duration" = time only,
+// anything else = weight x reps.
+const KM_PER_MI = 1.609344;
+function modeOf(category) { return category === "cardio" ? "cardio" : category === "duration" ? "duration" : "strength"; }
+function setDone(s) { return !!s.done && (+s.r > 0 || +s.d > 0 || +s.t > 0); }
+function fmtD(mi, unit) { const v = unit === "kg" ? +mi * KM_PER_MI : +mi; return String(Math.round(v * 100) / 100); }
+/** One set in words: "135 x 8", "1 mi · 15:00", "1:00:00". */
+function fmtSet(s, mode, unit) {
+  if (mode === "strength") return `${fmtW(s.w, unit)} × ${s.r}`;
+  const out = [];
+  if (+s.d > 0) out.push(`${fmtD(s.d, unit)} ${unit === "kg" ? "km" : "mi"}`);
+  if (+s.t > 0) out.push(clock(+s.t));
+  if (!out.length && +s.r > 0) out.push(`${s.r} reps`);
+  return out.join(" · ") || "–";
+}
+
+// ---------------------------------------------------------------- import from Ben's previous gym app (CSV)
+// Columns: Date, Duration, Workout Name, Exercise Name, Set Order, Weight, Reps, Distance (km), Seconds, RPE, Notes.
+// One workout per Date. Ids are made from the file's own values, so importing the same file twice updates
+// instead of doubling. Names that aren't in the library become Ben's own exercises (muscle, equipment, mode):
+const LIFTOFF_CUSTOM = {
+  "barbell flexion row": ["middle back", "barbell"], "bayesian curl": ["biceps", "cable"],
+  "cable standing hip abduction": ["abductors", "cable"], "cross body cable tricep extension": ["triceps", "cable"],
+  "high to low cable fly": ["chest", "cable"], "low to high cable fly": ["chest", "cable"],
+  "incline machine bench press": ["chest", "machine"], "machine hip thrust": ["glutes", "machine"],
+  "shoulder press": ["shoulders", "machine"], "single leg calf raise": ["calves", "body only"],
+  "strict curl": ["biceps", "barbell"], "wide grip chest press": ["chest", "machine"],
+  "wide grip seated cable row": ["middle back", "cable"], "running": ["quadriceps", "body only", "cardio"],
+  "golf": ["", "other", "duration"], "sex": ["", "body only", "duration"], "moving a washing machine and dry": ["", "other", "cardio"],
+};
+
+function hex32(str) {   // a stable 128-bit hash (cyrb128) as 32 hex digits
+  let h1 = 1779033703, h2 = 3144134277, h3 = 1013904242, h4 = 2773480762;
+  for (let i = 0; i < str.length; i++) {
+    const k = str.charCodeAt(i);
+    h1 = h2 ^ Math.imul(h1 ^ k, 597399067); h2 = h3 ^ Math.imul(h2 ^ k, 2869860233);
+    h3 = h4 ^ Math.imul(h3 ^ k, 951274213); h4 = h1 ^ Math.imul(h4 ^ k, 2716044179);
+  }
+  h1 = Math.imul(h3 ^ (h1 >>> 18), 597399067); h2 = Math.imul(h4 ^ (h2 >>> 22), 2869860233);
+  h3 = Math.imul(h1 ^ (h3 >>> 17), 951274213); h4 = Math.imul(h2 ^ (h4 >>> 19), 2716044179);
+  return [h1 ^ h2 ^ h3 ^ h4, h2 ^ h1, h3 ^ h1, h4 ^ h1].map((x) => (x >>> 0).toString(16).padStart(8, "0")).join("");
+}
+function stableUuid(s) {
+  const h = hex32(s);
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-a${h.slice(17, 20)}-${h.slice(20, 32)}`;
+}
+
+function parseCsv(text) {
+  const rows = []; let row = [], cell = "", q = false;
+  text = String(text); if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);   // a byte-order mark at the start
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
+    else cell += c;
+  }
+  if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter((r) => r.some((x) => x.trim() !== ""));
+}
+
+/** Turn the CSV into Jarvis workouts. findId(name) -> a library/own exercise id or null;
+ * musclesOf(id) -> primary muscles (for naming workouts that have no name). */
+function parseLiftoff(text, findId, musclesOf) {
+  const rows = parseCsv(text);
+  const head = (rows.shift() || []).map((h) => h.trim().toLowerCase());
+  const col = (n) => head.indexOf(n);
+  const need = ["date", "exercise name", "set order", "weight", "reps"];
+  if (need.some((n) => col(n) < 0)) throw new Error("This doesn't look like a workout export (no Date / Exercise Name / Set Order / Weight / Reps columns).");
+  const get = (r, n) => (col(n) >= 0 ? String(r[col(n)] ?? "").trim() : "");
+  const byDate = new Map(), custom = new Map();
+  let sets = 0;
+  for (const r of rows) {
+    const date = get(r, "date"), name = get(r, "exercise name");
+    if (!date || !name) continue;
+    const m = date.match(/^(\d{4})-(\d\d)-(\d\d)[ T](\d\d):(\d\d)(?::(\d\d))?/);
+    if (!m) continue;
+    let w = byDate.get(date);
+    if (!w) {
+      const start = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +(m[6] || 0));   // the phone's own time zone
+      const dm = get(r, "duration").match(/(\d+)\s*hours?\s*(\d+)\s*minutes?\s*(\d+)\s*seconds?/i);
+      const secs = dm ? +dm[1] * 3600 + +dm[2] * 60 + +dm[3] : 3600;
+      w = { id: stableUuid("liftoff|" + date), name: get(r, "workout name"), routine_id: null, started_at: start.toISOString(),
+        ended_at: new Date(start.getTime() + secs * 1000).toISOString(), notes: "", exercises: [], _order: new Map() };
+      byDate.set(date, w);
+    }
+    const key = name.toLowerCase();
+    let id = findId(name);
+    if (!id) {
+      id = "c-" + stableUuid("liftoff-ex|" + key);
+      if (!custom.has(id)) { const c = LIFTOFF_CUSTOM[key] || [];
+        custom.set(id, { id, name, equipment: c[1] || "other", primary_muscles: c[0] ? [c[0]] : [], secondary_muscles: [], instructions: [], category: c[2] || "", _sets: [] }); }
+    }
+    let e = w._order.get(id);
+    if (!e) { e = { ex: id, rest: 0, sets: [] }; w._order.set(id, e); w.exercises.push(e); }
+    const km = parseFloat(get(r, "distance")) || 0;
+    const s = { w: parseFloat(get(r, "weight")) || 0, r: Math.round(parseFloat(get(r, "reps")) || 0), done: true, _i: +get(r, "set order") || 0 };
+    if (km > 0) s.d = Math.round((km / KM_PER_MI) * 1000) / 1000;
+    const t = Math.round(parseFloat(get(r, "seconds")) || 0); if (t > 0) s.t = t;
+    e.sets.push(s); sets++;
+    if (custom.has(id)) custom.get(id)._sets.push(s);
+  }
+  for (const c of custom.values()) {   // own exercises with no known mode: from what was logged
+    if (!c.category) c.category = c._sets.some((s) => s.r > 0) ? "strength" : c._sets.some((s) => s.d > 0) ? "cardio" : "duration";
+    delete c._sets;
+  }
+  const workouts = [...byDate.values()].sort((a, b) => (a.started_at < b.started_at ? -1 : 1));
+  for (const w of workouts) {
+    delete w._order;
+    for (const e of w.exercises) { e.sets.sort((a, b) => a._i - b._i); for (const s of e.sets) delete s._i; }
+    if (!w.name) {   // name it after what it worked most: "Chest & Triceps"
+      const count = new Map();
+      for (const e of w.exercises) for (const mu of (musclesOf(e.ex) || []).slice(0, 1)) count.set(mu, (count.get(mu) || 0) + e.sets.length);
+      const top = [...count.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2).map(([mu]) => mu.replace(/\b\w/g, (x) => x.toUpperCase()));
+      w.name = top.length ? top.join(" & ") : w.exercises.length === 1 ? (custom.get(w.exercises[0].ex) || {}).name || "Workout" : "Workout";
+    }
+  }
+  return { workouts, custom: [...custom.values()], sets,
+    exercises: new Set(workouts.flatMap((w) => w.exercises.map((e) => e.ex))).size };
+}
+
+return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recent, stats, clock, dur, KM_PER_MI, modeOf, setDone, fmtD, fmtSet, LIFTOFF_CUSTOM, stableUuid, parseCsv, parseLiftoff };
  })();
     const FIT_TABS = [["start", "Workout"], ["hist", "History"], ["lib", "Exercises"], ["fset", "Settings"]];
     const W = { lib: null, map: new Map(), q: "", eq: "", mus: "", shown: 60, live: null, tick: null, rest: null,
@@ -3141,17 +3265,23 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
     async function ensureLib() {
       if (W.lib) return;
       let list = null;
-      try { const c = JSON.parse(localStorage.getItem("jarvis.fitLib") || "null"); if (c && Date.now() - c.at < 7 * 864e5 && !DEMO) list = c.list; } catch {}
-      if (!list) { list = (await fcall("library")).list; try { if (!DEMO) localStorage.setItem("jarvis.fitLib", JSON.stringify({ at: Date.now(), list })); } catch {} }
+      try { const c = JSON.parse(localStorage.getItem("jarvis.fitLib2") || "null"); if (c && Date.now() - c.at < 7 * 864e5 && !DEMO) list = c.list; } catch {}
+      if (!list) { list = (await fcall("library")).list; try { if (!DEMO) localStorage.setItem("jarvis.fitLib2", JSON.stringify({ at: Date.now(), list })); } catch {} }
       W.lib = list.map(([id, name, equipment, primary, secondary, category, aka]) => ({ id, name, aka: aka || "", equipment: equipment || "", primary: primary || [], secondary: secondary || [], category: category || "" }));
       for (const x of W.lib) W.map.set(x.id, x);
       addCustom();
     }
     function addCustom() {
       for (const c of (FD() && FD().custom) || []) W.map.set(c.id, { id: c.id, name: c.name, aka: "", equipment: c.equipment || "", primary: c.primary_muscles || [],
-        secondary: c.secondary_muscles || [], instructions: c.instructions || [], category: "custom", custom: true, deleted: c.deleted });
+        secondary: c.secondary_muscles || [], instructions: c.instructions || [], category: c.category || "strength", custom: true, deleted: c.deleted });
     }
     const exOf = (id) => W.map.get(id) || { id, name: "Exercise", equipment: "", primary: [], secondary: [] };
+    // How an exercise is logged: weight x reps, distance + time (cardio) or time only (duration).
+    const modeOf = (id) => FC.modeOf(exOf(id).category);
+    function setLine(s, i, id) {
+      const u = unit(), str = modeOf(id) === "strength";
+      return `<div class="fhs"><span>Set ${i + 1}: ${str ? `${FC.fmtW(s.w, u)} ${u} × ${s.r}` : esc(FC.fmtSet(s, modeOf(id), u))}</span><span>${str ? fE(FC.e1rm(s.w, s.r)) : ""}</span></div>`;
+    }
     const exName = (id) => exOf(id).name;
 
     // ---- small original line icons by equipment (Jarvis's cyan line style)
@@ -3305,10 +3435,11 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
           <div class="fchips"><span class="label">Primary</span> ${x.primary.map((m) => `<span class="fchip p">${esc(cap(m))}</span>`).join("") || "–"}</div>
           ${x.secondary.length ? `<div class="fchips"><span class="label">Secondary</span> ${x.secondary.map((m) => `<span class="fchip">${esc(cap(m))}</span>`).join("")}</div>` : ""}
           ${info && info.length ? `<div class="label" style="margin:14px 0 6px">How to do it</div><ol class="fsteps">${info.map((s) => `<li>${esc(s)}</li>`).join("")}</ol>` : ""}`;
-        const histH = hist.length ? hist.map((h) => `<div class="fhist"><div class="fhh"><b>${esc(new Date(h.date).toLocaleDateString([], { year: "numeric", month: "short", day: "numeric" }))}</b><span class="meta">e1RM</span></div>
-          ${h.sets.map((s, i) => `<div class="fhs"><span>Set ${i + 1}: ${FC.fmtW(s.w, u)} ${u} × ${s.r}</span><span>${fE(s.e1rm)}</span></div>`).join("")}</div>`).join("")
+        const str = modeOf(id) === "strength";
+        const histH = hist.length ? hist.map((h) => `<div class="fhist"><div class="fhh"><b>${esc(new Date(h.date).toLocaleDateString([], { year: "numeric", month: "short", day: "numeric" }))}</b><span class="meta">${str ? "e1RM" : ""}</span></div>
+          ${h.sets.map((s, i) => setLine(s, i, id)).join("")}</div>`).join("")
           : `<div class="empty">You haven't logged this one yet.</div>`;
-        openSheet(`<h2>${esc(x.name)}</h2><div class="meta">${best.e1rm ? `Best estimated 1RM ${fE(best.e1rm)} ${u} (${FC.fmtW(best.w, u)} × ${best.r})` : "No sets logged yet"}${x.aka ? ` · also called ${esc(x.aka)}` : ""}</div>
+        openSheet(`<h2>${esc(x.name)}</h2><div class="meta">${best.e1rm ? `Best estimated 1RM ${fE(best.e1rm)} ${u} (${FC.fmtW(best.w, u)} × ${best.r})` : hist.length ? `Logged ${hist.length} time${hist.length === 1 ? "" : "s"}` : "No sets logged yet"}${x.aka ? ` · also called ${esc(x.aka)}` : ""}</div>
           <div class="seg"><button data-t="about" class="${t === "about" ? "on" : ""}">About</button><button data-t="hist" class="${t === "hist" ? "on" : ""}">History ${hist.length}</button></div>
           ${t === "about" ? about : histH}
           <div class="btns">${x.custom ? `<button class="btn quiet" id="cedit">Edit</button>` : ""}<button class="btn quiet" id="sx">Close</button></div>`,
@@ -3328,8 +3459,8 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
       openSheet(`<h2>${esc(w.name)}</h2><div class="meta">${esc(new Date(w.started_at).toLocaleString([], { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))}
         <br>${FC.dur(s.seconds)} · ${s.sets} sets · ${fV(s.volume)} ${u} lifted</div>
         ${w.notes ? `<div class="note" style="margin:0 0 10px">${esc(w.notes)}</div>` : ""}
-        ${w.exercises.map((e) => `<div class="fhist"><div class="fhh"><b>${esc(exName(e.ex))}</b><span class="meta">e1RM</span></div>
-          ${e.sets.filter((x) => x.done).map((x, i) => `<div class="fhs"><span>Set ${i + 1}: ${FC.fmtW(x.w, u)} ${u} × ${x.r}</span><span>${fE(FC.e1rm(x.w, x.r))}</span></div>`).join("")}</div>`).join("")}
+        ${w.exercises.map((e) => `<div class="fhist"><div class="fhh"><b>${esc(exName(e.ex))}</b><span class="meta">${modeOf(e.ex) === "strength" ? "e1RM" : ""}</span></div>
+          ${e.sets.filter((x) => x.done).map((x, i) => setLine(x, i, e.ex)).join("")}</div>`).join("")}
         <div class="btns"><button class="btn quiet" id="wrout">Save as a routine</button><button class="btn danger" id="wdel">Delete</button><button class="btn quiet" id="sx">Close</button></div><div class="err"></div>`,
       (box) => {
         box.querySelector("#sx").onclick = closeSheet;
@@ -3383,12 +3514,13 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
         <label>Name</label><input id="cname" value="${esc(x ? x.name : W.q)}" placeholder="Moving a washing machine">
         <label>Main muscle</label><select id="cmus"><option value="">None / other</option>${all.map((m) => `<option value="${m}" ${x && x.primary[0] === m ? "selected" : ""}>${cap(m)}</option>`).join("")}</select>
         <label>Equipment</label><select id="ceq">${EQUIP.map((e) => `<option value="${e}" ${(x ? x.equipment : "other") === e ? "selected" : ""}>${cap(e)}</option>`).join("")}</select>
+        <label>Logged as</label><select id="ckind">${[["strength", "Weight × reps"], ["cardio", "Distance + time"], ["duration", "Time only"]].map(([v, l]) => `<option value="${v}" ${(x ? FC.modeOf(x.category) : "strength") === v ? "selected" : ""}>${l}</option>`).join("")}</select>
         <div class="btns"><button class="btn" id="csave">Save</button>${x ? `<button class="btn danger" id="cdel">Delete</button>` : ""}<button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`,
       (box) => {
         box.querySelector("#sx").onclick = back || closeSheet;
         box.querySelector("#csave").onclick = async () => {
           const m = box.querySelector("#cmus").value;
-          try { const ex = (await fcall("custom", { id: x && x.id, name: box.querySelector("#cname").value, equipment: box.querySelector("#ceq").value, primary: m ? [m] : [] })).exercise;
+          try { const ex = (await fcall("custom", { id: x && x.id, name: box.querySelector("#cname").value, equipment: box.querySelector("#ceq").value, primary: m ? [m] : [], category: box.querySelector("#ckind").value })).exercise;
             const list = FD().custom, k = list.findIndex((c) => c.id === ex.id); if (k >= 0) list[k] = ex; else list.push(ex);
             addCustom(); if (onSaved) onSaved(ex.id); else { closeSheet(); renderFit(); } } catch (e) { sheetErr(e.message); } };
         const d = box.querySelector("#cdel"); if (d) d.onclick = async () => { if (!confirm(`Delete "${x.name}"? Workouts you've logged with it keep it.`)) return;
@@ -3414,12 +3546,31 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
       inp.onchange = async () => {
         const f = inp.files && inp.files[0]; if (!f) return;
         const note = $("fbnote");
-        try { const data = JSON.parse(await f.text());
+        try { const text = await f.text();
+          let data;
+          const clean = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text;   // drop a byte-order mark
+          if (/^\s*[\[{]/.test(clean)) data = JSON.parse(clean);
+          else {   // a CSV export from another gym app (Date, Exercise Name, Set Order, Weight, Reps, ...)
+            const byName = new Map();
+            for (const x of W.map.values()) if (!x.deleted) for (const n of [x.name, x.aka]) if (n && !byName.has(n.toLowerCase())) byName.set(n.toLowerCase(), x.id);
+            const got = FC.parseLiftoff(text, (n) => byName.get(n.toLowerCase()) || null, (id) => exOf(id).primary);
+            const known = new Set(got.custom.map((c) => c.id)), ws = got.workouts;
+            if (!ws.length) throw new Error("no workouts found in it");
+            const day = (iso) => new Date(iso).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+            if (!confirm(`${ws.length} workouts from ${day(ws[0].started_at)} to ${day(ws[ws.length - 1].started_at)}: ${got.sets} sets of ${got.exercises} exercises ` +
+              `(${got.exercises - known.size} matched to the library, ${known.size} added as your own). Load them? Loading the same file again updates them instead of doubling.`)) return;
+            data = { app: "jarvis-workouts", version: 1, workouts: ws, routines: [], custom: got.custom };
+            note.textContent = "Loading…";
+            const r = await fcall("import", { data });
+            await loadFit();
+            const n2 = $("fbnote"); if (n2) n2.textContent = `Loaded ${r.imported.workouts} workouts and ${r.imported.custom} of your own exercises. They're in History.`;
+            return;
+          }
           if (!confirm(`Load ${(data.workouts || []).length} workouts and ${(data.routines || []).length} routines from this file? Ones you already have are updated, nothing is deleted.`)) return;
           note.textContent = "Loading…";
           const r = await fcall("import", { data });
-          note.textContent = `Loaded ${r.imported.workouts} workouts, ${r.imported.routines} routines, ${r.imported.custom} of your exercises.`;
-          await loadFit(); } catch (e) { note.textContent = "Couldn't load it: " + e.message; }
+          await loadFit();
+          const n2 = $("fbnote"); if (n2) n2.textContent = `Loaded ${r.imported.workouts} workouts, ${r.imported.routines} routines, ${r.imported.custom} of your exercises.`; } catch (e) { note.textContent = "Couldn't load it: " + e.message; }
       };
       inp.click();
     }
@@ -3452,7 +3603,8 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
     function restFor(ex) { let m = {}; try { m = JSON.parse(localStorage.getItem("jarvis.fitRest") || "{}"); } catch {}
       return ex in m ? m[ex] : (FD() ? FD().settings.rest : 180); }
     function rememberRest(ex, s) { try { const m = JSON.parse(localStorage.getItem("jarvis.fitRest") || "{}"); m[ex] = s; localStorage.setItem("jarvis.fitRest", JSON.stringify(m)); } catch {} }
-    function newExercise(ex, n) { return { ex, rest: restFor(ex), sets: Array.from({ length: n || 3 }, () => ({ w: "", r: "", done: false })) }; }
+    function newExercise(ex, n) { const str = modeOf(ex) === "strength";
+      return { ex, rest: str ? restFor(ex) : 0, sets: Array.from({ length: str ? n || 3 : 1 }, () => ({ w: "", r: "", done: false })) }; }
     function startWorkout(r) {
       if (W.live && !confirm(`"${W.live.name}" is still going. Finish it where it stands and start a new one?`)) return;
       if (W.live) { finishNow(false); }
@@ -3486,12 +3638,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
         const prev = prevOf(e.ex);
         h += `<div class="lex"><div class="lexh">${icon(e.ex)}<button class="lexn" data-info="${i}">${esc(exName(e.ex))}</button><button class="lmore" data-exm="${i}" aria-label="More">⋮</button></div>
           <div class="lrest"><span>⏱ Rest</span><button class="lrt" data-rt="${i}">${e.rest ? FC.clock(e.rest) : "off"} ✎</button><label class="lsw"><input type="checkbox" data-ron="${i}" ${e.rest ? "checked" : ""}><i></i></label></div>
-          <table class="lsets"><tr><th>Set</th><th>Prev</th><th>${U()}</th><th>Reps</th><th></th></tr>
-          ${e.sets.map((s, j) => { const p = prev[j];
-            return `<tr class="${s.done ? "done" : ""}"><td class="lno">${j + 1}</td><td class="lprev">${p ? `${FC.fmtW(p.w, u)} × ${p.r}` : "–"}</td>
-              <td><input inputmode="decimal" data-w="${i}:${j}" value="${s.w === "" ? "" : esc(FC.fmtW(s.w, u))}" placeholder="${p ? esc(FC.fmtW(p.w, u)) : ""}"></td>
-              <td><input inputmode="numeric" data-r="${i}:${j}" value="${esc(s.r)}" placeholder="${p ? p.r : ""}"></td>
-              <td><button class="ltick" data-t="${i}:${j}" aria-label="Done">✓</button></td></tr>`; }).join("")}</table>
+          ${setTable(e, i, prev)}
           <button class="laddset" data-add="${i}">+ Add set</button></div>`;
       });
       h += `<button class="btn" id="laddex">+ Add exercise</button><button class="btn danger" id="ldisc">Discard workout</button><div class="note" id="lsync">${W.unsynced ? "Not saved to the cloud yet (kept on this phone)" : ""}</div></div>
@@ -3499,6 +3646,21 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
       const top = live.querySelector(".lbody") ? live.querySelector(".lbody").scrollTop : 0;
       live.innerHTML = h; live.querySelector(".lbody").scrollTop = top;
       wireLive(); drawRest();
+    }
+    // The set table: weight x reps, or distance + minutes (cardio), or minutes only (duration).
+    const mins = (sec) => (+sec > 0 ? String(Math.round((+sec / 60) * 100) / 100) : "");
+    function setTable(e, i, prev) {
+      const u = unit(), mode = modeOf(e.ex), DU = u === "kg" ? "KM" : "MI";
+      const head = mode === "strength" ? `<th>${U()}</th><th>Reps</th>` : mode === "cardio" ? `<th>${DU}</th><th>Min</th>` : `<th></th><th>Min</th>`;
+      return `<table class="lsets"><tr><th>Set</th><th>Prev</th>${head}<th></th></tr>` + e.sets.map((s, j) => { const p = prev[j];
+        const prevTxt = p ? (mode === "strength" ? `${FC.fmtW(p.w, u)} × ${p.r}` : esc(FC.fmtSet(p, mode, u))) : "–";
+        const cells = mode === "strength"
+          ? `<td><input inputmode="decimal" data-w="${i}:${j}" value="${s.w === "" ? "" : esc(FC.fmtW(s.w, u))}" placeholder="${p ? esc(FC.fmtW(p.w, u)) : ""}"></td>
+             <td><input inputmode="numeric" data-r="${i}:${j}" value="${esc(s.r)}" placeholder="${p ? p.r : ""}"></td>`
+          : (mode === "cardio" ? `<td><input inputmode="decimal" data-d="${i}:${j}" value="${+s.d > 0 ? FC.fmtD(s.d, u) : ""}" placeholder="${p && p.d ? FC.fmtD(p.d, u) : ""}"></td>` : "<td></td>")
+            + `<td><input inputmode="decimal" data-tm="${i}:${j}" value="${mins(s.t)}" placeholder="${p ? mins(p.t) : ""}"></td>`;
+        return `<tr class="${s.done ? "done" : ""}"><td class="lno">${j + 1}</td><td class="lprev">${prevTxt}</td>${cells}
+          <td><button class="ltick" data-t="${i}:${j}" aria-label="Done">✓</button></td></tr>`; }).join("") + `</table>`;
     }
     function wireLive() {
       const w = W.live, u = unit(), at = (k) => k.split(":").map(Number);
@@ -3512,9 +3674,20 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
         w.exercises[i].sets[j].w = v === "" || isNaN(+v) ? "" : FC.toLbs(+v, u); changed(); }));
       live.querySelectorAll("[data-r]").forEach((inp) => (inp.oninput = () => { const [i, j] = at(inp.dataset.r); const v = parseInt(inp.value, 10);
         w.exercises[i].sets[j].r = isNaN(v) ? "" : v; changed(); }));
+      live.querySelectorAll("[data-d]").forEach((inp) => (inp.oninput = () => { const [i, j] = at(inp.dataset.d); const v = parseFloat(inp.value.replace(",", "."));
+        w.exercises[i].sets[j].d = isNaN(v) ? "" : (u === "kg" ? v / FC.KM_PER_MI : v); changed(); }));
+      live.querySelectorAll("[data-tm]").forEach((inp) => (inp.oninput = () => { const [i, j] = at(inp.dataset.tm); const v = parseFloat(inp.value.replace(",", "."));
+        w.exercises[i].sets[j].t = isNaN(v) ? "" : Math.round(v * 60); changed(); }));
       live.querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => {
         const [i, j] = at(b.dataset.t), e = w.exercises[i], s = e.sets[j], p = prevOf(e.ex)[j];
-        if (!s.done) {   // an empty box takes what you did last time (the grey number)
+        const mode = modeOf(e.ex);
+        if (!s.done && mode !== "strength") {   // distance / time: empty boxes take last time's numbers too
+          if (!(+s.d > 0) && p && p.d && mode === "cardio") s.d = p.d;
+          if (!(+s.t > 0) && p && p.t) s.t = p.t;
+          if (!(+s.t > 0) && !(mode === "cardio" && +s.d > 0)) { const inp = live.querySelector(`[data-tm="${i}:${j}"]`); inp.focus(); inp.classList.add("need"); return; }
+          s.w = 0; s.r = 0; s.done = true; s.at = new Date().toISOString();
+          if (e.rest) startRest(e.rest, exName(e.ex));
+        } else if (!s.done) {   // an empty box takes what you did last time (the grey number)
           if (s.w === "" && p) s.w = p.w;
           if (s.r === "" && p) s.r = p.r;
           if (!(+s.r > 0)) { const inp = live.querySelector(`[data-r="${i}:${j}"]`); inp.focus(); inp.classList.add("need"); return; }
@@ -3525,7 +3698,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
         changed(); drawLive();
       }));
       live.querySelectorAll("[data-add]").forEach((b) => (b.onclick = () => { const e = w.exercises[+b.dataset.add], last = e.sets[e.sets.length - 1];
-        e.sets.push({ w: last && last.w !== "" ? last.w : "", r: last && last.r !== "" ? last.r : "", done: false }); changed(); drawLive(); }));
+        e.sets.push({ w: last && last.w !== "" ? last.w : "", r: last && last.r !== "" ? last.r : "", ...(last && +last.d > 0 ? { d: last.d } : {}), ...(last && +last.t > 0 ? { t: last.t } : {}), done: false }); changed(); drawLive(); }));
       live.querySelectorAll("[data-ron]").forEach((c) => (c.onchange = () => { const e = w.exercises[+c.dataset.ron];
         e.rest = c.checked ? (restFor(e.ex) || FD().settings.rest || 180) : 0; changed(); drawLive(); }));
       live.querySelectorAll("[data-rt]").forEach((b) => (b.onclick = () => restSheet(w.exercises[+b.dataset.rt])));
@@ -3622,7 +3795,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
     }
     function summarySheet(w) {
       const u = unit(), s = FC.stats(w);
-      const bests = w.exercises.map((e) => { const best = Math.max(...e.sets.map((x) => FC.e1rm(x.w, x.r)));
+      const bests = w.exercises.filter((e) => modeOf(e.ex) === "strength").map((e) => { const best = Math.max(...e.sets.map((x) => FC.e1rm(x.w, x.r)));
         const before = FC.history(FD().workouts.filter((x) => x.id !== w.id), e.ex).reduce((m, h) => Math.max(m, h.best), 0);
         return { name: exName(e.ex), best, before }; });
       openSheet(`<h2>Workout saved</h2><div class="meta">${esc(w.name)} · ${FC.dur(s.seconds)} · ${s.sets} sets · ${fV(s.volume)} ${u} lifted</div>
