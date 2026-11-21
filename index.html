@@ -47,6 +47,7 @@
     --th-soft: #ff8fd6; --th-pale: #ffe0f3; --th-label: #c2a9ef; --th-ink2: #c9d6ee; --th-ink3: #9eb0d4;
     --th-bgA: #171a46; --th-bgB: #101636; --th-c1: 64,52,130; --th-c2: 30,42,92; --th-s1: #232056; --th-s2: #151a42;
     --th-input: 12,14,46; --th-nav: 26,26,70; --th-line: 255,130,210;
+    --th-on: #fff;   /* text on the main colour (light themes use dark text) */
     --bg0: #0e1033; --bg1: #241f5e; --panel: rgba(36,34,92,0.58); --muted: #9aa9d0; --magenta: #ff4fb8; --magenta-dim: rgba(255,79,184,0.6);
   }
   html:root[data-theme="classic"] {   /* the original dark blue */
@@ -76,6 +77,42 @@
     --th-bgA: #1f1846; --th-bgB: #110d2a; --th-c1: 70,52,120; --th-c2: 36,30,80; --th-s1: #261d55; --th-s2: #15112f;
     --th-input: 14,10,36; --th-nav: 30,22,64; --th-line: 255,210,110;
     --bg0: #0f0b26; --bg1: #2c2160; --panel: rgba(44,34,96,0.55); --muted: #a99fc8; --magenta: #ffc845; --magenta-dim: rgba(255,200,69,0.6);
+  }
+  /* Ben's pairs (2026-11-20), each with a third colour added */
+  html:root[data-theme="maroon"] {    /* maroon + gold, cream */
+    --th-a: 230,184,76; --th-a-hex: #e6b84c; --th-a2: 176,30,72; --th-a2-hex: #b01e48; --th-g2: 255,236,200;
+    --th-soft: #f3d58b; --th-pale: #fff3d6; --th-label: #e8b9a0; --th-ink2: #f0dcd8; --th-ink3: #c8a0a0;
+    --th-bgA: #2a0c16; --th-bgB: #14060b; --th-c1: 110,24,48; --th-c2: 60,14,30; --th-s1: #3a1020; --th-s2: #1c070f;
+    --th-input: 24,6,12; --th-nav: 44,10,22; --th-line: 230,184,76;
+    --bg0: #16060c; --bg1: #4a1226; --panel: rgba(80,20,40,0.55); --muted: #c8a0a0; --magenta: #e6b84c; --magenta-dim: rgba(230,184,76,0.6);
+  }
+  html:root[data-theme="cyansilver"] { /* cyan + silver, electric blue */
+    --th-a: 79,216,255; --th-a-hex: #4fd8ff; --th-a2: 192,200,212; --th-a2-hex: #c0c8d4; --th-g2: 90,120,255;
+    --th-soft: #9cecff; --th-pale: #e8fbff; --th-label: #b7c2cf; --th-ink2: #dbe3ea; --th-ink3: #9aa6b2;
+    --th-bgA: #1a1f26; --th-bgB: #0d1014; --th-c1: 52,60,72; --th-c2: 30,36,44; --th-s1: #262c35; --th-s2: #14181d;
+    --th-input: 10,12,16; --th-nav: 24,28,34; --th-line: 170,220,240; --th-on: #0b1620;
+    --bg0: #0b0e12; --bg1: #283039; --panel: rgba(50,58,70,0.55); --muted: #9aa6b2; --magenta: #c0c8d4; --magenta-dim: rgba(192,200,212,0.6);
+  }
+  html:root[data-theme="forest"] {    /* forest green + sapphire, seafoam */
+    --th-a: 60,179,113; --th-a-hex: #3cb371; --th-a2: 40,100,220; --th-a2-hex: #2864dc; --th-g2: 140,230,200;
+    --th-soft: #8fe0b0; --th-pale: #e2fbe9; --th-label: #9cc9b0; --th-ink2: #d6eadf; --th-ink3: #95b8a6;
+    --th-bgA: #0e2418; --th-bgB: #08140e; --th-c1: 30,72,52; --th-c2: 16,40,58; --th-s1: #143022; --th-s2: #0a1a14;
+    --th-input: 6,16,12; --th-nav: 12,32,24; --th-line: 110,200,150;
+    --bg0: #07140d; --bg1: #163a2a; --panel: rgba(24,60,44,0.55); --muted: #95b8a6; --magenta: #5b8cf0; --magenta-dim: rgba(40,100,220,0.6);
+  }
+  html:root[data-theme="goldsilver"] { /* gold + silver, bronze */
+    --th-a: 212,175,55; --th-a-hex: #d4af37; --th-a2: 192,192,192; --th-a2-hex: #c0c0c0; --th-g2: 205,127,50;
+    --th-soft: #ecd27a; --th-pale: #fff6dc; --th-label: #cfc3a0; --th-ink2: #e8e2d4; --th-ink3: #aaa290;
+    --th-bgA: #22201c; --th-bgB: #111010; --th-c1: 64,58,46; --th-c2: 36,34,32; --th-s1: #2c2924; --th-s2: #161513;
+    --th-input: 12,11,10; --th-nav: 28,26,22; --th-line: 220,190,110; --th-on: #1a1408;
+    --bg0: #0f0e0c; --bg1: #33302a; --panel: rgba(60,56,48,0.55); --muted: #aaa290; --magenta: #d4af37; --magenta-dim: rgba(212,175,55,0.6);
+  }
+  html:root[data-theme="mono"] {      /* black + white, a red touch */
+    --th-a: 240,240,240; --th-a-hex: #f0f0f0; --th-a2: 140,140,140; --th-a2-hex: #8c8c8c; --th-g2: 255,59,59;
+    --th-soft: #ffffff; --th-pale: #ffffff; --th-label: #bdbdbd; --th-ink2: #e0e0e0; --th-ink3: #9e9e9e;
+    --th-bgA: #1a1a1a; --th-bgB: #050505; --th-c1: 44,44,44; --th-c2: 24,24,24; --th-s1: #222222; --th-s2: #111111;
+    --th-input: 0,0,0; --th-nav: 18,18,18; --th-line: 220,220,220; --th-on: #000;
+    --bg0: #050505; --bg1: #2a2a2a; --panel: rgba(40,40,40,0.6); --muted: #9e9e9e; --magenta: #ff3b3b; --magenta-dim: rgba(255,59,59,0.6);
   }
   html:root { --line: rgba(var(--th-line),0.26); }
   /* Shared by the phone app and the laptop window. */
@@ -423,8 +460,8 @@
   #money nav button { color: var(--ink3); } #money nav button.on { color: var(--pink2); border-top-color: var(--pink); text-shadow: 0 0 10px rgba(var(--th-a),0.6); }
   #money .btn, #fitlive .btn { border-color: rgba(var(--th-a),0.55); color: var(--th-pale); background: linear-gradient(90deg, rgba(var(--th-g2),0.22), rgba(var(--th-a),0.30)); }
   #money .btn.quiet { background: rgba(255,255,255,0.04); color: var(--ink2); border-color: var(--line); }
-  #money .btn.fstart { background: linear-gradient(90deg, var(--pink), var(--violet)); color: #fff; border: 0; box-shadow: 0 4px 14px rgba(var(--th-a),0.45); }
-  #money .seg button.on { background: var(--pink); border-color: var(--pink); color: #fff; }
+  #money .btn.fstart { background: linear-gradient(90deg, var(--pink), var(--violet)); color: var(--th-on); border: 0; box-shadow: 0 4px 14px rgba(var(--th-a),0.45); }
+  #money .seg button.on { background: var(--pink); border-color: var(--pink); color: var(--th-on); }
   #money .search input, #money .search select { background: rgba(var(--th-input),0.6); border-color: var(--line); }
   #money .fresume { border-color: var(--pink); box-shadow: 0 0 18px rgba(var(--th-a),0.35); }
   #money .fico, #fitlive .fico, #msheet .fico { color: #fff; border-color: rgba(var(--th-a),0.5);
@@ -441,7 +478,7 @@
   #fitlive input, #fitlive textarea { background: rgba(var(--th-input),0.6); border-color: var(--line); }
   #fitlive .lprev { color: var(--ink3); }
   #fitlive tr.done td { background: rgba(var(--th-a),0.14); }
-  #fitlive tr.done .ltick { background: linear-gradient(135deg, var(--pink), var(--violet)); border-color: transparent; color: #fff; box-shadow: 0 0 12px rgba(var(--th-a),0.6); }
+  #fitlive tr.done .ltick { background: linear-gradient(135deg, var(--pink), var(--violet)); border-color: transparent; color: var(--th-on); box-shadow: 0 0 12px rgba(var(--th-a),0.6); }
   #fitlive .laddset { color: var(--pink2); border-color: rgba(var(--th-a),0.4); }
   #fitlive #lrestbar { background: rgba(var(--th-nav),0.98); }
   #lrestbar .lrb i { background: linear-gradient(90deg, rgba(var(--th-g2),1), var(--th-a-hex)); } #lrestbar.up { background: rgba(var(--th-a),0.22); }
@@ -449,7 +486,7 @@
   /* sheets (edit dialogs) */
   #msheet .box { background: linear-gradient(180deg, var(--th-s1) 0%, var(--th-s2) 100%); border-color: rgba(var(--th-line),0.35); box-shadow: 0 -6px 30px rgba(var(--th-a),0.18); }
   #msheet h2 { color: #fff; }
-  #msheet .seg button.on { background: var(--th-a-hex); border-color: var(--th-a-hex); color: #fff; }
+  #msheet .seg button.on { background: var(--th-a-hex); border-color: var(--th-a-hex); color: var(--th-on); }
   #msheet .btn { border-color: rgba(var(--th-a),0.55); color: var(--th-pale); background: linear-gradient(90deg, rgba(var(--th-g2),0.2), rgba(var(--th-a),0.28)); }
   #msheet .btn.quiet { background: rgba(255,255,255,0.04); color: var(--th-ink2); border-color: rgba(var(--th-line),0.26); }
   #msheet .fhist, #msheet .card { background: rgba(255,255,255,0.04); border-color: rgba(var(--th-line),0.26); }
@@ -3132,6 +3169,11 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       ["emerald", "Emerald", "Green and sky blue", ["#2ee59d", "#1fb6ff", "#8ef5cb"], "linear-gradient(150deg, #134049, #08181f)"],
       ["royal", "Royal", "Gold and violet", ["#ffc845", "#8b5cf6", "#ffe08a"], "linear-gradient(150deg, #33276b, #110d2a)"],
       ["classic", "Classic", "The original dark blue", ["#4fd8ff", "#2a7fff", "#d640a8"], "linear-gradient(150deg, #0b1a30, #020309)"],
+      ["maroon", "Maroon & Gold", "With a cream touch", ["#b01e48", "#e6b84c", "#ffecc8"], "linear-gradient(150deg, #5a1630, #1c070f)"],
+      ["cyansilver", "Cyan & Silver", "With electric blue", ["#4fd8ff", "#c0c8d4", "#5a78ff"], "linear-gradient(150deg, #323a45, #0d1014)"],
+      ["forest", "Forest & Sapphire", "With seafoam", ["#3cb371", "#2864dc", "#8ce6c8"], "linear-gradient(150deg, #1c4a34, #0a1a20)"],
+      ["goldsilver", "Gold & Silver", "With bronze", ["#d4af37", "#c0c0c0", "#cd7f32"], "linear-gradient(150deg, #3d3830, #111010)"],
+      ["mono", "Black & White", "With a red touch", ["#f0f0f0", "#111111", "#ff3b3b"], "linear-gradient(150deg, #2e2e2e, #050505)"],
     ];
     function renderLook() {
       const now = document.documentElement.dataset.theme || "neon";
