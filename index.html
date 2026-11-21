@@ -535,7 +535,7 @@
   #money .lbtn { font: inherit; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; padding: 4px 12px; border-radius: 6px; border: 0; color: var(--th-on);
     background: linear-gradient(90deg, var(--th-a-hex), var(--th-a2-hex)); pointer-events: none; }
   #money .llogo { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); height: 52%; max-width: 92%; filter: drop-shadow(0 0 10px rgba(var(--th-a),0.45)); }
-  #money .llogo i { position: absolute; inset: 0; -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+  #money .llogo i { position: absolute; inset: 0; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-position: center; mask-position: center; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }   /* contain: never stretched, whatever the box */
   @media (min-width: 760px) { #money .llogo { height: 46%; bottom: 24px; } #money .ltext { right: 40%; top: 22px; left: 24px; } #money .ltext h3 { font-size: 22px; } }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
