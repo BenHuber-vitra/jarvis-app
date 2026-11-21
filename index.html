@@ -627,6 +627,25 @@
   #money svg.frchart { width: 100%; height: auto; }
   .frchart .rg { stroke: rgba(255,255,255,0.08); } .frchart text { font-size: 9px; fill: var(--ink3); }
   .frchart .rl { fill: none; stroke: var(--th-a-hex); stroke-width: 2; filter: drop-shadow(0 0 3px rgba(var(--th-a),0.7)); } .frchart .ra { fill: rgba(var(--th-a),0.14); }
+  /* Nutrition (food.js) */
+  #money .ndays { display: flex; align-items: center; justify-content: space-between; margin: 0 0 10px; font-size: 17px; color: #fff; }
+  #money .ndays .linkish { font-size: 26px; padding: 0 12px; } #money .ndays .linkish:disabled { opacity: 0.25; }
+  #money .nsumrow { display: flex; align-items: center; gap: 14px; } #money svg.nring { width: 130px; flex: none; }
+  .nring .nt { fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 11; }
+  .nring .nv { fill: none; stroke: var(--th-a-hex); stroke-width: 11; stroke-linecap: round; filter: drop-shadow(0 0 5px rgba(var(--th-a),0.7)); }
+  .nring .nv.over { stroke: #ff6b6b; }
+  #money .nmacs { flex: 1; min-width: 0; } #money .nmac { margin: 0 0 8px; }
+  #money .nmh { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink2); } #money .nmh b { color: #fff; font-weight: 600; }
+  #money .nbar { height: 7px; border-radius: 4px; background: rgba(255,255,255,0.1); overflow: hidden; margin-top: 3px; }
+  #money .nbar i { display: block; height: 100%; border-radius: 4px; }
+  #money .nbar.p i { background: var(--th-a-hex); } #money .nbar.c i { background: rgba(var(--th-g2),1); } #money .nbar.f i { background: var(--th-a2-hex); }
+  #money .ftiles > div { background: rgba(255,255,255,0.04); border-radius: 10px; padding: 10px; } #money .ftiles > div b { display: block; font-size: 20px; color: #fff; margin-top: 4px; }
+  #money svg.nhist { width: 100%; height: auto; } .nhist .bv { fill: var(--th-a-hex); } .nhist .ov { fill: #ff8a8a; }
+  .nhist .tg { stroke: rgba(var(--th-g2),0.8); stroke-dasharray: 5 5; stroke-width: 1.2; } .nhist text { font-size: 10px; fill: var(--ink3); }
+  #msheet .nport { padding: 10px 12px; color: #fff; font-size: 15px; } #msheet .nport b { color: var(--th-soft); }
+  #msheet .nscan { position: relative; border-radius: 12px; overflow: hidden; background: #000; aspect-ratio: 4 / 3; }
+  #msheet .nscan video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  #msheet .nscan i { position: absolute; left: 12%; right: 12%; top: 45%; height: 2px; background: var(--th-a-hex); box-shadow: 0 0 10px var(--th-a-hex); }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -715,6 +734,7 @@
     <a href="#" id="goalsPers" class="ditem"><span>Personal goals</span><em>›</em></a>
   </div>
   <a href="#" id="navFit" class="ditem"><span>Workouts<small>Routines, live logging, history</small></span><em>›</em></a>
+  <a href="#" id="navFood" class="ditem"><span>Nutrition<small>Calories, protein, carbs and fat</small></span><em>›</em></a>
   <a href="#" id="navCalls" class="ditem"><span>Calls<small>Calls Jarvis made for you, with transcripts</small></span><em>›</em></a>
   <a href="#" id="navCrm" class="ditem"><span>Customers<small>The Customer Factor: jobs, invoices, estimates</small></span><em>›</em></a>
   </div>
@@ -1241,7 +1261,7 @@
     menuBtn.setAttribute("aria-expanded", open); drawer.setAttribute("aria-hidden", !open);
     if (open && !was) {   // show which screen you're on
       const m = $("money").classList.contains("on") && $("mtitle").textContent;
-      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["navLook", m === "COLOURS"], ["navCalls", m === "CALLS"], ["navFit", m === "WORKOUTS"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || / BINGO$/.test(m)]]) $(id).classList.toggle("cur", on);
+      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["navLook", m === "COLOURS"], ["navCalls", m === "CALLS"], ["navFit", m === "WORKOUTS"], ["navFood", m === "NUTRITION"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || / BINGO$/.test(m)]]) $(id).classList.toggle("cur", on);
       showSettings(m === "JARVIS COSTS" || m === "PERSONALITY" || m === "COLOURS");   // the cog's page holds Jarvis costs, so open there from it
       subOpen("Money", m === "BUSINESS" || m === "PERSONAL");   // on one of their screens, show the group open
       subOpen("Goals", m === "BUSINESS GOALS" || m === "PERSONAL GOALS" || / BINGO$/.test(m));
@@ -1651,6 +1671,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       if (M.book === "persona") return loadPersona();
       if (M.book === "calls") return loadCalls();
       if (M.book === "fit") return loadFit();
+      if (M.book === "food") return loadFood();
       if (M.book === "look") { M.data = { look: true }; return render(); }
       if (M.book === "goalsBiz") return loadBiz();
       M.busy = refresh === "force" ? "Syncing with your bank…" : (refresh ? "Checking for new transactions…" : "Loading…");
@@ -1673,11 +1694,11 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
         M.book = book; M.data = M.cache[book] || null; M.open = {}; M.q = ""; M.cat = ""; M.error = "";
         try { localStorage.setItem("jarvis.moneyBook", book); } catch {}
       }
-      const tabs = M.book === "crm" ? CRM_TABS : M.book === "fit" ? FIT_TABS : MONEY_TABS;   // the Customers screen has its own four tabs
+      const tabs = M.book === "crm" ? CRM_TABS : M.book === "fit" ? FIT_TABS : M.book === "food" ? FOOD_TABS : MONEY_TABS;   // the Customers screen has its own four tabs
       if (!tabs.some(([k]) => k === tab) && !(M.book === "fit" && (tab === "fset" || tab === "ranks"))) tab = tabs[0][0];   // Workouts' Settings: reached from Home
       el.querySelectorAll("nav button").forEach((b, i) => { b.dataset.tab = tabs[i][0]; b.textContent = tabs[i][1]; });
       M.tab = tab;
-      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY", calls: "CALLS", fit: "WORKOUTS", look: "COLOURS" }[M.book];
+      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY", calls: "CALLS", fit: "WORKOUTS", food: "NUTRITION", look: "COLOURS" }[M.book];
       el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book] || M.book === "bingo" || M.book === "persona" || M.book === "calls" || M.book === "look");   // no Dashboard/Spending/... tabs there
       el.classList.toggle("look", M.book === "look");   // the Colours page lays out its own two halves
       el.classList.toggle("fit", M.book === "fit"); document.body.classList.toggle("fitui", M.book === "fit");   // Workouts' brighter, pinker look
@@ -1704,6 +1725,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     $("goalsPers").onclick = (e) => { e.preventDefault(); goBook("goalsPers"); };
     $("navCrm").onclick = (e) => { e.preventDefault(); goBook("crm"); };
     $("navFit").onclick = (e) => { e.preventDefault(); goBook("fit"); };
+    $("navFood").onclick = (e) => { e.preventDefault(); goBook("food"); };
     $("navLook").onclick = (e) => { e.preventDefault(); goBook("look"); };
     $("mmenu").onclick = (e) => { e.preventDefault(); setMenu(true); };
     el.querySelectorAll("nav button").forEach((b) => (b.onclick = () => {
@@ -4699,6 +4721,259 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
       return ok({});
     }
 
+    // -------------------------------------------------------------- Nutrition: the calorie tracker (2026-11-20, Ben)
+    // A "book" of the money screen called food (title NUTRITION), tabs Today / Add food / Meals / History.
+    // Four ways in: tell Jarvis ("two eggs and toast"; his food tool), search (USDA + Open Food Facts),
+    // scan a barcode (phone camera, BarcodeDetector), saved meals. Targets are Ben's own numbers.
+    // Data: /jarvis/food/* (tools_food.ts; tables in supabase/food.sql). Inserted into money.js by app/build.py.
+    const FOOD_TABS = [["today", "Today"], ["add", "Add food"], ["meals", "Meals"], ["fhist", "History"]];
+    const MEAL_NAMES = { breakfast: "Breakfast", lunch: "Lunch", dinner: "Dinner", snack: "Snacks" };
+    const MKEYS = ["kcal", "protein", "carbs", "fat"];
+    const localToday = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+    const mealByClock = () => { const d = new Date(), t = d.getHours() + d.getMinutes() / 60; return t >= 4 && t < 10.5 ? "breakfast" : t < 14.5 ? "lunch" : t < 17 ? "snack" : t < 21.5 ? "dinner" : "snack"; };
+    const N = { day: localToday(), data: null, hist: null, meals: null, meal: mealByClock(), q: "", results: null, searching: false, err: "", demo: null };
+    const r0 = (n) => Math.round(+n || 0), r1n = (n) => Math.round((+n || 0) * 10) / 10;
+    const dayLabel = (d) => d === localToday() ? "Today" : new Date(d + "T12:00:00").toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
+    const addDays = (d, n) => new Date(Date.parse(d + "T12:00:00Z") + n * 864e5).toISOString().slice(0, 10);
+
+    async function ncall(action, payload) {
+      if (DEMO) return foodDemo(action, payload || {});
+      const auth = await authHeaders();
+      if (!auth) { showSignin(true); throw new Error("This phone isn't paired."); }
+      const r = await fetch(FN + "/food/" + action, { method: "POST",
+        headers: { ...auth, apikey: PUBLISHABLE_KEY, "content-type": "application/json" }, body: JSON.stringify({ tz: TZ, ...(payload || {}) }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || `Nutrition service error (${r.status})`);
+      return j;
+    }
+    async function loadFood() {
+      M.busy = M.data ? "" : "Loading…"; M.error = ""; render();
+      try { N.data = await ncall("day", { day: N.day }); M.cache.food = N.data; if (M.book !== "food") return; M.data = N.data; }
+      catch (e) { if (M.book !== "food") return; M.error = e.message; }
+      M.busy = ""; render();
+    }
+    async function refreshDay() { try { N.data = await ncall("day", { day: N.day }); M.data = N.data; } catch (e) { M.error = e.message; } if (M.book === "food") render(); }
+    window.addEventListener("jarvis:reply", () => { if (M.book === "food" && el.classList.contains("on")) setTimeout(refreshDay, 500); });   // he logged food by voice
+
+    function renderFood() {
+      ({ today: renderToday, add: renderAdd, meals: renderMeals, fhist: renderFoodHist }[M.tab] || renderToday)();
+    }
+    // ---- Today
+    function ring(eaten, target) {
+      const r = 52, len = 2 * Math.PI * r, p = target > 0 ? Math.min(1, eaten / target) : 0, over = target > 0 && eaten > target;
+      return `<svg class="nring" viewBox="0 0 130 130"><circle cx="65" cy="65" r="${r}" class="nt"/><circle cx="65" cy="65" r="${r}" class="nv${over ? " over" : ""}"
+        style="stroke-dasharray:${(len * p).toFixed(1)} ${len.toFixed(1)}" transform="rotate(-90 65 65)"/>
+        <text x="65" y="62" text-anchor="middle" style="font-size:24px;font-weight:700;fill:#fff">${r0(eaten).toLocaleString()}</text>
+        <text x="65" y="82" text-anchor="middle" style="font-size:11px;fill:var(--ink2)">${target ? "of " + r0(target).toLocaleString() + " kcal" : "kcal"}</text></svg>`;
+    }
+    function macroBar(label, eaten, target, cls) {
+      const p = target > 0 ? Math.min(100, (eaten / target) * 100) : 0;
+      return `<div class="nmac"><div class="nmh"><span>${label}</span><b>${r0(eaten)}${target ? ` / ${r0(target)}` : ""} g</b></div><div class="nbar ${cls}"><i style="width:${p}%"></i></div></div>`;
+    }
+    function renderToday() {
+      const d = N.data, t = d.totals, tg = d.targets, has = tg.kcal > 0;
+      let h = `<div class="ndays"><button class="linkish" id="nprev">‹</button><b>${esc(dayLabel(N.day))}</b><button class="linkish" id="nnext" ${N.day >= localToday() ? "disabled" : ""}>›</button></div>`;
+      h += `<div class="card nsum"><div class="nsumrow">${ring(t.kcal, tg.kcal)}<div class="nmacs">${has ? `<div class="sub" style="margin-bottom:6px">${tg.kcal - t.kcal >= 0 ? `<b>${r0(tg.kcal - t.kcal).toLocaleString()}</b> kcal left` : `<b>${r0(t.kcal - tg.kcal).toLocaleString()}</b> kcal over`}</div>` : ""}
+        ${macroBar("Protein", t.protein, tg.protein, "p")}${macroBar("Carbs", t.carbs, tg.carbs, "c")}${macroBar("Fat", t.fat, tg.fat, "f")}</div></div>
+        ${has ? "" : `<div class="btns"><button class="btn" id="ntargets1">Set your daily targets</button></div>`}</div>`;
+      for (const m of Object.keys(MEAL_NAMES)) {
+        const es = d.entries.filter((e) => e.meal === m), kc = es.reduce((a, e) => a + +e.kcal, 0);
+        h += `<div class="sect"><span class="label">${MEAL_NAMES[m]}${es.length ? ` · ${r0(kc)} kcal` : ""}</span><button class="linkish" data-addmeal="${m}">+ Add</button></div>`;
+        if (es.length) h += `<div class="card">${es.map((e) => `<div class="row click" data-entry="${e.id}"><div class="grow"><div class="name">${esc(e.name)}</div>
+          <div class="meta">${esc(r1n(e.qty) + " " + e.unit)}${e.brand ? " · " + esc(e.brand) : ""} · P ${r0(e.protein)} C ${r0(e.carbs)} F ${r0(e.fat)}</div></div><span class="amt">${r0(e.kcal)}</span></div>`).join("")}
+          <div style="text-align:right;margin:2px 0 6px"><button class="linkish" data-savemeal="${m}">Save as a meal</button></div></div>`;
+      }
+      h += `<div class="note">Tip: tell Jarvis "I had two eggs and toast for breakfast" and he logs it. Numbers from Jarvis are estimates; tap an entry to change it.</div>
+        <div class="btns"><button class="btn quiet" id="ntargets">Daily targets${has ? `: ${tg.kcal} kcal · P ${tg.protein} · C ${tg.carbs} · F ${tg.fat}` : ""}</button></div>`;
+      body.innerHTML = h;
+      $("nprev").onclick = () => { N.day = addDays(N.day, -1); refreshDay(); };
+      $("nnext").onclick = () => { if (N.day < localToday()) { N.day = addDays(N.day, 1); refreshDay(); } };
+      $("ntargets").onclick = targetsSheet; const t1 = $("ntargets1"); if (t1) t1.onclick = targetsSheet;
+      body.querySelectorAll("[data-addmeal]").forEach((b) => (b.onclick = () => { N.meal = b.dataset.addmeal; goTab("add"); }));
+      body.querySelectorAll("[data-entry]").forEach((r) => (r.onclick = () => entrySheet(d.entries.find((e) => e.id === r.dataset.entry))));
+      body.querySelectorAll("[data-savemeal]").forEach((b) => (b.onclick = () => saveMealSheet(d.entries.filter((e) => e.meal === b.dataset.savemeal), MEAL_NAMES[b.dataset.savemeal])));
+    }
+    function goTab(tab) { const from = { book: M.book, tab: M.tab }; nav.push(() => show(from.book, from.tab)); show("food", tab); }
+    function targetsSheet() {
+      const tg = N.data.targets;
+      openSheet(`<h2>Daily targets</h2><div class="meta">Your own numbers. Protein, carbs and fat in grams.</div>
+        <label>Calories</label><input id="tk" inputmode="numeric" value="${tg.kcal || ""}" placeholder="e.g. 2800">
+        <div class="search" style="margin-top:12px"><input id="tp" inputmode="numeric" placeholder="Protein g" value="${tg.protein || ""}"><input id="tc" inputmode="numeric" placeholder="Carbs g" value="${tg.carbs || ""}"><input id="tf" inputmode="numeric" placeholder="Fat g" value="${tg.fat || ""}"></div>
+        <div class="note" id="tcalc"></div>
+        <div class="btns"><button class="btn" id="tsave">Save</button><button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`, (box) => {
+        const q = (id) => +box.querySelector(id).value || 0;
+        const calc = () => { const m = q("#tp") * 4 + q("#tc") * 4 + q("#tf") * 9; box.querySelector("#tcalc").textContent = m ? `Your macros add up to ${m.toLocaleString()} kcal.` : ""; };
+        box.querySelectorAll("input").forEach((i) => (i.oninput = calc)); calc();
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelector("#tsave").onclick = async () => { try { N.data.targets = (await ncall("settings", { kcal: q("#tk"), protein: q("#tp"), carbs: q("#tc"), fat: q("#tf") })).targets; closeSheet(); render(); } catch (e) { sheetErr(e.message); } };
+      });
+    }
+    function entrySheet(e) {
+      if (!e) return;
+      openSheet(`<h2>${esc(e.name)}</h2><div class="meta">${esc(e.brand || "")}${e.brand ? " · " : ""}${r0(e.kcal)} kcal · P ${r0(e.protein)} · C ${r0(e.carbs)} · F ${r0(e.fat)}</div>
+        <label>Amount (${esc(e.unit)})</label><input id="eq" inputmode="decimal" value="${r1n(e.qty)}">
+        <label>Meal</label><select id="em">${Object.entries(MEAL_NAMES).map(([k, v]) => `<option value="${k}" ${k === e.meal ? "selected" : ""}>${v}</option>`).join("")}</select>
+        <div class="btns"><button class="btn" id="esave">Save</button><button class="btn danger" id="edel">Remove</button><button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`, (box) => {
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelector("#esave").onclick = async () => { try { await ncall("entry", { id: e.id, qty: +box.querySelector("#eq").value, meal: box.querySelector("#em").value }); closeSheet(); refreshDay(); } catch (x) { sheetErr(x.message); } };
+        box.querySelector("#edel").onclick = async () => { try { await ncall("entry", { id: e.id, delete: true }); closeSheet(); refreshDay(); } catch (x) { sheetErr(x.message); } };
+      });
+    }
+    function saveMealSheet(entries, label) {
+      const kc = entries.reduce((a, e) => a + +e.kcal, 0);
+      openSheet(`<h2>Save as a meal</h2><div class="meta">${entries.length} foods · ${r0(kc)} kcal. Log it again later in one tap (or tell Jarvis the name).</div>
+        <label>Name</label><input id="mn" value="${esc(label)}" placeholder="My usual breakfast">
+        <div class="btns"><button class="btn" id="msave">Save</button><button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`, (box) => {
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelector("#msave").onclick = async () => { try { N.meals = (await ncall("meals", { save: { name: box.querySelector("#mn").value, items: entries } })).meals; closeSheet(); } catch (x) { sheetErr(x.message); } };
+      });
+    }
+    // ---- Add food: search, barcode, recent, quick add
+    function mealSeg() { return `<div class="seg">${Object.entries(MEAL_NAMES).map(([k, v]) => `<button data-nm="${k}" class="${N.meal === k ? "on" : ""}">${v}</button>`).join("")}</div>`; }
+    function wireMealSeg() { body.querySelectorAll("[data-nm]").forEach((b) => (b.onclick = () => { N.meal = b.dataset.nm; body.querySelectorAll("[data-nm]").forEach((x) => x.classList.toggle("on", x === b)); })); }
+    function foodRow(f, i, kind) {
+      const s = f.serving, p = f.per100;
+      const info = s ? `${r0(s.kcal)} kcal per ${esc(s.label)}` : p ? `${r0(p.kcal)} kcal per 100 g` : "";
+      return `<div class="row click" data-${kind}="${i}"><div class="grow"><div class="name">${esc(f.name)}</div><div class="meta">${f.brand ? esc(f.brand) + " · " : ""}${info}${f.source ? " · " + esc(f.source) : ""}</div></div><span class="chev">+</span></div>`;
+    }
+    function renderAdd() {
+      const recent = (N.data && N.data.recent) || [];
+      let h = `<div class="note" style="margin-top:0">Adding to ${esc(dayLabel(N.day).toLowerCase())}</div>${mealSeg()}
+        <div class="search"><input id="nq" placeholder="Search foods (chicken breast, Fairlife...)" value="${esc(N.q)}" enterkeyhint="search"><button class="btn" id="ngo" style="flex:none;min-width:0">Search</button></div>
+        <div class="btns" style="margin:0 0 10px"><button class="btn" id="nscan">📷 Scan a barcode</button><button class="btn quiet" id="nquick">Quick add</button></div>`;
+      if (N.searching) h += `<div class="note">Searching…</div>`;
+      if (N.err) h += `<div class="note err">${esc(N.err)}</div>`;
+      if (N.results) h += `<div class="sect"><span class="label">${N.results.length} found</span></div>` + (N.results.length ? `<div class="card">${N.results.map((f, i) => foodRow(f, i, "res")).join("")}</div>` : `<div class="empty">Nothing found. Try fewer words, or Quick add.</div>`);
+      if (recent.length) h += `<div class="sect"><span class="label">Recent</span></div><div class="card">${recent.map((r, i) => `<div class="row click" data-rec="${i}"><div class="grow"><div class="name">${esc(r.name)}</div>
+        <div class="meta">${esc(r1n(r.qty) + " " + r.unit)}${r.brand ? " · " + esc(r.brand) : ""} · ${r0(r.kcal)} kcal</div></div><span class="chev">+</span></div>`).join("")}</div>`;
+      h += `<div class="note">Food data: USDA FoodData Central and Open Food Facts (openfoodfacts.org, ODbL).</div>`;
+      body.innerHTML = h; wireMealSeg();
+      const go = async () => { N.q = $("nq").value.trim(); if (!N.q) return; N.searching = true; N.err = ""; renderAdd();
+        try { N.results = (await ncall("search", { q: N.q })).results; } catch (e) { N.err = e.message; } N.searching = false; if (M.tab === "add") renderAdd(); };
+      $("ngo").onclick = go; $("nq").onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); go(); } };
+      $("nscan").onclick = scanSheet; $("nquick").onclick = quickSheet;
+      body.querySelectorAll("[data-res]").forEach((r) => (r.onclick = () => portionSheet(N.results[+r.dataset.res])));
+      body.querySelectorAll("[data-rec]").forEach((r) => (r.onclick = () => { const x = recent[+r.dataset.rec];
+        portionSheet({ name: x.name, brand: x.brand, ref: x.ref, source: "recent", unitPer: { unit: x.unit, per: x.per || Object.fromEntries(MKEYS.map((k) => [k, (+x[k] || 0) / (+x.qty || 1)])), qty: +x.qty || 1 } }); }));
+    }
+    // Pick an amount. Units: the food's serving, grams (from per-100 g values), or a recent entry's own unit.
+    function portionSheet(f) {
+      const units = [];
+      if (f.unitPer) units.push({ key: "u", label: f.unitPer.unit, per: f.unitPer.per, def: f.unitPer.qty });
+      if (f.serving) units.push({ key: "s", label: "serving (" + f.serving.label + ")", unit: "serving", per: f.serving, def: 1 });
+      if (f.per100) units.push({ key: "g", label: "grams", unit: "g", per: Object.fromEntries(MKEYS.map((k) => [k, f.per100[k] / 100])), def: f.serving && f.serving.g ? f.serving.g : 100 });
+      if (!units.length) return;
+      let u = units[0];
+      openSheet(`<h2>${esc(f.name)}</h2><div class="meta">${esc(f.brand || "")}${f.brand ? " · " : ""}${esc(f.source || "")}</div>
+        <div class="search"><input id="pq" inputmode="decimal" value="${u.def}"><select id="pu">${units.map((x) => `<option value="${x.key}">${esc(x.label)}</option>`).join("")}</select></div>
+        <div class="card nport" id="pm"></div>
+        <label>Meal</label><select id="pmeal">${Object.entries(MEAL_NAMES).map(([k, v]) => `<option value="${k}" ${k === N.meal ? "selected" : ""}>${v}</option>`).join("")}</select>
+        <div class="btns"><button class="btn" id="padd">Add</button><button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`, (box) => {
+        const q = () => +box.querySelector("#pq").value || 0;
+        const calc = () => Object.fromEntries(MKEYS.map((k) => [k, (+u.per[k] || 0) * q()]));
+        const draw = () => { const c = calc(); box.querySelector("#pm").innerHTML = `<b>${r0(c.kcal)} kcal</b> · Protein ${r0(c.protein)} g · Carbs ${r0(c.carbs)} g · Fat ${r0(c.fat)} g`; };
+        box.querySelector("#pq").oninput = draw;
+        box.querySelector("#pu").onchange = (e) => { u = units.find((x) => x.key === e.target.value); box.querySelector("#pq").value = u.def; draw(); };
+        draw();
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelector("#padd").onclick = async () => { if (!(q() > 0)) return sheetErr("How much?");
+          const c = calc(), unit = u.unit || u.label;
+          try { await ncall("log", { entries: [{ day: N.day, meal: box.querySelector("#pmeal").value, name: f.name, brand: f.brand, qty: q(), unit, ...c,
+            per: Object.fromEntries(MKEYS.map((k) => [k, +u.per[k] || 0])), source: f.source === "recent" ? "recent" : f.ref && f.ref.startsWith("off:") && f.scanned ? "barcode" : "search", ref: f.ref }] });
+            closeSheet(); N.meal = box.querySelector("#pmeal").value; await refreshDay(); goTab("today"); } catch (x) { sheetErr(x.message); } };
+      });
+    }
+    function quickSheet() {
+      openSheet(`<h2>Quick add</h2><div class="meta">Type the numbers from a label or a menu.</div>
+        <label>Name</label><input id="qn" placeholder="Protein bar">
+        <div class="search" style="margin-top:12px"><input id="qk" inputmode="numeric" placeholder="kcal"><input id="qp" inputmode="decimal" placeholder="Protein g"></div>
+        <div class="search"><input id="qc" inputmode="decimal" placeholder="Carbs g"><input id="qf" inputmode="decimal" placeholder="Fat g"></div>
+        <div class="btns"><button class="btn" id="qadd">Add to ${esc(MEAL_NAMES[N.meal])}</button><button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`, (box) => {
+        const v = (id) => +box.querySelector(id).value || 0;
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelector("#qadd").onclick = async () => { const name = box.querySelector("#qn").value.trim(); if (!name || !(v("#qk") > 0)) return sheetErr("Name and calories, at least.");
+          const c = { kcal: v("#qk"), protein: v("#qp"), carbs: v("#qc"), fat: v("#qf") };
+          try { await ncall("log", { entries: [{ day: N.day, meal: N.meal, name, qty: 1, unit: "serving", ...c, per: c, source: "manual" }] }); closeSheet(); await refreshDay(); goTab("today"); } catch (x) { sheetErr(x.message); } };
+      });
+    }
+    // ---- barcode: the phone camera + the browser's BarcodeDetector (Android Chrome); otherwise type it
+    let scanStream = null, scanTimer = null;
+    function stopScan() { clearInterval(scanTimer); scanTimer = null; if (scanStream) { scanStream.getTracks().forEach((t) => t.stop()); scanStream = null; } }
+    async function lookupBarcode(code, box) {
+      try { const f = (await ncall("barcode", { code })).result; f.scanned = true; stopScan(); portionSheet(f); }
+      catch (e) { if (box) { const er = box.querySelector(".err"); if (er) er.textContent = e.message; } else M.error = e.message; }
+    }
+    function scanSheet() {
+      const can = "BarcodeDetector" in window && navigator.mediaDevices;
+      openSheet(`<h2>Scan a barcode</h2><div class="meta">${can ? "Point the camera at the barcode on the pack." : "This device can't read barcodes with the camera; type the numbers under the barcode."}</div>
+        ${can ? `<div class="nscan"><video id="sv" playsinline muted></video><i></i></div>` : ""}
+        <div class="search" style="margin-top:10px"><input id="sc" inputmode="numeric" placeholder="Or type the barcode number"><button class="btn" id="sgo" style="flex:none;min-width:0">Look up</button></div>
+        <div class="btns"><button class="btn quiet" id="sx">Close</button></div><div class="err"></div>`, async (box) => {
+        box.querySelector("#sx").onclick = () => { stopScan(); closeSheet(); };
+        box.querySelector("#sgo").onclick = () => lookupBarcode(box.querySelector("#sc").value, box);
+        if (!can) return;
+        try {
+          const det = new window.BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e"] });
+          scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+          const v = box.querySelector("#sv"); v.srcObject = scanStream; await v.play();
+          scanTimer = setInterval(async () => {
+            if (!sheet.classList.contains("on")) return stopScan();
+            try { const got = await det.detect(v); if (got.length) { clearInterval(scanTimer); navigator.vibrate && navigator.vibrate(60); lookupBarcode(got[0].rawValue, box); } } catch {}
+          }, 300);
+        } catch (e) { box.querySelector(".err").textContent = "Couldn't open the camera: " + e.message + ". Type the number instead."; }
+      });
+    }
+    // ---- saved meals
+    async function renderMeals() {
+      if (!N.meals) { body.innerHTML = `<div class="note">Loading…</div>`; try { N.meals = (await ncall("meals", {})).meals; } catch (e) { body.innerHTML = `<div class="note err">${esc(e.message)}</div>`; return; } if (M.tab !== "meals") return; }
+      let h = mealSeg();
+      h += N.meals.length ? `<div class="card">${N.meals.map((m, i) => { const t = m.items.reduce((a, x) => (MKEYS.forEach((k) => (a[k] += +x[k] || 0)), a), { kcal: 0, protein: 0, carbs: 0, fat: 0 });
+        return `<div class="row"><div class="grow"><div class="name">${esc(m.name)}</div><div class="meta">${m.items.length} foods · ${r0(t.kcal)} kcal · P ${r0(t.protein)}</div></div>
+          <button class="btn fstart" data-logm="${i}" style="padding:6px 14px">Log</button><button class="linkish fdel" data-delm="${i}">✕</button></div>`; }).join("")}</div>`
+        : `<div class="empty">No saved meals yet. On Today, use "Save as a meal" under any meal you've logged.</div>`;
+      body.innerHTML = h; wireMealSeg();
+      body.querySelectorAll("[data-logm]").forEach((b) => (b.onclick = async () => { const m = N.meals[+b.dataset.logm];
+        try { await ncall("log", { entries: m.items.map((x) => ({ ...x, day: N.day, meal: N.meal, source: "meal" })) }); await refreshDay(); goTab("today"); } catch (e) { M.error = e.message; render(); } }));
+      body.querySelectorAll("[data-delm]").forEach((b) => (b.onclick = async () => { const m = N.meals[+b.dataset.delm]; if (!confirm(`Delete the saved meal "${m.name}"?`)) return;
+        N.meals = (await ncall("meals", { delete: m.id })).meals; renderMeals(); }));
+    }
+    // ---- history: the last 14 days
+    async function renderFoodHist() {
+      if (!N.hist) { body.innerHTML = `<div class="note">Loading…</div>`; try { N.hist = await ncall("history", { today: localToday(), days: 14 }); } catch (e) { body.innerHTML = `<div class="note err">${esc(e.message)}</div>`; return; } if (M.tab !== "fhist") return; }
+      const ds = N.hist.days, tg = N.hist.targets, logged = ds.filter((x) => x.n > 0);
+      const avg = (k) => (logged.length ? logged.reduce((a, x) => a + x[k], 0) / logged.length : 0);
+      const w = 300, hh = 120, mx = Math.max(tg.kcal || 0, ...ds.map((x) => x.kcal), 1) * 1.08, bw = w / ds.length;
+      const y = (v) => hh - (v / mx) * hh;
+      let svg = `<svg class="nhist" viewBox="0 0 ${w} ${hh + 14}">${ds.map((x, i) => `<rect x="${(i * bw + bw * 0.15).toFixed(1)}" width="${(bw * 0.7).toFixed(1)}" y="${y(x.kcal).toFixed(1)}" height="${(hh - y(x.kcal)).toFixed(1)}" rx="3" class="${tg.kcal && x.kcal > tg.kcal ? "ov" : "bv"}"/>`).join("")}
+        ${tg.kcal ? `<line x1="0" x2="${w}" y1="${y(tg.kcal).toFixed(1)}" y2="${y(tg.kcal).toFixed(1)}" class="tg"/>` : ""}
+        <text x="0" y="${hh + 12}">${esc(new Date(ds[0].day + "T12:00:00").toLocaleDateString([], { month: "short", day: "numeric" }))}</text><text x="${w}" y="${hh + 12}" text-anchor="end">Today</text></svg>`;
+      let h = `<div class="card"><div class="label">Last 14 days</div><div class="ftiles" style="margin:10px 0"><div><div class="label">Avg kcal</div><b>${r0(avg("kcal")).toLocaleString()}</b></div>
+        <div><div class="label">Avg protein</div><b>${r0(avg("protein"))} g</b></div><div><div class="label">Days logged</div><b>${logged.length}</b></div></div>${svg}</div>`;
+      h += `<div class="card">${[...ds].reverse().map((x) => `<div class="row click" data-day="${x.day}"><div class="grow"><div class="name">${esc(dayLabel(x.day))}</div>
+        <div class="meta">${x.n ? `P ${r0(x.protein)} · C ${r0(x.carbs)} · F ${r0(x.fat)}` : "Nothing logged"}</div></div><span class="amt">${x.n ? r0(x.kcal).toLocaleString() : "–"}</span></div>`).join("")}</div>`;
+      body.innerHTML = h;
+      body.querySelectorAll("[data-day]").forEach((r) => (r.onclick = () => { N.day = r.dataset.day; refreshDay(); goTab("today"); }));
+    }
+    // ---- demo (#money-demo; no network)
+    function foodDemo(action, p) {
+      if (!N.demo) N.demo = { targets: { kcal: 2800, protein: 200, carbs: 300, fat: 85 }, log: [
+        { id: "d1", day: localToday(), meal: "breakfast", name: "Eggs", qty: 3, unit: "egg", kcal: 215, protein: 19, carbs: 1, fat: 14, per: { kcal: 71.7, protein: 6.3, carbs: 0.3, fat: 4.7 } },
+        { id: "d2", day: localToday(), meal: "breakfast", name: "Toast", qty: 2, unit: "slice", kcal: 160, protein: 6, carbs: 28, fat: 2, per: { kcal: 80, protein: 3, carbs: 14, fat: 1 } },
+        { id: "d3", day: localToday(), meal: "lunch", name: "Chicken burrito bowl", brand: "Chipotle", qty: 1, unit: "bowl", kcal: 750, protein: 52, carbs: 70, fat: 26, per: { kcal: 750, protein: 52, carbs: 70, fat: 26 } }], meals: [] };
+      const D = N.demo, ok = (x) => Promise.resolve(JSON.parse(JSON.stringify(x)));
+      const dayOf = (d) => { const es = D.log.filter((e) => e.day === d); const t = { kcal: 0, protein: 0, carbs: 0, fat: 0 }; es.forEach((e) => MKEYS.forEach((k) => (t[k] += e[k]))); return { day: d, entries: es, totals: t, targets: D.targets, recent: D.log.slice(-10).reverse() }; };
+      if (action === "day") return ok(dayOf(p.day || localToday()));
+      if (action === "log") { p.entries.forEach((e) => D.log.push({ ...e, id: "d" + Math.random().toString(36).slice(2), qty: e.qty || 1 })); return ok({ ok: true }); }
+      if (action === "entry") { const e = D.log.find((x) => x.id === p.id); if (p.delete) D.log = D.log.filter((x) => x !== e); else { if (p.meal) e.meal = p.meal; if (p.qty) { MKEYS.forEach((k) => (e[k] = e.per[k] * p.qty)); e.qty = p.qty; } } return ok({ ok: true }); }
+      if (action === "settings") { MKEYS.forEach((k) => { if (p[k] !== undefined) D.targets[k] = p[k]; }); return ok({ targets: D.targets }); }
+      if (action === "meals") { if (p.save) D.meals.push({ id: "m" + D.meals.length, name: p.save.name, items: p.save.items }); if (p.delete) D.meals = D.meals.filter((m) => m.id !== p.delete); return ok({ meals: D.meals }); }
+      if (action === "search") return ok({ results: [{ name: "Chicken breast, roasted", brand: null, ref: "usda:1", source: "USDA", per100: { kcal: 165, protein: 31, carbs: 0, fat: 3.6 }, serving: null },
+        { name: "Core Power 26g", brand: "fairlife", ref: "off:1", source: "Open Food Facts", per100: null, serving: { label: "1 bottle (414 ml)", g: 414, kcal: 170, protein: 26, carbs: 6, fat: 4.5 } }] });
+      if (action === "barcode") return ok({ result: { name: "Diet Coke", brand: "Coca-Cola", ref: "off:" + p.code, source: "Open Food Facts", per100: { kcal: 0, protein: 0, carbs: 0, fat: 0 }, serving: { label: "1 can", g: 355, kcal: 0, protein: 0, carbs: 0, fat: 0 } } });
+      if (action === "history") { const days = Array.from({ length: 14 }, (_, i) => { const d = addDays(localToday(), i - 13); const t = dayOf(d).totals; return { day: d, ...t, n: dayOf(d).entries.length || (i % 3 ? 4 : 0), kcal: t.kcal || (i % 3 ? 2400 + i * 37 : 0), protein: t.protein || (i % 3 ? 170 : 0) }; }); return ok({ days, targets: D.targets }); }
+      return ok({});
+    }
+
     const MONEY_TABS = [["dash", "Dashboard"], ["spend", "Spending"], ["recur", "Recurring"], ["tx", "Transactions"]];
     function render() {
       el.querySelectorAll("nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === M.tab));
@@ -4711,6 +4986,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
         else if (M.book === "persona") renderPersona();
         else if (M.book === "calls") renderCalls();
         else if (M.book === "fit") renderFit();
+        else if (M.book === "food") renderFood();
         else if (M.book === "look") renderLook();
         else if (M.book === "costs") renderCosts();
         else if (M.book === "crm") renderCrm();
