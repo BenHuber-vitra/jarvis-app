@@ -656,6 +656,22 @@
   #money .crow b.hl { color: var(--th-soft); text-shadow: 0 0 10px rgba(var(--th-a),0.6); }
   #money .cmac { display: flex; height: 10px; border-radius: 5px; overflow: hidden; gap: 2px; }
   #money .cmac i { display: block; } #money .cmac .p { background: var(--th-a-hex); } #money .cmac .c { background: rgba(var(--th-g2),1); } #money .cmac .f { background: var(--th-a2-hex); }
+  /* settings pages (setpages.js) */
+  #money .sprow { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--grid); color: var(--ink); }
+  #money .card .label + .sprow { border-top: 0; }
+  #money .sprow .grow { flex: 1; min-width: 0; } #money .sprow b { font-weight: 600; font-size: 16px; }
+  #money .sprow input[type=time], #money .sprow select { background: rgba(var(--th-input),0.6); border: 1px solid var(--line); color: var(--ink); font: inherit; font-size: 15px; padding: 6px 8px; border-radius: 6px; }
+  #money .tgl { position: relative; width: 46px; height: 26px; flex: none; }
+  #money .tgl input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
+  #money .tgl i { position: absolute; inset: 0; border-radius: 13px; background: rgba(150,160,190,0.35); transition: background 0.2s; }
+  #money .tgl i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: left 0.2s; }
+  #money .tgl input:checked + i { background: var(--th-a-hex); } #money .tgl input:checked + i::after { left: 23px; }
+  #money .spchips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  #money .spchip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; border-radius: 14px; background: rgba(var(--th-a),0.16); border: 1px solid rgba(var(--th-a),0.4); color: #fff; font-size: 14px; }
+  #money .spchip button { background: none; border: 0; color: var(--ink2); font-size: 12px; padding: 0 2px; cursor: pointer; }
+  #money .sprule { padding: 12px 0; border-top: 1px solid var(--grid); color: var(--ink); } #money .sprule:first-child { border-top: 0; } #money .sprule b { font-size: 16px; }
+  #money .pends { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink3); margin-bottom: 4px; }
+  #msheet textarea { min-height: 80px; }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -753,6 +769,10 @@
   <a href="#" id="dback" class="ditem dback"><span>‹ Menu</span><em></em></a>
   <div class="dsect">Jarvis</div>
   <a href="#" id="navLook" class="ditem"><span>Colours<small>Pick the app's colour theme</small></span><em>›</em></a>
+  <a href="#" id="navAlerts" class="ditem"><span>Alerts &amp; schedule<small>Briefing, recap, heads-up alerts, quiet hours</small></span><em>›</em></a>
+  <a href="#" id="navRules" class="ditem"><span>Ask-first rules<small>What Jarvis does without asking</small></span><em>›</em></a>
+  <a href="#" id="navMemory" class="ditem"><span>Memory<small>What Jarvis remembers about you</small></span><em>›</em></a>
+  <a href="#" id="navVoice" class="ditem"><span>Voice &amp; listening<small>Speed, spoken replies, wake word, weather town</small></span><em>›</em></a>
   <a href="#" id="navPersona" class="ditem"><span>Personality<small>Humor, formality, detail and more</small></span><em>›</em></a>
   <a href="#" id="navCosts" class="ditem"><span>Jarvis costs<small>What Jarvis costs to run this month</small></span><em>›</em></a>
   <div class="dsect">This phone</div>
@@ -904,6 +924,7 @@
       if (busy) return; busy = true;
       while (queue.length && gen === generation) {
         const text = queue.shift();
+        if (window.jarvisVoice && window.jarvisVoice.spoken === false) continue;   // Settings: "Speak replies" off
         try {
           const r = await call("/tts", { method: "POST", headers: { "content-type": "application/json" },
             body: JSON.stringify({ text, previous_text: prevText, previous_request_ids: ids.slice(-3) }) });
@@ -1149,7 +1170,7 @@
       S.levelTarget = Math.min(1, rms * 8);
       const now = performance.now();
       if (rms > 0.02) { heard = true; quietSince = 0; } else if (heard && !quietSince) quietSince = now;
-      if (!heard && opts.followUp && now - t0 > 7000) { cancelListening(); return; }
+      if (!heard && opts.followUp && now - t0 > ((window.jarvisVoice && window.jarvisVoice.followup) || 7) * 1000) { cancelListening(); return; }
       if ((heard && quietSince && now - quietSince > 1300) || now - t0 > 20000) { stopListening(); return; }
       requestAnimationFrame(tick);
     };
@@ -1271,8 +1292,8 @@
     menuBtn.setAttribute("aria-expanded", open); drawer.setAttribute("aria-hidden", !open);
     if (open && !was) {   // show which screen you're on
       const m = $("money").classList.contains("on") && $("mtitle").textContent;
-      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["navLook", m === "COLOURS"], ["navCalls", m === "CALLS"], ["navFit", m === "WORKOUTS"], ["navFood", m === "NUTRITION"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || / BINGO$/.test(m)]]) $(id).classList.toggle("cur", on);
-      showSettings(m === "JARVIS COSTS" || m === "PERSONALITY" || m === "COLOURS");   // the cog's page holds Jarvis costs, so open there from it
+      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["navLook", m === "COLOURS"], ["navAlerts", m === "ALERTS"], ["navRules", m === "ASK FIRST"], ["navMemory", m === "MEMORY"], ["navVoice", m === "VOICE"], ["navCalls", m === "CALLS"], ["navFit", m === "WORKOUTS"], ["navFood", m === "NUTRITION"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || / BINGO$/.test(m)]]) $(id).classList.toggle("cur", on);
+      showSettings(["JARVIS COSTS", "PERSONALITY", "COLOURS", "ALERTS", "ASK FIRST", "MEMORY", "VOICE"].includes(m));   // the cog's page holds Jarvis costs, so open there from it
       subOpen("Money", m === "BUSINESS" || m === "PERSONAL");   // on one of their screens, show the group open
       subOpen("Goals", m === "BUSINESS GOALS" || m === "PERSONAL GOALS" || / BINGO$/.test(m));
       menuStep = nav.push(() => setMenu(false));
@@ -1683,6 +1704,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       if (M.book === "fit") return loadFit();
       if (M.book === "food") return loadFood();
       if (M.book === "look") { M.data = { look: true }; return render(); }
+      if (["alerts", "memory", "rules", "voice"].includes(M.book)) return loadSetPage(M.book);
       if (M.book === "goalsBiz") return loadBiz();
       M.busy = refresh === "force" ? "Syncing with your bank…" : (refresh ? "Checking for new transactions…" : "Loading…");
       M.error = ""; render();
@@ -1708,8 +1730,8 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       if (!tabs.some(([k]) => k === tab) && !(M.book === "fit" && (tab === "fset" || tab === "ranks")) && !(M.book === "food" && tab === "calc")) tab = tabs[0][0];   // Workouts' Settings: reached from Home
       el.querySelectorAll("nav button").forEach((b, i) => { b.dataset.tab = tabs[i][0]; b.textContent = tabs[i][1]; });
       M.tab = tab;
-      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY", calls: "CALLS", fit: "WORKOUTS", food: "NUTRITION", look: "COLOURS" }[M.book];
-      el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book] || M.book === "bingo" || M.book === "persona" || M.book === "calls" || M.book === "look");   // no Dashboard/Spending/... tabs there
+      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY", calls: "CALLS", fit: "WORKOUTS", food: "NUTRITION", look: "COLOURS", alerts: "ALERTS", rules: "ASK FIRST", memory: "MEMORY", voice: "VOICE" }[M.book];
+      el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book] || M.book === "bingo" || M.book === "persona" || M.book === "calls" || M.book === "look" || ["alerts", "memory", "rules", "voice"].includes(M.book));   // no Dashboard/Spending/... tabs there
       el.classList.toggle("look", M.book === "look");   // the Colours page lays out its own two halves
       el.classList.toggle("fit", M.book === "fit"); document.body.classList.toggle("fitui", M.book === "fit");   // Workouts' brighter, pinker look
       body.scrollTop = 0; hideTip(); el.classList.add("on");
@@ -1737,6 +1759,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     $("navFit").onclick = (e) => { e.preventDefault(); goBook("fit"); };
     $("navFood").onclick = (e) => { e.preventDefault(); goBook("food"); };
     $("navLook").onclick = (e) => { e.preventDefault(); goBook("look"); };
+    for (const b of ["alerts", "rules", "memory", "voice"]) $("nav" + b[0].toUpperCase() + b.slice(1)).onclick = (e) => { e.preventDefault(); goBook(b); };
     $("mmenu").onclick = (e) => { e.preventDefault(); setMenu(true); };
     el.querySelectorAll("nav button").forEach((b) => (b.onclick = () => {
       if (b.dataset.tab === M.tab) return;
@@ -3404,6 +3427,160 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
       }));
     }
 
+    // -------------------------------------------------------------- Settings pages (2026-11-20, Ben)
+    // Alerts & schedule, Memory, Ask-first rules, Voice & listening: each a "book" of the money screen without
+    // tabs, reached from the cog. Data: /jarvis/settings/<page> (tools_settings.ts). Appended to settings.js by build.py.
+    const SP = { alerts: null, schedule: null, facts: null, rules: null, voice: null, q: "", note: "" };
+    async function scall(page, payload) {
+      if (DEMO) return spDemo(page, payload || {});
+      const auth = await authHeaders();
+      if (!auth) { showSignin(true); throw new Error("This phone isn't paired."); }
+      const r = await fetch(FN + "/settings/" + page, { method: "POST",
+        headers: { ...auth, apikey: PUBLISHABLE_KEY, "content-type": "application/json" }, body: JSON.stringify(payload || {}) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || `Settings error (${r.status})`);
+      return j;
+    }
+    // The phone reads its voice settings once at start (speak replies, listen-again time); the page updates them.
+    if (!DEMO) (async () => { try { window.jarvisVoice = (await scall("voice")).voice; } catch {} })();
+    const toggle = (id, on) => `<label class="tgl"><input type="checkbox" id="${id}" ${on ? "checked" : ""}><i></i></label>`;
+    const sv = (msg) => { const n = $("spnote"); if (n) { n.textContent = msg; clearTimeout(sv.t); sv.t = setTimeout(() => { if ($("spnote")) $("spnote").textContent = ""; }, 2500); } };
+    async function loadSetPage(book) {
+      M.data = { [book]: true }; M.error = ""; render();
+      try {
+        if (book === "alerts") { const [a, s] = await Promise.all([scall("alerts"), scall("schedule")]); SP.alerts = a.alerts; SP.schedule = s.schedule; }
+        if (book === "memory") SP.facts = (await scall("memory")).facts;
+        if (book === "rules") SP.rules = (await scall("rules")).rules;
+        if (book === "voice") SP.voice = (await scall("voice")).voice;
+      } catch (e) { M.error = e.message; }
+      if (M.book === book) render();
+    }
+    function renderSetPage() { ({ alerts: renderAlerts, memory: renderMemory, rules: renderRules, voice: renderVoice }[M.book])(); }
+
+    // ---- Alerts & schedule
+    function chips(list, kind) {
+      return `<div class="spchips">${list.map((x, i) => `<span class="spchip">${esc(x)}<button data-rm${kind}="${i}" aria-label="Remove">✕</button></span>`).join("") || `<span class="meta">None yet</span>`}</div>
+        <div class="search"><input id="add${kind}" placeholder="${kind === "p" ? "Add a name (e.g. Charlie)" : "Add a word or name to mute"}"><button class="btn" id="go${kind}" style="flex:none;min-width:0">Add</button></div>`;
+    }
+    function renderAlerts() {
+      const a = SP.alerts, s = SP.schedule;
+      if (!a) { body.innerHTML = M.error ? `<div class="note err">${esc(M.error)}</div>` : `<div class="note">Loading…</div>`; return; }
+      body.innerHTML = `<div class="note" style="margin-top:0">Times are your local time. Changes save as you make them.</div>
+        <div class="card"><div class="label">Daily</div>
+          <div class="sprow"><div class="grow"><b>Morning briefing</b><div class="meta">A notification; tap it and Jarvis reads your day</div></div><input type="time" id="bt" value="${s.briefing.time}">${toggle("bon", s.briefing.on)}</div>
+          <div class="sprow"><div class="grow"><b>Evening recap</b><div class="meta">What you missed, and tomorrow</div></div><input type="time" id="rt" value="${s.recap.time}">${toggle("ron", s.recap.on)}</div></div>
+        <div class="card"><div class="label">Heads-up alerts</div>
+          <div class="sprow"><div class="grow"><b>Meetings</b><div class="meta">Before each calendar event</div></div><select id="lead">${[5, 10, 15, 20, 30, 45, 60].map((m) => `<option value="${m}" ${a.lead === m ? "selected" : ""}>${m} min</option>`).join("")}</select>${toggle("mon", a.meetings)}</div>
+          <div class="sprow"><div class="grow"><b>Important emails</b><div class="meta">From your people, or that look urgent</div></div>${toggle("eon", a.emails)}</div>
+          <div class="sprow"><div class="grow"><b>Unanswered texts</b><div class="meta">One check a day</div></div><input type="time" id="tat" value="${a.textsAt}">${toggle("ton", a.texts)}</div></div>
+        <div class="card"><div class="label">Quiet hours</div><div class="sub" style="margin:4px 0 8px">No alerts between these times.</div>
+          <div class="sprow"><span>From</span><input type="time" id="q0" value="${a.quiet[0]}"><span>to</span><input type="time" id="q1" value="${a.quiet[1]}"></div></div>
+        <div class="card"><div class="label">People who matter</div><div class="sub" style="margin:4px 0 8px">Their emails always alert you.</div>${chips(a.people, "p")}</div>
+        <div class="card"><div class="label">Muted</div><div class="sub" style="margin:4px 0 8px">Never alert about these names or words.</div>${chips(a.muted, "m")}</div>
+        <div class="note" id="spnote"></div>`;
+      const saveA = async (p) => { try { SP.alerts = (await scall("alerts", p)).alerts; sv("Saved"); } catch (e) { sv("Couldn't save: " + e.message); } };
+      const saveS = async (p) => { try { SP.schedule = (await scall("schedule", p)).schedule; sv("Saved"); } catch (e) { sv("Couldn't save: " + e.message); } };
+      $("bon").onchange = (e) => saveS({ briefing: { on: e.target.checked } }); $("bt").onchange = (e) => saveS({ briefing: { time: e.target.value } });
+      $("ron").onchange = (e) => saveS({ recap: { on: e.target.checked } }); $("rt").onchange = (e) => saveS({ recap: { time: e.target.value } });
+      $("mon").onchange = (e) => saveA({ meetings: e.target.checked }); $("lead").onchange = (e) => saveA({ lead: +e.target.value });
+      $("eon").onchange = (e) => saveA({ emails: e.target.checked });
+      $("ton").onchange = (e) => saveA({ texts: e.target.checked }); $("tat").onchange = (e) => saveA({ textsAt: e.target.value });
+      const q = () => saveA({ quiet: [$("q0").value, $("q1").value] }); $("q0").onchange = q; $("q1").onchange = q;
+      for (const [k, list] of [["p", "people"], ["m", "muted"]]) {
+        const add = async () => { const v = $("add" + k).value.trim(); if (!v) return; await saveA({ [list]: [...SP.alerts[list], v] }); renderAlerts(); };
+        $("go" + k).onclick = add; $("add" + k).onkeydown = (e) => { if (e.key === "Enter") add(); };
+        body.querySelectorAll(`[data-rm${k}]`).forEach((b) => (b.onclick = async () => { const arr = [...SP.alerts[list]]; arr.splice(+b.dataset["rm" + k], 1); await saveA({ [list]: arr }); renderAlerts(); }));
+      }
+    }
+
+    // ---- Memory
+    function renderMemory() {
+      const f = SP.facts;
+      if (!f) { body.innerHTML = M.error ? `<div class="note err">${esc(M.error)}</div>` : `<div class="note">Loading…</div>`; return; }
+      const ql = SP.q.toLowerCase(), shown = f.filter((x) => !ql || x.text.toLowerCase().includes(ql));
+      body.innerHTML = `<div class="note" style="margin-top:0">What Jarvis remembers about you (${f.length} of 150), on the phone and the laptop. Tap a fact to change or delete it.</div>
+        <div class="search"><input id="madd" placeholder="Add a fact (e.g. Amber's birthday is March 10)"><button class="btn" id="mgo" style="flex:none;min-width:0">Add</button></div>
+        ${f.length > 8 ? `<div class="search"><input id="mq" placeholder="Search" value="${esc(SP.q)}"></div>` : ""}
+        <div class="note err" id="spnote"></div>
+        <div class="card">${shown.length ? shown.map((x) => `<div class="row click" data-fact="${x.id}"><div class="grow"><div class="name" style="white-space:normal">${esc(x.text)}</div>
+          <div class="meta">${x.source === "noticed" ? "Jarvis noticed" : "You asked"} · ${esc(new Date(x.updated_at || x.created_at).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" }))}</div></div><span class="chev">›</span></div>`).join("")
+          : `<div class="empty">${f.length ? "Nothing matches." : "Nothing yet. Tell Jarvis \"remember that...\" or add a fact above."}</div>`}</div>
+        <div class="note">Jarvis never keeps passwords, PINs, codes, card or account numbers.</div>`;
+      const add = async () => { const v = $("madd").value.trim(); if (!v) return; try { SP.facts = (await scall("memory", { add: v })).facts; renderMemory(); } catch (e) { $("spnote").textContent = e.message; } };
+      $("mgo").onclick = add; $("madd").onkeydown = (e) => { if (e.key === "Enter") add(); };
+      const mq = $("mq"); if (mq) mq.oninput = () => { SP.q = mq.value; const pos = mq.selectionStart; renderMemory(); const n = $("mq"); n.focus(); n.setSelectionRange(pos, pos); };
+      body.querySelectorAll("[data-fact]").forEach((r) => (r.onclick = () => factSheet(f.find((x) => x.id === r.dataset.fact))));
+    }
+    function factSheet(x) {
+      openSheet(`<h2>Memory</h2><div class="meta">${x.source === "noticed" ? "Jarvis noticed this" : "You asked Jarvis to remember this"}.</div>
+        <textarea id="ft" rows="3">${esc(x.text)}</textarea>
+        <div class="btns"><button class="btn" id="fs">Save</button><button class="btn danger" id="fd">Forget it</button><button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`, (box) => {
+        box.querySelector("#sx").onclick = closeSheet;
+        box.querySelector("#fs").onclick = async () => { try { SP.facts = (await scall("memory", { edit: { id: x.id, text: box.querySelector("#ft").value } })).facts; closeSheet(); renderMemory(); } catch (e) { sheetErr(e.message); } };
+        box.querySelector("#fd").onclick = async () => { try { SP.facts = (await scall("memory", { delete: x.id })).facts; closeSheet(); renderMemory(); } catch (e) { sheetErr(e.message); } };
+      });
+    }
+
+    // ---- Ask-first rules
+    const RULE_ROWS = [["texts", "Texts", "\"Text Amber I'm on my way\""], ["emails", "Emails", "\"Email Charlie the invoice\""], ["calls", "Calls", "\"Call Amber\", \"you call the shop and ask...\""],
+      ["calendar", "Calendar", "\"Add the dentist Tuesday at 3\", moving and deleting events"], ["files", "Google Drive files", "Making, renaming, moving, trashing files"], ["mail", "Tidying email", "Drafts, archiving, marking read, trash"]];
+    function renderRules() {
+      const r = SP.rules;
+      if (!r) { body.innerHTML = M.error ? `<div class="note err">${esc(M.error)}</div>` : `<div class="note">Loading…</div>`; return; }
+      body.innerHTML = `<div class="note" style="margin-top:0">"Just do it": when you tell Jarvis outright, he does it without asking. When you only hint ("I should text Amber"), he always offers first. "Always ask": he reads it back and waits for your yes, every time.</div>
+        <div class="card">${RULE_ROWS.map(([k, n, ex]) => `<div class="sprule"><div><b>${n}</b><div class="meta" style="white-space:normal">${ex}</div></div>
+          <div class="seg" style="margin:8px 0 0"><button data-rule="${k}" data-v="direct" class="${r[k] !== "ask" ? "on" : ""}">Just do it</button><button data-rule="${k}" data-v="ask" class="${r[k] === "ask" ? "on" : ""}">Always ask</button></div></div>`).join("")}
+          <div class="sprule"><div><b>Buying or submitting forms online</b><div class="meta" style="white-space:normal">Always asks. This one can't be changed, because it involves money.</div></div></div></div>
+        <div class="note" id="spnote"></div>`;
+      body.querySelectorAll("[data-rule]").forEach((b) => (b.onclick = async () => {
+        try { SP.rules = (await scall("rules", { [b.dataset.rule]: b.dataset.v })).rules; renderRules(); sv("Saved. Jarvis uses it from his next reply."); } catch (e) { sv("Couldn't save: " + e.message); } }));
+    }
+
+    // ---- Voice & listening
+    const SPEEDS = [[0.8, "Slower"], [0.9, "A bit slower"], [1, "Normal"], [1.1, "A bit faster"], [1.2, "Faster"]];
+    function renderVoice() {
+      const v = SP.voice;
+      if (!v) { body.innerHTML = M.error ? `<div class="note err">${esc(M.error)}</div>` : `<div class="note">Loading…</div>`; return; }
+      body.innerHTML = `<div class="card"><div class="label">Jarvis's voice</div>
+          <div class="sprow"><div class="grow"><b>Speaking speed</b><div class="meta">${esc((SPEEDS.find((x) => x[0] === v.speed) || [0, v.speed + "x"])[1])}</div></div></div>
+          <input type="range" id="vsp" min="0.8" max="1.2" step="0.1" value="${v.speed}" style="width:100%;accent-color:var(--th-a-hex)">
+          <div class="pends"><span>Slower</span><span>Faster</span></div>
+          <div class="sprow"><div class="grow"><b>Speak replies</b><div class="meta">Off = text only (Jarvis still listens)</div></div>${toggle("vsk", v.spoken)}</div>
+          <div class="meta" style="white-space:normal">Voice: the J.A.R.V.I.S. voice from ElevenLabs.</div></div>
+        <div class="card"><div class="label">Listening</div>
+          <div class="sprow"><div class="grow"><b>Laptop: end a conversation after</b><div class="meta">Seconds of quiet before you need "hey Jarvis" again</div></div><select id="vid">${[8, 10, 15, 20, 30, 45, 60].map((s) => `<option value="${s}" ${v.idle === s ? "selected" : ""}>${s} s</option>`).join("")}</select></div>
+          <div class="sprow"><div class="grow"><b>Phone: listen again for</b><div class="meta">After Jarvis answers in Conversation mode</div></div><select id="vfu">${[4, 7, 10, 15, 20].map((s) => `<option value="${s}" ${v.followup === s ? "selected" : ""}>${s} s</option>`).join("")}</select></div>
+          <div class="label" style="margin-top:8px">"Hey Jarvis" on the laptop</div>
+          <div class="seg" style="margin-top:8px">${[["strict", "Strict"], ["normal", "Normal"], ["sensitive", "Sensitive"]].map(([k, n]) => `<button data-wake="${k}" class="${v.wake === k ? "on" : ""}">${n}</button>`).join("")}</div>
+          <div class="meta" style="white-space:normal">Sensitive hears you from further away but wakes by mistake more often.</div></div>
+        <div class="card"><div class="label">Weather location</div><div class="sub" style="margin:4px 0 8px">For the briefing and recap: <b>${esc(v.place.name)}</b></div>
+          <div class="search"><input id="vpl" placeholder="Town, State"><button class="btn" id="vplgo" style="flex:none;min-width:0">Set</button></div></div>
+        <div class="note" id="spnote"></div>`;
+      const save = async (p, re) => { try { SP.voice = (await scall("voice", p)).voice; sv("Saved. The laptop picks it up within a minute."); if (re) renderVoice(); } catch (e) { sv("Couldn't save: " + e.message); } };
+      $("vsp").onchange = (e) => save({ speed: +e.target.value }, true);
+      $("vsk").onchange = (e) => { save({ spoken: e.target.checked }); try { window.jarvisVoice = { ...(window.jarvisVoice || {}), spoken: e.target.checked }; } catch {} };
+      $("vid").onchange = (e) => save({ idle: +e.target.value });
+      $("vfu").onchange = (e) => { save({ followup: +e.target.value }); try { window.jarvisVoice = { ...(window.jarvisVoice || {}), followup: +e.target.value }; } catch {} };
+      body.querySelectorAll("[data-wake]").forEach((b) => (b.onclick = () => save({ wake: b.dataset.wake }, true)));
+      const pl = async () => { const q = $("vpl").value.trim(); if (q) await save({ place: q }, true); };
+      $("vplgo").onclick = pl; $("vpl").onkeydown = (e) => { if (e.key === "Enter") pl(); };
+    }
+
+    function spDemo(page, p) {
+      SP.demo = SP.demo || { alerts: { people: ["Charlie"], muted: [], quiet: ["22:00", "06:30"], lead: 15, textsAt: "21:00", meetings: true, emails: true, texts: true },
+        schedule: { briefing: { on: true, time: "05:30" }, recap: { on: true, time: "20:00" } }, facts: [{ id: "f1", text: "Amber is Ben's wife.", source: "asked", created_at: new Date().toISOString() }],
+        rules: { texts: "direct", emails: "direct", calls: "direct", calendar: "direct", files: "direct", mail: "direct" },
+        voice: { speed: 1, spoken: true, idle: 15, followup: 7, wake: "normal", place: { name: "Eagle Mountain, Utah" } } };
+      const D = SP.demo, ok = (x) => Promise.resolve(JSON.parse(JSON.stringify(x)));
+      if (page === "alerts") { Object.assign(D.alerts, p); return ok({ alerts: D.alerts }); }
+      if (page === "schedule") { for (const k of ["briefing", "recap"]) if (p[k]) Object.assign(D.schedule[k], p[k]); return ok({ schedule: D.schedule }); }
+      if (page === "memory") { if (p.add) D.facts.unshift({ id: "f" + Date.now(), text: p.add, source: "asked", created_at: new Date().toISOString() });
+        if (p.edit) D.facts.find((x) => x.id === p.edit.id).text = p.edit.text; if (p.delete) D.facts = D.facts.filter((x) => x.id !== p.delete); return ok({ facts: D.facts }); }
+      if (page === "rules") { Object.assign(D.rules, p); return ok({ rules: D.rules }); }
+      if (page === "voice") { const q = { ...p }; if (q.place) q.place = { name: q.place }; Object.assign(D.voice, q); return ok({ voice: D.voice }); }
+      return ok({});
+    }
+
     // -------------------------------------------------------------- Workouts (2026-11-20, Ben; Phase 1 = logging)
     // A "book" of the money screen called fit, with tabs Workout / History / Exercises / Settings, plus a
     // full-screen live workout (#fitlive) that sits above the screens and below the sheets. Data: cloud
@@ -5065,6 +5242,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
         else if (M.book === "fit") renderFit();
         else if (M.book === "food") renderFood();
         else if (M.book === "look") renderLook();
+        else if (["alerts", "memory", "rules", "voice"].includes(M.book)) renderSetPage();
         else if (M.book === "costs") renderCosts();
         else if (M.book === "crm") renderCrm();
         else ({ dash: renderDash, spend: renderSpending, recur: renderRecurring, tx: renderTx }[M.tab] || renderDash)();
