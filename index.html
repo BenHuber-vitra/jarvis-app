@@ -352,6 +352,64 @@
   #lrestbar .lrrow > div { flex: 1; text-align: center; color: var(--ink2); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #lrestbar b { font-family: "Orbitron", sans-serif; color: var(--ink); font-size: 18px; }
   #lrestbar button { border: 1px solid var(--line); background: transparent; color: var(--cyan); font: inherit; font-size: 14px; padding: 7px 10px; border-radius: 16px; }
+  /* body map (fitbody.js) */
+  .fbody { display: block; width: 100%; max-width: 270px; margin: 0 auto; overflow: visible; }
+  .fbody .bb > * { fill: rgba(190,214,236,0.16); stroke: rgba(190,214,236,0.16); stroke-linecap: round; }
+  .fbody .bb .bl { fill: none; stroke: rgba(190,214,236,0.3); stroke-width: 0.8; }
+  .fbody .bm > * { fill: inherit; stroke: rgba(10,18,36,0.55); stroke-width: 0.7; }
+  .fbody .bm { fill: rgba(190,214,236,0.30); }
+  .fbody .bm .ln { fill: none; stroke: rgba(10,18,36,0.45); stroke-width: 0.7; filter: none; }
+  .fbody .bm.on > * { filter: drop-shadow(0 0 2.5px rgba(255,79,184,0.75)); stroke: rgba(255,200,235,0.6); }
+  .fbody.mini { width: 64px; height: auto; margin: 0; flex: none; }
+  .fbody.mini .bm.on > * { filter: none; }
+  .fbleg { display: flex; justify-content: center; gap: 14px; font-size: 13px; color: var(--ink2, #9fbcd1); margin: 4px 0 10px; }
+  .fbleg i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  /* ---------------------------------------------------------------- Workouts: brighter, with more pink (Ben, 2026-11-20) */
+  #money.fit, #fitlive { --pink: #ff4fb8; --pink2: #ff8fd6; --violet: #9b6bff; --ink2: #c9d6ee; --ink3: #9eb0d4; --line: rgba(255,130,210,0.26); --grid: rgba(255,160,220,0.12);
+    --surface: rgba(38,42,96,0.78);
+    background: radial-gradient(130% 55% at 100% 0%, rgba(255,79,184,0.30), transparent 62%), radial-gradient(110% 50% at 0% 100%, rgba(79,216,255,0.20), transparent 60%),
+      linear-gradient(180deg, #171a46 0%, #101636 100%); }
+  #money.fit .mhead h1 { color: var(--pink2); text-shadow: 0 0 14px rgba(255,79,184,0.7); }
+  #money.fit .card, #fitlive .lex { background: linear-gradient(155deg, rgba(64,52,130,0.70), rgba(30,42,92,0.72)); border: 1px solid var(--line); border-radius: 14px;
+    box-shadow: 0 8px 22px rgba(5,6,25,0.35), inset 0 1px 0 rgba(255,255,255,0.06); }
+  #money.fit .label, #fitlive .lsets th { color: #c2a9ef; }
+  #money.fit .sub, #money.fit .meta, #money.fit .row .meta { color: var(--ink2); }
+  #money.fit .linkish { color: var(--pink2); }
+  #money.fit .row { border-top-color: var(--grid); }
+  #money.fit .day { color: #c2a9ef; }
+  #money.fit nav { background: rgba(26,26,70,0.96); border-top-color: var(--line); }
+  #money.fit nav button { color: #a9b6d6; } #money.fit nav button.on { color: var(--pink2); border-top-color: var(--pink); text-shadow: 0 0 10px rgba(255,79,184,0.6); }
+  #money.fit .btn, #fitlive .btn { border-color: rgba(255,143,214,0.55); color: #ffe0f3; background: linear-gradient(90deg, rgba(79,216,255,0.22), rgba(255,79,184,0.30)); }
+  #money.fit .btn.quiet { background: rgba(255,255,255,0.04); color: var(--ink2); border-color: var(--line); }
+  #money.fit .btn.fstart { background: linear-gradient(90deg, var(--pink), var(--violet)); color: #fff; border: 0; box-shadow: 0 4px 14px rgba(255,79,184,0.45); }
+  #money.fit .seg button.on { background: var(--pink); border-color: var(--pink); color: #fff; }
+  #money.fit .search input, #money.fit .search select { background: rgba(12,14,46,0.6); border-color: var(--line); }
+  #money.fit .fresume { border-color: var(--pink); box-shadow: 0 0 18px rgba(255,79,184,0.35); }
+  #money.fit .fico, #fitlive .fico, body.fitui #msheet .fico { color: #fff; border-color: rgba(255,143,214,0.5);
+    background: radial-gradient(circle at 35% 30%, rgba(79,216,255,0.45), rgba(255,79,184,0.40) 65%, rgba(155,107,255,0.25)); }
+  #money.fit .fico svg, #fitlive .fico svg { filter: drop-shadow(0 0 3px rgba(255,200,240,0.8)); }
+  #money.fit .froutine .name { color: #fff; }
+  #money.fit .fweek .fbody { max-width: 240px; margin-top: 6px; }
+  #money.fit .row .fbody.mini { width: 58px; }
+  /* the live workout */
+  #fitlive .lhead { background: linear-gradient(90deg, rgba(79,216,255,0.28), rgba(255,79,184,0.42) 60%, rgba(155,107,255,0.40)); border-bottom-color: var(--line); }
+  #fitlive #lmin { color: #fff; } #fitlive #lclock { color: #fff; text-shadow: 0 0 12px rgba(255,79,184,0.8); }
+  #fitlive #lfin { background: linear-gradient(90deg, #ffb547, #ff7a59); border: 0; color: #2a0f05; box-shadow: 0 3px 12px rgba(255,140,80,0.45); }
+  #fitlive .lexn { color: var(--pink2); }
+  #fitlive input, #fitlive textarea { background: rgba(12,14,46,0.6); border-color: var(--line); }
+  #fitlive .lprev { color: #a9b6d6; }
+  #fitlive tr.done td { background: rgba(255,79,184,0.14); }
+  #fitlive tr.done .ltick { background: linear-gradient(135deg, var(--pink), var(--violet)); border-color: transparent; color: #fff; box-shadow: 0 0 12px rgba(255,79,184,0.6); }
+  #fitlive .laddset { color: var(--pink2); border-color: rgba(255,143,214,0.4); }
+  #fitlive #lrestbar { background: rgba(30,26,74,0.98); }
+  /* sheets opened from Workouts */
+  body.fitui #msheet .box, body.fitlive-on #msheet .box { background: linear-gradient(180deg, #232056 0%, #151a42 100%); border-color: rgba(255,130,210,0.35);
+    box-shadow: 0 -6px 30px rgba(255,79,184,0.18); }
+  body.fitui #msheet h2, body.fitlive-on #msheet h2 { color: #fff; }
+  body.fitui #msheet .seg button.on, body.fitlive-on #msheet .seg button.on { background: #ff4fb8; border-color: #ff4fb8; color: #fff; }
+  body.fitui #msheet .btn, body.fitlive-on #msheet .btn { border-color: rgba(255,143,214,0.55); color: #ffe0f3; background: linear-gradient(90deg, rgba(79,216,255,0.2), rgba(255,79,184,0.28)); }
+  body.fitui #msheet .btn.quiet, body.fitlive-on #msheet .btn.quiet { background: rgba(255,255,255,0.04); color: #c9d6ee; border-color: rgba(255,130,210,0.26); }
+  body.fitui #msheet .fhist, body.fitlive-on #msheet .fhist, body.fitui #msheet .card, body.fitlive-on #msheet .card { background: rgba(255,255,255,0.04); border-color: rgba(255,130,210,0.26); }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -1369,10 +1427,11 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       M.tab = tab;
       $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY", calls: "CALLS", fit: "WORKOUTS" }[M.book];
       el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book] || M.book === "bingo" || M.book === "persona" || M.book === "calls");   // no Dashboard/Spending/... tabs there
+      el.classList.toggle("fit", M.book === "fit"); document.body.classList.toggle("fitui", M.book === "fit");   // Workouts' brighter, pinker look
       body.scrollTop = 0; hideTip(); el.classList.add("on");
       if (!fresh) render(); else if (!M.data) load(true); else { render(); load(true); }
     }
-    function hideMoney() { closeSheet(); el.classList.remove("on"); hideTip(); }
+    function hideMoney() { closeSheet(); el.classList.remove("on"); hideTip(); document.body.classList.remove("fitui"); }
     nav.screens.push(hideMoney);
     function openMoney(book) {   // from outside the menu (page load, bank sign-in coming back)
       if (!el.classList.contains("on")) nav.push(hideMoney);
@@ -3224,8 +3283,84 @@ function parseLiftoff(text, findId, musclesOf) {
     exercises: new Set(workouts.flatMap((w) => w.exercises.map((e) => e.ex))).size };
 }
 
-return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recent, stats, clock, dur, KM_PER_MI, modeOf, setDone, fmtD, fmtSet, LIFTOFF_CUSTOM, stableUuid, parseCsv, parseLiftoff };
+// ---------------------------------------------------------------- muscles worked (for the body map)
+/** How hard each muscle was worked across workouts: { muscle: 0..1 }. Each ticked set counts 1 for the
+ * exercise's primary muscles and 0.5 for its secondary ones; the busiest muscle = 1. */
+function musclesWorked(workouts, musclesOf) {
+  const score = {};
+  for (const w of workouts) for (const e of w.exercises || []) {
+    const n = doneSets(e).length;
+    if (!n) continue;
+    const m = musclesOf(e.ex) || {};
+    for (const mu of m.primary || []) score[mu] = (score[mu] || 0) + n;
+    for (const mu of m.secondary || []) score[mu] = (score[mu] || 0) + n / 2;
+  }
+  const top = Math.max(0, ...Object.values(score));
+  for (const k in score) score[k] = top ? score[k] / top : 0;
+  return score;
+}
+
+return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recent, stats, clock, dur, KM_PER_MI, modeOf, setDone, fmtD, fmtSet, LIFTOFF_CUSTOM, stableUuid, parseCsv, parseLiftoff, musclesWorked };
  })();
+    // -------------------------------------------------------------- body map (2026-11-20, Ben)
+    // Our own simple front + back figure (drawn here, not copied from any app). Each muscle group of the
+    // exercise library (chest, lats, quadriceps, ...) is a shape; bodyMap(levels) colours them from
+    // levels { muscle: 0..1 } (0 = not worked: pale; 1 = worked hardest: hot pink). Inlined into fit.js
+    // at /*FIT_BODY*/ by app/build.py.
+    const BODY = (() => {
+      const E = (cx, cy, rx, ry, rot) => `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}"${rot ? ` transform="rotate(${rot} ${cx} ${cy})"` : ""}/>`;
+      const both = (f) => f(1) + f(-1);   // left and right (mirror around x = 50)
+      const X = (s, x) => 50 + s * (x - 50);
+      // the figure itself: capsules for limbs, a torso, head
+      const base = (back) => `<g class="bb">
+        <ellipse cx="50" cy="13" rx="8.5" ry="10.5"/><rect x="45" y="21" width="10" height="9" rx="3"/>
+        <path d="M30 32 Q50 27 70 32 L68 58 Q64 76 63 88 L66 100 Q50 106 34 100 L37 88 Q36 76 32 58 Z"/>
+        ${both((s) => `<line x1="${X(s, 31)}" y1="35" x2="${X(s, 27)}" y2="70" stroke-width="11"/><line x1="${X(s, 27)}" y1="71" x2="${X(s, 23)}" y2="97" stroke-width="8.5"/>
+          ${E(X(s, 22.5), 102, 4, 5.5)}<line x1="${X(s, 42)}" y1="100" x2="${X(s, 41)}" y2="142" stroke-width="15"/>
+          <line x1="${X(s, 41)}" y1="146" x2="${X(s, 40.5)}" y2="186" stroke-width="10.5"/>${E(X(s, 40), 194, 5, 3.5)}`)}
+        ${back ? "" : `<path d="M44 21 Q50 25 56 21" class="bl"/>`}</g>`;
+      const FRONT = {
+        neck: `<rect x="46" y="22" width="8" height="8" rx="2.5"/>`,
+        traps: both((s) => `<path d="M${X(s, 45)} 29 L${X(s, 36)} 33 L${X(s, 45)} 33 Z"/>`),
+        shoulders: both((s) => E(X(s, 31), 38, 6.5, 7.5, s * -12)),
+        chest: both((s) => `<path d="M${X(s, 50.8)} 35 L${X(s, 38)} 35 Q${X(s, 34)} 43 ${X(s, 37)} 50 Q${X(s, 44)} 54 ${X(s, 50.8)} 51 Z"/>`),
+        biceps: both((s) => E(X(s, 28.8), 55, 4.6, 9.5, s * 6)),
+        forearms: both((s) => E(X(s, 25.3), 82, 4, 11.5, s * 9)),
+        abdominals: `<rect x="43.5" y="54" width="13" height="33" rx="4"/><path class="ln" d="M50 55 V86 M44 63 H56 M44 71 H56 M44.5 79 H55.5"/>`,
+        abductors: both((s) => E(X(s, 36), 97, 3, 7, s * 10)),
+        adductors: both((s) => `<path d="M${X(s, 49)} 101 L${X(s, 44)} 103 Q${X(s, 45)} 116 ${X(s, 48.5)} 124 Z"/>`),
+        quadriceps: both((s) => E(X(s, 41.3), 121, 6.3, 18)),
+        calves: both((s) => E(X(s, 39.5), 163, 3.6, 12)),
+      };
+      const BACK = {
+        neck: `<rect x="46" y="22" width="8" height="8" rx="2.5"/>`,
+        traps: `<path d="M50 25 L38 33 L50 54 L62 33 Z"/>`,
+        shoulders: both((s) => E(X(s, 31), 38, 6.5, 7.5, s * -12)),
+        triceps: both((s) => E(X(s, 28.8), 56, 4.6, 10, s * 6)),
+        forearms: both((s) => E(X(s, 25.3), 82, 4, 11.5, s * 9)),
+        lats: both((s) => `<path d="M${X(s, 37.5)} 42 Q${X(s, 33)} 58 ${X(s, 41)} 76 L${X(s, 47)} 70 L${X(s, 45.5)} 50 Z"/>`),
+        "middle back": both((s) => `<path d="M${X(s, 49)} 52 L${X(s, 45.5)} 50 L${X(s, 46.5)} 68 L${X(s, 49)} 67 Z"/>`),
+        "lower back": `<rect x="44.5" y="71" width="11" height="16" rx="3"/>`,
+        glutes: both((s) => E(X(s, 43.2), 97, 7.6, 8)),
+        hamstrings: both((s) => E(X(s, 41.3), 125, 6, 17)),
+        calves: both((s) => E(X(s, 40.3), 160, 4.8, 11)),
+      };
+      // colour for a level: pale (not worked) -> soft pink -> hot pink
+      const fill = (v) => {
+        if (!(v > 0)) return "";
+        const t = Math.min(1, Math.max(0, v)), a = 0.35 + 0.65 * t;
+        const r = Math.round(255), g = Math.round(150 - 90 * t), b = Math.round(210 - 30 * t);
+        return ` style="fill:rgba(${r},${g},${b},${a.toFixed(2)})"`;
+      };
+      const side = (parts, levels) => Object.entries(parts).map(([mu, d]) => `<g class="bm${levels[mu] > 0 ? " on" : ""}"${fill(levels[mu])}><title>${mu}</title>${d}</g>`).join("");
+      return (levels, cls) => `<svg class="fbody ${cls || ""}" viewBox="0 0 200 204" role="img" aria-label="Muscles worked">
+        <g>${base(false)}${side(FRONT, levels || {})}</g><g transform="translate(100 0)">${base(true)}${side(BACK, levels || {})}</g></svg>`;
+    })();
+    // levels for one exercise: primary 1, secondary 0.45
+    const exLevels = (x) => Object.fromEntries([...(x.secondary || []).map((m) => [m, 0.45]), ...(x.primary || []).map((m) => [m, 1])]);
+
+    const worked = (ws) => FC.musclesWorked(ws, (id) => exOf(id));   // { muscle: 0..1 } for the body map
+    const LEGEND = `<div class="fbleg"><span><i style="background:rgba(255,120,200,0.55)"></i>Some</span><span><i style="background:#ff3cb4"></i>Most</span></div>`;
     const FIT_TABS = [["start", "Workout"], ["hist", "History"], ["lib", "Exercises"], ["fset", "Settings"]];
     const W = { lib: null, map: new Map(), q: "", eq: "", mus: "", shown: 60, live: null, tick: null, rest: null,
       saveT: null, unsynced: false, demo: null };
@@ -3362,6 +3497,11 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
       if (W.live) h += `<div class="card fresume" id="fresume"><div class="label">Workout in progress</div><div class="name">${esc(W.live.name)}</div>
         <div class="sub"><span id="fresclock">${FC.clock(FC.stats(W.live).seconds)}</span> · ${FC.stats(W.live).sets} sets done</div><div class="btns"><button class="btn">Resume</button></div></div>`;
       else h += `<div class="btns" style="margin:0 0 14px"><button class="btn" id="fempty">Start an empty workout</button></div>`;
+      const week = FD().workouts.filter((w) => w.ended_at && Date.now() - Date.parse(w.started_at) < 7 * 864e5);
+      if (FD().workouts.some((w) => w.ended_at)) {
+        const sets = week.reduce((a, w) => a + FC.stats(w).sets, 0);
+        h += `<div class="card fweek"><div class="frh"><div><div class="label">Last 7 days</div><div class="sub">${week.length ? `${week.length} workout${week.length === 1 ? "" : "s"} · ${sets} sets` : "Nothing yet this week"}</div></div></div>${BODY(worked(week))}${week.length ? LEGEND : ""}</div>`;
+      }
       h += `<div class="sect"><span class="label">My routines ${rs.length}</span><button class="linkish" id="fnewr">+ New routine</button></div>`;
       if (!rs.length) h += `<div class="empty">No routines yet. Make one ("Push heavy": bench press 4 sets, ...) and start it with one tap.</div>`;
       for (const r of rs) {
@@ -3391,7 +3531,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
         if (m !== month) { if (month) h += "</div>"; h += `<div class="day">${esc(m)}</div><div class="card">`; month = m; }
         const s = FC.stats(w);
         h += `<div class="row click" data-w="${w.id}"><div class="grow"><div class="name">${esc(w.name)}</div>
-          <div class="meta">${esc(new Date(w.started_at).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }))} · ${FC.dur(s.seconds)} · ${s.sets} sets · ${fV(s.volume)} ${unit()}</div></div><span class="chev">›</span></div>`;
+          <div class="meta">${esc(new Date(w.started_at).toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" }))} · ${FC.dur(s.seconds)} · ${s.sets} sets · ${fV(s.volume)} ${unit()}</div></div>${BODY(worked([w]), "mini")}</div>`;
       }
       body.innerHTML = h + "</div>";
       body.querySelectorAll("[data-w]").forEach((r) => (r.onclick = () => workoutSheet(ws.find((w) => w.id === r.dataset.w))));
@@ -3430,7 +3570,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
     async function exerciseSheet(id, tab) {
       const x = exOf(id), hist = FC.history(FD().workouts, id), best = FC.bestE1rm(FD().workouts, id), u = unit();
       const draw = (t, info) => {
-        const about = `${info === null ? `<div class="note">Loading…</div>` : ""}
+        const about = `${BODY(exLevels(x))}<div class="fbleg"><span><i style="background:#ff3cb4"></i>Primary</span><span><i style="background:rgba(255,120,200,0.6)"></i>Secondary</span></div>${info === null ? `<div class="note">Loading…</div>` : ""}
           <div class="fchips"><span class="label">Equipment</span> ${esc(cap(x.equipment || "none"))}</div>
           <div class="fchips"><span class="label">Primary</span> ${x.primary.map((m) => `<span class="fchip p">${esc(cap(m))}</span>`).join("") || "–"}</div>
           ${x.secondary.length ? `<div class="fchips"><span class="label">Secondary</span> ${x.secondary.map((m) => `<span class="fchip">${esc(cap(m))}</span>`).join("")}</div>` : ""}
@@ -3458,6 +3598,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
       const u = unit(), s = FC.stats(w);
       openSheet(`<h2>${esc(w.name)}</h2><div class="meta">${esc(new Date(w.started_at).toLocaleString([], { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))}
         <br>${FC.dur(s.seconds)} · ${s.sets} sets · ${fV(s.volume)} ${u} lifted</div>
+        ${BODY(worked([w]))}${LEGEND}
         ${w.notes ? `<div class="note" style="margin:0 0 10px">${esc(w.notes)}</div>` : ""}
         ${w.exercises.map((e) => `<div class="fhist"><div class="fhh"><b>${esc(exName(e.ex))}</b><span class="meta">${modeOf(e.ex) === "strength" ? "e1RM" : ""}</span></div>
           ${e.sets.filter((x) => x.done).map((x, i) => setLine(x, i, e.ex)).join("")}</div>`).join("")}
@@ -3615,9 +3756,9 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
     function openLive() {
       if (!W.live) return;
       if (!live.classList.contains("on")) liveStep = nav.push(hideLive);
-      live.classList.add("on"); drawLive(); startClock();
+      live.classList.add("on"); document.body.classList.add("fitlive-on"); drawLive(); startClock();
     }
-    function hideLive() { live.classList.remove("on"); const id = liveStep; liveStep = null; if (id) nav.drop(id); if (M.book === "fit" && el.classList.contains("on")) renderFit(); }
+    function hideLive() { live.classList.remove("on"); document.body.classList.remove("fitlive-on"); const id = liveStep; liveStep = null; if (id) nav.drop(id); if (M.book === "fit" && el.classList.contains("on")) renderFit(); }
     function startClock() {
       clearInterval(W.tick);
       if (!W.live) return;
@@ -3798,7 +3939,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
       const bests = w.exercises.filter((e) => modeOf(e.ex) === "strength").map((e) => { const best = Math.max(...e.sets.map((x) => FC.e1rm(x.w, x.r)));
         const before = FC.history(FD().workouts.filter((x) => x.id !== w.id), e.ex).reduce((m, h) => Math.max(m, h.best), 0);
         return { name: exName(e.ex), best, before }; });
-      openSheet(`<h2>Workout saved</h2><div class="meta">${esc(w.name)} · ${FC.dur(s.seconds)} · ${s.sets} sets · ${fV(s.volume)} ${u} lifted</div>
+      openSheet(`<h2>Workout saved</h2><div class="meta">${esc(w.name)} · ${FC.dur(s.seconds)} · ${s.sets} sets · ${fV(s.volume)} ${u} lifted</div>${BODY(worked([w]))}${LEGEND}
         <div class="card" style="margin:0">${bests.map((b) => `<div class="row"><div class="grow"><div class="name">${esc(b.name)}</div><div class="meta">best set ≈ ${fE(b.best)} ${u} 1RM</div></div>
           ${b.before && b.best > b.before ? `<span class="fpr">New best</span>` : ""}</div>`).join("")}</div>
         <div class="btns"><button class="btn" id="sx">Done</button></div>`, (box) => (box.querySelector("#sx").onclick = () => { closeSheet(); if (M.book === "fit") show("fit", "hist"); }));
