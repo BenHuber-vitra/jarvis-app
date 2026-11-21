@@ -896,6 +896,23 @@
   .pcard.m-holo .pcart { background: rgba(0,0,0,0.35); }
   .pcard.m-holo .pctop b, .pcard.m-holo .prar { background: linear-gradient(90deg, #ff9ad8, #8fd0ff, #93f5c4, #ffe28f, #c9a4ff, #ff9ad8); background-size: 200% 100%;
     -webkit-background-clip: text; background-clip: text; color: transparent; animation: holorim 7s linear infinite; }
+  /* Foil, premium take (Ben, 2026-11-20): polished chrome, a step below holographic. Steel-banded icon (play.js cardArt),
+     a bevelled chrome rim, faint brushed-metal lines on the card, one crisp glint crossing every few seconds,
+     and the name in chrome. Silver only, so it never looks like holo (rainbow) or shiny (gold). */
+  .pcard.m-foil { box-shadow: 0 0 0 1px rgba(225,232,244,0.55), 0 0 12px rgba(200,212,232,0.28), 0 4px 14px rgba(0,0,0,0.45) !important; }
+  .pcard.m-foil.r-common, .pcard.m-foil.r-uncommon { border-color: rgba(214,222,236,0.4); }
+  .pcard.m-foil::before { content: ""; position: absolute; inset: 0; border-radius: inherit; padding: 2px; pointer-events: none; z-index: 2;
+    background: linear-gradient(135deg, #ffffff, #8d97a8 22%, #f2f5f9 40%, #5e687a 58%, #e9edf3 76%, #9aa4b4); background-size: 220% 220%; animation: foilrim 8s ease-in-out infinite alternate;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); }
+  @keyframes foilrim { to { background-position: 100% 100%; } }
+  .pcard.m-foil::after { mix-blend-mode: screen; animation: foilglint 5.5s ease-in-out infinite;
+    background-image: linear-gradient(105deg, transparent 38%, rgba(255,255,255,0) 45%, rgba(235,242,255,0.22) 48.5%, rgba(255,255,255,0.55) 50%, rgba(235,242,255,0.22) 51.5%, rgba(255,255,255,0) 55%, transparent 62%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.028) 0 1px, transparent 1px 3px);
+    background-size: 300% 100%, auto; background-position: 150% 0, 0 0; }
+  @keyframes foilglint { 0% { background-position: 150% 0, 0 0; } 55%, 100% { background-position: -150% 0, 0 0; } }
+  .pcard.m-foil .pctop b { background: linear-gradient(180deg, #ffffff 0%, #dfe5ee 45%, #8f99aa 55%, #f1f4f8 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .pcard.m-foil .prar { color: #dfe6f0; text-shadow: 0 0 5px rgba(220,230,250,0.45); }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -5687,13 +5704,18 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
       // Holographic (Ben, 2026-11-20): a soft rainbow sheen on the icon itself, sliding slowly along it.
       const holo = mod === "holo", hid = gid + "h";
       if (holo) c1 = `url(#${hid})`;
+      // Foil (Ben, 2026-11-20): polished chrome. The icon is drawn in bands of bright and dark steel that roll slowly.
+      const foil = mod === "foil", fid = gid + "f";
+      if (foil) c1 = `url(#${fid})`;
       return `<svg viewBox="0 0 100 100" class="pcart"><defs><pattern id="pg" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M10 0H0V10" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/></pattern>
         ${G ? `<linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1">${G.map((c, i) => `<stop offset="${i / (G.length - 1)}" stop-color="${c}"/>`).join("")}</linearGradient>` : ""}
         ${holo ? `<linearGradient id="${hid}" x1="0" y1="0" x2="1" y2="1" spreadMethod="reflect">${["#ffc4ec", "#c4e4ff", "#c8ffe4", "#fff2c4", "#e6ccff"].map((c, i) => `<stop offset="${i / 4}" stop-color="${c}"/>`).join("")}
-          <animateTransform attributeName="gradientTransform" type="translate" values="-1 -1; 1 1" dur="7s" repeatCount="indefinite"/></linearGradient>` : ""}</defs>
+          <animateTransform attributeName="gradientTransform" type="translate" values="-1 -1; 1 1" dur="7s" repeatCount="indefinite"/></linearGradient>` : ""}
+        ${foil ? `<linearGradient id="${fid}" x1="0" y1="0" x2="0.6" y2="1" spreadMethod="reflect">${["#ffffff", "#aab3c2", "#f4f7fb", "#6e7889", "#e6ebf2"].map((c, i) => `<stop offset="${i / 4}" stop-color="${c}"/>`).join("")}
+          <animateTransform attributeName="gradientTransform" type="translate" values="0 -1; 0 1" dur="9s" repeatCount="indefinite"/></linearGradient>` : ""}</defs>
         <rect width="100" height="100" fill="url(#pg)"/><circle cx="50" cy="50" r="40" fill="none" stroke="${c2}" stroke-opacity="0.35" stroke-dasharray="2 3"/>
         <path d="${path(0.06, 0.06)}" fill="none" stroke="${c2}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="0.7"/>
-        <path d="${path(0, 0)}" fill="none" stroke="${c1}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" style="filter:drop-shadow(0 0 ${holo ? "3px #e6d4ff" : "2px " + rarOf(rar)[3][0]})"/></svg>`;
+        <path d="${path(0, 0)}" fill="none" stroke="${c1}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" style="filter:drop-shadow(0 0 ${holo ? "3px #e6d4ff" : foil ? "2.5px rgba(235,242,255,0.8)" : "2px " + rarOf(rar)[3][0]})"/></svg>`;
     }
     function cardHTML(x, opts = {}) {
       const c = cardOf(x.card); if (!c) return "";
@@ -5750,7 +5772,7 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
         <div class="label" style="margin:14px 0 6px">Modifiers (per card, at most one)</div>
         <div class="card">${(() => { let left = 1; const eff = {};   // the cloud checks shiny, then holo, then foil: the real chance of each
           for (const [id, , q] of [...PL.MODS].reverse()) { eff[id] = left * q; left *= 1 - q; }
-          return PL.MODS.map(([id, name]) => [id, name, eff[id]]); })().map(([id, name, p]) => `<div class="row"><div class="grow"><div class="name">${name}</div><div class="meta">${{ foil: "A metallic sheen sweeps across", holo: "A moving rainbow", shiny: "Twinkling sparkles, the rarest" }[id]}</div></div><span class="amt">${pct(p * 100)} · ${one(p)}</span></div>`).join("")}</div>
+          return PL.MODS.map(([id, name]) => [id, name, eff[id]]); })().map(([id, name, p]) => `<div class="row"><div class="grow"><div class="name">${name}</div><div class="meta">${{ foil: "Polished chrome: steel art, chrome rim, a light glint", holo: "A soft rainbow sheen on the art and edges", shiny: "Gold rim, gloss and star glints, the rarest" }[id]}</div></div><span class="amt">${pct(p * 100)} · ${one(p)}</span></div>`).join("")}</div>
         <div class="label" style="margin:14px 0 6px">Packs</div>
         <div class="card"><div class="row"><div class="grow"><div class="name">Standard pack</div><div class="meta">${PL.PACKS.standard.cards} cards, odds above</div></div></div>
           <div class="row"><div class="grow"><div class="name">Rare pack</div><div class="meta" style="white-space:normal">${PL.PACKS.rare.cards} cards; the last is Rare or better: ${floorOdds("rare")}</div></div></div>
