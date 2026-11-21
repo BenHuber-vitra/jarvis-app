@@ -173,10 +173,10 @@
     justify-content: space-between; cursor: pointer; }
   .menubtn i { display: block; height: 2px; border-radius: 1px; background: var(--th-core1-hex, var(--cyan)); box-shadow: 0 0 6px rgba(var(--th-core1, 79,216,255),0.6); }   /* follows the theme */
   /* menu drawer (slides in from the left) */
-  #scrim { position: fixed; inset: 0; z-index: 20; background: rgba(2,6,13,0.6); opacity: 0; pointer-events: none; transition: opacity .2s; }
+  #scrim { position: fixed; inset: 0; z-index: 20; background: rgba(2,6,13,0.6); opacity: 0; pointer-events: none; transition: opacity .3s ease; }
   #drawer { position: fixed; top: 0; bottom: 0; left: 0; z-index: 21; width: min(300px, 82vw); background: linear-gradient(180deg, var(--th-s1) 0%, var(--th-s2) 100%); border-right: 1px solid rgba(var(--th-line),0.3);
     padding: calc(14px + env(safe-area-inset-top)) 0 calc(14px + env(safe-area-inset-bottom)); overflow-y: auto;
-    transform: translateX(-102%); transition: transform .22s ease-out; box-shadow: 8px 0 30px rgba(var(--th-a),0.15), 8px 0 30px rgba(0,0,0,0.45); }
+    transform: translateX(-102%); transition: transform .32s cubic-bezier(0.2, 0.8, 0.2, 1); box-shadow: 8px 0 30px rgba(var(--th-a),0.15), 8px 0 30px rgba(0,0,0,0.45); }
   body.menu #scrim { opacity: 1; pointer-events: auto; } body.menu #drawer { transform: none; }
   #drawer .dhead { font-family: "Orbitron", sans-serif; font-weight: 700; letter-spacing: 0.36em; font-size: 15px; color: var(--cyan);
     padding: 4px 20px 14px; text-shadow: 0 0 12px var(--cyan-dim); border-bottom: 1px solid rgba(var(--th-line),0.3); }
@@ -189,8 +189,8 @@
   #drawer .ditem.on em { color: var(--cyan); }
   #drawer .ditem.cur { background: linear-gradient(90deg, rgba(var(--th-a),0.22), transparent); box-shadow: inset 3px 0 0 var(--th-a-hex); }
   /* Money opens its two books underneath (one menu item) */
-  #drawer .dsub { display: none; }
-  #drawer .dsub.on { display: block; }
+  #drawer .dsub { display: block; max-height: 0; overflow: hidden; opacity: 0; transition: max-height 0.32s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease; }
+  #drawer .dsub.on { max-height: 420px; opacity: 1; }   /* drop-downs open smoothly (Ben, 2026-11-20) */
   #drawer .dsub .ditem { padding-left: 38px; font-size: 16px; }
   #drawer .dchev { transition: transform .15s; }
   #drawer [aria-expanded="true"] .dchev { transform: rotate(90deg); color: var(--cyan); }
@@ -200,7 +200,10 @@
   #drawer .cog svg { width: 22px; height: 22px; display: block; margin: auto; transition: transform .3s; }
   #drawer .cog[aria-pressed="true"] { color: var(--cyan); background: rgba(79,216,255,0.1); }
   #drawer .cog[aria-pressed="true"] svg { transform: rotate(60deg); }
-  #drawer #dset { display: none; } #drawer.set #dset { display: block; } #drawer.set #dmain { display: none; }
+  #drawer #dset { display: none; } #drawer.set #dset { display: block; animation: dfade 0.25s ease-out; } #drawer.set #dmain { display: none; }
+  #drawer:not(.set) #dmain { animation: dfade 0.25s ease-out; }
+  @keyframes dfade { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
+  #drawer .ditem { transition: background-color 0.2s; }
   #drawer .dback span { color: var(--cyan); font-size: 16px; }
   /* ---------------------------------------------------------------- Money screen */
   #money { position: fixed; inset: 0; z-index: 10; display: none; flex-direction: column; background: var(--bg0);
@@ -774,6 +777,22 @@
   .rpart { display: grid; grid-template-columns: 1fr auto; text-align: left; gap: 2px 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(var(--th-a),0.4); background: rgba(255,255,255,0.05); color: #fff; font: inherit; }
   .rpart b { font-size: 15px; } .rpart small { color: var(--th-soft); } .rpart span { grid-column: 1; font-size: 12px; color: var(--th-ink2, #c9d6ee); } .rpart em { grid-row: 1 / 3; grid-column: 2; align-self: center; font-style: normal; color: var(--th-soft); font-weight: 700; }
   .rpart:disabled { opacity: 0.4; }
+
+  /* ---------------------------------------------------------------- smooth open and close everywhere (Ben, 2026-11-20) */
+  #money, #fitlive { display: flex !important; opacity: 0; visibility: hidden; transform: translateY(14px) scale(0.985); pointer-events: none;
+    transition: opacity 0.26s ease, transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 0.3s; }
+  #money.on, #fitlive.on { opacity: 1; visibility: visible; transform: none; pointer-events: auto; transition: opacity 0.26s ease, transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s; }
+  #msheet { display: flex !important; opacity: 0; visibility: hidden; transition: opacity 0.25s ease, visibility 0s linear 0.3s; }
+  #msheet.on { opacity: 1; visibility: visible; transition: opacity 0.25s ease, visibility 0s; }
+  #msheet .box { transform: translateY(40px); transition: transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  #msheet.on .box { transform: none; }
+  #mbody.swap { animation: swapin 0.28s ease-out; }
+  @keyframes swapin { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  #money .card, #money .btn, #money .seg button, #money nav button, #money .row.click { transition: background-color 0.2s, border-color 0.2s, color 0.2s, box-shadow 0.2s, transform 0.12s; }
+  #money .btn:active, #money .row.click:active, #msheet .btn:active, #money .pltile:active { transform: scale(0.97); }
+  @media (prefers-reduced-motion: reduce) {
+    #money, #fitlive, #msheet, #msheet .box, #mbody.swap, #playgame { transition: none !important; animation: none !important; transform: none !important; }
+  }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -1839,6 +1858,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       el.classList.toggle("look", M.book === "look");   // the Colours page lays out its own two halves
       el.classList.toggle("fit", M.book === "fit"); document.body.classList.toggle("fitui", M.book === "fit");   // Workouts' brighter, pinker look
       body.scrollTop = 0; hideTip(); el.classList.add("on");
+      body.classList.remove("swap"); void body.offsetWidth; body.classList.add("swap");   // a gentle fade between tabs and screens
       if (!fresh) render(); else if (!M.data) load(true); else { render(); load(true); }
     }
     function hideMoney() { closeSheet(); el.classList.remove("on"); hideTip(); document.body.classList.remove("fitui"); }
@@ -5838,15 +5858,21 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
     }
 
     // -------------------------------------------------------------- sheets (edit dialogs)
+    let sheetClear = null;
     function openSheet(html, wire) {
-      if (!sheet.classList.contains("on")) sheetStep = nav.push(closeSheet);
-      sheet.innerHTML = `<div class="box">${html}</div>`; sheet.classList.add("on");
+      clearTimeout(sheetClear);
+      const fresh = !sheet.classList.contains("on");
+      if (fresh) sheetStep = nav.push(closeSheet);
+      sheet.innerHTML = `<div class="box">${html}</div>`;
+      if (fresh) requestAnimationFrame(() => requestAnimationFrame(() => sheet.classList.add("on")));   // slide up (smooth, Ben 2026-11-20)
+      else sheet.classList.add("on");
       sheet.onclick = (e) => { if (e.target === sheet) closeSheet(); };
       wire(sheet.querySelector(".box"));
     }
     function closeSheet() {
       if (!sheet.classList.contains("on")) return;
-      sheet.classList.remove("on"); sheet.innerHTML = "";
+      sheet.classList.remove("on");
+      clearTimeout(sheetClear); sheetClear = setTimeout(() => { if (!sheet.classList.contains("on")) sheet.innerHTML = ""; }, 320);   // after the slide down
       const id = sheetStep; sheetStep = null; nav.drop(id);
     }
     const sheetErr = (msg) => { const e = sheet.querySelector(".err"); if (e) e.textContent = msg; };
