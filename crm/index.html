@@ -984,12 +984,12 @@ const TABLES = { people: "crm_people", services: "crm_services", estimates: "crm
   jobs: "crm_jobs", invoices: "crm_invoices", payments: "crm_payments", employees: "crm_employees",
   pins: "knock_pins", areas: "knock_areas" };
 const COLUMNS = {
-  people: ["id", "kind", "type", "first", "last", "company", "phones", "emails", "address", "city", "state", "zip", "notes", "source", "status", "created", "tcf", "edited", "lat", "lng", "follow_up", "follow_note", "lost_reason", "no_auto", "auto"],
+  people: ["id", "kind", "type", "first", "last", "company", "phones", "emails", "address", "city", "state", "zip", "notes", "source", "status", "created", "tcf", "edited", "lat", "lng", "follow_up", "follow_note", "lost_reason", "no_auto", "auto", "bill_monthly"],
   services: ["id", "name", "description", "rate", "unit", "position", "archived"],
-  estimates: ["id", "number", "person", "date", "status", "options", "lines", "notes", "decided", "tcf", "edited", "sent", "sent_to", "lost_reason"],
+  estimates: ["id", "number", "person", "date", "status", "options", "lines", "notes", "decided", "tcf", "edited", "sent", "sent_to", "lost_reason", "tax_rate"],
   plans: ["id", "person", "every", "unit", "start", "time", "lines", "active", "notes", "tcf", "assignee"],
   jobs: ["id", "person", "date", "days", "time", "lines", "status", "plan", "estimate", "invoice", "notes", "tcf", "edited", "assignee"],
-  invoices: ["id", "number", "person", "date", "due", "lines", "total", "bad_debt", "job", "notes", "tcf", "edited", "sent", "sent_to"],
+  invoices: ["id", "number", "person", "date", "due", "lines", "total", "bad_debt", "job", "notes", "tcf", "edited", "sent", "sent_to", "tax_rate"],
   payments: ["id", "invoice", "amount", "date", "method", "note", "tcf"],
   pins: ["id", "lat", "lng", "address", "status", "note", "person", "come_back", "visits", "by"],
   areas: ["id", "name", "path", "status", "date", "assignee", "notes"],
@@ -1119,12 +1119,32 @@ function nameOf(p) {
 const addressOf = (p) => p ? [p.address, [p.city, p.state].filter(Boolean).join(", "), p.zip].filter(Boolean).join(" ").replace(/\s+/g, " ").trim() : "";
 const lineTotal = (l) => l.total != null && l.total !== "" && !Number.isNaN(+l.total) ? +l.total : round2((+l.rate || 0) * (l.qty === "" || l.qty == null ? 1 : +l.qty || 0));
 const linesTotal = (lines) => round2((lines || []).reduce((s, l) => s + lineTotal(l), 0));
-/** What an estimate is worth: the sum, or for "options" estimates the dearest option ({value, low, options}). */
+// Sales tax (2026-11-22, Ben): a rate in percent on each estimate / invoice (tax_rate; 0 or empty = none). An
+// invoice's stored `total` includes the tax; estimate values include it too. The default for new ones comes from
+// CRM Settings (settings.tax = {on, rate}).
+const taxOf = (sub, rate) => round2((+sub || 0) * (+rate || 0) / 100);
+const docTotal = (lines, rate) => { const s = linesTotal(lines); return round2(s + taxOf(s, rate)); };
+const defaultTax = (settings) => (settings && settings.tax && settings.tax.on ? Math.max(0, Math.min(20, +settings.tax.rate || 0)) : 0);
+/** What an estimate is worth, tax included: the sum, or for "options" estimates the dearest option ({value, low, options, sub, tax}). */
 function estimateValue(e) {
-  const ts = (e.lines || []).map(lineTotal);
-  if (!ts.length) return { value: 0, low: 0, options: false };
-  if (e.options) return { value: Math.max(...ts), low: Math.min(...ts.filter((t) => t > 0).concat([Math.max(...ts)])), options: true };
-  return { value: round2(ts.reduce((a, b) => a + b, 0)), low: 0, options: false };
+  const ts = (e.lines || []).map(lineTotal), rate = +e.tax_rate || 0, withTax = (n) => round2(n + taxOf(n, rate));
+  if (!ts.length) return { value: 0, low: 0, options: false, sub: 0, tax: 0 };
+  if (e.options) { const hi = Math.max(...ts), lo = Math.min(...ts.filter((t) => t > 0).concat([hi])); return { value: withTax(hi), low: withTax(lo), options: true, sub: hi, tax: taxOf(hi, rate) }; }
+  const sub = round2(ts.reduce((a, b) => a + b, 0));
+  return { value: withTax(sub), low: 0, options: false, sub, tax: taxOf(sub, rate) };
+}
+// One invoice a month for a commercial customer's visits (people.bill_monthly): the visits that happened in a month
+// (done, or scheduled and already past) and aren't on an invoice yet.
+function uninvoicedVisits(D, I, personId, from, to, today) {
+  return (I.jobsOf.get(personId) || []).filter((j) => !j.invoice && j.date >= from && j.date <= to && j.date <= today && (j.status === "done" || j.status === "scheduled"));
+}
+const monthlyLines = (jobs) => jobs.flatMap((j) => (j.lines || []).map((l) => ({ ...l, description: `Visit ${niceDate(j.date, { weekday: false })}` })));
+/** People billed monthly with visits from LAST month still not invoiced: [{p, jobs, total}]. */
+function monthlyDue(D, I, today) {
+  const first = today.slice(0, 8) + "01", from = addMonths(first, -1), to = addDays(first, -1);
+  return D.people.filter((p) => p.bill_monthly && p.status === "active").map((p) => {
+    const jobs = uninvoicedVisits(D, I, p.id, from, to, today); return { p, jobs, total: round2(jobs.reduce((s, j) => s + jobTotal(j), 0)), month: from };
+  }).filter((x) => x.jobs.length);
 }
 const jobTotal = (j) => linesTotal(j.lines);
 const serviceNames = (lines) => [...new Set((lines || []).map((l) => (l.service || "").trim()).filter(Boolean))];
@@ -1602,8 +1622,11 @@ const AUTO_RULES = [
   ["job_reminder", "Job reminders", "The day before a booked visit (recurring visits too)."],
   ["checkin", "Follow-up check-ins", "When a follow-up date you set on someone comes up. Your own note isn't sent."],
   ["est_delivery", "Estimate delivery", "A new estimate, sent to the customer: by email with the PDF, or a short text if there's no email."],
+  ["pay_reminder", "Payment reminders", "A friendly reminder when an invoice is still unpaid some days after its date. Stops as soon as it's paid (or marked bad debt)."],
+  ["review", "Review requests", "A thank-you asking for a review, a day after a visit is marked done. At most once a year per customer; needs your review link."],
 ];
-const AUTO_FIELDS = ["first", "name", "business", "phone", "when", "date", "time", "services", "total", "estimate"];
+const AUTO_DAYS = { est_follow: "Check in after (days)", pay_reminder: "Remind after (days)", review: "Ask after (days)" };
+const AUTO_FIELDS = ["first", "name", "business", "phone", "when", "date", "time", "services", "total", "estimate", "invoice", "balance", "review_link"];
 const AUTO_DEFAULT = {
   quiet: { from: "09:00", to: "19:00" }, channel: "text_else_email", daily_cap: 25,
   rules: {
@@ -1625,6 +1648,14 @@ const AUTO_DEFAULT = {
       text: "Hi {first}, here's your estimate from {business}: {services}, {total}. Reply with any questions or when you'd like to get on the schedule!",
       subject: "Estimate #{estimate} from {business}",
       email: "Hi {first},\n\nThanks for having us out. Your estimate is attached. Just reply to this email if you have any questions, or when you'd like to get on the schedule.\n\nThank you,\nBen Huber\n{business}\n{phone}" },
+    pay_reminder: { on: false, since: null, approve: true, days: [7, 14, 30],
+      text: "Hi {first}, this is {business}. A friendly reminder that invoice #{invoice} for {balance} from {date} is still open. Reply here with any questions. Thank you!",
+      subject: "Reminder: invoice #{invoice} from {business}",
+      email: "Hi {first},\n\nA friendly reminder that invoice #{invoice} for {balance} from {date} is still open. Just reply to this email if you have any questions.\n\nThank you,\nBen Huber\n{business}\n{phone}" },
+    review: { on: false, since: null, approve: true, days: [1], review_link: "",
+      text: "Hi {first}, thanks for having {business} out! If you were happy with your {services}, would you leave us a quick review? {review_link}",
+      subject: "How did we do? {business}",
+      email: "Hi {first},\n\nThanks for having us out. If you were happy with your {services}, would you leave us a quick review? It really helps a small business like ours:\n{review_link}\n\nThank you,\nBen Huber\n{business}\n{phone}" },
   },
 };
 /** Saved settings on top of the defaults (anything missing falls back). Estimate delivery always waits for Ben's OK:
@@ -1634,8 +1665,11 @@ function normalizeAuto(saved) {
   const out = { ...AUTO_DEFAULT, ...s, quiet: { ...AUTO_DEFAULT.quiet, ...(s.quiet || {}) }, rules: {} };
   for (const [k] of AUTO_RULES) out.rules[k] = { ...AUTO_DEFAULT.rules[k], ...((s.rules || {})[k] || {}) };
   out.rules.est_delivery.approve = true;
-  out.rules.est_follow.days = (Array.isArray(out.rules.est_follow.days) ? out.rules.est_follow.days : [2, 7]).map(Number).filter((n) => n >= 1 && n <= 60).slice(0, 3);
-  if (!out.rules.est_follow.days.length) out.rules.est_follow.days = [2, 7];
+  for (const k of Object.keys(AUTO_DAYS)) {   // rules timed in days after something: up to 3 numbers, 1-90
+    const d = (Array.isArray(out.rules[k].days) ? out.rules[k].days : []).map(Number).filter((n) => n >= 1 && n <= 90).slice(0, 3);
+    out.rules[k].days = d.length ? d : AUTO_DEFAULT.rules[k].days;
+  }
+  out.rules.review.review_link = String(out.rules.review.review_link || "").trim().slice(0, 300);
   out.daily_cap = Math.max(1, Math.min(100, +out.daily_cap || 25));
   return out;
 }
@@ -1653,7 +1687,7 @@ function personAuto(p) {
   for (const [k] of AUTO_RULES) {
     const r = (a.rules || {})[k] || {};
     rules[k] = { mode: r.mode === "on" || r.mode === "off" ? r.mode : "default", since: /^\d{4}-\d\d-\d\d$/.test(r.since || "") ? r.since : null,
-      days: Array.isArray(r.days) ? r.days.map(Number).filter((n) => n >= 1 && n <= 60).slice(0, 3) : [], lead: AUTO_LEADS.includes(+r.lead) ? +r.lead : null };
+      days: Array.isArray(r.days) ? r.days.map(Number).filter((n) => n >= 1 && n <= 90).slice(0, 3) : [], lead: AUTO_LEADS.includes(+r.lead) ? +r.lead : null };
   }
   return { channel: a.channel === "text" || a.channel === "email" ? a.channel : "default", rules };
 }
@@ -1726,7 +1760,26 @@ function autoCandidates(D, I, autoSaved, today, nowHM, onlyRule = null, relax = 
     if (e.date < (relax ? addDays(today, -14) : ef.since)) continue;
     make("est_delivery", p, e.id, `est_delivery:${e.id}`, R.est_delivery.text, R.est_delivery.email, R.est_delivery.subject, estVars(e), true);
   }
-  return out;
+  for (const inv of D.invoices) {   // payment reminders: only reminders that fall due from the day the rule went on
+    if (inv.bad_debt || !inv.date) continue;
+    const bal = balanceOf(I, inv); if (bal <= 0.005) continue;
+    const p = I.people.get(inv.person), ef = eff(p, "pay_reminder"); if (!ef) continue;
+    const age = daysBetween(inv.date, today);
+    ef.days.forEach((d) => { if (age >= d && age < d + 3 && addDays(inv.date, d) >= ef.since)
+      make("pay_reminder", p, inv.id, `pay_reminder:${inv.id}:${d}`, R.pay_reminder.text, R.pay_reminder.email, R.pay_reminder.subject,
+        { invoice: inv.number, balance: usd(bal, Math.round(bal * 100) % 100 !== 0), total: usd(+inv.total || 0), date: niceDate(inv.date, { weekday: false }), services: serviceNames(inv.lines).join(", ").toLowerCase() }); });
+  }
+  if (R.review.review_link || relax) {   // review requests: once a year per customer, after a visit marked done
+    for (const j of D.jobs) {
+      if (j.status !== "done" || !j.date || j.date > today) continue;
+      const p = I.people.get(j.person), ef = eff(p, "review"); if (!ef || j.date < ef.since) continue;
+      const age = daysBetween(j.date, today), d = ef.days[0] || 1;
+      if (age >= d && age < d + 3) make("review", p, j.id, `review:${p.id}:${j.date.slice(0, 4)}`, R.review.text, R.review.email, R.review.subject,
+        { services: serviceNames(j.lines).join(", ").toLowerCase() || "service", review_link: R.review.review_link || "(your review link)", date: niceDate(j.date, { weekday: false }) });
+    }
+  }
+  const seen = new Set();   // one per key (two visits in a year make the same review key)
+  return out.filter((c) => (seen.has(c.ref_key) ? false : seen.add(c.ref_key)));
 }
 /** Does anyone have a rule switched on just for them? (the scan runs then even with every main switch off) */
 const anyPersonOn = (people) => people.some((p) => p && p.auto && Object.values((p.auto.rules || {})).some((r) => r && r.mode === "on"));
@@ -1774,7 +1827,7 @@ function metres(a, b) {
 }
 function trackLength(points) { let m = 0; for (let i = 1; i < points.length; i++) m += metres(points[i - 1], points[i]); return m; }
 
-return { TABLES, COLUMNS, PERMISSIONS, PERM_KEYS, DEFAULT_ROLES, normalizeRoles, effectivePerms, empName, PAY_TYPES, payText, DEFAULT_TRAININGS, METHODS, HORIZON_DAYS, round2, usd, usdShort, localDay, addDays, addMonths, daysBetween, weekday, niceDate, uuid, nameOf, addressOf, lineTotal, linesTotal, estimateValue, jobTotal, serviceNames, freqText, FREQS, index, paidOf, balanceOf, jobDays, jobsBetween, moneyBetween, nextJob, lastJob, activePlan, servicesFor, nextOpenDay, dashboard, occurrences, regenPlan, topUp, freqFromGap, search, nextNumber, fixMojibake, htmlText, fromDump, LOST_REASONS, SOURCES, NUDGE_DAYS, STALE_DAYS, sourceOf, pipeline, followUps, winRate, sourceStats, AUTO_RULES, AUTO_FIELDS, AUTO_DEFAULT, normalizeAuto, fillTemplate, AUTO_LEADS, personAuto, autoFor, autoRoute, autoVars, canSendNow, autoCandidates, anyPersonOn, KNOCK, knockStats, areaFreshness, inPolygon, metres, trackLength };
+return { TABLES, COLUMNS, PERMISSIONS, PERM_KEYS, DEFAULT_ROLES, normalizeRoles, effectivePerms, empName, PAY_TYPES, payText, DEFAULT_TRAININGS, METHODS, HORIZON_DAYS, round2, usd, usdShort, localDay, addDays, addMonths, daysBetween, weekday, niceDate, uuid, nameOf, addressOf, lineTotal, linesTotal, taxOf, docTotal, defaultTax, estimateValue, uninvoicedVisits, monthlyLines, monthlyDue, jobTotal, serviceNames, freqText, FREQS, index, paidOf, balanceOf, jobDays, jobsBetween, moneyBetween, nextJob, lastJob, activePlan, servicesFor, nextOpenDay, dashboard, occurrences, regenPlan, topUp, freqFromGap, search, nextNumber, fixMojibake, htmlText, fromDump, LOST_REASONS, SOURCES, NUDGE_DAYS, STALE_DAYS, sourceOf, pipeline, followUps, winRate, sourceStats, AUTO_RULES, AUTO_DAYS, AUTO_FIELDS, AUTO_DEFAULT, normalizeAuto, fillTemplate, AUTO_LEADS, personAuto, autoFor, autoRoute, autoVars, canSendNow, autoCandidates, anyPersonOn, KNOCK, knockStats, areaFreshness, inPolygon, metres, trackLength };
  })();
 const TCF = (() => { // The Customer Factor (Ben's CRM) inside Jarvis (2026-11-19). Ben exports a full backup from The
 // Customer Factor (a MySQL dump, .sql) about once a month and uploads it on the Customers screen.
@@ -2780,9 +2833,42 @@ function viewDashboard(v) {
         ${d.unpaid.length ? `<div class="aging">${["0-30 days", "31-60", "61-90", "90+"].map((l, i) => `<div><small>${l}</small><b>${X.usdShort(d.aging[i])}</b></div>`).join("")}</div>` : ""}</div>
       <div class="card"><h3>${ic("bell")}Follow-ups due <a class="right" href="#/prospects">Pipeline ›</a></h3><div class="list">${estRows}</div></div>
     </div>
+    ${(() => { const due = X.monthlyDue(D, I, TODAY); return due.length ? `<div class="card"><h3>${ic("receipt")}Monthly invoices to make <span class="right">${MONTHS[+due[0].month.slice(5, 7) - 1]} visits</span></h3><div class="list">${due.map((x) =>
+      `<div class="li" data-monthly="${x.p.id}"><div class="avatar com" data-n="${esc(X.nameOf(x.p))}">${esc(initials(x.p))}</div><div class="main"><div class="t">${esc(X.nameOf(x.p))}</div><div class="s">${x.jobs.length} visit${x.jobs.length > 1 ? "s" : ""} not invoiced</div></div><div class="amt">${money(x.total)}</div></div>`).join("")}</div></div>` : ""; })()}
     <div class="card"><h3>${ic("repeat")}One-time customers to put on a schedule <span class="right">biggest first</span></h3><div class="list">${convertRows}</div></div>
   </div>`;
+  v.addEventListener("click", (e) => { const m = e.target.closest("[data-monthly]"); if (m) monthlySheet(I.people.get(m.dataset.monthly)); });
   wire(v);
+}
+// One invoice for a month of visits (people billed monthly; Ben, 2026-11-22): pick the month, untick any visit, make it.
+function monthlySheet(p) {
+  const first = TODAY.slice(0, 8) + "01", months = [X.addMonths(first, -2), X.addMonths(first, -1), first];
+  let month = X.uninvoicedVisits(D, I, p.id, months[1], X.addDays(first, -1), TODAY).length ? months[1] : first;
+  const draw = (b) => {
+    const to = X.addDays(X.addMonths(month, 1), -1), jobs = X.uninvoicedVisits(D, I, p.id, month, to, TODAY), rate = X.defaultTax(D.settings);
+    $("#mbody", b).innerHTML = jobs.length ? `<div class="list">${jobs.map((j) => `<label class="li check"><input type="checkbox" data-j="${j.id}" checked><div class="main"><div class="t">${X.niceDate(j.date)}${j.status !== "done" ? ' <span class="badge warn">not marked done</span>' : ""}</div>
+      <div class="s">${esc(X.serviceNames(j.lines).join(", "))}</div></div><div class="amt">${money(X.jobTotal(j))}</div></label>`).join("")}</div>
+      <div class="row" style="margin-top:10px"><span class="muted">Total${rate ? ` incl. ${rate}% tax` : ""}</span><div class="spacer"></div><b id="msum" style="font-size:18px"></b></div>`
+      : `<div class="empty"><b>No visits to invoice in ${MONTHS[+month.slice(5, 7) - 1]}</b><span class="small muted">Visits already on an invoice, skipped or cancelled aren't listed.</span></div>`;
+    const sum = () => { const pick = jobs.filter((j) => $(`[data-j="${j.id}"]`, b)?.checked); $("#msum", b) && ($("#msum", b).textContent = money(X.docTotal(X.monthlyLines(pick), rate))); $("#mmake", b).disabled = !pick.length; return pick; };
+    $("#mbody", b).onchange = sum; sum();
+    $("#mmake", b).onclick = (ev) => busy(ev.currentTarget, async () => {
+      const pick = sum(); if (!pick.length) return;
+      const lines = X.monthlyLines(pick).map((l) => ({ ...l, total: X.lineTotal(l) }));
+      const inv = { id: X.uuid(), number: X.nextNumber(D.invoices), person: p.id, date: TODAY, due: TODAY, lines, total: X.docTotal(lines, rate), tax_rate: rate, bad_debt: false, job: null,
+        notes: `${MONTHS[+month.slice(5, 7) - 1]} ${month.slice(0, 4)}: ${pick.length} visit${pick.length > 1 ? "s" : ""}` };
+      await save("invoices", inv);
+      for (const j of pick) await save("jobs", { ...j, status: "done", invoice: inv.id });
+      toast(`Invoice #${inv.number} made for ${pick.length} visit${pick.length > 1 ? "s" : ""}.`); leaveSheet("invoice/" + inv.id);
+    });
+  };
+  openSheet(`Monthly invoice · ${X.nameOf(p)}`, `<div class="chips">${months.map((m) => `<button type="button" class="chip ${m === month ? "on" : ""}" data-m="${m}">${MONTHS[+m.slice(5, 7) - 1]} ${m.slice(0, 4)}</button>`).join("")}</div>
+    <div id="mbody" style="margin-top:12px"></div>
+    <div class="sheetfoot"><button class="btn" id="mc">Cancel</button><div class="spacer"></div><button class="btn primary" id="mmake">${ic("receipt")}Make the invoice</button></div>`, (b) => {
+    $("#mc", b).onclick = () => closeSheet();
+    for (const c of $$("[data-m]", b)) c.onclick = () => { month = c.dataset.m; $$("[data-m]", b).forEach((x) => x.classList.toggle("on", x === c)); draw(b); };
+    draw(b);
+  });
 }
 function jobLi(j, first = true) {
   const p = I.people.get(j.person);
@@ -3076,7 +3162,7 @@ function viewPerson(v, r) {
         ${p.status !== "active" ? `<span class="badge bad">${p.status}</span>` : ""}</div></div>
       <div class="spacer"></div>
       <div class="row"><button class="btn" id="edit">${ic("edit")}Edit</button><a class="btn" href="#/estimate/new?person=${p.id}">${ic("file")}Estimate</a>
-        <button class="btn" data-newjob="${p.id}|${open}">${ic("cal")}Schedule</button><button class="btn primary" id="inv">${ic("receipt")}Invoice</button></div></div>
+        <button class="btn" data-newjob="${p.id}|${open}">${ic("cal")}Schedule</button>${p.bill_monthly ? `<button class="btn" id="monthly">${ic("receipt")}Monthly invoice</button>` : ""}<button class="btn primary" id="inv">${ic("receipt")}Invoice</button></div></div>
     <div class="twocol"><div class="stack">
       <div class="card"><h3>Upcoming jobs <span class="right">${upcoming.length ? money(upcoming.slice(0, 12).reduce((s, j) => s + X.jobTotal(j), 0)) + " in the next " + Math.min(12, upcoming.length) : ""}</span></h3>
         <div class="list">${upcoming.slice(0, 8).map((j) => `<div class="li" data-job="${j.id}"><div class="main"><div class="t">${X.niceDate(j.date, { year: true })}${j.time ? " · " + esc(j.time) : ""}</div>
@@ -3111,6 +3197,7 @@ function viewPerson(v, r) {
     </div></div></div>`;
   $("#edit", v).onclick = () => personSheet(p);
   $("#inv", v).onclick = () => go("invoice/new?person=" + p.id);
+  if ($("#monthly", v)) $("#monthly", v).onclick = () => monthlySheet(p);
   $("#fu", v).onclick = () => followUpSheet(p);
   photoStrip($("#pphotos", v), { person: p.id }, { kind: "before", add: ME.owner, where: true });
   if ($("#apSave", v)) wireAutoCard(v, p);
@@ -3145,6 +3232,7 @@ function personFields(p, prefix = "") {
     <label class="f full">Street address<input name="${prefix}address" value="${v("address")}" autocomplete="off"></label>
     <label class="f">City<input name="${prefix}city" value="${v("city")}" autocomplete="off"></label>
     <div class="fgrid" style="gap:12px"><label class="f">State<input name="${prefix}state" value="${esc(p.state ?? "UT")}"></label><label class="f">Zip<input name="${prefix}zip" value="${v("zip")}" inputmode="numeric"></label></div>
+    <label class="check full"><input type="checkbox" name="${prefix}bill_monthly" ${p.bill_monthly ? "checked" : ""}>Bill monthly: one invoice for each month's visits</label>
     <label class="f">How they found you<input name="${prefix}source" value="${v("source")}" list="srcList"><datalist id="srcList">${sources.map((s) => `<option value="${esc(s)}">`).join("")}</datalist></label>
     <label class="f full">Notes<textarea name="${prefix}notes" rows="3">${v("notes")}</textarea></label></div>`;
 }
@@ -3155,7 +3243,8 @@ function readPerson(root, base, prefix = "") {
   const phones = (base.phones || []).slice(); if (phone) { if (phones[0]) phones[0] = { ...phones[0], n: phone }; else phones.push({ n: phone, label: "mobile" }); } else phones.splice(0, 1);
   const emails = (base.emails || []).slice(); if (email) emails[0] = email; else emails.splice(0, 1);
   return { ...base, id: base.id || X.uuid(), kind: base.kind || "prospect", type, first: g("first"), last: g("last"), company: g("company"), phones, emails,
-    address: g("address"), city: g("city"), state: g("state"), zip: g("zip"), source: g("source"), notes: g("notes"), status: base.status || "active", created: base.created || TODAY };
+    address: g("address"), city: g("city"), state: g("state"), zip: g("zip"), source: g("source"), notes: g("notes"), status: base.status || "active", created: base.created || TODAY,
+    bill_monthly: !!$(`[name="${prefix}bill_monthly"]`, root)?.checked };
 }
 function segWire(root) { for (const s of $$("[data-ptype]", root)) s.onclick = (e) => { const b = e.target.closest("button"); if (!b) return; $$("button", s).forEach((x) => x.classList.toggle("on", x === b)); }; }
 function personSheet(p) {
@@ -3360,7 +3449,7 @@ function viewEstimate(v, r) {
   const isNew = r.args[0] === "new";
   const src = isNew ? null : I.estimates.get(r.args[0]);
   if (!isNew && !src) { v.innerHTML = `<div class="empty"><b>That estimate isn't here.</b></div>`; return; }
-  const e = src ? JSON.parse(JSON.stringify(src)) : { id: X.uuid(), number: X.nextNumber(D.estimates), person: r.q.get("person") || null, date: TODAY, status: "open", options: false, lines: [], notes: "" };
+  const e = src ? JSON.parse(JSON.stringify(src)) : { id: X.uuid(), number: X.nextNumber(D.estimates), person: r.q.get("person") || null, date: TODAY, status: "open", options: false, lines: [], notes: "", tax_rate: X.defaultTax(D.settings) };
   if (isNew && !e.lines.length) e.lines.push({ service: "", description: "", rate: "", qty: 1 });
   const state = { person: e.person, newPerson: null };
   const before = JSON.stringify(e);
@@ -3374,7 +3463,7 @@ function viewEstimate(v, r) {
     </div>
     <div class="stack sticky"><div class="card totalbox">
       <div class="row"><b style="font-size:18px">Estimate #</b><input class="inp" id="num" value="${esc(e.number)}" style="width:110px"><div class="spacer"></div>${isNew ? "" : statusBadge(e.status)}</div>
-      <label class="f">Date<input type="date" id="date" value="${esc(e.date || TODAY)}"></label>
+      <div class="fgrid"><label class="f">Date<input type="date" id="date" value="${esc(e.date || TODAY)}"></label><label class="f">Sales tax %<input id="tax" inputmode="decimal" value="${+e.tax_rate || 0}"></label></div>
       <div class="muted small" id="totLabel">Total</div><div class="big" id="tot"></div><div class="small muted" id="totSub"></div>
       <div class="row"><button class="btn primary" id="save" style="flex:1">${ic("check")}Save estimate</button><button class="btn" id="prt" title="Print">${ic("print")}</button></div>
       <div class="row"><button class="btn" id="pdf" style="flex:1">${ic("file")}Download PDF</button>${ME.owner ? `<button class="btn" id="mail" style="flex:1">${ic("mail")}Email</button>` : ""}</div>
@@ -3389,19 +3478,22 @@ function viewEstimate(v, r) {
   const picker = personPicker($("#who", v), state, onChange, "prospect");
   linesEditor($("#lines", v), e.lines, onChange);
   const sum = () => {
-    const val = X.estimateValue({ ...e, options: $("#opt", v).checked, lines: cleanLines(e.lines) });
+    const rate = +$("#tax", v).value || 0;
+    const val = X.estimateValue({ ...e, options: $("#opt", v).checked, lines: cleanLines(e.lines), tax_rate: rate });
     $("#totLabel", v).textContent = val.options ? "Options from" : "Total";
     $("#tot", v).textContent = val.options ? `${money(val.low)} – ${money(val.value)}` : money(val.value);
-    $("#totSub", v).textContent = val.options ? "The customer picks one option" : `${cleanLines(e.lines).length} line${cleanLines(e.lines).length === 1 ? "" : "s"}`;
+    $("#totSub", v).textContent = (val.options ? "The customer picks one option" : `${cleanLines(e.lines).length} line${cleanLines(e.lines).length === 1 ? "" : "s"}`) +
+      (rate && !val.options ? ` · ${money(val.sub)} + ${money(val.tax)} tax (${rate}%)` : rate ? ` · incl. ${rate}% tax` : "");
   };
   sum();
-  for (const id of ["opt", "notes", "num", "date"]) $("#" + id, v).addEventListener("input", onChange);
+  for (const id of ["opt", "notes", "num", "date", "tax"]) $("#" + id, v).addEventListener("input", onChange);
   dirty = () => changed || state.newPerson;
   const collect = async () => {
     const person = await picker.resolve();
     const lines = cleanLines(e.lines);
     if (!lines.length) throw new Error("Add at least one service.");
-    return { ...e, person, lines, options: $("#opt", v).checked, notes: $("#notes", v).value.trim(), number: $("#num", v).value.trim() || e.number, date: $("#date", v).value || TODAY };
+    return { ...e, person, lines, options: $("#opt", v).checked, notes: $("#notes", v).value.trim(), number: $("#num", v).value.trim() || e.number, date: $("#date", v).value || TODAY,
+      tax_rate: Math.max(0, Math.min(20, +$("#tax", v).value || 0)) };
   };
   const doSave = async () => { const row = await collect(); const saved = await save("estimates", row); changed = false; dirty = null; return saved; };
   $("#save", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = await doSave(); toast(`Estimate #${s.number} saved.`); if (isNew) { history.replaceState(null, "", "#/estimate/" + s.id); render(); } });
@@ -3515,7 +3607,8 @@ function jobSheet(job, isNew = false, optionsFrom = null) {
     if ($("#jinv", b)) $("#jinv", b).onclick = () => leaveSheet("invoice/" + inv.id);
     if ($("#jmkinv", b)) $("#jmkinv", b).onclick = (ev) => busy(ev.currentTarget, async () => {
       const row = await read();
-      const invRow = { id: X.uuid(), number: X.nextNumber(D.invoices), person: row.person, date: TODAY, due: TODAY, lines: row.lines, total: X.linesTotal(row.lines), bad_debt: false, job: row.id, notes: "" };
+      const tr = X.defaultTax(D.settings);
+      const invRow = { id: X.uuid(), number: X.nextNumber(D.invoices), person: row.person, date: TODAY, due: TODAY, lines: row.lines, total: X.docTotal(row.lines, tr), tax_rate: tr, bad_debt: false, job: row.id, notes: "" };
       await save("invoices", invRow);
       await saveOne({ ...row, status: "done", invoice: invRow.id });
       toast(`Invoice #${invRow.number} made.`);
@@ -3583,7 +3676,7 @@ function viewInvoice(v, r) {
   const isNew = r.args[0] === "new";
   const src = isNew ? null : I.invoices.get(r.args[0]);
   if (!isNew && !src) { v.innerHTML = `<div class="empty"><b>That invoice isn't here.</b></div>`; return; }
-  const inv = src ? JSON.parse(JSON.stringify(src)) : { id: X.uuid(), number: X.nextNumber(D.invoices), person: r.q.get("person") || null, date: TODAY, due: TODAY, lines: [], total: 0, bad_debt: false, job: null, notes: "" };
+  const inv = src ? JSON.parse(JSON.stringify(src)) : { id: X.uuid(), number: X.nextNumber(D.invoices), person: r.q.get("person") || null, date: TODAY, due: TODAY, lines: [], total: 0, bad_debt: false, job: null, notes: "", tax_rate: X.defaultTax(D.settings) };
   if (!inv.lines.length) inv.lines.push({ service: "", description: "", rate: "", qty: 1 });
   const state = { person: inv.person, newPerson: null };
   let changed = false;
@@ -3597,7 +3690,8 @@ function viewInvoice(v, r) {
     <div class="stack sticky"><div class="card totalbox">
       <div class="row"><b style="font-size:18px">Invoice #</b><input class="inp" id="num" value="${esc(inv.number)}" style="width:110px"></div>
       <div class="fgrid"><label class="f">Date<input type="date" id="date" value="${esc(inv.date || TODAY)}"></label><label class="f">Due<input type="date" id="due" value="${esc(inv.due || inv.date || TODAY)}"></label></div>
-      <div class="muted small">Total</div><div class="big" id="tot"></div>
+      <label class="f">Sales tax %<input id="tax" inputmode="decimal" value="${+inv.tax_rate || 0}"></label>
+      <div class="muted small">Total</div><div class="big" id="tot"></div><div class="small muted" id="totSub"></div>
       ${isNew ? "" : `<div class="row small"><span class="muted">Paid</span><div class="spacer"></div><b>${money(X.paidOf(I, src))}</b></div>
         <div class="row"><span class="muted">Balance</span><div class="spacer"></div><b style="font-size:18px;color:${X.balanceOf(I, src) > 0.005 ? "var(--warn)" : "var(--good)"}">${money(X.balanceOf(I, src))}</b></div>`}
       <div class="row"><button class="btn primary" id="save" style="flex:1">${ic("check")}Save invoice</button><button class="btn" id="prt" title="Print">${ic("print")}</button></div>
@@ -3610,11 +3704,13 @@ function viewInvoice(v, r) {
     ${isNew ? "" : `<div class="card"><h3>Payments</h3><div class="list">${pays.map((p) => `<div class="li"><div class="main"><div class="t">${money(p.amount)} · ${esc(p.method || "")}</div><div class="s">${X.niceDate(p.date, { year: true })}${p.note ? " · " + esc(p.note) : ""}</div></div>
       <button class="iconbtn" data-delpay="${p.id}" aria-label="Remove payment">${ic("trash")}</button></div>`).join("") || '<div class="empty">No payments yet</div>'}</div></div>`}
     </div></div>`;
-  const onChange = () => { changed = true; $("#tot", v).textContent = money(X.linesTotal(cleanLines(inv.lines))); };
+  const showTot = () => { const rate = +$("#tax", v).value || 0, sub = X.linesTotal(cleanLines(inv.lines));
+    $("#tot", v).textContent = money(X.docTotal(cleanLines(inv.lines), rate)); $("#totSub", v).textContent = rate ? `${money(sub)} + ${money(X.taxOf(sub, rate))} tax (${rate}%)` : ""; };
+  const onChange = () => { changed = true; showTot(); };
   const picker = personPicker($("#who", v), state, onChange, "customer");
   linesEditor($("#lines", v), inv.lines, onChange);
-  $("#tot", v).textContent = money(X.linesTotal(cleanLines(inv.lines)));
-  for (const id of ["notes", "num", "date", "due"]) $("#" + id, v).addEventListener("input", onChange);
+  showTot();
+  for (const id of ["notes", "num", "date", "due", "tax"]) $("#" + id, v).addEventListener("input", onChange);
   dirty = () => changed || state.newPerson;
   const doSave = async () => {
     const person = await picker.resolve();
@@ -3622,7 +3718,8 @@ function viewInvoice(v, r) {
     if (!lines.length) throw new Error("Add at least one line.");
     const p = I.people.get(person);
     if (p && p.kind !== "customer") await save("people", { ...p, kind: "customer", status: "active" });
-    const row = { ...inv, person, lines, total: X.linesTotal(lines), notes: $("#notes", v).value.trim(), number: $("#num", v).value.trim() || inv.number,
+    const rate = Math.max(0, Math.min(20, +$("#tax", v).value || 0));
+    const row = { ...inv, person, lines, total: X.docTotal(lines, rate), tax_rate: rate, notes: $("#notes", v).value.trim(), number: $("#num", v).value.trim() || inv.number,
       date: $("#date", v).value || TODAY, due: $("#due", v).value || $("#date", v).value || TODAY, bad_debt: $("#bad", v) ? $("#bad", v).checked : false };
     const s = await save("invoices", row); changed = false; dirty = null; return s;
   };
@@ -3687,6 +3784,10 @@ function viewSettings(v) {
         `<label class="f ${k === "address" ? "full" : ""}">${l}<input data-biz="${k}" value="${esc(biz[k] || "")}" placeholder="${esc(ph)}"></label>`).join("")}
       <label class="f full">Terms printed on estimates<textarea id="terms" rows="3" placeholder="e.g. 100% satisfaction guarantee. Prices good for 30 days.">${esc(D.settings.terms || "")}</textarea></label></div>
       <div class="row end" style="margin-top:12px"><button class="btn primary" id="saveBiz">Save</button></div></div>
+    <div class="card"><h3>${ic("receipt")}Sales tax</h3><p class="muted" style="margin-top:0">Each estimate and invoice has its own "Sales tax %" box; this is what new ones start with.</p>
+      <div class="fgrid"><label class="f">Rate %<input id="taxRate" inputmode="decimal" value="${esc((D.settings.tax || {}).rate ?? "")}" placeholder="e.g. 7.25"></label>
+        <label class="check" style="align-self:end"><input type="checkbox" id="taxOn" ${(D.settings.tax || {}).on ? "checked" : ""}>Add it to new estimates and invoices</label></div>
+      <div class="row end" style="margin-top:12px"><button class="btn primary" id="saveTax">Save</button></div></div>
     <div class="card"><h3>The Customer Factor</h3><p class="muted" style="margin-top:0">While you use both, import a fresh backup (.sql) now and then: new customers, jobs, estimates and invoices come in; anything you've changed here is left alone. Card numbers in the backup are never read.</p>
       ${imp ? `<p class="small">Last import: <b>${esc(imp.file || "backup")}</b> on ${new Date(imp.at).toLocaleString()}${imp.counts ? ` · ${imp.counts.people} people, ${imp.counts.jobs} jobs, ${imp.counts.estimates} estimates, ${imp.counts.invoices} invoices` : ""}</p>` : ""}
       <label class="btn" style="position:relative;overflow:hidden">${ic("file")}Import a backup…<input type="file" id="tcf" style="position:absolute;inset:0;opacity:0;cursor:pointer"></label><span id="tcfMsg" class="small muted" style="margin-left:10px"></span></div>
@@ -3708,6 +3809,10 @@ function viewSettings(v) {
     D.settings = { ...D.settings, ...settings }; MAPENG = null; GMAPS_REFUSED = false;
     // Google's script can only be loaded once per page, so a changed key needs a fresh page
     toast(window.google && window.google.maps ? "Saved. Reload the page to use the new key." : "Saved. The map uses it next time it opens.");
+  });
+  $("#saveTax", v).onclick = (e) => busy(e.currentTarget, async () => {
+    const { settings } = await api("settings", { settings: { tax: { on: $("#taxOn", v).checked, rate: +$("#taxRate", v).value || 0 } } });
+    D.settings = { ...D.settings, ...settings }; toast("Saved.");
   });
   $("#saveBiz", v).onclick = (e) => busy(e.currentTarget, async () => {
     const business = Object.fromEntries($$("[data-biz]", v).map((x) => [x.dataset.biz, x.value.trim()]));
@@ -3755,7 +3860,7 @@ function printDoc(kind, doc) {
     <table><thead><tr><th>Service</th><th class="n">Price</th><th class="n">Qty</th><th class="n">Total</th></tr></thead><tbody>
     ${doc.lines.map((l) => `<tr><td><b>${esc(l.service)}</b>${l.description ? `<div class="d">${esc(l.description)}</div>` : ""}</td><td class="n">${money(l.rate)}</td><td class="n">${+l.qty === 1 ? "1" : esc(l.qty)}${l.unit ? " " + esc(String(l.unit).replace(/^per /, "")) : ""}</td><td class="n">${money(X.lineTotal(l))}</td></tr>`).join("")}</tbody></table>
     <div class="tot"><div>${kind === "estimate" && doc.options ? `<div class="r g"><span>Options from</span><span>${money(val.low)} – ${money(val.value)}</span></div>`
-      : `<div class="r g"><span>Total</span><span>${money(val.value)}</span></div>`}
+      : `${+doc.tax_rate ? `<div class="r"><span>Subtotal</span><span>${money(X.linesTotal(doc.lines))}</span></div><div class="r"><span>Sales tax (${+doc.tax_rate}%)</span><span>${money(X.taxOf(X.linesTotal(doc.lines), doc.tax_rate))}</span></div>` : ""}<div class="r g"><span>Total</span><span>${money(val.value)}</span></div>`}
       ${kind === "invoice" ? `<div class="r"><span>Paid</span><span>${money(X.paidOf(I, doc))}</span></div><div class="r"><b>Balance due</b><b>${money(bal)}</b></div>` : ""}</div></div>
     ${doc.notes ? `<div class="notes">${esc(doc.notes)}</div>` : ""}
     ${kind === "estimate" && D.settings.terms ? `<div class="notes">${esc(D.settings.terms)}</div>` : ""}
@@ -3942,9 +4047,13 @@ async function makePdf(kind, doc) {
     need(20); pdf.setFont("helvetica", big ? "bold" : "normal"); pdf.setFontSize(big ? 14 : 10.5);
     pdf.text(label, W - M - 220, y); pdf.text(value, W - M, y, { align: "right" }); y += big ? 22 : 15;
   };
-  const val = kind === "estimate" ? X.estimateValue({ ...doc, lines }) : { value: +doc.total || X.linesTotal(lines) };
+  const val = kind === "estimate" ? X.estimateValue({ ...doc, lines }) : { value: +doc.total || X.docTotal(lines, doc.tax_rate) };
   need(30); pdf.setDrawColor(...ink); pdf.setLineWidth(1.4); pdf.line(W - M - 220, y - 12, W - M, y - 12); y += 4;
-  if (kind === "estimate" && doc.options) row("Options from", `${money(val.low)} - ${money(val.value)}`, true);
+  const rate = +doc.tax_rate || 0;
+  if (rate && !(kind === "estimate" && doc.options)) {   // subtotal + sales tax above the total
+    const sub = X.linesTotal(lines); row("Subtotal", money(sub)); row(`Sales tax (${rate}%)`, money(X.taxOf(sub, rate)));
+  }
+  if (kind === "estimate" && doc.options) row(rate ? `Options from (incl. ${rate}% tax)` : "Options from", `${money(val.low)} - ${money(val.value)}`, true);
   else row("Total", money(val.value), true);
   if (kind === "invoice") { row("Paid", money(X.paidOf(I, doc))); row("Balance due", money(X.balanceOf(I, doc)), true); }
   const para = (text, size = 9.5) => {
@@ -5122,7 +5231,7 @@ function autoCard(p) {
         ${X.AUTO_RULES.map(([k, l]) => { const r = pa.rules[k], g = A.rules[k];
           return `<div class="aprow" data-k="${k}"><div class="row" style="gap:8px"><b style="flex:1;min-width:140px">${esc(l)}</b>
             <div class="seg">${[["default", `Default (${g.on ? "on" : "off"})`], ["on", "On"], ["off", "Off"]].map(([m, txt]) => `<button type="button" data-m="${m}" class="${r.mode === m ? "on" : ""}">${txt}</button>`).join("")}</div></div>
-            ${k === "est_follow" ? `<label class="f small" style="margin-top:8px">Check in after (days, up to 3)<input data-days inputmode="numeric" value="${esc(r.days.join(", "))}" placeholder="${esc(g.days.join(", "))} (your default)"></label>` : ""}
+            ${X.AUTO_DAYS[k] ? `<label class="f small" style="margin-top:8px">${esc(X.AUTO_DAYS[k])}, up to 3<input data-days inputmode="numeric" value="${esc(r.days.join(", "))}" placeholder="${esc(g.days.join(", "))} (your default)"></label>` : ""}
             ${k === "job_reminder" ? `<label class="f small" style="margin-top:8px">Remind them<select data-lead><option value="" ${r.lead ? "" : "selected"}>The day before (default)</option>${[2, 3].map((n) => `<option value="${n}" ${r.lead === n ? "selected" : ""}>${n} days before</option>`).join("")}</select></label>` : ""}
             ${r.mode === "on" && r.since ? `<div class="small muted" style="margin-top:4px">On for them since ${X.niceDate(r.since, { weekday: false })}</div>` : ""}</div>`; }).join("")}
       </div>
@@ -5233,7 +5342,8 @@ async function msgSettings(host) {
         <label class="check"><input type="checkbox" data-r="${k}" data-f="on" ${R[k].on ? "checked" : ""}>${R[k].on ? `On since ${X.niceDate(R[k].since, { weekday: false })}` : "Off"}</label></div>
       <div class="fgrid" style="margin-top:12px">
         ${k === "est_delivery" ? `<div class="small muted">Waits for your OK (the PDF is made on this page).</div>` : `<label class="f">When one is due<select data-r="${k}" data-f="approve"><option value="1" ${R[k].approve ? "selected" : ""}>Wait for my OK</option><option value="0" ${R[k].approve ? "" : "selected"}>Send by itself</option></select></label>`}
-        ${k === "est_follow" ? `<label class="f">First check-in, days after the estimate<input data-r="${k}" data-f="day1" inputmode="numeric" value="${R[k].days[0] ?? 2}"></label><label class="f">Second, days after<input data-r="${k}" data-f="day2" inputmode="numeric" value="${R[k].days[1] ?? ""}" placeholder="none"></label>` : ""}
+        ${X.AUTO_DAYS[k] ? `<label class="f">${esc(X.AUTO_DAYS[k])}, up to 3<input data-r="${k}" data-f="days" inputmode="numeric" value="${esc(R[k].days.join(", "))}"></label>` : ""}
+        ${k === "review" ? `<label class="f" style="grid-column:1/-1">Your review link (Google: Business Profile > Ask for reviews)<input data-r="${k}" data-f="review_link" value="${esc(R[k].review_link || "")}" placeholder="https://g.page/r/..."></label>` : ""}
         ${k === "job_reminder" ? `<label class="f">Send the day before at<input type="time" data-r="${k}" data-f="at" value="${esc(R[k].at)}"></label>` : ""}</div>
       ${k === "est_follow" ? tpl(k, "text1", "First text") + tpl(k, "text2", "Second text") : tpl(k, "text", "Text")}
       <label class="f">Email subject<input class="inp" data-r="${k}" data-f="subject" value="${esc(R[k].subject || "")}"></label>
@@ -5247,7 +5357,8 @@ async function msgSettings(host) {
       const r = { on: g("on").checked };
       if (g("approve")) r.approve = g("approve").value === "1";
       if (g("at")) r.at = g("at").value || "16:00";
-      if (k === "est_follow") r.days = [+g("day1").value, +g("day2").value].filter((n) => n > 0);
+      if (g("days")) r.days = g("days").value.split(/[^0-9]+/).map(Number).filter((n) => n >= 1 && n <= 90).slice(0, 3);
+      if (g("review_link")) r.review_link = g("review_link").value.trim();
       for (const f of ["text", "text1", "text2", "subject", "email", "email1", "email2"]) if (g(f)) r[f] = g(f).value;
       rules[k] = r;
     }
