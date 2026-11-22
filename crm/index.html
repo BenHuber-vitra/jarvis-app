@@ -501,6 +501,31 @@ table.t .t2 { color: var(--ink3); font-size: 12.5px; }
 #sheet .lrow .svc, #sheet .lrow .desc { grid-column: 1 / -1; }
 #sheet .lrow .ltot { justify-content: flex-start; }
 #sheet .lrow .show-phone { display: inline !important; }
+/* job photos (2026-11-22) */
+.pbar { margin-bottom: 10px; gap: 8px; }
+.pbar .seg button { padding: 0 10px; font-size: 12.5px; }
+.pick { position: relative; overflow: hidden; }
+.pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; }
+.ptile { position: relative; aspect-ratio: 1; border-radius: 10px; border: 1px solid var(--line); background: rgba(0,0,0,.25) center / cover no-repeat; cursor: pointer; padding: 0; overflow: hidden; }
+.ptile:hover { border-color: rgba(var(--acc-rgb), .55); }
+.ptile .pk { position: absolute; left: 5px; bottom: 5px; font-size: 10.5px; font-weight: 650; padding: 2px 6px; border-radius: 6px; background: rgba(0,0,0,.62); color: #fff; }
+.ptile .pk.k-after { background: rgba(22,163,74,.85); } .ptile .pk.k-issue { background: rgba(220,38,38,.85); }
+.ptile .pstar { position: absolute; right: 6px; top: 4px; color: #fbbf24; text-shadow: 0 1px 3px rgba(0,0,0,.7); }
+.ptile .ppdf { position: absolute; left: 5px; top: 5px; font-size: 9.5px; font-weight: 700; padding: 1px 5px; border-radius: 5px; background: rgba(var(--acc-rgb), .9); color: #fff; }
+.ptile.pbusy { display: grid; place-items: center; font-size: 11.5px; color: var(--ink3); animation: pbusy 1.2s ease-in-out infinite; cursor: default; }
+@keyframes pbusy { 50% { opacity: .45; } }
+.ptile.parch { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border-style: dashed; color: var(--ink2); text-decoration: none; font-size: 12px; }
+.ptile.parch svg { width: 18px; height: 18px; } .ptile.parch small { color: var(--ink3); }
+#pview { position: fixed; inset: 0; z-index: 300; background: rgba(4,6,14,.94); display: flex; flex-direction: column; color: #fff; }
+#pview .pvtop { display: flex; align-items: center; gap: 10px; padding: 12px 14px; font-size: 13px; color: rgba(255,255,255,.75); }
+#pview .pvimg { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; position: relative; padding: 0 8px; }
+#pview .pvimg img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 6px; }
+#pview .pvnav { position: absolute; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; border-radius: 50%; border: 0; background: rgba(255,255,255,.12); color: #fff; display: grid; place-items: center; cursor: pointer; }
+#pview .pvnav.l { left: 10px; } #pview .pvnav.r { right: 10px; }
+#pview .pvnav svg { width: 20px; height: 20px; }
+#pview .pvbar { padding: 12px 14px calc(14px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 10px; max-width: 760px; width: 100%; margin: 0 auto; }
+#pview .pvbar .seg button { padding: 0 10px; }
 /* automatic messages (2026-11-22) */
 .autop { min-width: 0; max-width: 100%; overflow: hidden; }
 .autop select, .autop input { max-width: 100%; min-width: 0; }
@@ -2353,6 +2378,7 @@ const P = {
   lock: "M6 11h12v10H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3",
   badge: "M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM8.5 14l-1.5 7 5-3 5 3-1.5-7",
   bell: "M6 16V11a6 6 0 1 1 12 0v5l2 2H4zM10 21h4",
+  camera: "M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
 };
 const icon = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${P[n] || ""}"/></svg>`;
 const ic = (n) => `<i data-icon="${n}">${icon(n)}</i>`;
@@ -3076,6 +3102,7 @@ function viewPerson(v, r) {
       <div class="card"><h3>${ic("bell")}Follow-up</h3>${p.follow_up ? `<div class="row" style="gap:8px">${dueBadge(p.follow_up)}</div>${p.follow_note ? `<div class="small" style="margin-top:6px">${esc(p.follow_note)}</div>` : ""}` : '<div class="small muted">None set</div>'}
         <div class="row" style="margin-top:10px"><button class="btn sm" id="fu">${ic("bell")}${p.follow_up ? "Change or mark done" : "Set a follow-up"}</button></div>${p.lost_reason && p.status === "lost" ? `<div class="small muted" style="margin-top:8px">Lost: ${esc(p.lost_reason)}</div>` : ""}</div>
       <div class="card"><h3>Notes</h3><div class="pre small">${esc(p.notes || "") || '<span class="muted">No notes</span>'}</div></div>
+      <div class="card"><h3>${ic("camera")}Photos</h3><div id="pphotos"></div></div>
       ${p.kind === "prospect" && p.status === "active" ? `<div class="card"><h3>Prospect</h3><div class="row"><button class="btn good" id="mkCust">${ic("check")}Make a customer</button><button class="btn bad" id="mkLost">Said no</button></div></div>` : ""}
       ${p.status !== "active" ? `<div class="card"><button class="btn" id="reopen">Make active again</button></div>` : ""}
       <button class="btn bad sm" id="del" style="align-self:flex-start">${ic("trash")}Delete ${p.kind}</button>
@@ -3083,6 +3110,7 @@ function viewPerson(v, r) {
   $("#edit", v).onclick = () => personSheet(p);
   $("#inv", v).onclick = () => go("invoice/new?person=" + p.id);
   $("#fu", v).onclick = () => followUpSheet(p);
+  photoStrip($("#pphotos", v), { person: p.id }, { kind: "before", add: ME.owner, where: true });
   if ($("#apSave", v)) wireAutoCard(v, p);
   if ($("#mkCust", v)) $("#mkCust", v).onclick = (e) => busy(e.target, async () => { await save("people", { ...p, kind: "customer" }); toast("Now a customer."); render(); });
   if ($("#mkLost", v)) $("#mkLost", v).onclick = (e) => busy(e.target, async () => { await save("people", { ...p, status: "lost", follow_up: null, follow_note: "" }); render(); });
@@ -3330,6 +3358,7 @@ function viewEstimate(v, r) {
       <div class="card"><h3>For</h3><div id="who"></div></div>
       <div class="card"><h3>Services <span class="right"><label class="check"><input type="checkbox" id="opt" ${e.options ? "checked" : ""}>Options (they pick one)</label></span></h3><div id="lines"></div></div>
       <div class="card"><h3>Notes on the estimate</h3><textarea class="inp" id="notes" rows="3" placeholder="Anything else the customer should know">${esc(e.notes || "")}</textarea></div>
+      ${isNew ? "" : `<div class="card"><h3>${ic("camera")}Photos <span class="right small muted">ones marked PDF go on the estimate</span></h3><div id="ephotos"></div></div>`}
     </div>
     <div class="stack sticky"><div class="card totalbox">
       <div class="row"><b style="font-size:18px">Estimate #</b><input class="inp" id="num" value="${esc(e.number)}" style="width:110px"><div class="spacer"></div>${isNew ? "" : statusBadge(e.status)}</div>
@@ -3367,6 +3396,7 @@ function viewEstimate(v, r) {
   $("#prt", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = changed || isNew ? await doSave() : e; printDoc("estimate", s); if (isNew) { history.replaceState(null, "", "#/estimate/" + s.id); render(); } });
   // the finished estimate as a PDF file, or emailed to the customer with the PDF attached (saved first)
   const ready = async () => { const s = changed || isNew ? await doSave() : e; if (isNew) history.replaceState(null, "", "#/estimate/" + s.id); return I.estimates.get(s.id) || s; };
+  if ($("#ephotos", v)) photoStrip($("#ephotos", v), { estimate: e.id }, { kind: "before", pdf: true });
   $("#pdf", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = await ready(); const pdf = await makePdf("estimate", s); pdf.save(pdfName("estimate", s)); if (isNew) render(); });
   if ($("#mail", v)) $("#mail", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = await ready(); emailSheet("estimate", s); });
   if ($("#won", v)) $("#won", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = changed ? await doSave() : src; await acceptEstimate(I.estimates.get(s.id), null); });
@@ -3404,6 +3434,7 @@ function jobSheet(job, isNew = false, optionsFrom = null) {
       <label class="f">Who's doing it<select class="inp" id="jwho2"><option value="">Me (Ben)</option>${D.employees.filter((e) => e.status === "active" || e.id === j.assignee).map((e) => `<option value="${e.id}" ${e.id === j.assignee ? "selected" : ""}>${esc(X.empName(e))}</option>`).join("")}</select></label>
       <label class="f">Repeats<select id="jfreq"><option value="none">Doesn't repeat (one-time)</option>${X.FREQS.map(([n, u]) => `<option value="${n}-${u}" ${freq === `${n}-${u}` ? "selected" : ""}>${esc(X.freqText({ every: n, unit: u }))}</option>`).join("")}</select></label></div>
     <div id="jlines"></div>
+    ${isNew ? "" : `<div><div class="lbl">Photos</div><div id="jphotos"></div></div>`}
     <label class="f">Notes for the job<textarea id="jnotes" rows="2">${esc(j.notes || "")}</textarea></label>
     <div class="row"><span class="muted">Job total</span><div class="spacer"></div><b id="jtot" style="font-size:20px"></b></div>
     <div id="scope" hidden class="card"><h3>Change which visits?</h3><div class="row"><button class="btn" data-scope="one">Only this visit</button><button class="btn primary" data-scope="future">This and all future visits</button></div></div>
@@ -3415,6 +3446,7 @@ function jobSheet(job, isNew = false, optionsFrom = null) {
     const picker = personPicker($("#jwho", b), state, () => {}, "customer");
     const tot = () => { $("#jtot", b).textContent = money(X.linesTotal(cleanLines(j.lines))); };
     const ed = linesEditor($("#jlines", b), j.lines, tot, 2); tot();
+    if ($("#jphotos", b)) photoStrip($("#jphotos", b), { job: j.id }, { kind: j.status === "done" ? "after" : "before" });
     if (!can("schedule_jobs")) {   // crew without "book and move jobs": read the job, mark it done, write notes
       for (const el of $$("input, select, textarea", b)) if (el.id !== "jnotes") el.disabled = true;
       for (const el of $$("#jwho, #jlines", b)) el.classList.add("ro");
@@ -3720,6 +3752,111 @@ function printDoc(kind, doc) {
 }
 
 
+// ------------------------------------------------------------------ job photos (2026-11-22, Ben)
+// A strip of photos on a job, an estimate or a person: Add photos (camera or gallery; each one is shrunk here to a
+// <= 1600 px JPEG + a 400 px thumbnail before it goes up), Before / After / Issue, and a full-screen viewer (kind,
+// caption, ★ keep here, on the estimate PDF, delete). The cloud keeps them 30 days, then moves unstarred ones to
+// Ben's Google Drive ("VITRA job photos"); those show as "In Drive" tiles (tools_crmphotos.ts).
+const PHOTO_KINDS = [["before", "Before"], ["after", "After"], ["issue", "Issue"], ["other", "Other"]];
+const KLABEL = Object.fromEntries(PHOTO_KINDS);
+const blobB64 = (blob) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1]); r.onerror = rej; r.readAsDataURL(blob); });
+async function shrink(file, max) {
+  const bmp = await createImageBitmap(file, { imageOrientation: "from-image" });
+  const s = Math.min(1, max / Math.max(bmp.width, bmp.height)), c = document.createElement("canvas");
+  c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  const blob = await new Promise((r) => c.toBlob(r, "image/jpeg", max > 800 ? 0.82 : 0.72));
+  return { b64: await blobB64(blob), w: c.width, h: c.height };
+}
+async function photoStrip(host, ref, opt = {}) {
+  if (!host) return;
+  let kind = opt.kind || "before", list = [], uploading = 0;
+  const canAdd = opt.add !== false && (ME.owner || (ref.job ? can("complete_jobs") : ref.estimate ? can("create_estimates") : false));
+  const where = (ph) => (!opt.where ? "" : ph.job ? "job" : ph.estimate ? "estimate" : "");
+  const tile = (ph, i) => ph.archived_at
+    ? `<a class="ptile parch" href="${esc(ph.drive_link || "#")}" target="_blank" rel="noopener" title="Moved to your Google Drive">${ic("link")}<span>In Drive</span><small>${esc(KLABEL[ph.kind] || "")}</small></a>`
+    : `<button type="button" class="ptile" data-pi="${i}" style="background-image:url('${esc(ph.thumb || ph.url || "")}')"><span class="pk k-${ph.kind}">${KLABEL[ph.kind] || ""}${where(ph) ? " · " + where(ph) : ""}</span>
+        ${ph.starred ? '<span class="pstar">★</span>' : ""}${opt.pdf && ph.on_pdf ? '<span class="ppdf">PDF</span>' : ""}</button>`;
+  const draw = () => {
+    host.innerHTML = `${canAdd ? `<div class="row pbar"><div class="seg">${PHOTO_KINDS.slice(0, 3).map(([k, l]) => `<button type="button" data-pk="${k}" class="${k === kind ? "on" : ""}">${l}</button>`).join("")}</div><div class="spacer"></div>
+        <label class="btn sm pick">${ic("camera")}Add photos<input type="file" accept="image/*" multiple data-pfile></label></div>` : ""}
+      ${list.length || uploading ? `<div class="pgrid">${Array.from({ length: uploading }, () => '<div class="ptile pbusy"><span>Uploading…</span></div>').join("")}${list.map(tile).join("")}</div>` : `<div class="small muted">${canAdd ? "No photos yet. Pick Before, After or Issue, then Add photos." : "No photos yet."}</div>`}
+      ${list.some((x) => !x.archived_at) ? '<div class="small muted" style="margin-top:8px">Kept here 30 days, then moved to your Google Drive (VITRA job photos). ★ keeps one here.</div>' : ""}`;
+    paintIcons(host);
+  };
+  const load = async () => { list = (await api("photos", ref)).photos || []; draw(); };
+  host.onclick = (e) => {
+    const k = e.target.closest("[data-pk]"); if (k) { kind = k.dataset.pk; draw(); return; }
+    const t = e.target.closest("[data-pi]"); if (t) photoViewer(list, +t.dataset.pi, opt, (changed) => { if (changed) draw(); });
+  };
+  host.onchange = async (e) => {
+    const f = e.target.closest("[data-pfile]"); if (!f || !f.files.length) return;
+    const files = [...f.files]; uploading = files.length; draw();
+    let ok = 0;
+    for (const file of files) {
+      try {
+        const full = await shrink(file, 1600), th = await shrink(file, 400);
+        const r = await api("photo", { act: "add", ...ref, kind, full: full.b64, thumb: th.b64, w: full.w, h: full.h, taken_at: file.lastModified ? new Date(file.lastModified).toISOString() : null });
+        list.unshift(r.photo); ok++;
+      } catch (err) { toast("A photo didn't upload: " + (err.message || err), true); }
+      uploading--; draw();
+    }
+    if (ok) toast(ok > 1 ? `${ok} photos added.` : "Photo added.");
+  };
+  draw();
+  try { await load(); } catch (e) { host.innerHTML = `<div class="small muted">Photos couldn't load (${esc(e.message || e)}).</div>`; }
+}
+function photoViewer(list, i, opt, done) {
+  let changed = false;
+  const el = document.createElement("div"); el.id = "pview"; document.body.appendChild(el);
+  const draw = () => {
+    const ph = list[i], mine = ME.owner || ph.by === ME.id, when = ph.taken_at || ph.created_at;
+    el.innerHTML = `<div class="pvtop"><span>${i + 1} of ${list.length}${when ? " · " + esc(new Date(when).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })) : ""}</span><div class="spacer"></div><button class="iconbtn" data-x aria-label="Close">${ic("x")}</button></div>
+      <div class="pvimg">${i > 0 ? `<button class="pvnav l" data-nav="-1" aria-label="Previous">${ic("left")}</button>` : ""}<img src="${esc(ph.url || ph.thumb || "")}" alt="">${i < list.length - 1 ? `<button class="pvnav r" data-nav="1" aria-label="Next">${ic("right")}</button>` : ""}</div>
+      <div class="pvbar">${mine ? `<div class="seg">${PHOTO_KINDS.map(([k, l]) => `<button type="button" data-k="${k}" class="${ph.kind === k ? "on" : ""}">${l}</button>`).join("")}</div>
+        <input class="inp" data-cap value="${esc(ph.caption || "")}" placeholder="Caption (optional)">
+        <div class="row"><button type="button" class="btn sm ${ph.starred ? "primary" : ""}" data-star>${ph.starred ? "★ Kept here" : "☆ Keep here"}</button>
+          ${opt.pdf ? `<label class="check small"><input type="checkbox" data-pdf ${ph.on_pdf ? "checked" : ""}>On the estimate PDF</label>` : ""}
+          <div class="spacer"></div><a class="btn sm" href="${esc(ph.url || "#")}" target="_blank" rel="noopener">Open</a><button type="button" class="btn sm bad" data-del aria-label="Delete">${ic("trash")}</button></div>`
+        : `<div class="row"><span class="badge">${esc(KLABEL[ph.kind] || "")}</span>${ph.caption ? `<span>${esc(ph.caption)}</span>` : ""}</div>`}</div>`;
+    paintIcons(el);
+  };
+  const patch = async (u) => { const r = await api("photo", { act: "update", id: list[i].id, ...u }); Object.assign(list[i], r.photo); changed = true; draw(); };
+  const close = () => { el.remove(); document.removeEventListener("keydown", key, true); done(changed); };
+  const key = (e) => {
+    if (e.key === "Escape") { e.stopImmediatePropagation(); close(); }
+    else if (e.key === "ArrowLeft" && i > 0 && !e.target.closest("input")) { i--; draw(); }
+    else if (e.key === "ArrowRight" && i < list.length - 1 && !e.target.closest("input")) { i++; draw(); }
+  };
+  document.addEventListener("keydown", key, true);
+  el.onclick = (e) => {
+    if (e.target === el || e.target.classList.contains("pvimg") || e.target.closest("[data-x]")) return close();
+    const n = e.target.closest("[data-nav]"); if (n) { i += +n.dataset.nav; return draw(); }
+    const k = e.target.closest("[data-k]"); if (k) return busy(k, () => patch({ kind: k.dataset.k }));
+    if (e.target.closest("[data-star]")) return busy(null, () => patch({ starred: !list[i].starred }));
+    const d = e.target.closest("[data-del]");
+    if (d) { if (!confirm("Delete this photo? It can't be undone.")) return;
+      busy(d, async () => { await api("photo", { act: "delete", id: list[i].id }); list.splice(i, 1); changed = true; if (!list.length) return close(); i = Math.min(i, list.length - 1); draw(); }); }
+  };
+  el.onchange = (e) => {
+    if (e.target.matches("[data-cap]")) busy(null, () => patch({ caption: e.target.value }));
+    if (e.target.matches("[data-pdf]")) busy(null, () => patch({ on_pdf: e.target.checked }));
+  };
+  draw();
+}
+/** An estimate's photos for its PDF (marked PDF, not yet moved to Drive), as data URLs; at most 6. */
+async function pdfPhotos(estimateId) {
+  try {
+    const list = ((await api("photos", { estimate: estimateId })).photos || []).filter((x) => x.on_pdf && !x.archived_at && x.url).slice(0, 6);
+    const out = [];
+    for (const ph of list) {
+      const src = ph.url.startsWith("data:") ? ph.url : `data:image/jpeg;base64,${await blobB64(await (await fetch(ph.url)).blob())}`;
+      out.push({ src, w: ph.w || 4, h: ph.h || 3, caption: ph.caption || KLABEL[ph.kind] || "" });
+    }
+    return out;
+  } catch (e) { console.warn("pdf photos", e); return []; }
+}
+
 // ------------------------------------------------------------------ PDF file + email (2026-11-21, Ben)
 // A real PDF (text, not a picture): jsPDF + AutoTable from cdnjs, loaded the first time. The logo's mask layers are
 // painted onto a canvas in the theme colours (PDF makers can't do CSS masks). Email goes out from Ben's Gmail via
@@ -3807,6 +3944,24 @@ async function makePdf(kind, doc) {
   y += 10;
   para(doc.notes, 10);
   if (kind === "estimate") para(D.settings && D.settings.terms, 8.5);
+  if (kind === "estimate" && doc.id) {   // photos marked "PDF" on the estimate, three to a row
+    const phs = await pdfPhotos(doc.id);
+    if (phs.length) {
+      const gap = 10, cw = (W - 2 * M - 2 * gap) / 3;
+      need(40); pdf.setFont("helvetica", "bold"); pdf.setFontSize(10.5); pdf.setTextColor(...ink); pdf.text("Photos", M, y); y += 10;
+      for (let k = 0; k < phs.length; k += 3) {
+        const row = phs.slice(k, k + 3), hRow = Math.min(150, Math.max(...row.map((ph) => cw * ph.h / ph.w)));
+        need(hRow + 24);
+        row.forEach((ph, n) => {
+          const h = Math.min(hRow, cw * ph.h / ph.w), w = h * ph.w / ph.h, x0 = M + n * (cw + gap) + (cw - w) / 2;
+          try { pdf.addImage(ph.src, "JPEG", x0, y, w, h); } catch (e) { console.warn(e); }
+          if (ph.caption) { pdf.setFont("helvetica", "normal"); pdf.setFontSize(8); pdf.setTextColor(...grey); pdf.text(pdfText(ph.caption).slice(0, 48), M + n * (cw + gap), y + hRow + 10); }
+        });
+        y += hRow + 20;
+      }
+      pdf.setTextColor(...ink);
+    }
+  }
   if (kind === "estimate") {
     need(60); y += 34; pdf.setDrawColor(...ink); pdf.setLineWidth(0.8);
     pdf.line(M, y, M + 250, y); pdf.line(W - M - 160, y, W - M, y);
@@ -5167,6 +5322,23 @@ function demoApi(route, b) {
   }
   if (route === "settings") { if (b.settings) DB.settings = { ...DB.settings, ...b.settings }; return { settings: DB.settings }; }
   if (route === "track" || route === "geo" || route === "signout") return { ok: true };
+  if (route === "photos") {   // photos in the demo live in this page only
+    const k = b.job ? "job" : b.estimate ? "estimate" : "person";
+    return { photos: (DB.photos || []).filter((x) => x[k] === b[k]).map((x) => ({ ...x })) };
+  }
+  if (route === "photo") {
+    DB.photos = DB.photos || [];
+    if (b.act === "add") {
+      const person = b.job ? (DB.jobs.find((j) => j.id === b.job) || {}).person : b.estimate ? (DB.estimates.find((x) => x.id === b.estimate) || {}).person : b.person;
+      const ph = { id: X.uuid(), person, job: b.job || null, estimate: b.estimate || null, kind: b.kind || "other", caption: "", starred: false, on_pdf: true, w: b.w, h: b.h,
+        taken_at: b.taken_at, created_at: new Date().toISOString(), by: "ben", url: "data:image/jpeg;base64," + b.full, thumb: "data:image/jpeg;base64," + b.thumb };
+      DB.photos.unshift(ph); return { photo: { ...ph } };
+    }
+    const ph = DB.photos.find((x) => x.id === b.id); if (!ph) throw new Error("That photo isn't there any more.");
+    if (b.act === "delete") { DB.photos = DB.photos.filter((x) => x !== ph); return { ok: true }; }
+    for (const f of ["kind", "caption", "starred", "on_pdf"]) if (f in b) ph[f] = b[f];
+    return { photo: { ...ph } };
+  }
   if (route === "auto") {   // automatic messages in the demo: same rules, nothing leaves the page
     let auto = X.normalizeAuto(DB.auto);
     if (b.settings) {
