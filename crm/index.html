@@ -977,6 +977,13 @@ body.dragging, body.dragging * { cursor: grabbing !important; -webkit-user-selec
 .select.sm, select.inp.sm { height: 34px; padding: 0 10px; }
 @media (max-width: 900px) { .stopbtns .btn { flex: 1 1 auto; justify-content: center; } .stopbtns .spacer { display: none; } }
 
+/* ---- customer pages, Ben's side (2026-11-22, switch-over step 2) ---- */
+.reqcard { border-color: rgba(245,158,11,.4); box-shadow: 0 0 0 1px rgba(245,158,11,.15), var(--sh1); }
+.reqcard .li .btn { flex: none; }
+.approved { border-color: rgba(52,211,153,.45); }
+.approved h3 { color: var(--good); }
+.sigimg { display: block; background: #fff; border-radius: 9px; max-width: 100%; height: 76px; object-fit: contain; margin-top: 10px; padding: 4px 8px; }
+
 </style>
 </head>
 <body>
@@ -1728,15 +1735,15 @@ const AUTO_RULES = [
   ["review", "Review requests", "A thank-you asking for a review, a day after a visit is marked done. At most once a year per customer; needs your review link."],
 ];
 const AUTO_DAYS = { est_follow: "Check in after (days)", pay_reminder: "Remind after (days)", review: "Ask after (days)" };
-const AUTO_FIELDS = ["first", "name", "business", "phone", "when", "date", "time", "services", "total", "estimate", "invoice", "balance", "review_link"];
+const AUTO_FIELDS = ["first", "name", "business", "phone", "when", "date", "time", "services", "total", "estimate", "invoice", "balance", "review_link", "link"];
 const AUTO_DEFAULT = {
   quiet: { from: "09:00", to: "19:00" }, channel: "text_else_email", daily_cap: 25,
   rules: {
     est_follow: { on: false, since: null, approve: true, days: [2, 7],
-      text1: "Hi {first}, it's Ben with {business}. Just making sure you got the estimate for {services}. Happy to answer any questions or get you on the schedule!",
+      text1: "Hi {first}, it's Ben with {business}. Just making sure you got the estimate for {services}. You can look it over and approve it here: {link}",
       text2: "Hi {first}, Ben from {business} again. Any questions on your estimate? We have openings coming up if you'd like to get on the schedule.",
       subject: "Your estimate from {business}",
-      email1: "Hi {first},\n\nJust making sure you got the estimate for {services} ({total}). Happy to answer any questions, or just reply when you'd like to get on the schedule.\n\nThank you,\nBen Huber\n{business}\n{phone}",
+      email1: "Hi {first},\n\nJust making sure you got the estimate for {services} ({total}). You can look it over and approve it online here:\n{link}\n\nHappy to answer any questions, or just reply when you'd like to get on the schedule.\n\nThank you,\nBen Huber\n{business}\n{phone}",
       email2: "Hi {first},\n\nChecking in once more on your estimate for {services}. We have openings coming up if you'd like to get on the schedule.\n\nThank you,\nBen Huber\n{business}\n{phone}" },
     job_reminder: { on: false, since: null, approve: false, at: "16:00",
       text: "Hi {first}, this is {business}. Just a reminder we're scheduled at your place {when}, {date}{time}. Reply here if you need to reschedule. Thank you!",
@@ -1747,9 +1754,9 @@ const AUTO_DEFAULT = {
       subject: "Checking in from {business}",
       email: "Hi {first},\n\nJust checking in. Let me know if there's anything I can help with.\n\nThank you,\nBen Huber\n{business}\n{phone}" },
     est_delivery: { on: false, since: null, approve: true,
-      text: "Hi {first}, here's your estimate from {business}: {services}, {total}. Reply with any questions or when you'd like to get on the schedule!",
+      text: "Hi {first}, here's your estimate from {business}: {services}, {total}. See it and approve it online: {link}",
       subject: "Estimate #{estimate} from {business}",
-      email: "Hi {first},\n\nThanks for having us out. Your estimate is attached. Just reply to this email if you have any questions, or when you'd like to get on the schedule.\n\nThank you,\nBen Huber\n{business}\n{phone}" },
+      email: "Hi {first},\n\nThanks for having us out. Your estimate is attached, and you can review and approve it online here:\n{link}\n\nJust reply to this email if you have any questions, or when you'd like to get on the schedule.\n\nThank you,\nBen Huber\n{business}\n{phone}" },
     pay_reminder: { on: false, since: null, approve: true, days: [7, 14, 30],
       text: "Hi {first}, this is {business}. A friendly reminder that invoice #{invoice} for {balance} from {date} is still open. Reply here with any questions. Thank you!",
       subject: "Reminder: invoice #{invoice} from {business}",
@@ -2565,6 +2572,7 @@ const P = {
   lock: "M6 11h12v10H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3",
   badge: "M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM8.5 14l-1.5 7 5-3 5 3-1.5-7",
   bell: "M6 16V11a6 6 0 1 1 12 0v5l2 2H4zM10 21h4",
+  globe: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3c2.5 2.4 3.8 5.4 3.8 9s-1.3 6.6-3.8 9c-2.5-2.4-3.8-5.4-3.8-9S9.5 5.4 12 3z",
   route: "M6 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM6 15V9.5A3.5 3.5 0 0 1 9.5 6H16M18 9v5.5a3.5 3.5 0 0 1-3.5 3.5H8",
   play: "M7 5l12 7-12 7z", flag: "M5 21V4M5 4h11l-2 4 2 4H5",
   camera: "M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
@@ -2629,8 +2637,10 @@ async function load() {
   if (d.today) TODAY = d.today;
   if (d.me) { ME = d.me; HIDE_PRICES = !can("see_prices"); applyMe(); }
   reindex();
-  if (ME.owner) await loadMsgs().catch((e) => console.warn("messages", e));
+  if (ME.owner) await Promise.all([loadMsgs().catch((e) => console.warn("messages", e)), loadReqs().catch((e) => console.warn("requests", e))]);
 }
+let REQS = [];   // what customers sent in: website quote requests, reschedules, questions, online approvals (owner only)
+async function loadReqs() { REQS = (await api("requests", {})).requests || []; }
 let MSGS = [];   // automatic texts & emails (owner only; Messages page)
 async function loadMsgs() { const [m, a] = await Promise.all([api("messages", {}), api("auto", {})]); MSGS = m.messages || []; D.auto = a.auto; }
 let toastT = 0;
@@ -2718,7 +2728,22 @@ function counts() {
   set("invoices", D.invoices.filter((i) => X.balanceOf(I, i) > 0.005).length, "warn");
   set("messages", MSGS.filter((m) => m.status === "ready").length, "acc");
   set("calendar", X.jobsBetween(D, I, TODAY, TODAY).length, "core");
+  set("dashboard", REQS.filter((r) => r.status === "new").length, "warn");
 }
+const SITE_BASE = new URL("../", location.href.split("#")[0].split("?")[0]).href.replace(/127\.0\.0\.1:\d+\/(cloud\/)?/, "benhuber-vitra.github.io/jarvis-app/").replace(/^http:\/\/benhuber/, "https://benhuber");
+const BOOK_URL = SITE_BASE + "c/book.html";
+const BOOK_SNIPPET = `<iframe id="vitra-quote" src="${BOOK_URL}?embed=1" title="Request a free quote" style="width:100%;min-height:900px;border:0"></iframe>
+<script>addEventListener("message",function(e){if(e.origin==="https://benhuber-vitra.github.io"&&e.data&&e.data.vitraHeight){document.getElementById("vitra-quote").style.height=e.data.vitraHeight+"px"}});<\/script>`;
+const BOOK_NOTE = `Hi! Could you add our quote request form to the website? Two options, whichever is easier:
+
+1) Put the form inside a page (e.g. "Get a quote"): add an HTML / embed block and paste this code:
+
+${BOOK_SNIPPET}
+
+2) Or link our "Get a quote" buttons straight to: ${BOOK_URL}
+
+Thanks!`;
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-copy]"); if (b) copyText(b.dataset.copy); });
 const ROUTE_OF = { person: "customers", estimate: "estimates", invoice: "invoices", employee: "employees" };
 function parse() {
   const h = location.hash.replace(/^#\/?/, "");
@@ -3008,6 +3033,69 @@ function onWaySheet(j) {
     });
   });
 }
+// ------------------------------------------------------------------ customer pages: Ben's side (2026-11-22, switch-over step 2)
+// Each person has one private page (their estimates to approve + sign, visits, invoices, a message box); what they
+// send comes back here as requests. The website booking form makes a new lead in the Pipeline.
+const REQ_KIND = { approval: ["check", "Approved online", "good"], booking: ["globe", "Quote request", "acc"], reschedule: ["cal", "Wants to reschedule", "warn"], question: ["msg", "Question", "core"] };
+const agoText = (iso) => { const m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : X.niceDate(iso.slice(0, 10), { weekday: false }); };
+function reqLine(r) {
+  const [i, label, cls] = REQ_KIND[r.kind] || ["msg", r.kind, ""], d = r.details || {}, who = I.people.get(r.person);
+  const what = r.kind === "approval" ? `Estimate #${esc(d.number)}${d.option_service ? " · " + esc(d.option_service) : ""} · ${money(d.value)} · signed by ${esc(d.name)}`
+    : r.kind === "booking" ? esc([d.services && d.services.join(", "), d.city, d.message].filter(Boolean).join(" · ").slice(0, 160)) || "From the website"
+    : r.kind === "reschedule" ? `${d.date ? "Visit " + X.niceDate(d.date) : "A visit"}${d.when ? " · " + esc(d.when) : ""}` : esc(String(d.text || "").slice(0, 160));
+  const go = r.kind === "approval" && r.ref ? "estimate/" + r.ref : r.person ? "person/" + r.person : "";
+  return `<div class="li" ${go ? `data-go="${go}"` : ""}><div class="avatar" data-n="${esc(who ? X.nameOf(who) : d.first || "?")}">${ic(i)}</div>
+    <div class="main"><div class="t">${esc(who ? X.nameOf(who) : [d.first, d.last].filter(Boolean).join(" ") || "Someone")} <span class="badge ${cls}">${label}</span></div><div class="s">${what}</div></div>
+    <span class="small muted hide-phone">${agoText(r.created_at)}</span>${r.status === "new" ? `<button class="btn sm" data-reqdone="${r.id}">${ic("check")}Done</button>` : ""}</div>`;
+}
+function reqCard() {
+  const fresh = REQS.filter((r) => r.status === "new");
+  return fresh.length ? `<div class="card reqcard"><h3>${ic("bell")}From customers <span class="right">${fresh.length} new</span></h3><div class="list">${fresh.slice(0, 8).map(reqLine).join("")}</div></div>` : "";
+}
+document.addEventListener("click", (e) => {   // "Done" on a customer request, wherever it's listed
+  const b = e.target.closest("[data-reqdone]"); if (!b) return;
+  e.stopPropagation(); e.preventDefault();
+  busy(b, async () => { REQS = (await api("requests", { done: b.dataset.reqdone })).requests || []; counts(); rerenderKeep(); });
+}, true);
+const LINKS = new Map();   // person -> {url, created_at, last_seen, views}
+async function linkOf(person, rotate = false) {
+  if (!rotate && LINKS.has(person)) return LINKS.get(person);
+  const r = await api("link", { person, rotate }); LINKS.set(person, r); return r;
+}
+async function copyText(s) { try { await navigator.clipboard.writeText(s); toast("Copied."); } catch { prompt("Copy this:", s); } }
+// share a customer's page: the estimate's own link opens on that estimate
+function shareSheet(p, est) {
+  const biz = (D.settings.business || {}).name || "VITRA Window Washing", ph = X.mobileOf(p) || ((p.phones || [])[0] || {}).n;
+  openSheet(est ? `Send estimate #${est.number} to approve` : `${X.nameOf(p)}'s page`, `<div class="small muted">Their own private page: ${est ? "they can look the estimate over, pick an option, sign and approve it. You get a notification when they do." : "estimates to approve, upcoming visits (they can ask to move one), invoices, and a message box."}</div>
+    <div id="shBody"><div class="sk" style="height:44px"></div></div>`, async (b) => {
+    try {
+      const L = await linkOf(p.id), url = L.url + (est ? "&e=" + encodeURIComponent(est.id) : "");
+      const msg = est ? `Hi ${p.first || "there"}, here's your estimate from ${biz}. You can look it over and approve it here: ${url}` : `Hi ${p.first || "there"}, here's your page with ${biz}: ${url}`;
+      $("#shBody", b).innerHTML = `<label class="f">Link<input class="inp" readonly value="${esc(url)}"></label>
+        <div class="row"><button class="btn" id="shCopy">${ic("link")}Copy link</button>${ph ? `<a class="btn" href="sms:${String(ph).replace(/[^\d+]/g, "")}?body=${encodeURIComponent(msg)}">${ic("msg")}Text it</a>` : ""}
+          ${est ? `<button class="btn" id="shMail">${ic("mail")}Email with the PDF</button>` : ""}<a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">See their page</a></div>
+        <div class="small muted">${L.views ? `Opened ${L.views} time${L.views > 1 ? "s" : ""}, last ${agoText(L.last_seen)}.` : "They haven't opened it yet."}</div>
+        <div class="sheetfoot"><button class="btn ghost sm" id="shNew" style="color:var(--bad)">New link (the old one stops working)</button><div class="spacer"></div><button class="btn primary" id="shOk">Done</button></div>`;
+      paintIcons(b);
+      $("#shCopy", b).onclick = () => copyText(url);
+      $("#shOk", b).onclick = () => closeSheet();
+      if ($("#shMail", b)) $("#shMail", b).onclick = () => { closeSheet(true); emailSheet("estimate", est); };
+      $("#shNew", b).onclick = (ev) => { if (!confirm("Make a new link? The one you sent before will stop working.")) return; busy(ev.currentTarget, async () => { await linkOf(p.id, true); closeSheet(true); shareSheet(p, est); }); };
+    } catch (e) { $("#shBody", b).innerHTML = `<div class="err">${esc(e.message)}</div>`; }
+  });
+}
+function portalCard(p) {
+  const mine = REQS.filter((r) => r.person === p.id);
+  return `<div class="card"><h3>${ic("globe")}Their page</h3><div class="small muted">A private page where they approve estimates, see visits and invoices, and send you messages.</div>
+    <div class="row" style="margin-top:10px"><button class="btn sm" id="share">${ic("link")}Send their page</button></div>
+    ${mine.length ? `<div class="list" style="margin-top:8px">${mine.slice(0, 5).map(reqLine).join("")}</div>` : ""}</div>`;
+}
+function approvalBox(e) {
+  const a = e.approval; if (!a) return "";
+  return `<div class="card approved"><h3>${ic("check")}Approved online</h3>
+    <div class="small">By <b>${esc(a.name)}</b> on ${X.niceDate(String(a.at).slice(0, 10), { year: true })} at ${new Date(a.at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: TZ })}${a.option_service ? `<br>Picked: <b>${esc(a.option_service)}</b>${a.value ? " · " + money(a.value) : ""}` : ""}</div>
+    ${a.signature ? `<img class="sigimg" src="${esc(a.signature)}" alt="Signature">` : ""}</div>`;
+}
 function viewMyDay(v) {
   setTitle("My day");
   const mine = (from, to) => X.jobsBetween(D, I, from, to);
@@ -3063,6 +3151,7 @@ function viewDashboard(v) {
   v.innerHTML = `<div class="wrap stack">
     <div class="pagehead"><div><h2>${hi}, Ben</h2><div class="sub">${X.niceDate(TODAY, { year: true })} · ${d.today.jobs ? `${d.today.jobs} job${d.today.jobs > 1 ? "s" : ""} today worth ${money(d.today.total)}` : "nothing booked today"}</div></div>
       <div class="spacer"></div><a class="btn hide-phone" href="#/calendar/week/${TODAY}">${ic("cal")}This week</a><a class="btn primary hide-phone" href="#/estimate/new">${ic("plus")}New estimate</a></div>
+    ${reqCard()}
     <div class="grid g4 kpis">
       <div class="card kpi link" data-go="invoices?f=paid"><div class="label">${ic("dollar")}Sales ${d.year}</div>${spark(monthsSoFar.length > 1 ? monthsSoFar : [0, ...monthsSoFar])}<div class="value">${X.usd(d.ytd)}</div>
         <div class="sub">${vsLast == null ? "Collected so far" : `<span class="delta ${vsLast >= 0 ? "up" : "down"}">${vsLast >= 0 ? "↑" : "↓"} ${Math.abs(vsLast)}%</span>vs this time last year`}</div></div>
@@ -3451,6 +3540,7 @@ function viewPerson(v, r) {
         ${p.source ? `<dt>found us</dt><dd>${esc(X.sourceOf(p))}</dd>` : ""}
         ${p.created ? `<dt>added</dt><dd>${X.niceDate(p.created, { year: true })}</dd>` : ""}
         <dt>billed</dt><dd>${money(billed)}</dd></dl>${contactLinks(p)}</div>
+      ${ME.owner ? portalCard(p) : ""}
       ${ME.owner ? autoCard(p) : ""}
       <div class="card"><h3>${ic("bell")}Follow-up</h3>${p.follow_up ? `<div class="row" style="gap:8px">${dueBadge(p.follow_up)}</div>${p.follow_note ? `<div class="small" style="margin-top:6px">${esc(p.follow_note)}</div>` : ""}` : '<div class="small muted">None set</div>'}
         <div class="row" style="margin-top:10px"><button class="btn sm" id="fu">${ic("bell")}${p.follow_up ? "Change or mark done" : "Set a follow-up"}</button></div>${p.lost_reason && p.status === "lost" ? `<div class="small muted" style="margin-top:8px">Lost: ${esc(p.lost_reason)}</div>` : ""}</div>
@@ -3466,6 +3556,7 @@ function viewPerson(v, r) {
   $("#fu", v).onclick = () => followUpSheet(p);
   photoStrip($("#pphotos", v), { person: p.id }, { kind: "before", add: ME.owner, where: true });
   if ($("#apSave", v)) wireAutoCard(v, p);
+  if ($("#share", v)) $("#share", v).onclick = () => shareSheet(p);
   if ($("#mkCust", v)) $("#mkCust", v).onclick = (e) => busy(e.target, async () => { await save("people", { ...p, kind: "customer" }); toast("Now a customer."); render(); });
   if ($("#mkLost", v)) $("#mkLost", v).onclick = (e) => busy(e.target, async () => { await save("people", { ...p, status: "lost", follow_up: null, follow_note: "" }); render(); });
   if ($("#reopen", v)) $("#reopen", v).onclick = (e) => busy(e.target, async () => { await save("people", { ...p, status: "active" }); render(); });
@@ -3726,13 +3817,14 @@ function viewEstimate(v, r) {
       <div class="card"><h3>Notes on the estimate</h3><textarea class="inp" id="notes" rows="3" placeholder="Anything else the customer should know">${esc(e.notes || "")}</textarea></div>
       ${isNew ? "" : `<div class="card"><h3>${ic("camera")}Photos <span class="right small muted">ones marked PDF go on the estimate</span></h3><div id="ephotos"></div></div>`}
     </div>
-    <div class="stack sticky"><div class="card totalbox">
+    <div class="stack sticky">${approvalBox(e)}<div class="card totalbox">
       <div class="row"><b style="font-size:18px">Estimate #</b><input class="inp" id="num" value="${esc(e.number)}" style="width:110px"><div class="spacer"></div>${isNew ? "" : statusBadge(e.status)}</div>
       <div class="fgrid"><label class="f">Date<input type="date" id="date" value="${esc(e.date || TODAY)}"></label><label class="f">Sales tax %<input id="tax" inputmode="decimal" value="${+e.tax_rate || 0}"></label></div>
       <div class="muted small" id="totLabel">Total</div><div class="big" id="tot"></div><div class="small muted" id="totSub"></div>
       <div class="row"><button class="btn primary" id="save" style="flex:1">${ic("check")}Save estimate</button><button class="btn" id="prt" title="Print">${ic("print")}</button></div>
       <div class="row"><button class="btn" id="pdf" style="flex:1">${ic("file")}Download PDF</button>${ME.owner ? `<button class="btn" id="mail" style="flex:1">${ic("mail")}Email</button>` : ""}</div>
       ${e.sent ? `<div class="small muted">Emailed ${X.niceDate(e.sent, { weekday: false })}${e.sent_to ? " to " + esc(e.sent_to) : ""}</div>` : ""}
+      ${!isNew && ME.owner && e.status === "open" ? `<button class="btn" id="share">${ic("link")}Send to approve online</button>` : ""}
       ${isNew ? "" : `<div class="row">${e.status !== "accepted" ? `<button class="btn good" id="won" style="flex:1">${ic("check")}They said yes</button>` : `<button class="btn" id="sched" style="flex:1">${ic("cal")}Schedule the job</button>`}
         ${e.status === "open" ? `<button class="btn bad" id="lost">Turned down</button>` : e.status !== "accepted" ? `<button class="btn" id="reopen">Re-open</button>` : ""}</div>
         ${e.status === "open" && I.people.get(e.person) ? `<button class="btn" id="fu">${ic("bell")}${I.people.get(e.person).follow_up ? "Follow-up: " + esc(dueText(I.people.get(e.person).follow_up)) : "Set a follow-up"}</button>` : ""}
@@ -3768,6 +3860,7 @@ function viewEstimate(v, r) {
   if ($("#ephotos", v)) photoStrip($("#ephotos", v), { estimate: e.id }, { kind: "before", pdf: true });
   $("#pdf", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = await ready(); const pdf = await makePdf("estimate", s); pdf.save(pdfName("estimate", s)); if (isNew) render(); });
   if ($("#mail", v)) $("#mail", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = await ready(); emailSheet("estimate", s); });
+  if ($("#share", v)) $("#share", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = await ready(); const who = I.people.get(s.person); if (who) shareSheet(who, s); });
   if ($("#won", v)) $("#won", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = changed ? await doSave() : src; await acceptEstimate(I.estimates.get(s.id), null); });
   if ($("#lost", v)) $("#lost", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = changed ? await doSave() : src; declineEstimate(I.estimates.get(s.id)); });
   if ($("#fu", v)) $("#fu", v).onclick = () => followUpSheet(I.people.get(e.person));
@@ -4216,6 +4309,11 @@ function viewSettings(v) {
       <div class="fgrid"><label class="f">Rate %<input id="taxRate" inputmode="decimal" value="${esc((D.settings.tax || {}).rate ?? "")}" placeholder="e.g. 7.25"></label>
         <label class="check" style="align-self:end"><input type="checkbox" id="taxOn" ${(D.settings.tax || {}).on ? "checked" : ""}>Add it to new estimates and invoices</label></div>
       <div class="row end" style="margin-top:12px"><button class="btn primary" id="saveTax">Save</button></div></div>
+    <div class="card"><h3>${ic("globe")}Website quote form</h3><p class="muted" style="margin-top:0">A "request a free quote" form. Each request lands in your Pipeline as a new lead with a follow-up for today, and you get a notification.</p>
+      <label class="f">The form on its own (share it, or link a button to it)<input class="inp" readonly value="${esc(BOOK_URL)}"></label>
+      <div class="row" style="margin:8px 0 14px"><button class="btn sm" data-copy="${esc(BOOK_URL)}">${ic("link")}Copy</button><a class="btn sm" href="${esc(BOOK_URL)}" target="_blank" rel="noopener">Open it</a></div>
+      <label class="f">For your website person: put the form inside a page<textarea class="inp" readonly rows="5" style="font-family:ui-monospace,Consolas,monospace;font-size:12px">${esc(BOOK_SNIPPET)}</textarea></label>
+      <div class="row" style="margin-top:8px"><button class="btn sm" data-copy="${esc(BOOK_NOTE)}">${ic("mail")}Copy a note to send them</button></div></div>
     <div class="card"><h3>The Customer Factor</h3><p class="muted" style="margin-top:0">While you use both, import a fresh backup (.sql) now and then: new customers, jobs, estimates and invoices come in; anything you've changed here is left alone. Card numbers in the backup are never read.</p>
       ${imp ? `<p class="small">Last import: <b>${esc(imp.file || "backup")}</b> on ${new Date(imp.at).toLocaleString()}${imp.counts ? ` · ${imp.counts.people} people, ${imp.counts.jobs} jobs, ${imp.counts.estimates} estimates, ${imp.counts.invoices} invoices` : ""}</p>` : ""}
       <label class="btn" style="position:relative;overflow:hidden">${ic("file")}Import a backup…<input type="file" id="tcf" style="position:absolute;inset:0;opacity:0;cursor:pointer"></label><span id="tcfMsg" class="small muted" style="margin-left:10px"></span></div>
@@ -4292,7 +4390,8 @@ function printDoc(kind, doc) {
       ${kind === "invoice" ? `<div class="r"><span>Paid</span><span>${money(X.paidOf(I, doc))}</span></div><div class="r"><b>Balance due</b><b>${money(bal)}</b></div>` : ""}</div></div>
     ${doc.notes ? `<div class="notes">${esc(doc.notes)}</div>` : ""}
     ${kind === "estimate" && D.settings.terms ? `<div class="notes">${esc(D.settings.terms)}</div>` : ""}
-    ${kind === "estimate" ? `<div class="sign"><div>Customer signature</div><div>Date</div></div>` : ""}`;
+    ${kind === "estimate" ? (doc.approval ? `<div class="sign"><div>${doc.approval.signature ? `<img src="${esc(doc.approval.signature)}" style="height:60px;display:block">` : ""}Approved online by ${esc(doc.approval.name)}</div><div>${X.niceDate(String(doc.approval.at).slice(0, 10), { year: true })}</div></div>`
+      : `<div class="sign"><div>Customer signature</div><div>Date</div></div>`) : ""}`;
   setTimeout(() => window.print(), 50);
 }
 
@@ -4512,22 +4611,30 @@ async function makePdf(kind, doc) {
     }
   }
   if (kind === "estimate") {
-    need(60); y += 34; pdf.setDrawColor(...ink); pdf.setLineWidth(0.8);
+    need(80); y += 34;
+    const ap = doc.approval;
+    if (ap && ap.signature) {   // approved online: their signature, name and date on the lines
+      try { pdf.addImage(ap.signature, "PNG", M, y - 52, 160, 50); } catch (e) { console.warn("signature", e); }
+      pdf.setFontSize(10); pdf.setTextColor(...ink); pdf.text(pdfText(X.niceDate(String(ap.at).slice(0, 10), { year: true })), W - M - 160, y - 6);
+    }
+    pdf.setDrawColor(...ink); pdf.setLineWidth(0.8);
     pdf.line(M, y, M + 250, y); pdf.line(W - M - 160, y, W - M, y);
-    pdf.setFontSize(8.5); pdf.setTextColor(...grey); pdf.text("Customer signature", M, y + 12); pdf.text("Date", W - M - 160, y + 12);
+    pdf.setFontSize(8.5); pdf.setTextColor(...grey); pdf.text(ap ? pdfText(`Approved online by ${ap.name}${ap.option_service ? " (" + ap.option_service + ")" : ""}`) : "Customer signature", M, y + 12); pdf.text("Date", W - M - 160, y + 12);
   }
   const pages = pdf.getNumberOfPages();
   if (pages > 1) for (let k = 1; k <= pages; k++) { pdf.setPage(k); pdf.setFontSize(8); pdf.setTextColor(...grey); pdf.text(`Page ${k} of ${pages}`, W - M, H - 24, { align: "right" }); }
   return pdf;
 }
-function emailSheet(kind, doc) {
+async function emailSheet(kind, doc) {
   const p = I.people.get(doc.person) || {}, biz = (D.settings && D.settings.business) || {};
+  let url = "";   // their private page (estimates open on this one) goes in the message, the PDF stays attached
+  if (ME.owner && p.id) try { url = (await linkOf(p.id)).url + (kind === "estimate" ? "&e=" + encodeURIComponent(doc.id) : ""); } catch (e) { console.warn("link", e); }
   const name = biz.name || "VITRA Window Washing", word = kind === "estimate" ? "estimate" : "invoice";
   const hi = p.first ? `Hi ${p.first},` : "Hi,";
   const sign = ["Thank you,", "Ben Huber", name, biz.phone].filter(Boolean).join("\n");
   const msg = kind === "estimate"
-    ? `${hi}\n\nThanks for having us out. Your estimate is attached. Just reply to this email if you have any questions, or when you'd like to get on the schedule.\n\n${sign}`
-    : `${hi}\n\nYour invoice #${doc.number} for ${money(X.balanceOf(I, doc) || +doc.total || 0)} is attached. Thank you for your business!\n\n${sign}`;
+    ? `${hi}\n\nThanks for having us out. Your estimate is attached${url ? `, and you can review and approve it online here:\n${url}\n\nJust` : ". Just"} reply to this email if you have any questions, or when you'd like to get on the schedule.\n\n${sign}`
+    : `${hi}\n\nYour invoice #${doc.number} for ${money(X.balanceOf(I, doc) || +doc.total || 0)} is attached.${url ? ` You can see your invoices and upcoming visits anytime here:\n${url}\n\n` : " "}Thank you for your business!\n\n${sign}`;
   const file = pdfName(kind, doc);
   openSheet(`Email ${word} #${doc.number}`, `
     <label class="f">To<input id="mto" type="email" value="${esc((p.emails || [])[0] || "")}" placeholder="customer@example.com" autocomplete="off"></label>
@@ -5831,6 +5938,13 @@ function demoData() {
   for (let m = 0; m < 10; m++) { const d = X.addMonths(t.slice(0, 4) + "-01-15", m); if (d >= t) break; const id = "d-ih" + m; INV.push({ id, number: String(1100 + m), person: "d-p" + (m % 8), date: d, due: d, lines: [L(0, 20 + m * 3)], total: 12 * (20 + m * 3), bad_debt: false, job: null, notes: "" }); PAY.push({ id: "d-ph" + m, invoice: id, amount: 12 * (20 + m * 3), date: X.addDays(d, 2), method: "check", note: "" }); }
   [8, 9, 10, 11].forEach((i, k) => E.push({ id: "d-e" + i, number: String(501 + k), person: "d-p" + i, date: X.addDays(t, -[2, 9, 21, 45][k]), status: "open", options: k === 1,
     lines: k === 1 ? [{ ...L(1, 28), service: "One-time exterior" }, { ...L(1, 28), service: "Every 6 months (per visit)", rate: 6 }] : [L(0, 30 + k * 4), L(2, 16)], notes: "", decided: null }));
+  { // one estimate approved online, with a drawn signature, so the approval box and the PDF can be seen in the demo
+    const c = document.createElement("canvas"); c.width = 300; c.height = 80; const g = c.getContext("2d");
+    g.fillStyle = "#fff"; g.fillRect(0, 0, 300, 80); g.strokeStyle = "#141a33"; g.lineWidth = 3; g.beginPath(); g.moveTo(20, 55);
+    g.bezierCurveTo(60, 5, 90, 75, 130, 35); g.bezierCurveTo(160, 10, 200, 70, 270, 30); g.stroke();
+    const e = E[E.length - 1];
+    Object.assign(e, { status: "accepted", decided: X.addDays(t, -1), approval: { at: new Date(Date.now() - 86400e3).toISOString(), name: "Demo Customer", option: null, option_service: null, value: X.estimateValue(e).value, signature: c.toDataURL("image/png") } });
+  }
   const EMP = [
     { id: "d-emp1", first: "Marcus", last: "Reyes", phone: "(801) 555-0190", email: "marcus@example.com", role: "lead", status: "active", pay_type: "hourly", pay_rate: 22, commission: 0, start: "2026-03-02", address: "", emergency: "", color: "196", notes: "Runs crew 1.", trainings: X.DEFAULT_TRAININGS.map((n, i) => ({ name: n, done: i < 4 ? "2026-04-01" : null })), overrides: {} },
     { id: "d-emp2", first: "Kayla", last: "Brooks", phone: "(801) 555-0191", email: "", role: "sales", status: "active", pay_type: "commission", pay_rate: 0, commission: 12, start: "2026-06-15", address: "", emergency: "", color: "328", notes: "", trainings: X.DEFAULT_TRAININGS.map((n, i) => ({ name: n, done: i === 5 ? "2026-06-20" : null })), overrides: { see_contact: true } },
@@ -5872,6 +5986,15 @@ function demoApi(route, b) {
     return { plan: b.plan, remove: r.remove, add: JSON.parse(JSON.stringify(r.add)) };
   }
   if (route === "settings") { if (b.settings) DB.settings = { ...DB.settings, ...b.settings }; return { settings: DB.settings }; }
+  if (route === "link") return { url: SITE_BASE + "c/#t=demo-link-" + b.person, views: 2, last_seen: new Date(Date.now() - 3600e3).toISOString(), created_at: new Date().toISOString() };
+  if (route === "requests") {
+    if (!DB.requests) { const ps = DB.people.slice(0, 3); const e0 = DB.estimates.find((e) => e.status === "open"); DB.requests = [
+      { id: "d-r1", kind: "booking", person: ps[0].id, status: "new", created_at: new Date(Date.now() - 900e3).toISOString(), details: { first: ps[0].first, services: ["Window cleaning"], city: "Lehi", message: "Two story, about 30 windows" } },
+      { id: "d-r2", kind: "reschedule", person: ps[1].id, status: "new", created_at: new Date(Date.now() - 7200e3).toISOString(), details: { date: TODAY, when: "Any morning next week" } },
+      ...(e0 ? [{ id: "d-r3", kind: "approval", person: e0.person, ref: e0.id, status: "new", created_at: new Date(Date.now() - 86400e3).toISOString(), details: { number: e0.number, name: "Demo Customer", value: 425 } }] : [])]; }
+    if (b.done) { const r = DB.requests.find((x) => x.id === b.done); if (r) r.status = "done"; }
+    return { requests: DB.requests };
+  }
   if (route === "onway") { const j = DB.jobs.find((x) => x.id === b.job); const at = new Date().toISOString(); if (j) j.on_way_at = at; return { sent: true, on_way_at: at }; }
   if (route === "track" || route === "geo" || route === "signout") return { ok: true };
   if (route === "photos") {   // photos in the demo live in this page only
