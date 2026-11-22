@@ -946,6 +946,37 @@ body.dragging, body.dragging * { cursor: grabbing !important; -webkit-user-selec
 #toast { width: max-content; }
 @media (max-width: 900px) { #toast { bottom: calc(78px + env(safe-area-inset-bottom, 0px)); } }
 
+/* ---- today's route (crew day screen; 2026-11-22, Ben's switch-over step 5) ---- */
+.routepg { max-width: 860px; }
+.stop { display: flex; flex-direction: column; gap: 10px; border-left: 3px solid rgba(var(--acc-rgb), .55); }
+.stop.onway { border-left-color: var(--warn, #f59e0b); }
+.stop.working { border-left-color: var(--core); box-shadow: 0 0 0 1px rgba(var(--core-rgb), .35), var(--sh1); }
+.stop.done { border-left-color: var(--good); opacity: .72; }
+.stophead { display: flex; gap: 12px; align-items: flex-start; }
+.stophead h4 { margin: 0 0 2px; font-size: 16px; }
+.stophead .num { flex: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 750;
+  background: rgba(var(--acc-rgb), .18); color: var(--acc); border: 1px solid rgba(var(--acc-rgb), .45); }
+.stop.done .num { background: rgba(52,211,153,.16); color: var(--good); border-color: rgba(52,211,153,.4); }
+.stop.working .num { background: rgba(var(--core-rgb), .2); color: var(--core); border-color: rgba(var(--core-rgb), .5); }
+.stophead .addr { display: inline-flex; gap: 5px; align-items: center; font-size: 13px; color: var(--ink2); text-decoration: none; }
+.stophead .addr:hover { color: var(--acc); }
+.stophead .addr i { width: 14px; height: 14px; flex: none; }
+.stophead .amt { font-weight: 700; white-space: nowrap; }
+.stophead .mv { display: flex; flex-direction: column; gap: 2px; }
+.stophead .mv .iconbtn { width: 28px; height: 24px; }
+.stop .lines { display: flex; flex-direction: column; gap: 4px; font-size: 13.5px; }
+.stop .lines > div { display: flex; justify-content: space-between; gap: 12px; }
+.stop .lines small { display: block; color: var(--ink3); font-size: 12px; }
+.stop .office { display: flex; gap: 8px; padding: 9px 11px; border-radius: 10px; background: rgba(245,158,11,.08); border: 1px solid rgba(245,158,11,.25); font-size: 13px; }
+.stop .office i { width: 16px; height: 16px; flex: none; color: var(--warn, #f59e0b); margin-top: 1px; }
+.stop .stoptimes { color: var(--ink2); }
+.stopbtns { gap: 8px; flex-wrap: wrap; }
+.stopmore summary { cursor: pointer; color: var(--ink2); font-size: 13px; display: inline-flex; gap: 6px; align-items: center; }
+.stopmore summary i { width: 15px; height: 15px; }
+.stopmore[open] { display: flex; flex-direction: column; gap: 10px; }
+.select.sm, select.inp.sm { height: 34px; padding: 0 10px; }
+@media (max-width: 900px) { .stopbtns .btn { flex: 1 1 auto; justify-content: center; } .stopbtns .spacer { display: none; } }
+
 </style>
 </head>
 <body>
@@ -1896,9 +1927,39 @@ function metres(a, b) {
   const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(h));
 }
+// ------------------------------------------------------------------ the crew's day: route + "on my way" (2026-11-22)
+const ONWAY_DEFAULT = "Hi {first}, it's {tech} from {business}. I'm on my way and should be there in about {eta} minutes.";
+/** The "on my way" text for a job: Ben's wording (settings.onway_text) or the default. */
+function onWayText(settings, p, techName, eta, tpl) {
+  const biz = (settings && settings.business) || {};
+  return fillTemplate(tpl || (settings && settings.onway_text) || ONWAY_DEFAULT, { first: (p && p.first) || "there", name: nameOf(p), business: biz.name || "VITRA Window Washing",
+    phone: biz.phone || "", tech: techName || "Ben", eta: Math.max(1, Math.round(+eta || 15)) });
+}
+/** Jobs in driving order. Timed ones by arrival time; the rest fitted in nearest-first after them (map positions
+ *  where known, otherwise by ZIP and street). `manual` = job ids in an order someone set by hand (wins). */
+function routeOrder(I, jobs, manual) {
+  const pos = (j) => { const p = I.people.get(j.person) || {}; return p.lat != null && p.lng != null ? [+p.lat, +p.lng] : null; };
+  const key = (j) => { const p = I.people.get(j.person) || {}; return `${p.zip || "~"} ${String(p.address || "").replace(/^\d+\s*/, "")} ${p.address || ""}`; };
+  const timed = jobs.filter((j) => timeMin(j.time) != null).sort((a, b) => timeMin(a.time) - timeMin(b.time));
+  const rest = jobs.filter((j) => timeMin(j.time) == null).sort((a, b) => (key(a) < key(b) ? -1 : 1));
+  const out = timed.slice();
+  let here = out.length ? pos(out[out.length - 1]) : null;
+  while (rest.length) {
+    let k = 0;
+    if (here) { let best = Infinity; rest.forEach((j, i) => { const q = pos(j); const d = q ? metres(here, q) : Infinity; if (d < best) { best = d; k = i; } }); }
+    const j = rest.splice(k, 1)[0]; out.push(j); here = pos(j) || here;
+  }
+  if (manual && manual.length) {
+    const at = new Map(manual.map((id, i) => [id, i]));
+    out.sort((a, b) => (at.has(a.id) ? at.get(a.id) : 1e6 + out.indexOf(a)) - (at.has(b.id) ? at.get(b.id) : 1e6 + out.indexOf(b)));
+  }
+  return out;
+}
+/** Minutes between two ISO times (time on the job). */
+const minutesBetween = (a, b) => (a && b ? Math.max(0, Math.round((Date.parse(b) - Date.parse(a)) / 60000)) : 0);
 function trackLength(points) { let m = 0; for (let i = 1; i < points.length; i++) m += metres(points[i - 1], points[i]); return m; }
 
-return { TABLES, COLUMNS, PERMISSIONS, PERM_KEYS, DEFAULT_ROLES, normalizeRoles, effectivePerms, empName, PAY_TYPES, payText, DEFAULT_TRAININGS, METHODS, HORIZON_DAYS, round2, usd, usdShort, localDay, addDays, addMonths, daysBetween, weekday, niceDate, uuid, nameOf, addressOf, lineTotal, linesTotal, taxOf, docTotal, defaultTax, estimateValue, uninvoicedVisits, monthlyLines, monthlyDue, jobTotal, serviceNames, freqText, FREQS, index, paidOf, balanceOf, jobDays, jobsBetween, timeMin, minText, lenText, timeText, dayLoad, moneyBetween, nextJob, lastJob, activePlan, servicesFor, nextOpenDay, dashboard, occurrences, regenPlan, topUp, freqFromGap, search, nextNumber, fixMojibake, htmlText, fromDump, LOST_REASONS, SOURCES, NUDGE_DAYS, STALE_DAYS, sourceOf, pipeline, followUps, winRate, sourceStats, AUTO_RULES, AUTO_DAYS, AUTO_FIELDS, AUTO_DEFAULT, normalizeAuto, fillTemplate, AUTO_LEADS, personAuto, autoFor, autoRoute, autoVars, canSendNow, autoCandidates, anyPersonOn, KNOCK, knockStats, areaFreshness, inPolygon, metres, trackLength };
+return { TABLES, COLUMNS, PERMISSIONS, PERM_KEYS, DEFAULT_ROLES, normalizeRoles, effectivePerms, empName, PAY_TYPES, payText, DEFAULT_TRAININGS, METHODS, HORIZON_DAYS, round2, usd, usdShort, localDay, addDays, addMonths, daysBetween, weekday, niceDate, uuid, nameOf, addressOf, lineTotal, linesTotal, taxOf, docTotal, defaultTax, estimateValue, uninvoicedVisits, monthlyLines, monthlyDue, jobTotal, serviceNames, freqText, FREQS, index, paidOf, balanceOf, jobDays, jobsBetween, timeMin, minText, lenText, timeText, dayLoad, moneyBetween, nextJob, lastJob, activePlan, servicesFor, nextOpenDay, dashboard, occurrences, regenPlan, topUp, freqFromGap, search, nextNumber, fixMojibake, htmlText, fromDump, LOST_REASONS, SOURCES, NUDGE_DAYS, STALE_DAYS, sourceOf, pipeline, followUps, winRate, sourceStats, AUTO_RULES, AUTO_DAYS, AUTO_FIELDS, AUTO_DEFAULT, normalizeAuto, fillTemplate, mobileOf, AUTO_LEADS, personAuto, autoFor, autoRoute, autoVars, canSendNow, autoCandidates, anyPersonOn, KNOCK, knockStats, areaFreshness, inPolygon, metres, ONWAY_DEFAULT, onWayText, routeOrder, minutesBetween, trackLength };
  })();
 const TCF = (() => { // The Customer Factor (Ben's CRM) inside Jarvis (2026-11-19). Ben exports a full backup from The
 // Customer Factor (a MySQL dump, .sql) about once a month and uploads it on the Customers screen.
@@ -2504,6 +2565,8 @@ const P = {
   lock: "M6 11h12v10H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3",
   badge: "M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM8.5 14l-1.5 7 5-3 5 3-1.5-7",
   bell: "M6 16V11a6 6 0 1 1 12 0v5l2 2H4zM10 21h4",
+  route: "M6 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM6 15V9.5A3.5 3.5 0 0 1 9.5 6H16M18 9v5.5a3.5 3.5 0 0 1-3.5 3.5H8",
+  play: "M7 5l12 7-12 7z", flag: "M5 21V4M5 4h11l-2 4 2 4H5",
   camera: "M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
 };
 const icon = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${P[n] || ""}"/></svg>`;
@@ -2584,14 +2647,14 @@ async function busy(btn, fn) {
 
 // ------------------------------------------------------------------ frame: menu, routes
 const NAV = [
-  ["dashboard", "Dashboard", "home"], ["calendar", "Calendar", "cal"], ["prospects", "Pipeline", "target"],
+  ["dashboard", "Dashboard", "home"], ["calendar", "Calendar", "cal"], ["route", "Today's route", "route"], ["prospects", "Pipeline", "target"],
   ["customers", "Customers", "users"], ["estimates", "Estimates", "file"], ["invoices", "Invoices", "receipt"],
   ["employees", "Employees", "team"], ["permissions", "Permissions", "shield"],
   ["knock", "Door knocking", "map"], ["messages", "Messages", "mail"],
   ["books", "Transactions", "bank"], ["reports", "Reports", "chart"], ["banking", "Bank & uploads", "upload"],
 ];
-const BOTTOM = ["dashboard", "calendar", "prospects", "customers"];   // + the New button in the middle; Invoices is in the menu
-const SECTIONS = [["Overview", ["dashboard", "calendar"]], ["Sales", ["knock", "prospects", "estimates", "messages"]], ["Customers", ["customers", "invoices"]], ["Books", ["books", "reports", "banking"]], ["Team", ["employees", "permissions"]]];
+const BOTTOM = ["dashboard", "calendar", "prospects", "route", "customers"];   // + the New button in the middle; Invoices is in the menu; Route only where Pipeline is hidden (crew)
+const SECTIONS = [["Overview", ["dashboard", "calendar", "route"]], ["Sales", ["knock", "prospects", "estimates", "messages"]], ["Customers", ["customers", "invoices"]], ["Books", ["books", "reports", "banking"]], ["Team", ["employees", "permissions"]]];
 const NEW_ITEMS = [
   ["estimate", "file", "New estimate", "Price a job for someone"],
   ["job", "cal", "Book a job", "One-time or recurring"],
@@ -2601,7 +2664,7 @@ const NEW_ITEMS = [
 function buildNav() {
   const item = ([id, label, i]) => `<a class="navi" data-nav="${id}" href="#/${id}">${ic(i)}<span>${label}</span><span class="badge" data-count="${id}" hidden></span></a>`;
   $("#nav").innerHTML = SECTIONS.map(([t, ids]) => `<div class="navsec">${t}</div>` + ids.map((id) => item(NAV.find((n) => n[0] === id))).join("")).join("");
-  const b = NAV.filter((n) => BOTTOM.includes(n[0])).map(([id, label, i]) => `<a data-nav="${id}" href="#/${id}">${ic(i)}<span>${label === "Dashboard" ? "Home" : label}</span></a>`);
+  const b = NAV.filter((n) => BOTTOM.includes(n[0])).map(([id, label, i]) => `<a data-nav="${id}" href="#/${id}"${id === "route" ? " hidden" : ""}>${ic(i)}<span>${label === "Dashboard" ? "Home" : id === "route" ? "Route" : label}</span></a>`);
   b.splice(2, 0, `<button class="fab" id="fab" aria-label="New">${ic("plus")}</button>`);
   $("#bottom").innerHTML = b.join("");
   $("#newMenu").innerHTML = NEW_ITEMS.map(([k, i, t, sub]) => `<button class="mi" role="menuitem" data-new="${k}">${ic(i)}<span>${t}<small>${sub}</small></span></button>`).join("");
@@ -2615,6 +2678,8 @@ const NEEDS = { prospects: "create_estimates", estimates: "create_estimates", cu
 const NEW_NEEDS = { estimate: "create_estimates", job: "schedule_jobs", customer: "edit_customers", invoice: "create_invoices" };
 function applyMe() {
   for (const a of $$("[data-nav]")) { const need = NEEDS[a.dataset.nav]; a.hidden = !!need && !can(need); }
+  const bp = $('#bottom [data-nav="prospects"]'), br = $('#bottom [data-nav="route"]');
+  if (br) br.hidden = !!(bp && !bp.hidden);   // phone bar: Pipeline for Ben, Route for the crew
   for (const sec of $$(".navsec")) { let n = sec.nextElementSibling, any = false; while (n && !n.classList.contains("navsec")) { if (!n.hidden) any = true; n = n.nextElementSibling; } sec.hidden = !any; }
   $("#navSettings").hidden = !can("edit_settings");
   $("#toJarvis").hidden = !ME.owner;
@@ -2815,6 +2880,134 @@ function enforceUi(root) {
   for (const [perm, sel] of UI_NEEDS) if (!can(perm)) for (const el of $$(sel, root)) el.hidden = true;
 }
 // An employee's home: their own day (no business money unless their role has "reports").
+// ------------------------------------------------------------------ today's route (crew day screen; 2026-11-22, Ben's switch-over)
+// One person's jobs for a day in driving order: arrival windows first, the rest nearest-first. Each stop: address
+// (directions), what to do, notes from the office, call / text, "On my way" (a text with the ETA from Ben's number),
+// Start / Finish (time on the job, finish = done), notes back to the office and photos. The whole remaining route
+// opens in Google Maps. The order can be changed by hand (kept on this device).
+const enc = encodeURIComponent;
+const dirUrl = (addr) => `https://www.google.com/maps/dir/?api=1&travelmode=driving&destination=${enc(addr)}`;
+function routeUrl(addrs) {   // Google takes up to 9 stops on the way + the destination; the start is where you are
+  const a = addrs.filter(Boolean).slice(0, 10); if (!a.length) return "";
+  return dirUrl(a[a.length - 1]) + (a.length > 1 ? `&waypoints=${enc(a.slice(0, -1).join("|"))}` : "");
+}
+const hm = (iso) => iso ? new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: TZ }) : "";
+function viewRoute(v, r) {
+  setTitle("Today's route");
+  const day = /^\d{4}-\d\d-\d\d$/.test(r.q.get("d") || "") ? r.q.get("d") : TODAY;
+  const staff = D.employees.filter((e) => e.status === "active");
+  const who = ME.owner ? (r.q.get("w") || "me") : ME.id;
+  const mine = X.jobsBetween(D, I, day, day).filter((x) => x.job.status !== "skipped" && (who === "all" || (x.job.assignee || "me") === who || (!ME.owner && x.job.assignee === ME.id)));
+  const key = `vitra.route.${day}.${who}`;
+  let manual = []; try { manual = JSON.parse(localStorage.getItem(key) || "[]"); } catch {}
+  const stops = X.routeOrder(I, mine.map((x) => x.job), manual);
+  const left = stops.filter((j) => j.status !== "done");
+  const done = stops.length - left.length;
+  const onJob = stops.reduce((s, j) => s + X.minutesBetween(j.started_at, j.finished_at), 0);
+  const booked = stops.reduce((s, j) => s + (+j.minutes || 0), 0);
+  const url = routeUrl(left.map((j) => X.addressOf(I.people.get(j.person))));
+  const go2 = (d, w) => `route?d=${d}${ME.owner && w !== "me" ? "&w=" + enc(w) : ""}`;
+  const stopHtml = (j, i) => {
+    const p = I.people.get(j.person) || {}, addr = X.addressOf(p), ph = X.mobileOf(p) || ((p.phones || [])[0] || {}).n;
+    const state = j.status === "done" ? "done" : j.started_at ? "working" : j.on_way_at ? "onway" : "todo";
+    const when = [X.timeText(j) && `Arrive ${X.timeText(j)}`, j.minutes && X.lenText(j.minutes)].filter(Boolean).join(" · ");
+    const times = [j.on_way_at && `On the way ${hm(j.on_way_at)}`, j.started_at && `Started ${hm(j.started_at)}`, j.finished_at && `Finished ${hm(j.finished_at)}`,
+      j.started_at && j.finished_at && `${X.lenText(X.minutesBetween(j.started_at, j.finished_at)) || "0 min"} on the job`].filter(Boolean).join(" · ");
+    return `<div class="card stop ${state}" data-stop="${j.id}">
+      <div class="stophead"><div class="num">${state === "done" ? ic("check") : i + 1}</div>
+        <div style="flex:1;min-width:0"><h4 class="ell">${esc(X.nameOf(p))}${j.plan ? ' <span class="badge core">↻</span>' : ""}</h4>
+          ${addr ? `<a class="addr" href="${dirUrl(addr)}" target="_blank" rel="noopener">${ic("map")}${esc(addr)}</a>` : '<span class="small muted">No address on file</span>'}
+          ${when ? `<div class="small muted">${esc(when)}</div>` : ""}</div>
+        ${HIDE_PRICES ? "" : `<div class="amt">${money(X.jobTotal(j))}</div>`}
+        ${stops.length > 1 && j.status !== "done" ? `<div class="mv"><button class="iconbtn" data-up="${j.id}" aria-label="Earlier" ${i ? "" : "disabled"}>${ic("up")}</button><button class="iconbtn" data-down="${j.id}" aria-label="Later" ${i < stops.length - 1 ? "" : "disabled"}>${ic("down")}</button></div>` : ""}</div>
+      <div class="lines">${(j.lines || []).map((l) => `<div><span>${esc(l.service)}${l.qty && +l.qty !== 1 ? ` × ${+l.qty}` : ""}${l.description ? `<small>${esc(String(l.description).split("\n")[0].slice(0, 140))}</small>` : ""}</span><span>${money(X.lineTotal(l))}</span></div>`).join("")}</div>
+      ${p.notes || j.notes ? `<div class="office">${ic("file")}<div>${p.notes ? `<div class="pre">${esc(p.notes)}</div>` : ""}${j.notes ? `<div class="pre">${esc(j.notes)}</div>` : ""}</div></div>` : ""}
+      ${times ? `<div class="small stoptimes">${esc(times)}</div>` : ""}
+      <div class="row stopbtns">
+        ${ph ? `<a class="btn sm" href="${telHref(ph)}">${ic("phone")}Call</a><a class="btn sm" href="${smsHref(ph)}">${ic("msg")}Text</a>` : ""}
+        <div class="spacer"></div>
+        ${state === "todo" || state === "onway" ? `${ph ? `<button class="btn sm" data-onway="${j.id}">${ic("route")}${state === "onway" ? "Send again" : "On my way"}</button>` : ""}<button class="btn sm primary" data-start="${j.id}">${ic("play")}Start</button>` : ""}
+        ${state === "working" ? `<button class="btn sm good" data-finish="${j.id}">${ic("flag")}Finish</button>` : ""}
+        ${state === "done" ? `<button class="btn sm ghost" data-undone="${j.id}">Not done</button>` : ""}
+      </div>
+      <details class="stopmore" data-more="${j.id}"><summary>${ic("camera")}Notes and photos</summary>
+        <label class="f">Notes for the office<textarea rows="2" data-notes="${j.id}" placeholder="Anything Ben should know: gate, dog, extra work they asked for...">${esc(j.notes || "")}</textarea></label>
+        <div data-photos="${j.id}"></div></details>
+    </div>`;
+  };
+  v.innerHTML = `<div class="wrap stack routepg">
+    <div class="calbar">
+      <div class="navgrp"><button class="iconbtn" data-go="${go2(X.addDays(day, -1), who)}" aria-label="Day before">${ic("left")}</button><button class="btn ghost sm" data-go="${go2(TODAY, who)}">Today</button><button class="iconbtn" data-go="${go2(X.addDays(day, 1), who)}" aria-label="Next day">${ic("right")}</button></div>
+      <h2>${esc(X.niceDate(day, { year: day.slice(0, 4) !== TODAY.slice(0, 4) }))}</h2><div class="spacer"></div>
+      ${ME.owner && staff.length ? `<select class="inp sm" id="rwho"><option value="me" ${who === "me" ? "selected" : ""}>My route</option>${staff.map((e) => `<option value="${e.id}" ${who === e.id ? "selected" : ""}>${esc(X.empName(e))}</option>`).join("")}<option value="all" ${who === "all" ? "selected" : ""}>Everyone</option></select>` : ""}
+    </div>
+    <div class="totals">
+      <div class="tot main"><small>Stops</small><b>${stops.length}</b></div>
+      <div class="tot"><small>Done</small><b>${done} of ${stops.length}</b></div>
+      ${booked ? `<div class="tot"><small>Booked</small><b>${X.lenText(booked)}</b></div>` : ""}
+      ${onJob ? `<div class="tot"><small>On the job</small><b>${X.lenText(onJob)}</b></div>` : ""}
+      ${HIDE_PRICES ? "" : `<div class="tot"><small>Work today</small><b>${money(stops.reduce((s, j) => s + X.jobTotal(j), 0))}</b></div>`}
+    </div>
+    ${url ? `<div class="row"><a class="btn primary" href="${url}" target="_blank" rel="noopener">${ic("map")}Open the ${done ? "rest of the " : ""}route in Google Maps</a>${left.length > 10 ? `<span class="small muted">first 10 stops</span>` : ""}
+      ${manual.length ? `<button class="btn ghost sm" id="rreset">Back to the suggested order</button>` : ""}</div>` : ""}
+    ${stops.length ? stops.map(stopHtml).join("") : `<div class="card">${emptyBox("route", `No jobs ${day === TODAY ? "today" : "on " + X.niceDate(day)}`, ME.owner ? "Jobs given to someone show on their route." : "Jobs Ben gives you show up here.")}</div>`}
+  </div>`;
+  const job = (id) => I.jobs.get(id);
+  const saveJob = (row, msg) => busy(null, async () => { await save("jobs", row); rerenderKeep(); if (msg) toast(msg); });
+  const reorder = (id, by) => { const ids = stops.map((j) => j.id), i = ids.indexOf(id), k = i + by; if (k < 0 || k >= ids.length) return; [ids[i], ids[k]] = [ids[k], ids[i]];
+    try { localStorage.setItem(key, JSON.stringify(ids)); } catch {} rerenderKeep(); };
+  if ($("#rwho", v)) $("#rwho", v).onchange = (e) => go(go2(day, e.target.value));
+  if ($("#rreset", v)) $("#rreset", v).onclick = () => { try { localStorage.removeItem(key); } catch {} rerenderKeep(); };
+  v.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-up],[data-down],[data-start],[data-finish],[data-undone],[data-onway]"); if (!b) return;
+    const d = b.dataset, now = new Date().toISOString();
+    if (d.up) return reorder(d.up, -1);
+    if (d.down) return reorder(d.down, 1);
+    if (d.start) { const j = job(d.start); return saveJob({ ...j, started_at: now, finished_at: null }, `Started at ${hm(now)}.`); }
+    if (d.finish) { const j = job(d.finish), mins = X.minutesBetween(j.started_at, now);
+      return saveJob({ ...j, status: "done", finished_at: now, started_at: j.started_at || now }, `Done${mins ? ` · ${X.lenText(mins)} on the job` : ""}.`); }
+    if (d.undone) { const j = job(d.undone); return saveJob({ ...j, status: "scheduled", finished_at: null }, "Back to not done."); }
+    if (d.onway) onWaySheet(job(d.onway));
+  });
+  for (const det of $$("[data-more]", v)) det.addEventListener("toggle", () => {   // photos load only when opened
+    const host = $("[data-photos]", det); if (det.open && !host.dataset.on) { host.dataset.on = 1; const j = job(det.dataset.more); photoStrip(host, { job: j.id }, { kind: j.status === "done" ? "after" : "before" }); }
+  });
+  for (const ta of $$("[data-notes]", v)) ta.addEventListener("change", () => {
+    const j = job(ta.dataset.notes); if ((j.notes || "") === ta.value.trim()) return;
+    busy(null, async () => { await save("jobs", { ...j, notes: ta.value.trim() }); toast("Notes saved."); });
+  });
+  wire(v);
+}
+function onWaySheet(j) {
+  const p = I.people.get(j.person) || {}, ph = X.mobileOf(p) || ((p.phones || [])[0] || {}).n;
+  const tech = ME.owner ? "Ben" : (ME.name || "").split(" ")[0];
+  let eta = 15;
+  const text = () => X.onWayText(D.settings, p, tech, eta);
+  openSheet(`On my way · ${X.nameOf(p)}`, `
+    <div><div class="lbl">How long until you get there?</div><div class="chips">${[5, 10, 15, 20, 30, 45, 60].map((m) => `<button type="button" class="chip ${m === eta ? "on" : ""}" data-eta="${m}">${m} min</button>`).join("")}</div></div>
+    <label class="f">The text to ${esc(ph || "")}<textarea id="owText" rows="3" ${ME.owner ? "" : "readonly"}>${esc(text())}</textarea></label>
+    ${ME.owner ? `<label class="check"><input type="checkbox" id="owKeep">Use this wording from now on <span class="small muted">({first}, {tech}, {business}, {eta} fill themselves in)</span></label>` : `<div class="small muted">It goes out from the business number.</div>`}
+    <div class="sheetfoot"><button class="btn" id="owNo">Cancel</button><div class="spacer"></div><button class="btn primary" id="owGo">${ic("msg")}Send</button></div>`, (b) => {
+    let typed = false;
+    $("#owText", b).addEventListener("input", () => { typed = true; });
+    for (const c of $$("[data-eta]", b)) c.onclick = () => { eta = +c.dataset.eta; $$("[data-eta]", b).forEach((x) => x.classList.toggle("on", x === c));
+      if (!typed) $("#owText", b).value = text(); else $("#owText", b).value = $("#owText", b).value.replace(/\b\d+ minutes\b/, `${eta} minutes`); };
+    $("#owNo", b).onclick = () => closeSheet();
+    $("#owGo", b).onclick = (ev) => busy(ev.currentTarget, async () => {
+      const body = $("#owText", b).value.trim();
+      if (ME.owner && $("#owKeep", b).checked) {   // keep the wording as a template: put the fill-ins back
+        const tpl = body.replace(new RegExp(`\\b${eta} minutes\\b`), "{eta} minutes").replace(p.first ? new RegExp(`\\b${p.first}\\b`) : /$^/, "{first}");
+        const { settings } = await api("settings", { settings: { onway_text: tpl } }); D.settings = { ...D.settings, ...settings };
+      }
+      const res = await api("onway", { job: j.id, eta, text: ME.owner ? body : "" });
+      const row = I.jobs.get(j.id); if (row) { row.on_way_at = res.on_way_at; }
+      closeSheet(); rerenderKeep();
+      if (res.sms) { location.href = `sms:${String(res.sms.to).replace(/[^\d+]/g, "")}?body=${enc(res.sms.body)}`; return; }   // texts not set up: the phone's own Messages app
+      if (res.error) throw new Error("The text didn't go: " + res.error);
+      toast(res.sent ? `Text sent to ${X.nameOf(p)}.` : `Text handed to the phone for ${X.nameOf(p)}.`);
+    });
+  });
+}
 function viewMyDay(v) {
   setTitle("My day");
   const mine = (from, to) => X.jobsBetween(D, I, from, to);
@@ -2824,7 +3017,7 @@ function viewMyDay(v) {
   v.innerHTML = `<div class="wrap stack">
     <div class="pagehead"><div><h2>${hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"}, ${esc(ME.name.split(" ")[0])}</h2>
       <div class="sub">${X.niceDate(TODAY, { year: true })} · ${today.length ? `${today.length} job${today.length > 1 ? "s" : ""} today` : "no jobs today"}</div></div>
-      <div class="spacer"></div>${can("knock_doors") ? `<a class="btn primary" href="#/knock">${ic("map")}Door knocking</a>` : ""}</div>
+      <div class="spacer"></div>${today.length ? `<a class="btn primary" href="#/route">${ic("route")}Today's route</a>` : ""}${can("knock_doors") ? `<a class="btn ${today.length ? "" : "primary"}" href="#/knock">${ic("map")}Door knocking</a>` : ""}</div>
     <div class="grid g4 kpis">
       <div class="card kpi"><div class="label">${ic("cal")}Today</div><div class="value">${today.length}</div><div class="sub">job${today.length === 1 ? "" : "s"}</div></div>
       <div class="card kpi"><div class="label">${ic("cal")}Next 7 days</div><div class="value">${week.length}</div><div class="sub">jobs</div></div>
@@ -5501,7 +5694,7 @@ function wireAutoCard(v, p) {
 // Messages page: Ready to send (estimate follow-ups, check-ins and estimate delivery wait for Ben's tap), Sent (the
 // log, incl. job reminders that went by themselves) and Settings (switches, timing, wording, preview). The cloud
 // makes and sends them (tools_crmauto.ts); rules and wording are shared (crmapp_calc.js AUTO_*).
-const RULE_LABEL = Object.fromEntries(X.AUTO_RULES.map(([k, l]) => [k, l]));
+const RULE_LABEL = { ...Object.fromEntries(X.AUTO_RULES.map(([k, l]) => [k, l])), on_way: "On my way" };
 const msgStatus = { ready: ["acc", "waiting"], queued: ["core", "scheduled"], sent: ["good", "sent"], skipped: ["", "skipped"], failed: ["bad", "failed"] };
 function viewMessages(v, r) {
   setTitle("Messages");
@@ -5604,7 +5797,7 @@ async function msgSettings(host) {
   });
 }
 
-const VIEWS = { messages: viewMessages, knock: viewKnock, books: viewBooks, reports: viewReports, banking: viewBanking, employees: viewEmployees, employee: viewEmployee, permissions: viewPermissions, dashboard: viewDashboard, calendar: viewCalendar, prospects: viewProspects, customers: viewCustomers, person: viewPerson,
+const VIEWS = { route: viewRoute, messages: viewMessages, knock: viewKnock, books: viewBooks, reports: viewReports, banking: viewBanking, employees: viewEmployees, employee: viewEmployee, permissions: viewPermissions, dashboard: viewDashboard, calendar: viewCalendar, prospects: viewProspects, customers: viewCustomers, person: viewPerson,
   estimates: viewEstimates, estimate: viewEstimate, invoices: viewInvoices, invoice: viewInvoice, search: viewSearch, settings: viewSettings };
 
 // ------------------------------------------------------------------ demo data (?demo=1): made-up people, nothing leaves the page
@@ -5679,6 +5872,7 @@ function demoApi(route, b) {
     return { plan: b.plan, remove: r.remove, add: JSON.parse(JSON.stringify(r.add)) };
   }
   if (route === "settings") { if (b.settings) DB.settings = { ...DB.settings, ...b.settings }; return { settings: DB.settings }; }
+  if (route === "onway") { const j = DB.jobs.find((x) => x.id === b.job); const at = new Date().toISOString(); if (j) j.on_way_at = at; return { sent: true, on_way_at: at }; }
   if (route === "track" || route === "geo" || route === "signout") return { ok: true };
   if (route === "photos") {   // photos in the demo live in this page only
     const k = b.job ? "job" : b.estimate ? "estimate" : "person";
