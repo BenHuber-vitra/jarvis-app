@@ -806,6 +806,9 @@ table.pl tr.totrow.net td { font-size: 15px; background: rgba(var(--acc-rgb), .1
 #view.full > div { height: 100%; }
 .kbtn[hidden] { display: none; }
 [hidden] { display: none !important; }   /* the hidden attribute always wins over layout classes */
+.ro { pointer-events: none; opacity: .75; }
+.ro .presets, .ro [data-addline], .ro .x, .ro [data-change] { display: none; }
+.crew { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: 99px; font-size: 11px; font-weight: 650; color: #fff; background: hsl(var(--h, 212) 48% 40%); vertical-align: middle; }
 
 </style>
 </head>
@@ -852,7 +855,22 @@ const FN = SUPABASE_URL + "/functions/v1/jarvis", IS_LAPTOP = false;
 const DEVICE_KEY = "jarvis.deviceToken";   // the same pairing as the Jarvis app on this device (same site)
 { const m = location.hash.match(/pair=([A-Za-z0-9_-]{20,})/);
   if (m) { try { localStorage.setItem(DEVICE_KEY, m[1]); } catch {} history.replaceState(null, "", location.pathname + location.search); } }
-async function authHeaders() { let t = null; try { t = localStorage.getItem(DEVICE_KEY); } catch {} return t ? { "x-jarvis-token": t, apikey: PUBLISHABLE_KEY } : null; }
+const EMP_KEY = "vitra.empToken";            // an employee's device (from the login link Ben sends; CRM only)
+const INVITE = (location.hash.match(/invite=([A-Za-z0-9_-]{20,})/) || [])[1] || null;
+if (INVITE) history.replaceState(null, "", location.pathname + location.search);
+async function claimInvite() {   // opening the link: swap the one-time code for this device's own login
+  const dev = /android/i.test(navigator.userAgent) ? "Android phone" : /iphone|ipad/i.test(navigator.userAgent) ? "iPhone" : /windows/i.test(navigator.userAgent) ? "Windows computer" : /mac/i.test(navigator.userAgent) ? "Mac" : "Browser";
+  const r = await fetch(FN + "/crmapp/claim", { method: "POST", headers: { "content-type": "application/json", apikey: PUBLISHABLE_KEY }, body: JSON.stringify({ code: INVITE, device: dev }) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || "That login link didn't work.");
+  try { localStorage.setItem(EMP_KEY, j.token); } catch {}
+  return j.name;
+}
+function signOutHere() { try { localStorage.removeItem(EMP_KEY); } catch {} }
+async function authHeaders() {
+  let t = null, e = null; try { t = localStorage.getItem(DEVICE_KEY); e = localStorage.getItem(EMP_KEY); } catch {}
+  return t ? { "x-jarvis-token": t, apikey: PUBLISHABLE_KEY } : e ? { "x-crm-token": e, apikey: PUBLISHABLE_KEY } : null;
+}
 
 const X = (() => { // Ben's own CRM (2026-11-21; docs/crm-plan.md). Shared like money_calc.js: the CRM website/app inlines it
 // (app/build.py build_crm), cloud Jarvis imports it (tools_crmapp.ts), so the screen and Jarvis agree.
@@ -876,8 +894,8 @@ const COLUMNS = {
   people: ["id", "kind", "type", "first", "last", "company", "phones", "emails", "address", "city", "state", "zip", "notes", "source", "status", "created", "tcf", "edited", "lat", "lng"],
   services: ["id", "name", "description", "rate", "unit", "position", "archived"],
   estimates: ["id", "number", "person", "date", "status", "options", "lines", "notes", "decided", "tcf", "edited"],
-  plans: ["id", "person", "every", "unit", "start", "time", "lines", "active", "notes", "tcf"],
-  jobs: ["id", "person", "date", "days", "time", "lines", "status", "plan", "estimate", "invoice", "notes", "tcf", "edited"],
+  plans: ["id", "person", "every", "unit", "start", "time", "lines", "active", "notes", "tcf", "assignee"],
+  jobs: ["id", "person", "date", "days", "time", "lines", "status", "plan", "estimate", "invoice", "notes", "tcf", "edited", "assignee"],
   invoices: ["id", "number", "person", "date", "due", "lines", "total", "bad_debt", "job", "notes", "tcf", "edited"],
   payments: ["id", "invoice", "amount", "date", "method", "note", "tcf"],
   pins: ["id", "lat", "lng", "address", "status", "note", "person", "come_back", "visits", "by"],
@@ -1137,7 +1155,7 @@ function occurrences(anchor, every, unit, until) {
   return out;
 }
 const jobFrom = (plan, date) => ({ id: uuid(), person: plan.person, date, days: null, time: plan.time || "", lines: plan.lines || [],
-  status: "scheduled", plan: plan.id, estimate: null, invoice: null, notes: "", tcf: null, edited: false });
+  status: "scheduled", plan: plan.id, estimate: null, invoice: null, notes: "", tcf: null, edited: false, assignee: plan.assignee || null });
 /** Change a plan from one visit on: drop its scheduled visits from `from` and make new ones from `anchor`. */
 function regenPlan(plan, jobs, from, anchor, today) {
   const remove = jobs.filter((j) => j.plan === plan.id && j.status === "scheduled" && j.date >= from).map((j) => j.id);
@@ -1976,10 +1994,13 @@ const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Denver";
 const DEMO = new URLSearchParams(location.search).has("demo");
 let TODAY = X.localDay(TZ);
 let D = null, I = null;
+let ME = { owner: true, id: "ben", name: "Ben Huber", role: "owner", perms: {} };
+const can = (p) => ME.owner || !!(ME.perms && ME.perms[p]);
+let HIDE_PRICES = false;
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const money = (n) => X.usd(n, Math.abs(n % 1) > 0.004);
+const money = (n) => HIDE_PRICES ? "" : X.usd(n, Math.abs(n % 1) > 0.004);
 const name = (id) => X.nameOf(I.people.get(id));
 const initials = (p) => (X.nameOf(p).replace(/\(.*\)/, "").match(/\b[A-Za-z0-9]/g) || ["?"]).slice(0, 2).join("").toUpperCase();
 const telHref = (n) => "tel:" + String(n).replace(/[^\d+]/g, "");
@@ -2087,6 +2108,7 @@ async function load() {
   D = { people: d.people, services: d.services, estimates: d.estimates, plans: d.plans, jobs: d.jobs, invoices: d.invoices, payments: d.payments, settings: d.settings || {},
     employees: d.employees || [], roles: d.roles || X.normalizeRoles(null), pins: d.pins || [], areas: d.areas || [], tracks: d.tracks || [] };
   if (d.today) TODAY = d.today;
+  if (d.me) { ME = d.me; HIDE_PRICES = !can("see_prices"); applyMe(); }
   reindex();
 }
 let toastT = 0;
@@ -2127,6 +2149,24 @@ function buildNav() {
   $("#brandMark").innerHTML = logoLayers();
   if (!LOGO) $("#brandMark").style.display = "none";
   paintIcons();
+}
+// What each screen needs (Ben, as owner, has everything). The server checks again on every request.
+const NEEDS = { prospects: "create_estimates", estimates: "create_estimates", customers: "view_customers", invoices: "view_invoices",
+  books: "see_reports", reports: "see_reports", banking: "see_reports", employees: "manage_employees", permissions: "manage_permissions", knock: "knock_doors", settings: "edit_settings" };
+const NEW_NEEDS = { estimate: "create_estimates", job: "schedule_jobs", customer: "edit_customers", invoice: "create_invoices" };
+function applyMe() {
+  for (const a of $$("[data-nav]")) { const need = NEEDS[a.dataset.nav]; a.hidden = !!need && !can(need); }
+  for (const sec of $$(".navsec")) { let n = sec.nextElementSibling, any = false; while (n && !n.classList.contains("navsec")) { if (!n.hidden) any = true; n = n.nextElementSibling; } sec.hidden = !any; }
+  $("#navSettings").hidden = !can("edit_settings");
+  $("#toJarvis").hidden = !ME.owner;
+  for (const b of $$("[data-new]")) b.hidden = !can(NEW_NEEDS[b.dataset.new]);
+  const anyNew = Object.values(NEW_NEEDS).some((p) => can(p));
+  $(".newwrap").hidden = !anyNew; const fab = $("#fab"); if (fab) fab.hidden = !anyNew;
+  const roleName = ME.owner ? "Owner" : (D && D.roles || []).find((r) => r.id === ME.role)?.name || "Employee";
+  $(".me").innerHTML = `<div class="avatar" style="--h:${ME.owner ? 265 : hueOf(ME.name)}">${esc(ME.name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase())}</div><div style="flex:1;min-width:0"><b class="ell">${esc(ME.name)}</b><small>${esc(roleName)}</small></div>
+    ${ME.owner ? "" : `<button class="iconbtn" id="meOut" title="Sign out of this device" aria-label="Sign out">${ic("back")}</button>`}`;
+  const out = $("#meOut");
+  if (out) out.onclick = () => { if (!confirm("Sign out of the CRM on this device? Ben will need to send you a new link.")) return; signOutHere(); location.reload(); };
 }
 function createNew(k) {
   $("#newMenu").classList.remove("on"); $("#newBtn").setAttribute("aria-expanded", "false");
@@ -2181,9 +2221,11 @@ function render() {
   v.className = "fade";
   host.replaceChildren(v);
   host.classList.toggle("full", r.name === "knock");   // the map uses the whole page
-  try { (VIEWS[r.name] || VIEWS.dashboard)(v, r); }
+  const blocked = NEEDS[r.name] && !can(NEEDS[r.name]);
+  try { (blocked ? VIEWS.dashboard : (VIEWS[r.name] || VIEWS.dashboard))(v, r); }
   catch (e) { console.error(e); v.innerHTML = `<div class="empty"><b>Something went wrong on this page.</b>${esc(e.message)}</div>`; }
   paintIcons(v);
+  enforceUi(v);
   counts();
   host.scrollTop = 0;   // a new page starts at the top
 }
@@ -2300,7 +2342,43 @@ function spark(values, kind = "line") {
     <circle cx="${pts[n - 1][0]}" cy="${pts[n - 1][1]}" r="2.6" fill="var(--acc)"/></svg>`;
 }
 function niceMax(v) { if (v <= 0) return 1000; const p = Math.pow(10, Math.floor(Math.log10(v))); for (const m of [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10]) if (m * p >= v) return m * p; return 10 * p; }
+// Buttons an employee's role doesn't allow are hidden (the server refuses them anyway).
+const UI_NEEDS = [
+  ["schedule_jobs", "[data-newjob]"], ["edit_customers", "#newCust, #edit, #mkCust, #mkLost, #reopen"],
+  ["create_estimates", 'a[href^="#/estimate/new"]'], ["mark_won_lost", "[data-win], [data-lose], #won, #lost"],
+  ["create_invoices", '#inv, a[href^="#/invoice/new"], #jmkinv'], ["take_payments", "[data-pay], #pay"], ["delete_records", "#del"],
+  ["see_prices", ".tot:not(.cnt), .amt"],
+];
+function enforceUi(root) {
+  if (ME.owner) return;
+  for (const [perm, sel] of UI_NEEDS) if (!can(perm)) for (const el of $$(sel, root)) el.hidden = true;
+}
+// An employee's home: their own day (no business money unless their role has "reports").
+function viewMyDay(v) {
+  setTitle("My day");
+  const mine = (from, to) => X.jobsBetween(D, I, from, to);
+  const today = mine(TODAY, TODAY), week = mine(X.addDays(TODAY, 1), X.addDays(TODAY, 7));
+  const hour = +new Intl.DateTimeFormat("en-US", { timeZone: TZ, hour: "numeric", hourCycle: "h23" }).format(new Date());
+  const st = can("knock_doors") ? X.knockStats(D.pins, TODAY, TZ, ME.id) : null;
+  v.innerHTML = `<div class="wrap stack">
+    <div class="pagehead"><div><h2>${hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening"}, ${esc(ME.name.split(" ")[0])}</h2>
+      <div class="sub">${X.niceDate(TODAY, { year: true })} · ${today.length ? `${today.length} job${today.length > 1 ? "s" : ""} today` : "no jobs today"}</div></div>
+      <div class="spacer"></div>${can("knock_doors") ? `<a class="btn primary" href="#/knock">${ic("map")}Door knocking</a>` : ""}</div>
+    <div class="grid g4 kpis">
+      <div class="card kpi"><div class="label">${ic("cal")}Today</div><div class="value">${today.length}</div><div class="sub">job${today.length === 1 ? "" : "s"}</div></div>
+      <div class="card kpi"><div class="label">${ic("cal")}Next 7 days</div><div class="value">${week.length}</div><div class="sub">jobs</div></div>
+      ${st ? `<div class="card kpi link" data-go="knock"><div class="label">${ic("map")}Doors today</div><div class="value">${st.doors}</div><div class="sub">${st.talked} talked · ${st.estimates} estimates</div></div>
+      <div class="card kpi link" data-go="knock"><div class="label">${ic("check")}Sold today</div><div class="value">${st.sold}</div><div class="sub">${st.perHour ? st.perHour.toFixed(1) + " doors / hour" : "–"}</div></div>` : ""}
+    </div>
+    <div class="grid g2">
+      <div class="card"><h3>${ic("cal")}Today</h3><div class="list">${today.map((x) => jobLi(x.job, x.first)).join("") || emptyBox("cal", "No jobs today")}</div></div>
+      <div class="card"><h3>${ic("cal")}Coming up <a class="right" href="#/calendar/week/${TODAY}">Calendar ›</a></h3><div class="list">${week.slice(0, 10).map((x) => `<div class="li" data-job="${x.job.id}"><div class="main"><div class="t">${esc(name(x.job.person))}</div>
+        <div class="s">${X.niceDate(x.day)}${x.job.time ? " · " + esc(x.job.time) : ""} · ${esc(X.serviceNames(x.job.lines).join(", "))}</div></div></div>`).join("") || emptyBox("cal", "Nothing in the next week")}</div></div>
+    </div></div>`;
+  wire(v);
+}
 function viewDashboard(v) {
+  if (!ME.owner && !can("see_reports")) return viewMyDay(v);
   setTitle("Dashboard");
   const d = X.dashboard(D, I, TODAY);
   const hour = +new Intl.DateTimeFormat("en-US", { timeZone: TZ, hour: "numeric", hourCycle: "h23" }).format(new Date());
@@ -2399,7 +2477,7 @@ function viewCalendar(v, r) {
     </div>
     <div class="totals">
       <div class="tot main"><small>${label}</small><b>${money(m.total)}</b></div>
-      <div class="tot"><small>Jobs</small><b>${m.jobs}</b></div>
+      <div class="tot cnt"><small>Jobs</small><b>${m.jobs}</b></div>
       <div class="tot"><small>Done</small><b>${money(m.done)}</b></div>
       ${to >= TODAY ? `<div class="tot"><small>Still ahead</small><b>${money(ahead.total - ahead.done)}</b></div>` : ""}
       <div class="tot"><small>From recurring</small><b>${money(recurringOnly)}</b></div>
@@ -2452,14 +2530,19 @@ function jobCard(j, first) {
   const svc = X.serviceNames(j.lines).join(", ");
   return `<div class="jc ${j.plan ? "rec" : ""} ${j.status === "done" ? "done" : ""}" data-job="${j.id}"><div class="jt">${esc(name(j.person))}</div>
     <div class="js">${esc(svc || "No services listed")}</div>
-    <div class="jm"><span class="muted">${j.time ? esc(j.time) : ""}${j.plan ? " ↻" : ""}${j.status === "done" ? " ✓" : ""}${j.status === "skipped" ? " skipped" : ""}</span><b>${first ? money(X.jobTotal(j)) : "project"}</b></div></div>`;
+    <div class="jm"><span class="muted">${j.time ? esc(j.time) : ""}${j.plan ? " ↻" : ""}${j.status === "done" ? " ✓" : ""}${j.status === "skipped" ? " skipped" : ""}${crewTag(j)}</span><b>${first ? money(X.jobTotal(j)) : "project"}</b></div></div>`;
+}
+// who's doing a job, as a small coloured name (nothing when it's Ben's own)
+function crewTag(j) {
+  const e = j.assignee && D.employees.find((x) => x.id === j.assignee);
+  return e ? ` <span class="crew" style="--h:${e.color || hueOf(X.empName(e))}">${esc(e.first || X.empName(e))}</span>` : "";
 }
 function dayList(date) {
   const xs = X.jobsBetween(D, I, date, date);
   if (!xs.length) return `<div class="card">${emptyBox("cal", `Nothing booked on ${X.niceDate(date)}`, "", `<br><button class="btn primary" data-newjob="|${date}">${ic("plus")}Book a job</button>`)}</div>`;
   return `<div class="dayjobs">${xs.map((x) => { const j = x.job, p = I.people.get(j.person) || {};
     return `<div class="card jbig" data-job="${j.id}"><div class="time">${esc(j.time || "Any time")}<small>${j.plan ? "↻ " + X.freqText(I.plans.get(j.plan)) : "one-time"}</small></div>
-      <div><h4>${esc(X.nameOf(p))} ${j.status !== "scheduled" ? `<span class="badge ${j.status === "done" ? "good" : "warn"}">${j.status}</span>` : ""}</h4>
+      <div><h4>${esc(X.nameOf(p))} ${j.status !== "scheduled" ? `<span class="badge ${j.status === "done" ? "good" : "warn"}">${j.status}</span>` : ""}${crewTag(j)}</h4>
         <div class="muted small">${esc(X.addressOf(p))}</div>
         <div class="lines">${(j.lines || []).map((l) => `<div><span>${esc(l.service)}${l.qty && +l.qty !== 1 ? ` × ${+l.qty}` : ""}</span><span>${money(X.lineTotal(l))}</span></div>`).join("")}</div>
         ${j.notes ? `<div class="small muted pre" style="margin-top:6px">${esc(j.notes)}</div>` : ""}
@@ -2890,7 +2973,8 @@ function jobSheet(job, isNew = false, optionsFrom = null) {
     ${optionsFrom ? `<div class="card"><h3>Which option did they pick?</h3><div class="chips">${optionsFrom.lines.map((l, i) => `<button type="button" class="chip" data-opt="${i}">${esc(l.service)} · ${money(X.lineTotal(l))}</button>`).join("")}</div></div>` : ""}
     <div><div class="lbl">Customer</div><div id="jwho"></div></div>
     <div class="fgrid"><label class="f">Date<input type="date" id="jdate" value="${esc(j.date)}"></label><label class="f">Time (optional)<input type="time" id="jtime" value="${esc(t24)}"></label>
-      <label class="f full">Repeats<select id="jfreq"><option value="none">Doesn't repeat (one-time)</option>${X.FREQS.map(([n, u]) => `<option value="${n}-${u}" ${freq === `${n}-${u}` ? "selected" : ""}>${esc(X.freqText({ every: n, unit: u }))}</option>`).join("")}</select></label></div>
+      <label class="f">Who's doing it<select class="inp" id="jwho2"><option value="">Me (Ben)</option>${D.employees.filter((e) => e.status === "active" || e.id === j.assignee).map((e) => `<option value="${e.id}" ${e.id === j.assignee ? "selected" : ""}>${esc(X.empName(e))}</option>`).join("")}</select></label>
+      <label class="f">Repeats<select id="jfreq"><option value="none">Doesn't repeat (one-time)</option>${X.FREQS.map(([n, u]) => `<option value="${n}-${u}" ${freq === `${n}-${u}` ? "selected" : ""}>${esc(X.freqText({ every: n, unit: u }))}</option>`).join("")}</select></label></div>
     <div id="jlines"></div>
     <label class="f">Notes for the job<textarea id="jnotes" rows="2">${esc(j.notes || "")}</textarea></label>
     <div class="row"><span class="muted">Job total</span><div class="spacer"></div><b id="jtot" style="font-size:20px"></b></div>
@@ -2903,6 +2987,14 @@ function jobSheet(job, isNew = false, optionsFrom = null) {
     const picker = personPicker($("#jwho", b), state, () => {}, "customer");
     const tot = () => { $("#jtot", b).textContent = money(X.linesTotal(cleanLines(j.lines))); };
     const ed = linesEditor($("#jlines", b), j.lines, tot); tot();
+    if (!can("schedule_jobs")) {   // crew without "book and move jobs": read the job, mark it done, write notes
+      for (const el of $$("input, select, textarea", b)) if (el.id !== "jnotes") el.disabled = true;
+      for (const el of $$("#jwho, #jlines", b)) el.classList.add("ro");
+      $("#jsave", b).innerHTML = ic("check") + "Save notes";
+      for (const id of ["#jskip", "#jdel"]) { const x = $(id, b); if (x) x.hidden = true; }
+    }
+    if (!can("create_invoices")) { const x = $("#jmkinv", b); if (x) x.hidden = true; }
+    if (!can("delete_records")) { const x = $("#jdel", b); if (x) x.hidden = true; }
     $("#jwho", b).addEventListener("click", () => setTimeout(() => {   // picking someone with no lines yet fills in their usual services
       if (state.person && !cleanLines(j.lines).length) { const last = X.lastJob(I, state.person, TODAY); if (last) { j.lines.splice(0, j.lines.length, ...last.lines.map((l) => ({ ...l }))); ed.redraw(); tot(); } }
     }, 0));
@@ -2912,7 +3004,7 @@ function jobSheet(job, isNew = false, optionsFrom = null) {
       const lines = cleanLines(j.lines);
       if (!lines.length) throw new Error("Add what you'll be doing.");
       const date = $("#jdate", b).value || j.date;
-      return { ...j, person, date, time: from24($("#jtime", b).value), lines, notes: $("#jnotes", b).value.trim() };
+      return { ...j, person, date, time: from24($("#jtime", b).value), lines, notes: $("#jnotes", b).value.trim(), assignee: $("#jwho2", b).value || null };
     };
     const freqOf = () => { const v = $("#jfreq", b).value; if (v === "none") return null; const [n, u] = v.split("-"); return { every: +n, unit: u }; };
     const finish = (msg) => { toast(msg); closeSheet(); render(); };
@@ -2921,7 +3013,7 @@ function jobSheet(job, isNew = false, optionsFrom = null) {
       const row = await read(), f = freqOf();
       if (isNew || !plan) {
         if (f) {   // a new recurring schedule starting with this visit
-          const pl = { id: X.uuid(), person: row.person, every: f.every, unit: f.unit, start: row.date, time: row.time, lines: row.lines, active: true, notes: "" };
+          const pl = { id: X.uuid(), person: row.person, every: f.every, unit: f.unit, start: row.date, time: row.time, lines: row.lines, active: true, notes: "", assignee: row.assignee };
           if (!isNew) { await saveOne({ ...row, plan: pl.id }); await savePlan(pl, X.addDays(row.date, 1), row.date); }
           else await savePlan(pl, row.date, row.date);
           if (row.estimate) { const first = D.jobs.find((x) => x.plan === pl.id && x.date === row.date); if (first) await save("jobs", { ...first, estimate: row.estimate }); }
@@ -2932,7 +3024,7 @@ function jobSheet(job, isNew = false, optionsFrom = null) {
       }
       // a visit of a recurring plan: ask whether the change is for this visit only or from here on
       const sameSchedule = f && f.every === plan.every && f.unit === plan.unit;
-      const changedPlan = !sameSchedule || row.time !== j.time || JSON.stringify(row.lines) !== JSON.stringify(cleanLines(job.lines)) || row.date !== job.date;
+      const changedPlan = !sameSchedule || row.assignee !== (job.assignee || null) || row.time !== j.time || JSON.stringify(row.lines) !== JSON.stringify(cleanLines(job.lines)) || row.date !== job.date;
       if (!changedPlan) { await saveOne(row); return finish("Saved."); }
       $("#scope", b).hidden = false; $("#scope", b).scrollIntoView({ behavior: "smooth", block: "nearest" });
       $("#scope", b).onclick = (e2) => {
@@ -2940,7 +3032,7 @@ function jobSheet(job, isNew = false, optionsFrom = null) {
         busy(s, async () => {
           if (s.dataset.scope === "one") { await saveOne({ ...row, edited: true }); return finish("This visit changed."); }
           if (!f) { await saveOne(row); await savePlan({ ...plan, active: false }, X.addDays(row.date, 1), row.date); return finish("Schedule stopped after this visit."); }
-          await savePlan({ ...plan, every: f.every, unit: f.unit, time: row.time, lines: row.lines }, row.date < job.date ? row.date : job.date, row.date);
+          await savePlan({ ...plan, every: f.every, unit: f.unit, time: row.time, lines: row.lines, assignee: row.assignee }, row.date < job.date ? row.date : job.date, row.date);
           finish(`Schedule updated from ${X.niceDate(row.date)}.`);
         });
       };
@@ -3262,6 +3354,7 @@ function viewEmployee(v, r) {
         <label class="f">Role<select id="role">${D.roles.map((ro) => `<option value="${ro.id}" ${ro.id === e.role ? "selected" : ""}>${esc(ro.name)}</option>`).join("")}</select></label>
         <div class="small muted" id="roleDesc" style="margin-top:8px"></div>
         <div class="row" style="margin-top:12px"><label class="check"><input type="checkbox" id="active" ${e.status === "active" ? "checked" : ""}>Working here</label></div></div>
+      ${isNew ? "" : `<div class="card"><h3>${ic("link")}Login</h3><div id="login" class="small muted">Loading…</div></div>`}
       <div class="card"><h3>${ic("lock")}What they can do <a class="right" href="#/permissions">Edit roles ›</a></h3>
         <div class="small muted" style="margin-bottom:10px">Switches follow their role. Change one here to make an exception just for them.</div>
         <div id="perms"></div>${loginNote}</div>
@@ -3310,6 +3403,7 @@ function viewEmployee(v, r) {
     else if (t.id === "role") { e.role = t.value; drawPerms(); mark(); }
     else if (t.id === "active") { e.status = t.checked ? "active" : "inactive"; mark(); }
   });
+  if (!isNew) loginCard($v("#login"), e);
   const addTraining = () => { const n = $v("#trNew").value.trim(); if (!n) return; e.trainings.push({ name: n.slice(0, 80), done: null }); $v("#trNew").value = ""; drawTrainings(); paintIcons(v); mark(); };
   $v("#trAdd").onclick = addTraining;
   $v("#trNew").onkeydown = (ev) => { if (ev.key === "Enter") { ev.preventDefault(); addTraining(); } };
@@ -3329,6 +3423,37 @@ function viewEmployee(v, r) {
   };
 }
 
+// Login card on an employee's page: send them a one-time link, see and sign out their devices.
+async function loginCard(host, e) {
+  const draw = async () => {
+    let list = [];
+    try { list = (await api("sessions", { employee: e.id })).sessions || []; } catch (err) { host.textContent = err.message; return; }
+    host.innerHTML = `<div class="small muted" style="margin-bottom:10px">${list.length ? `Signed in on ${list.length} device${list.length > 1 ? "s" : ""}.` : "Not signed in anywhere yet."} A login link works once, on one device, for 7 days.</div>
+      ${list.map((x) => `<div class="li" style="cursor:default"><div class="avatar" data-n="${esc(x.device || "Device")}">${ic("phone")}</div><div class="main"><div class="t">${esc(x.device || "Device")}</div>
+        <div class="s">signed in ${X.niceDate(x.created_at.slice(0, 10), { weekday: false })} · last used ${ago2(x.last_seen)}</div></div><button class="btn sm" data-out="${x.id}">Sign out</button></div>`).join("")}
+      <div class="row" style="margin-top:10px"><button class="btn primary sm" id="lkSend">${ic("link")}Send login link</button>${list.length > 1 ? `<button class="btn sm bad" data-out="">Sign out everywhere</button>` : ""}</div>
+      <div id="lkOut"></div>`;
+    paintIcons(host);
+  };
+  host.onclick = (ev) => {
+    const o = ev.target.closest("[data-out]");
+    if (o) { if (!confirm(o.dataset.out ? "Sign this device out?" : `Sign ${X.empName(e)} out on every device?`)) return; return busy(o, async () => { await api("signout", { employee: e.id, sid: o.dataset.out || undefined }); toast("Signed out."); draw(); }); }
+    const s2 = ev.target.closest("#lkSend");
+    if (s2) busy(s2, async () => {
+      if (DEMO) throw new Error("The demo can't make login links.");
+      const { code } = await api("invite", { employee: e.id });
+      const url = "https://benhuber-vitra.github.io/jarvis-app/crm/#invite=" + code;
+      const msg = `Hi ${e.first || ""}, here's your login for the VITRA CRM. Open it on your phone (it works once): ${url}`;
+      const ph = String(e.phone || "").replace(/[^\d+]/g, "");
+      $("#lkOut", host).innerHTML = `<div class="note" style="margin:12px 0 0;flex-direction:column;align-items:stretch">
+        <span>Link for <b>${esc(X.empName(e))}</b>, good for 7 days and one device:</span><input class="inp" readonly value="${esc(url)}" onclick="this.select()">
+        <div class="row">${ph ? `<a class="btn sm primary" href="sms:${esc(ph)}?body=${encodeURIComponent(msg)}">${ic("msg")}Text it to them</a>` : ""}<button class="btn sm" id="lkCopy">Copy link</button></div></div>`;
+      paintIcons(host);
+      $("#lkCopy", host).onclick = async () => { try { await navigator.clipboard.writeText(url); toast("Link copied."); } catch { toast("Select the link and copy it.", true); } };
+    });
+  };
+  draw();
+}
 let permRole = null;   // phone: which role's switches are shown
 function viewPermissions(v) {
   setTitle("Permissions");
@@ -3525,7 +3650,7 @@ let KN = null;   // live map state while the door-knocking page is open
 function viewKnock(v) {
   setTitle("Door knocking");
   const saved = (() => { try { return JSON.parse(localStorage.getItem(KV_KEY) || "null"); } catch { return null; } })();
-  const today = TODAY, stats = X.knockStats(D.pins, today, TZ), myTrack = (D.tracks.find((t) => t.day === today && t.who === "ben") || { points: [] }).points;
+  const today = TODAY, stats = X.knockStats(D.pins, today, TZ), myTrack = (D.tracks.find((t) => t.day === today && t.who === ME.id) || { points: [] }).points;
   const show = (() => { try { return JSON.parse(localStorage.getItem("vitra.knockShow") || "null"); } catch { return null; } })() || { ...Object.fromEntries(Object.keys(X.KNOCK).map((k) => [k, true])), areas: true };
   const comeBack = D.pins.filter((p) => p.status === "come_back").sort((a, b) => ((a.come_back || "9") < (b.come_back || "9") ? -1 : 1));
   v.innerHTML = `<div class="knock">
@@ -3640,7 +3765,7 @@ function locate(pan) {
     if (KN.tracking && acc < 50 && (!KN.lastPt || X.metres(KN.lastPt, p) > 8)) {
       KN.lastPt = p; const pt = [+p[0].toFixed(6), +p[1].toFixed(6), Math.round(Date.now() / 1000)];
       KN.pending.push(pt);
-      const tr = D.tracks.find((t) => t.day === TODAY && t.who === "ben") || (D.tracks.push({ id: TODAY + "|ben", day: TODAY, who: "ben", points: [] }), D.tracks[D.tracks.length - 1]);
+      const tr = D.tracks.find((t) => t.day === TODAY && t.who === ME.id) || (D.tracks.push({ id: TODAY + "|" + ME.id, day: TODAY, who: ME.id, points: [] }), D.tracks[D.tracks.length - 1]);
       tr.points.push(pt); drawTrack(tr.points);
       const el = $("#kMiles", KN.v); if (el) el.textContent = (X.trackLength(tr.points) / 1609.34).toFixed(1);
     }
@@ -3657,7 +3782,7 @@ function toggleTracking() {
 async function flushTrack() {
   if (!KN || !KN.pending.length) return;
   const pts = KN.pending.splice(0);
-  try { await api("track", { day: TODAY, who: "ben", points: pts }); } catch { KN.pending.unshift(...pts); }
+  try { await api("track", { day: TODAY, who: ME.id, points: pts }); } catch { KN.pending.unshift(...pts); }
 }
 window.addEventListener("hashchange", () => { if (KN && KN.watch != null && !/^#\/knock/.test(location.hash)) { navigator.geolocation.clearWatch(KN.watch); KN.watch = null; clearInterval(KN.flushT); flushTrack(); } });
 function startDraw() {
@@ -3690,7 +3815,7 @@ function resultButtons(cur) {
 }
 function newPinSheet(p) {
   const temp = KN.map.marker(p, { color: "#fff", size: 9, ring: "#0b1730", z: 7 });
-  const pin = { id: X.uuid(), lat: +p[0].toFixed(6), lng: +p[1].toFixed(6), address: "", status: "not_home", note: "", person: null, come_back: null, visits: [], by: "ben" };
+  const pin = { id: X.uuid(), lat: +p[0].toFixed(6), lng: +p[1].toFixed(6), address: "", status: "not_home", note: "", person: null, come_back: null, visits: [], by: ME.id };
   pinForm(pin, true, () => temp.remove());
   KN.E.reverse(p).then((addr) => { const i = $("#pAddr"); if (i && !i.value) { i.value = addr; pin.address = addr; } const h = $("#pFinding"); if (h) h.remove(); });
 }
@@ -3712,8 +3837,8 @@ function pinForm(pin, isNew, onClose) {
     <div class="sheetfoot">${!isNew ? `<button class="btn bad" id="pDel">${ic("trash")}</button>` : ""}<div class="spacer"></div><button class="btn primary" id="pSave" hidden>${ic("check")}Save</button>${!isNew ? `<button class="btn" id="pNoteSave">Save note</button>` : ""}</div>`, (b) => {
     const commit = async (status) => {
       const now = new Date().toISOString(), note = $("#pNote", b).value.trim();
-      const row = { ...pin, address: $("#pAddr", b).value.trim(), status, note, by: "ben", come_back: status === "come_back" ? ($("#pWhen", b).value || null) : null,
-        visits: [...pin.visits, { at: now, status, by: "ben", ...(note && note !== pin.note ? { note } : {}) }] };
+      const row = { ...pin, address: $("#pAddr", b).value.trim(), status, note, by: ME.id, come_back: status === "come_back" ? ($("#pWhen", b).value || null) : null,
+        visits: [...pin.visits, { at: now, status, by: ME.id, ...(note && note !== pin.note ? { note } : {}) }] };
       // a name or an estimate makes them a person in the CRM (prospect; a sale makes a customer)
       const nm = $("#pName", b).value.trim(), ph = $("#pPhone", b).value.trim();
       if ((nm || ph || status === "estimate" || status === "sold") && !row.person) {
@@ -4285,7 +4410,18 @@ let demoDb = null;
 function demoApi(route, b) {
   if (!demoDb) demoDb = demoData();
   const DB = demoDb;
-  if (route === "data") return JSON.parse(JSON.stringify(DB));
+  if (route === "data") {
+    const out = JSON.parse(JSON.stringify(DB));
+    const as = new URLSearchParams(location.search).get("as");   // ?demo=1&as=tech: see the demo as a technician (the real filtering is on the server)
+    if (as) {
+      const emp = { id: "d-emp-as", first: "Demo", last: "Employee", role: as, overrides: {} };
+      out.me = { owner: false, id: emp.id, name: "Demo Employee", role: as, perms: X.effectivePerms(emp, out.roles) };
+      if (!out.me.perms.view_all_jobs) { out.jobs.forEach((j, i) => { if (i % 3 === 0) j.assignee = emp.id; }); out.jobs = out.jobs.filter((j) => j.assignee === emp.id); }
+      if (!out.me.perms.see_prices) { out.invoices = []; out.payments = []; for (const j of out.jobs) j.lines = j.lines.map((l) => ({ service: l.service, description: l.description, qty: l.qty })); }
+      if (!out.me.perms.knock_doors) { out.pins = []; out.areas = []; }
+    }
+    return out;
+  }
   if (route === "save") { const arr = DB[b.table], i = arr.findIndex((r) => r.id === b.row.id); if (i >= 0) arr[i] = b.row; else arr.push(b.row); return { row: JSON.parse(JSON.stringify(b.row)) }; }
   if (route === "delete") {
     if (b.table === "people") { for (const t of ["estimates", "jobs", "plans", "invoices"]) DB[t] = DB[t].filter((r) => r.person !== b.id); }
@@ -4299,7 +4435,8 @@ function demoApi(route, b) {
     return { plan: b.plan, remove: r.remove, add: JSON.parse(JSON.stringify(r.add)) };
   }
   if (route === "settings") { if (b.settings) DB.settings = { ...DB.settings, ...b.settings }; return { settings: DB.settings }; }
-  if (route === "track" || route === "geo") return { ok: true };
+  if (route === "track" || route === "geo" || route === "signout") return { ok: true };
+  if (route === "sessions") return { sessions: [] };
   if (route === "roles") {
     const roles = X.normalizeRoles(b.roles);
     if (DB.employees.some((e) => !roles.some((r) => r.id === e.role))) throw new Error("Someone still has a role you removed. Give them another role first.");
@@ -4318,6 +4455,10 @@ paintIcons();
 if (IS_LAPTOP) { $("#toJarvis").setAttribute("href", "/"); }
 (async () => {
   $("#view").innerHTML = `<div class="wrap skel"><div class="sk" style="height:44px;width:40%"></div><div class="grid g4 kpis">${'<div class="sk" style="height:118px"></div>'.repeat(4)}</div><div class="sk" style="height:300px"></div></div>`;
+  if (INVITE && !DEMO) {
+    try { const who = await claimInvite(); toast(`Welcome, ${who.split(" ")[0]}. This device is signed in.`); }
+    catch (e) { $("#gate").classList.add("on"); $("#gate h2").textContent = "That login link didn't work"; $("#gate p").textContent = e.message; $("#view").innerHTML = ""; return; }
+  }
   if (!DEMO && !(await authHeaders())) { $("#gate").classList.add("on"); $("#view").innerHTML = ""; return; }
   try { await load(); }
   catch (e) { if (e.message !== "not paired") $("#view").innerHTML = `<div class="empty"><b>Couldn't load the CRM.</b>${esc(e.message)}<br><br><button class="btn" onclick="location.reload()">Try again</button></div>`; return; }
