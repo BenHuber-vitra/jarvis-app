@@ -984,6 +984,12 @@ body.dragging, body.dragging * { cursor: grabbing !important; -webkit-user-selec
 .approved h3 { color: var(--good); }
 .sigimg { display: block; background: #fff; border-radius: 9px; max-width: 100%; height: 76px; object-fit: contain; margin-top: 10px; padding: 4px 8px; }
 
+/* ---- online payments (2026-11-22, switch-over step 3) ---- */
+.qrbox { background: #fff; border-radius: 14px; padding: 10px; width: min(260px, 70vw); margin: 4px auto 0; }
+.qrbox svg { display: block; width: 100%; height: auto; }
+.dotpulse { width: 9px; height: 9px; border-radius: 50%; background: var(--acc); display: inline-block; margin-right: 8px; animation: dotp 1.2s ease-in-out infinite; }
+@keyframes dotp { 50% { opacity: .25; transform: scale(.7); } }
+
 </style>
 </head>
 <body>
@@ -1758,9 +1764,9 @@ const AUTO_DEFAULT = {
       subject: "Estimate #{estimate} from {business}",
       email: "Hi {first},\n\nThanks for having us out. Your estimate is attached, and you can review and approve it online here:\n{link}\n\nJust reply to this email if you have any questions, or when you'd like to get on the schedule.\n\nThank you,\nBen Huber\n{business}\n{phone}" },
     pay_reminder: { on: false, since: null, approve: true, days: [7, 14, 30],
-      text: "Hi {first}, this is {business}. A friendly reminder that invoice #{invoice} for {balance} from {date} is still open. Reply here with any questions. Thank you!",
+      text: "Hi {first}, this is {business}. A friendly reminder that invoice #{invoice} for {balance} from {date} is still open. You can see it and pay online here: {link} Thank you!",
       subject: "Reminder: invoice #{invoice} from {business}",
-      email: "Hi {first},\n\nA friendly reminder that invoice #{invoice} for {balance} from {date} is still open. Just reply to this email if you have any questions.\n\nThank you,\nBen Huber\n{business}\n{phone}" },
+      email: "Hi {first},\n\nA friendly reminder that invoice #{invoice} for {balance} from {date} is still open. You can see it and pay online here:\n{link}\n\nJust reply to this email if you have any questions.\n\nThank you,\nBen Huber\n{business}\n{phone}" },
     review: { on: false, since: null, approve: true, days: [1], review_link: "",
       text: "Hi {first}, thanks for having {business} out! If you were happy with your {services}, would you leave us a quick review? {review_link}",
       subject: "How did we do? {business}",
@@ -2637,7 +2643,7 @@ async function load() {
   if (d.today) TODAY = d.today;
   if (d.me) { ME = d.me; HIDE_PRICES = !can("see_prices"); applyMe(); }
   reindex();
-  if (ME.owner) await Promise.all([loadMsgs().catch((e) => console.warn("messages", e)), loadReqs().catch((e) => console.warn("requests", e))]);
+  if (ME.owner) await Promise.all([loadMsgs().catch((e) => console.warn("messages", e)), loadReqs().catch((e) => console.warn("requests", e)), loadPay().catch((e) => console.warn("payments", e))]);
 }
 let REQS = [];   // what customers sent in: website quote requests, reschedules, questions, online approvals (owner only)
 async function loadReqs() { REQS = (await api("requests", {})).requests || []; }
@@ -3064,26 +3070,96 @@ async function linkOf(person, rotate = false) {
 }
 async function copyText(s) { try { await navigator.clipboard.writeText(s); toast("Copied."); } catch { prompt("Copy this:", s); } }
 // share a customer's page: the estimate's own link opens on that estimate
-function shareSheet(p, est) {
+function shareSheet(p, est, inv) {
   const biz = (D.settings.business || {}).name || "VITRA Window Washing", ph = X.mobileOf(p) || ((p.phones || [])[0] || {}).n;
-  openSheet(est ? `Send estimate #${est.number} to approve` : `${X.nameOf(p)}'s page`, `<div class="small muted">Their own private page: ${est ? "they can look the estimate over, pick an option, sign and approve it. You get a notification when they do." : "estimates to approve, upcoming visits (they can ask to move one), invoices, and a message box."}</div>
+  const bal = inv ? X.balanceOf(I, inv) : 0, online = PAYCFG && PAYCFG.ready;
+  openSheet(est ? `Send estimate #${est.number} to approve` : inv ? `Send invoice #${inv.number}` : `${X.nameOf(p)}'s page`, `<div class="small muted">Their own private page: ${est ? "they can look the estimate over, pick an option, sign and approve it. You get a notification when they do."
+      : inv ? (online ? "it opens on this invoice with Pay buttons (bank or card). You get a notification when it's paid, and the payment is recorded by itself." : "it opens on this invoice. Online paying turns on once Stripe is connected (CRM Settings).")
+      : "estimates to approve, upcoming visits (they can ask to move one), invoices, and a message box."}</div>
     <div id="shBody"><div class="sk" style="height:44px"></div></div>`, async (b) => {
     try {
-      const L = await linkOf(p.id), url = L.url + (est ? "&e=" + encodeURIComponent(est.id) : "");
-      const msg = est ? `Hi ${p.first || "there"}, here's your estimate from ${biz}. You can look it over and approve it here: ${url}` : `Hi ${p.first || "there"}, here's your page with ${biz}: ${url}`;
+      const L = await linkOf(p.id), url = L.url + (est ? "&e=" + encodeURIComponent(est.id) : inv ? "&i=" + encodeURIComponent(inv.id) : "");
+      const msg = est ? `Hi ${p.first || "there"}, here's your estimate from ${biz}. You can look it over and approve it here: ${url}`
+        : inv ? `Hi ${p.first || "there"}, here's invoice #${inv.number} from ${biz} for ${money(bal)}. You can see it${online ? " and pay online" : ""} here: ${url}`
+        : `Hi ${p.first || "there"}, here's your page with ${biz}: ${url}`;
       $("#shBody", b).innerHTML = `<label class="f">Link<input class="inp" readonly value="${esc(url)}"></label>
         <div class="row"><button class="btn" id="shCopy">${ic("link")}Copy link</button>${ph ? `<a class="btn" href="sms:${String(ph).replace(/[^\d+]/g, "")}?body=${encodeURIComponent(msg)}">${ic("msg")}Text it</a>` : ""}
-          ${est ? `<button class="btn" id="shMail">${ic("mail")}Email with the PDF</button>` : ""}<a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">See their page</a></div>
+          ${est || inv ? `<button class="btn" id="shMail">${ic("mail")}Email with the PDF</button>` : ""}<a class="btn ghost" href="${esc(url)}" target="_blank" rel="noopener">See their page</a></div>
         <div class="small muted">${L.views ? `Opened ${L.views} time${L.views > 1 ? "s" : ""}, last ${agoText(L.last_seen)}.` : "They haven't opened it yet."}</div>
         <div class="sheetfoot"><button class="btn ghost sm" id="shNew" style="color:var(--bad)">New link (the old one stops working)</button><div class="spacer"></div><button class="btn primary" id="shOk">Done</button></div>`;
       paintIcons(b);
       $("#shCopy", b).onclick = () => copyText(url);
       $("#shOk", b).onclick = () => closeSheet();
-      if ($("#shMail", b)) $("#shMail", b).onclick = () => { closeSheet(true); emailSheet("estimate", est); };
-      $("#shNew", b).onclick = (ev) => { if (!confirm("Make a new link? The one you sent before will stop working.")) return; busy(ev.currentTarget, async () => { await linkOf(p.id, true); closeSheet(true); shareSheet(p, est); }); };
+      if ($("#shMail", b)) $("#shMail", b).onclick = () => { closeSheet(true); emailSheet(est ? "estimate" : "invoice", est || inv); };
+      $("#shNew", b).onclick = (ev) => { if (!confirm("Make a new link? The one you sent before will stop working.")) return; busy(ev.currentTarget, async () => { await linkOf(p.id, true); closeSheet(true); shareSheet(p, est, inv); }); };
     } catch (e) { $("#shBody", b).innerHTML = `<div class="err">${esc(e.message)}</div>`; }
   });
 }
+// ------------------------------------------------------------------ online payments (Stripe Checkout; 2026-11-22, switch-over step 3)
+// Card numbers never come here: Stripe's own page takes them. "Take a card now" makes that page for an invoice
+// and shows it as a QR code (their phone) or opens it on this one; the payment is recorded by itself.
+let PAYCFG = null;   // {ready, mode, settings, recent} (owner only)
+async function loadPay() { PAYCFG = await api("stripe", {}); }
+const QR_LIB = "https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js";
+function payNotReady() {
+  openSheet("Online payments aren't on yet", `<div>Connect Stripe first (it takes a few minutes, plus a few days for Stripe to verify the business for real money):</div>
+    <div class="sheetfoot"><div class="spacer"></div><button class="btn primary" id="pnr">${ic("gear")}Open the setup steps</button></div>`, (b) => { $("#pnr", b).onclick = () => leaveSheet("settings"); });
+}
+function takeCardSheet(inv) {
+  if (!PAYCFG || !PAYCFG.ready) return payNotReady();
+  const S = PAYCFG.settings, bal = X.balanceOf(I, inv), fee = S.card && S.fee_on ? X.round2(bal * S.fee_pct / 100) : 0;
+  let method = S.card ? "card" : "bank", timer = 0;
+  const stop = () => clearInterval(timer);
+  openSheet(`Take a payment · invoice #${inv.number}`, `
+    ${PAYCFG.mode === "test" ? `<div class="badge warn" style="white-space:normal;line-height:1.4;padding:6px 10px">Test mode, no real money: card 4242 4242 4242 4242 with any future date and CVC; for a bank payment pick "Test Institution".</div>` : ""}
+    <div class="seg" id="tcM">${S.card ? `<button data-m="card" class="${method === "card" ? "on" : ""}">Card · ${money(bal + fee)}</button>` : ""}${S.bank ? `<button data-m="bank" class="${method === "bank" ? "on" : ""}">Bank · ${money(bal)}</button>` : ""}</div>
+    <div class="small muted" id="tcNote"></div>
+    <div id="tcBody"><button class="btn primary" id="tcGo" style="width:100%">${ic("dollar")}Make the payment page</button></div>`, (b) => {
+    const note = () => { $("#tcNote", b).textContent = method === "card" ? (fee ? `${money(bal)} + ${money(fee)} card fee (${S.fee_pct}%). On a debit card the fee is refunded by itself.` : "") : "No fee. Bank payments take a few business days to clear; the invoice shows paid when they do."; };
+    note();
+    for (const x of $$("[data-m]", b)) x.onclick = () => { method = x.dataset.m; $$("[data-m]", b).forEach((y) => y.classList.toggle("on", y === x)); note(); };
+    $("#tcGo", b).onclick = (ev) => busy(ev.currentTarget, async () => {
+      const r = await api("charge", { invoice: inv.id, method });
+      let qr = "";
+      try { await scriptOnce(QR_LIB); const q = window.qrcode(0, "M"); q.addData(r.url); q.make(); qr = q.createSvgTag({ cellSize: 5, margin: 3, scalable: true }); } catch (e) { console.warn("qr", e); }
+      $("#tcM", b).hidden = true;
+      $("#tcBody", b).innerHTML = `${qr ? `<div class="qrbox">${qr}</div><div class="small muted" style="text-align:center">They scan this with their phone camera and pay there.</div>` : ""}
+        <div class="row"><a class="btn" href="${esc(r.url)}" target="_blank" rel="noopener" style="flex:1">${ic("phone")}Open it on this phone</a><button class="btn" id="tcCopy">${ic("link")}Copy</button></div>
+        <div class="row small" id="tcStatus"><span class="dotpulse"></span>Waiting for the payment…</div>`;
+      paintIcons(b);
+      $("#tcCopy", b).onclick = () => copyText(r.url);
+      const check = async () => {
+        const s = await api("settle", { id: r.id }).catch(() => null); if (!s) return;
+        if (s.status === "paid" || s.status === "processing") {
+          stop(); await load(); closeSheet(); rerenderKeep();
+          toast(s.status === "paid" ? `Paid: ${money(s.amount)} recorded on invoice #${inv.number}.` : `Bank payment of ${money(s.amount)} started. It shows as paid once it clears.`);
+        } else if (s.status === "failed") $("#tcStatus", b).textContent = "That payment didn't go through. They can try again on the same page.";
+      };
+      timer = setInterval(check, 4000);
+    });
+  }, stop);
+}
+function payCard() {
+  const P = PAYCFG || { ready: false, settings: { card: true, bank: true, fee_on: true, fee_pct: 3 }, recent: [] }, S = P.settings;
+  const statusChip = { paid: "good", processing: "warn", open: "", expired: "", failed: "bad" };
+  return `<div class="card"><h3>${ic("dollar")}Online payments (Stripe) <span class="right">${P.ready ? `<span class="badge ${P.mode === "live" ? "good" : "warn"}">${P.mode === "live" ? "Live" : "Test mode"}</span>` : '<span class="badge">Not connected</span>'}</span></h3>
+    ${P.ready ? "" : `<ol class="small" style="margin:0 0 12px;padding-left:18px;line-height:1.7">
+      <li>Sign up at <a href="https://dashboard.stripe.com/register" target="_blank" rel="noopener">stripe.com</a>. Test keys work right away; real payments need Stripe to verify the business (a few days).</li>
+      <li>In Stripe: Developers › API keys. Copy the <b>Secret key</b> (starts with sk_test_ while testing).</li>
+      <li>On the computer, in PowerShell in the Jarvis folder, run the line below and paste the key when it asks. The key goes straight to Jarvis's cloud, nowhere else.</li></ol>
+      <input class="inp" readonly value="${esc(STRIPE_CMD)}" style="font-family:ui-monospace,Consolas,monospace;font-size:12px"><div class="row" style="margin:8px 0 12px"><button class="btn sm" data-copy="${esc(STRIPE_CMD)}">${ic("link")}Copy</button></div>`}
+    <div class="stack" style="gap:10px">
+      <label class="check"><input type="checkbox" id="payCard" ${S.card ? "checked" : ""}>Take cards</label>
+      <label class="check"><input type="checkbox" id="payBank" ${S.bank ? "checked" : ""}>Take bank payments (ACH: 0.8%, at most $5; clears in a few days)</label>
+      <div class="row"><label class="check"><input type="checkbox" id="payFee" ${S.fee_on ? "checked" : ""}>Add a card fee of</label><input class="inp" id="payPct" inputmode="decimal" value="${+S.fee_pct}" style="width:70px">%</div>
+      <div class="small muted">Card rules: at most 3%, shown before they pay (it is), and never on debit or prepaid cards (refunded by itself). Stripe asks you to tell them before you add a surcharge.</div>
+      <div class="row end"><button class="btn primary" id="paySave">Save</button></div></div>
+    ${P.recent && P.recent.length ? `<div class="list" style="margin-top:12px">${P.recent.slice(0, 8).map((c) => { const i = I.invoices.get(c.invoice);
+      return `<div class="li" ${i ? `data-go="invoice/${i.id}"` : ""}><div class="main"><div class="t">${money(c.amount / 100)} · ${c.method}${c.fee ? ` (+${money(c.fee / 100)} fee${c.fee_refunded ? ", refunded" : ""})` : ""}</div>
+        <div class="s">${i ? `Invoice #${esc(i.number)} · ${esc(name(i.person))}` : "Invoice"} · ${agoText(c.created_at)}</div></div><span class="badge ${statusChip[c.status] || ""}">${c.status}</span></div>`; }).join("")}</div>` : ""}
+  </div>`;
+}
+const STRIPE_CMD = `$k = Read-Host "Stripe secret key"; npx supabase secrets set "STRIPE_SECRET_KEY=$k" --remote=ruuqwbmomdmcqqqncegq --yes; Remove-Variable k`;
 function portalCard(p) {
   const mine = REQS.filter((r) => r.person === p.id);
   return `<div class="card"><h3>${ic("globe")}Their page</h3><div class="small muted">A private page where they approve estimates, see visits and invoices, and send you messages.</div>
@@ -4218,6 +4294,7 @@ function viewInvoice(v, r) {
       <div class="row"><button class="btn primary" id="save" style="flex:1">${ic("check")}Save invoice</button><button class="btn" id="prt" title="Print">${ic("print")}</button></div>
       <div class="row"><button class="btn" id="pdf" style="flex:1">${ic("file")}Download PDF</button>${ME.owner ? `<button class="btn" id="mail" style="flex:1">${ic("mail")}Email</button>` : ""}</div>
       ${inv.sent ? `<div class="small muted">Emailed ${X.niceDate(inv.sent, { weekday: false })}${inv.sent_to ? " to " + esc(inv.sent_to) : ""}</div>` : ""}
+      ${!isNew && ME.owner && X.balanceOf(I, src) > 0.005 ? `<div class="row"><button class="btn" id="paylink" style="flex:1">${ic("link")}Send pay link</button><button class="btn" id="takecard" style="flex:1">${ic("dollar")}Take a card now</button></div>` : ""}
       ${isNew ? "" : `<button class="btn good" id="pay">${ic("dollar")}Record a payment</button>
         <label class="check small"><input type="checkbox" id="bad" ${inv.bad_debt ? "checked" : ""}>Bad debt (won't be paid)</label>
         <button class="btn ghost sm" id="del" style="align-self:flex-start;color:var(--bad)">${ic("trash")}Delete invoice</button>`}
@@ -4250,6 +4327,8 @@ function viewInvoice(v, r) {
   $("#pdf", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = await ready(); const pdf = await makePdf("invoice", s); pdf.save(pdfName("invoice", s)); if (isNew) render(); });
   if ($("#mail", v)) $("#mail", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = await ready(); emailSheet("invoice", s); });
   if ($("#pay", v)) $("#pay", v).onclick = () => paymentSheet(I.invoices.get(inv.id));
+  if ($("#paylink", v)) $("#paylink", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = await ready(); const who = I.people.get(s.person); if (who) shareSheet(who, null, s); });
+  if ($("#takecard", v)) $("#takecard", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = await ready(); takeCardSheet(s); });
   if ($("#bad", v)) $("#bad", v).onchange = (ev) => busy(null, async () => { await save("invoices", { ...src, bad_debt: ev.target.checked }); render(); });
   if ($("#del", v)) $("#del", v).onclick = (ev) => { if (!confirm(`Delete invoice #${inv.number} and its payments? This can't be undone.`)) return; busy(ev.currentTarget, async () => { await remove("invoices", inv.id); dirty = null; toast("Deleted."); go("invoices"); }); };
   v.addEventListener("click", (e) => { const d = e.target.closest("[data-delpay]"); if (!d) return; if (!confirm("Remove this payment?")) return; busy(d, async () => { await remove("payments", d.dataset.delpay); render(); }); });
@@ -4309,6 +4388,7 @@ function viewSettings(v) {
       <div class="fgrid"><label class="f">Rate %<input id="taxRate" inputmode="decimal" value="${esc((D.settings.tax || {}).rate ?? "")}" placeholder="e.g. 7.25"></label>
         <label class="check" style="align-self:end"><input type="checkbox" id="taxOn" ${(D.settings.tax || {}).on ? "checked" : ""}>Add it to new estimates and invoices</label></div>
       <div class="row end" style="margin-top:12px"><button class="btn primary" id="saveTax">Save</button></div></div>
+    ${ME.owner ? payCard() : ""}
     <div class="card"><h3>${ic("globe")}Website quote form</h3><p class="muted" style="margin-top:0">A "request a free quote" form. Each request lands in your Pipeline as a new lead with a follow-up for today, and you get a notification.</p>
       <label class="f">The form on its own (share it, or link a button to it)<input class="inp" readonly value="${esc(BOOK_URL)}"></label>
       <div class="row" style="margin:8px 0 14px"><button class="btn sm" data-copy="${esc(BOOK_URL)}">${ic("link")}Copy</button><a class="btn sm" href="${esc(BOOK_URL)}" target="_blank" rel="noopener">Open it</a></div>
@@ -4335,6 +4415,12 @@ function viewSettings(v) {
     D.settings = { ...D.settings, ...settings }; MAPENG = null; GMAPS_REFUSED = false;
     // Google's script can only be loaded once per page, so a changed key needs a fresh page
     toast(window.google && window.google.maps ? "Saved. Reload the page to use the new key." : "Saved. The map uses it next time it opens.");
+  });
+  if ($("#paySave", v)) $("#paySave", v).onclick = (e) => busy(e.currentTarget, async () => {
+    const pct = +$("#payPct", v).value;
+    if (!(pct >= 0 && pct <= 3)) throw new Error("The card fee can be at most 3%.");
+    PAYCFG = await api("stripe", { settings: { card: $("#payCard", v).checked, bank: $("#payBank", v).checked, fee_on: $("#payFee", v).checked, fee_pct: pct } });
+    toast("Saved.");
   });
   $("#saveTax", v).onclick = (e) => busy(e.currentTarget, async () => {
     const { settings } = await api("settings", { settings: { tax: { on: $("#taxOn", v).checked, rate: +$("#taxRate", v).value || 0 } } });
@@ -4628,13 +4714,13 @@ async function makePdf(kind, doc) {
 async function emailSheet(kind, doc) {
   const p = I.people.get(doc.person) || {}, biz = (D.settings && D.settings.business) || {};
   let url = "";   // their private page (estimates open on this one) goes in the message, the PDF stays attached
-  if (ME.owner && p.id) try { url = (await linkOf(p.id)).url + (kind === "estimate" ? "&e=" + encodeURIComponent(doc.id) : ""); } catch (e) { console.warn("link", e); }
+  if (ME.owner && p.id) try { url = (await linkOf(p.id)).url + (kind === "estimate" ? "&e=" : "&i=") + encodeURIComponent(doc.id); } catch (e) { console.warn("link", e); }
   const name = biz.name || "VITRA Window Washing", word = kind === "estimate" ? "estimate" : "invoice";
   const hi = p.first ? `Hi ${p.first},` : "Hi,";
   const sign = ["Thank you,", "Ben Huber", name, biz.phone].filter(Boolean).join("\n");
   const msg = kind === "estimate"
     ? `${hi}\n\nThanks for having us out. Your estimate is attached${url ? `, and you can review and approve it online here:\n${url}\n\nJust` : ". Just"} reply to this email if you have any questions, or when you'd like to get on the schedule.\n\n${sign}`
-    : `${hi}\n\nYour invoice #${doc.number} for ${money(X.balanceOf(I, doc) || +doc.total || 0)} is attached.${url ? ` You can see your invoices and upcoming visits anytime here:\n${url}\n\n` : " "}Thank you for your business!\n\n${sign}`;
+    : `${hi}\n\nYour invoice #${doc.number} for ${money(X.balanceOf(I, doc) || +doc.total || 0)} is attached.${url ? ` You can see it${PAYCFG && PAYCFG.ready && X.balanceOf(I, doc) > 0.005 ? " and pay online (bank or card)" : ""} here:\n${url}\n\n` : " "}Thank you for your business!\n\n${sign}`;
   const file = pdfName(kind, doc);
   openSheet(`Email ${word} #${doc.number}`, `
     <label class="f">To<input id="mto" type="email" value="${esc((p.emails || [])[0] || "")}" placeholder="customer@example.com" autocomplete="off"></label>
@@ -5986,6 +6072,18 @@ function demoApi(route, b) {
     return { plan: b.plan, remove: r.remove, add: JSON.parse(JSON.stringify(r.add)) };
   }
   if (route === "settings") { if (b.settings) DB.settings = { ...DB.settings, ...b.settings }; return { settings: DB.settings }; }
+  if (route === "stripe") { DB.pay = { ...(DB.pay || { card: true, bank: true, fee_on: true, fee_pct: 3 }), ...(b.settings || {}) }; return { ready: true, mode: "test", settings: DB.pay, recent: DB.checkouts || [] }; }
+  if (route === "charge") {   // demo: a pretend Stripe page that "pays" on the second check
+    const inv = DB.invoices.find((x) => x.id === b.invoice), paid = DB.payments.filter((x) => x.invoice === b.invoice).reduce((s, x) => s + x.amount, 0);
+    const c = { id: "cs_demo_" + Date.now(), invoice: b.invoice, method: b.method, amount: Math.round((inv.total - paid) * 100), fee: b.method === "card" ? Math.round((inv.total - paid) * 3) : 0, status: "open", checks: 0, created_at: new Date().toISOString() };
+    (DB.checkouts = DB.checkouts || []).unshift(c); return { id: c.id, url: "https://checkout.stripe.com/c/pay/" + c.id };
+  }
+  if (route === "settle") {
+    const c = (DB.checkouts || []).find((x) => x.id === b.id); if (!c) throw new Error("not found");
+    if (++c.checks >= 2 && c.status === "open") { c.status = c.method === "bank" ? "processing" : "paid";
+      if (c.status === "paid") DB.payments.push({ id: "s-" + c.id, invoice: c.invoice, amount: c.amount / 100, date: TODAY, method: "card", note: "Paid online by card (Stripe); demo", tcf: null }); }
+    return { status: c.status, amount: c.amount / 100 };
+  }
   if (route === "link") return { url: SITE_BASE + "c/#t=demo-link-" + b.person, views: 2, last_seen: new Date(Date.now() - 3600e3).toISOString(), created_at: new Date().toISOString() };
   if (route === "requests") {
     if (!DB.requests) { const ps = DB.people.slice(0, 3); const e0 = DB.estimates.find((e) => e.status === "open"); DB.requests = [

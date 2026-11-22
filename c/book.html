@@ -92,6 +92,8 @@ footer { max-width: 760px; margin: 0 auto 40px; padding: 0 16px; color: var(--in
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } .band .call { display: none; } .card { padding: 16px; } }
 body.embed { background: transparent; } body.embed .band { display: none; } body.embed main { margin-top: 0; padding: 0; } body.embed footer { display: none; }
+.paybox { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; border-top: 1px dashed var(--line); padding-top: 14px; }
+.paybox .row .btn { flex: 1 1 220px; }
 /* print / save as PDF: only the chosen estimate or invoice */
 @media print {
   body { background: #fff; } .band { background: none; color: var(--ink); padding: 0 0 10px; } .band .call, footer { display: none; }

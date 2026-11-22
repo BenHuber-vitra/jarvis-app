@@ -93,6 +93,8 @@ footer { max-width: 760px; margin: 0 auto 40px; padding: 0 16px; color: var(--in
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } .band .call { display: none; } .card { padding: 16px; } }
 body.embed { background: transparent; } body.embed .band { display: none; } body.embed main { margin-top: 0; padding: 0; } body.embed footer { display: none; }
+.paybox { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; border-top: 1px dashed var(--line); padding-top: 14px; }
+.paybox .row .btn { flex: 1 1 220px; }
 /* print / save as PDF: only the chosen estimate or invoice */
 @media print {
   body { background: #fff; } .band { background: none; color: var(--ink); padding: 0 0 10px; } .band .call, footer { display: none; }
@@ -119,7 +121,8 @@ const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct
 const dt = (d) => new Date(d + "T12:00:00");
 const nice = (d, wd = false) => { const x = dt(d); return `${wd ? DOW[x.getDay()] + ", " : ""}${MON[x.getMonth()]} ${x.getDate()}, ${x.getFullYear()}`; };
 const hash = new URLSearchParams(location.hash.slice(1));
-const T = hash.get("t") || "", FOCUS = hash.get("e") || "";
+const T = hash.get("t") || "", FOCUS = hash.get("e") || hash.get("i") || "", PAID = hash.get("paid") || "";
+if (PAID || hash.get("i")) history.replaceState(null, "", location.pathname + location.search + "#t=" + T + (hash.get("i") ? "&i=" + hash.get("i") : ""));
 const OK = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>';
 async function call(route, body) {
   const r = await fetch(FN + "/public/" + route, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ t: T, ...body }) });
@@ -161,13 +164,23 @@ function estimateCard(e) {
     <div class="row noprint" style="margin-top:14px"><div class="spacer"></div><button class="btn sm" data-print="e-${e.id}">Print or save as PDF</button></div>
   </section>`;
 }
+function payBox(i) {   // Stripe Checkout: card numbers go into Stripe's own page, never here
+  const pay = P.pay; if (!pay || !(i.balance > 0.005)) return "";
+  const fee = pay.card && pay.fee_pct ? Math.round(i.balance * pay.fee_pct) / 100 : 0;
+  return `<div class="paybox noprint">${pay.test ? '<span class="chip due">Test mode: no real money moves</span>' : ""}
+    <div class="row">${pay.bank ? `<button class="btn primary" data-pay="${i.id}" data-m="bank">Pay from bank account · ${usd(i.balance)}</button>` : ""}
+      ${pay.card ? `<button class="btn ${pay.bank ? "" : "primary"}" data-pay="${i.id}" data-m="card">Pay by card · ${usd(i.balance + fee)}</button>` : ""}</div>
+    <div class="small muted">${pay.card && pay.fee_pct ? `Card payments include a ${pay.fee_pct}% processing fee (${usd(fee)}); on a debit card it's refunded automatically. ` : ""}${pay.bank ? "Bank payments have no fee and take a few business days to clear. " : ""}Payments are handled securely by Stripe.</div>
+    <div class="err small" data-perr hidden></div></div>`;
+}
 function invoiceCard(i) {
   const chip = i.balance > 0.005 ? `<span class="chip due">${usd(i.balance)} due</span>` : '<span class="chip good">Paid</span>';
-  return `<details class="card" data-doc="i-${i.id}" style="padding:0"><summary style="list-style:none;cursor:pointer;padding:16px 20px" class="row">
+  return `<details class="card" data-doc="i-${i.id}" id="i-${i.id}" style="padding:0" ${i.balance > 0.005 || FOCUS === i.id ? "open" : ""}><summary style="list-style:none;cursor:pointer;padding:16px 20px" class="row">
       <div class="main" style="flex:1"><b>Invoice #${esc(i.number)}</b><div class="small muted">${nice(i.date)}</div></div><b>${usd(i.total)}</b>${chip}</summary>
     <div style="padding:0 20px 18px">${linesTable(i)}${totals({ ...i, sub: i.lines.reduce((s, l) => s + l.total, 0), tax: i.total - i.lines.reduce((s, l) => s + l.total, 0), value: i.total },
       `<div><span>Paid</span><span>${usd(i.paid)}</span></div><div class="g"><span>Balance</span><span>${usd(i.balance)}</span></div>`)}
       ${i.notes ? `<div class="notes">${esc(i.notes)}</div>` : ""}
+      ${payBox(i)}
       <div class="row noprint" style="margin-top:12px"><div class="spacer"></div><button class="btn sm" data-print="i-${i.id}">Print or save as PDF</button></div></div></details>`;
 }
 function render() {
@@ -180,7 +193,9 @@ function render() {
   const resched = new Set(P.requests.filter((r) => r.kind === "reschedule" && r.status === "new").map((r) => r.ref));
   $("#main").innerHTML = `
     <section class="card hello"><h2>Hi ${esc(first)}</h2><div class="muted">${esc(P.person.address || "")}</div>
-      ${open.length ? `<div style="margin-top:8px">You have ${open.length === 1 ? "an estimate" : open.length + " estimates"} waiting for your OK below.</div>` : ""}</section>
+      ${open.length ? `<div style="margin-top:8px">You have ${open.length === 1 ? "an estimate" : open.length + " estimates"} waiting for your OK below.</div>` : ""}
+      ${dueLine()}</section>
+    ${PAYMSG}
     ${open.map(estimateCard).join("")}
     <section class="card"><h3>Your next visits</h3>${P.upcoming.length ? P.upcoming.map((j) => { const x = dt(j.date); return `<div class="li" data-job="${j.id}"><div class="cal"><small>${MON[x.getMonth()]}</small><b>${x.getDate()}</b></div>
       <div class="main"><div class="t">${DOW[x.getDay()]}${j.time ? " · " + esc(j.time) : ""}</div><div class="s">${esc(j.services.join(", "))}${j.recurring ? " · regular visit" : ""}</div>
@@ -195,7 +210,8 @@ function render() {
       <div class="row" style="margin-top:10px"><div class="spacer"></div><span class="err small" id="qerr" hidden></span><button class="btn primary" id="qgo">Send</button></div></section>`;
   for (const s of $$("[data-sign]")) signBox(s);
   wire();
-  if (FOCUS && $("#e-" + CSS.escape(FOCUS))) setTimeout(() => $("#e-" + CSS.escape(FOCUS)).scrollIntoView({ behavior: "smooth", block: "start" }), 200);
+  const focus = FOCUS && ($("#e-" + CSS.escape(FOCUS)) || $("#i-" + CSS.escape(FOCUS)));
+  if (focus && !PAYMSG) setTimeout(() => focus.scrollIntoView({ behavior: "smooth", block: "start" }), 200);
 }
 function signBox(box) {
   const id = box.dataset.sign, cv = $("canvas", box), ctx = cv.getContext("2d");
@@ -242,12 +258,31 @@ function wire() {
       try { await call("request", { kind: "reschedule", job: li.dataset.job, when: $("[data-when]", li).value.trim(), text: $("[data-when]", li).value.trim() }); await load(); }
       catch (e) { err.textContent = e.message; err.hidden = false; ev.currentTarget.disabled = false; } };
   }
+  for (const b of $$("[data-pay]")) b.onclick = async () => {
+    const box = b.closest(".paybox"), err = $("[data-perr]", box); err.hidden = true;
+    $$("[data-pay]", box).forEach((x) => (x.disabled = true)); const was = b.textContent; b.textContent = "Opening secure payment…";
+    try { const r = await call("pay", { invoice: b.dataset.pay, method: b.dataset.m }); location.href = r.url; }
+    catch (e) { err.textContent = e.message; err.hidden = false; $$("[data-pay]", box).forEach((x) => (x.disabled = false)); b.textContent = was; }
+  };
   $("#qgo").onclick = async (ev) => { const err = $("#qerr"); err.hidden = true; ev.currentTarget.disabled = true;
     try { await call("request", { kind: "question", text: $("#q").value.trim() }); $("#ask").innerHTML = `<div class="done">${OK}<div>Thanks! We got your message and will get back to you soon.</div></div>`; }
     catch (e) { err.textContent = e.message; err.hidden = false; ev.currentTarget.disabled = false; } };
 }
+function dueLine() {
+  const due = P.invoices.reduce((s, i) => s + Math.max(0, i.balance), 0);
+  return due > 0.005 ? `<div style="margin-top:8px">Balance due: <b>${usd(due)}</b>${P.pay ? " · you can pay online below." : ""}</div>` : "";
+}
+let PAYMSG = "";   // back from Stripe: what happened
 async function load() {
-  try { P = await call("portal", {}); render(); }
+  try {
+    if (PAID && !PAYMSG) {
+      const r = await call("paid", { session: PAID }).catch(() => ({ status: "unknown" }));
+      PAYMSG = r.status === "paid" ? `<div class="done">${OK}<div>Thank you! Your payment${r.amount ? " of " + usd(r.amount) : ""} was received.</div></div>`
+        : r.status === "processing" ? `<div class="done">${OK}<div>Thank you! Your bank payment${r.amount ? " of " + usd(r.amount) : ""} is on its way. It takes a few business days to clear.</div></div>`
+        : `<div class="card"><b>Your payment didn't finish.</b><div class="muted small">Nothing was charged. You can try again below.</div></div>`;
+    }
+    P = await call("portal", {}); render();
+  }
   catch (e) { $("#main").innerHTML = `<section class="card"><h2>We couldn't open this page</h2><p class="muted">${esc(e.message)}</p></section>`; }
 }
 if (!T) $("#main").innerHTML = `<section class="card"><h2>This link isn't complete</h2><p class="muted">Please open the full link from your text or email.</p></section>`;
