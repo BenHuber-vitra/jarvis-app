@@ -514,6 +514,42 @@ table.t .t2 { color: var(--ink3); font-size: 12.5px; }
 .who { display: flex; gap: 12px; align-items: center; }
 .pre { white-space: pre-line; }
 
+/* ---------------------------------------------------------------- team: employees and permissions */
+.ell { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.empcard { display: flex; flex-direction: column; gap: 14px; color: var(--ink); transition: transform .15s var(--ease), border-color .15s, box-shadow .15s; }
+.empcard:hover { transform: translateY(-2px); border-color: var(--lineacc); box-shadow: var(--sh2); }
+.empcard .avatar { width: 42px; height: 42px; border-radius: 12px; font-size: 14px; }
+.empcard .kv { grid-template-columns: 74px 1fr; font-size: 13px; }
+.note { display: flex; gap: 10px; align-items: flex-start; padding: 11px 13px; border-radius: 11px; background: rgba(var(--core-rgb), .08); border: 1px solid rgba(var(--core-rgb), .2); color: var(--ink2); font-size: 12.5px; margin: 14px 0 16px; }
+.note i { color: var(--core); width: 16px; height: 16px; margin-top: 1px; }
+.note b { color: var(--ink); font-weight: 600; }
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.swatches .sw { width: 28px; height: 28px; border-radius: 9px; border: 2px solid transparent; background: hsl(var(--h) 48% 44%); cursor: pointer; transition: transform .12s; }
+.swatches .sw:hover { transform: scale(1.08); }
+.swatches .sw.on { border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,.15); }
+.pgrp { font-size: 11px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--ink3); padding: 14px 0 6px; }
+.pgrp:first-child { padding-top: 2px; }
+.prow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink2); cursor: pointer; }
+.prow .check { flex: none; }
+.prow.custom span:first-child { color: var(--ink); }
+.prow em { font-style: normal; font-size: 11px; font-weight: 600; color: var(--warn); background: rgba(251,191,36,.12); border-radius: 99px; padding: 1px 7px; margin-left: 4px; white-space: nowrap; }
+.ptable { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+.ptable th { position: sticky; top: 0; background: var(--solid); padding: 10px 8px; border-bottom: 1px solid var(--line2); text-align: center; z-index: 1; vertical-align: bottom; }
+.ptable td { padding: 9px 8px; border-bottom: 1px solid var(--line); text-align: center; }
+.ptable .pcol { text-align: left; padding-left: 20px; color: var(--ink2); min-width: 260px; position: sticky; left: 0; background: var(--solid); z-index: 1; }
+.ptable th.pcol { font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink3); z-index: 2; }
+.ptable tbody tr:hover td { background: rgba(255,255,255,.025); }
+.ptable tbody tr:hover td.pcol { background: color-mix(in srgb, var(--solid) 94%, #fff); }
+.ptable .pgrow td { text-align: left; padding: 16px 20px 7px; font-size: 11px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--ink3); background: rgba(0,0,0,.12); }
+.ptable .check { justify-content: center; }
+.rolehead { border: 0; background: none; cursor: pointer; display: inline-flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 8px; border-radius: 8px; color: var(--ink); min-width: 96px; }
+.rolehead:hover:not([disabled]) { background: rgba(255,255,255,.06); }
+.rolehead[disabled] { cursor: default; }
+.rolehead b { font-size: 13px; font-weight: 650; display: inline-flex; align-items: center; gap: 4px; }
+.rolehead b i { width: 13px; height: 13px; color: var(--ink3); }
+.rolehead small { color: var(--ink3); font-size: 11.5px; font-weight: 500; }
+.check input:disabled { opacity: .55; cursor: default; }
+
 /* ---------------------------------------------------------------- sheet, toast, loading */
 #sheetWrap { position: fixed; inset: 0; z-index: 60; background: rgba(3,4,16,.5); display: flex; justify-content: flex-end;
   opacity: 0; visibility: hidden; transition: opacity .25s, visibility 0s .25s; }
@@ -732,7 +768,7 @@ const X = (() => { // Ben's own CRM (2026-11-21; docs/crm-plan.md). Shared like 
 //   line      {service, description, rate, qty, total, unit?}   total = rate x qty (imported lines keep their own total)
 
 const TABLES = { people: "crm_people", services: "crm_services", estimates: "crm_estimates", plans: "crm_plans",
-  jobs: "crm_jobs", invoices: "crm_invoices", payments: "crm_payments" };
+  jobs: "crm_jobs", invoices: "crm_invoices", payments: "crm_payments", employees: "crm_employees" };
 const COLUMNS = {
   people: ["id", "kind", "type", "first", "last", "company", "phones", "emails", "address", "city", "state", "zip", "notes", "source", "status", "created", "tcf", "edited"],
   services: ["id", "name", "description", "rate", "unit", "position", "archived"],
@@ -741,7 +777,90 @@ const COLUMNS = {
   jobs: ["id", "person", "date", "days", "time", "lines", "status", "plan", "estimate", "invoice", "notes", "tcf", "edited"],
   invoices: ["id", "number", "person", "date", "due", "lines", "total", "bad_debt", "job", "notes", "tcf", "edited"],
   payments: ["id", "invoice", "amount", "date", "method", "note", "tcf"],
+  employees: ["id", "first", "last", "phone", "email", "role", "status", "pay_type", "pay_rate", "commission", "start", "address", "emergency", "color", "notes", "trainings", "overrides"],
 };
+
+// ------------------------------------------------------------------ employees, roles and permissions (2026-11-21)
+// Roles live in kv "crm_roles" ({roles: [{id, name, desc, perms: {key: true|false}}]}); an employee has one role
+// plus per-person overrides. Logins come later: until then these are saved but nobody else signs in.
+const PERMISSIONS = [
+  ["Customers", [
+    ["view_customers", "See customers and prospects"],
+    ["see_contact", "See phone numbers, emails and addresses"],
+    ["edit_customers", "Add and edit customers"],
+    ["delete_records", "Delete customers, estimates, jobs or invoices"],
+  ]],
+  ["Sales", [
+    ["create_estimates", "Create and edit estimates"],
+    ["see_prices", "See prices and job totals"],
+    ["give_discounts", "Change prices / give discounts"],
+    ["mark_won_lost", "Mark estimates won or lost"],
+  ]],
+  ["Schedule", [
+    ["view_all_jobs", "See everyone's jobs (otherwise only their own)"],
+    ["schedule_jobs", "Book, move and cancel jobs"],
+    ["complete_jobs", "Mark jobs done and add notes"],
+  ]],
+  ["Money", [
+    ["view_invoices", "See invoices and balances"],
+    ["create_invoices", "Create and edit invoices"],
+    ["take_payments", "Record payments"],
+    ["see_reports", "See the dashboard's money figures and reports"],
+  ]],
+  ["Door knocking", [
+    ["knock_doors", "Use the door-knocking map"],
+    ["see_team_knocking", "See other people's pins and areas"],
+    ["manage_areas", "Draw and assign areas"],
+  ]],
+  ["Team and settings", [
+    ["manage_employees", "Add and edit employees"],
+    ["see_pay", "See pay rates"],
+    ["manage_permissions", "Change roles and permissions"],
+    ["edit_settings", "Edit presets and business settings, import data"],
+  ]],
+];
+const PERM_KEYS = PERMISSIONS.flatMap(([, ps]) => ps.map((p) => p[0]));
+const allOn = () => Object.fromEntries(PERM_KEYS.map((k) => [k, true]));
+const only = (...keys) => Object.fromEntries(PERM_KEYS.map((k) => [k, keys.includes(k)]));
+const DEFAULT_ROLES = [
+  { id: "owner", name: "Owner", desc: "Everything. Can't be changed.", locked: true, perms: allOn() },
+  { id: "manager", name: "Manager", desc: "Runs the day: customers, schedule, estimates and invoices.",
+    perms: { ...allOn(), manage_permissions: false, see_pay: false } },
+  { id: "lead", name: "Crew lead", desc: "Leads a crew in the field; sees the day's jobs and takes payments.",
+    perms: only("view_customers", "see_contact", "see_prices", "view_all_jobs", "complete_jobs", "take_payments", "create_estimates") },
+  { id: "tech", name: "Technician", desc: "Cleans windows; sees only their own jobs.",
+    perms: only("view_customers", "complete_jobs") },
+  { id: "sales", name: "Sales (door knocker)", desc: "Knocks doors and gives estimates.",
+    perms: only("view_customers", "see_contact", "create_estimates", "see_prices", "knock_doors") },
+];
+/** Saved roles, with the Owner role always present and complete, and every permission key filled in. */
+function normalizeRoles(saved) {
+  const list = Array.isArray(saved) && saved.length ? saved : DEFAULT_ROLES;
+  const out = [];
+  for (const r of list) {
+    if (!r || !r.id || out.some((x) => x.id === r.id)) continue;
+    if (r.id === "owner") continue;
+    out.push({ id: String(r.id).slice(0, 40), name: String(r.name || "Role").slice(0, 60), desc: String(r.desc || "").slice(0, 200),
+      perms: Object.fromEntries(PERM_KEYS.map((k) => [k, !!(r.perms && r.perms[k])])) });
+  }
+  return [{ ...DEFAULT_ROLES[0], perms: allOn() }, ...out];
+}
+/** What one employee may do: their role's switches, then their own overrides. */
+function effectivePerms(emp, roles) {
+  const role = roles.find((r) => r.id === emp.role) || roles.find((r) => r.id === "tech") || roles[roles.length - 1];
+  if (role && role.id === "owner") return allOn();
+  const out = { ...(role ? role.perms : {}) };
+  for (const [k, v] of Object.entries(emp.overrides || {})) if (PERM_KEYS.includes(k) && typeof v === "boolean") out[k] = v;
+  return out;
+}
+const empName = (e) => [e && e.first, e && e.last].filter(Boolean).join(" ") || "(no name)";
+const PAY_TYPES = { hourly: "per hour", per_job: "per job", commission: "commission only", salary: "per year" };
+function payText(e) {
+  const base = e.pay_type === "commission" ? "" : (+e.pay_rate ? usd(+e.pay_rate, +e.pay_rate % 1 !== 0) + " " + PAY_TYPES[e.pay_type] : "");
+  const com = +e.commission ? `${+e.commission}% commission` : "";
+  return [base, com].filter(Boolean).join(" + ") || "Not set";
+}
+const DEFAULT_TRAININGS = ["Ladder safety", "Pure water pole", "Screens and tracks", "Hard water removal", "Customer service", "Door knocking pitch"];
 const METHODS = ["cash", "check", "card", "Venmo", "Zelle", "credit", "other"];
 const HORIZON_DAYS = 730;    // a recurring plan keeps its visits scheduled this far ahead
 
@@ -1173,7 +1292,7 @@ function fromDump(t, tz, today) {
   return { people, estimates, jobs, plans, invoices, payments, services };
 }
 
-return { TABLES, COLUMNS, METHODS, HORIZON_DAYS, round2, usd, usdShort, localDay, addDays, addMonths, daysBetween, weekday, niceDate, uuid, nameOf, addressOf, lineTotal, linesTotal, estimateValue, jobTotal, serviceNames, freqText, FREQS, index, paidOf, balanceOf, jobDays, jobsBetween, moneyBetween, nextJob, lastJob, activePlan, servicesFor, nextOpenDay, dashboard, occurrences, regenPlan, topUp, freqFromGap, search, nextNumber, fixMojibake, htmlText, fromDump };
+return { TABLES, COLUMNS, PERMISSIONS, PERM_KEYS, DEFAULT_ROLES, normalizeRoles, effectivePerms, empName, PAY_TYPES, payText, DEFAULT_TRAININGS, METHODS, HORIZON_DAYS, round2, usd, usdShort, localDay, addDays, addMonths, daysBetween, weekday, niceDate, uuid, nameOf, addressOf, lineTotal, linesTotal, estimateValue, jobTotal, serviceNames, freqText, FREQS, index, paidOf, balanceOf, jobDays, jobsBetween, moneyBetween, nextJob, lastJob, activePlan, servicesFor, nextOpenDay, dashboard, occurrences, regenPlan, topUp, freqFromGap, search, nextNumber, fixMojibake, htmlText, fromDump };
  })();
 const TCF = (() => { // The Customer Factor (Ben's CRM) inside Jarvis (2026-11-19). Ben exports a full backup from The
 // Customer Factor (a MySQL dump, .sql) about once a month and uploads it on the Customers screen.
@@ -1527,6 +1646,10 @@ const P = {
   dollar: "M12 2v20M17 6.5C16 5 14.3 4.5 12 4.5c-3 0-5 1.4-5 3.6 0 5 10 2.6 10 7.6 0 2.3-2.2 3.8-5 3.8-2.6 0-4.4-.8-5.4-2.4",
   star: "M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z",
   up: "M12 19V5M6 11l6-6 6 6", down: "M12 5v14M6 13l6 6 6-6",
+  team: "M8 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM16.5 10a3 3 0 1 0 0-6M2 20v-1a6 6 0 0 1 12 0v1M15 14.2a5 5 0 0 1 7 4.6V20",
+  shield: "M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6zM9 12l2 2 4-4",
+  lock: "M6 11h12v10H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3",
+  badge: "M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM8.5 14l-1.5 7 5-3 5 3-1.5-7",
 };
 const icon = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${P[n] || ""}"/></svg>`;
 const ic = (n) => `<i data-icon="${n}">${icon(n)}</i>`;
@@ -1582,7 +1705,8 @@ async function savePlan(plan, from, anchor) {
 }
 async function load() {
   const d = await api("data", {});
-  D = { people: d.people, services: d.services, estimates: d.estimates, plans: d.plans, jobs: d.jobs, invoices: d.invoices, payments: d.payments, settings: d.settings || {} };
+  D = { people: d.people, services: d.services, estimates: d.estimates, plans: d.plans, jobs: d.jobs, invoices: d.invoices, payments: d.payments, settings: d.settings || {},
+    employees: d.employees || [], roles: d.roles || X.normalizeRoles(null) };
   if (d.today) TODAY = d.today;
   reindex();
 }
@@ -1602,9 +1726,10 @@ async function busy(btn, fn) {
 const NAV = [
   ["dashboard", "Dashboard", "home"], ["calendar", "Calendar", "cal"], ["prospects", "Prospects", "target"],
   ["customers", "Customers", "users"], ["estimates", "Estimates", "file"], ["invoices", "Invoices", "receipt"],
+  ["employees", "Employees", "team"], ["permissions", "Permissions", "shield"],
 ];
 const BOTTOM = ["dashboard", "calendar", "prospects", "customers"];   // + the New button in the middle; Invoices is in the menu
-const SECTIONS = [["Overview", ["dashboard", "calendar"]], ["Sales", ["prospects", "estimates"]], ["Customers", ["customers", "invoices"]]];
+const SECTIONS = [["Overview", ["dashboard", "calendar"]], ["Sales", ["prospects", "estimates"]], ["Customers", ["customers", "invoices"]], ["Team", ["employees", "permissions"]]];
 const NEW_ITEMS = [
   ["estimate", "file", "New estimate", "Price a job for someone"],
   ["job", "cal", "Book a job", "One-time or recurring"],
@@ -1647,7 +1772,7 @@ function counts() {
   set("invoices", D.invoices.filter((i) => X.balanceOf(I, i) > 0.005).length, "warn");
   set("calendar", X.jobsBetween(D, I, TODAY, TODAY).length, "core");
 }
-const ROUTE_OF = { person: "customers", estimate: "estimates", invoice: "invoices" };
+const ROUTE_OF = { person: "customers", estimate: "estimates", invoice: "invoices", employee: "employees" };
 function parse() {
   const h = location.hash.replace(/^#\/?/, "");
   const [path, qs] = h.split("?");
@@ -2677,7 +2802,206 @@ function printDoc(kind, doc) {
   setTimeout(() => window.print(), 50);
 }
 
-const VIEWS = { dashboard: viewDashboard, calendar: viewCalendar, prospects: viewProspects, customers: viewCustomers, person: viewPerson,
+
+// ------------------------------------------------------------------ team: employees and permissions (2026-11-21)
+// Logins come later (Ben's order): the switches are saved now and will apply once employees can sign in.
+const HUES = [212, 196, 176, 152, 32, 12, 328, 292, 262, 236];
+const empAvatar = (e, cls = "") => `<div class="avatar ${cls}" style="--h:${e.color || hueOf(X.empName(e))}">${esc(((e.first || "?")[0] + ((e.last || "")[0] || "")).toUpperCase())}</div>`;
+const roleOf = (id) => D.roles.find((r) => r.id === id) || { id, name: "No role", desc: "", perms: {} };
+const trainingDone = (e) => (e.trainings || []).filter((t) => t.done).length;
+const loginNote = `<div class="note">${ic("lock")}<span><b>Logins come next.</b> These switches are saved now and take effect once employees can sign in.</span></div>`;
+
+function viewEmployees(v, r) {
+  setTitle("Employees");
+  const f = r.q.get("f") || "active";
+  const list = D.employees.filter((e) => f === "all" || e.status === f).sort((a, b) => X.empName(a).localeCompare(X.empName(b)));
+  const n = (k) => D.employees.filter((e) => k === "all" || e.status === k).length;
+  const payroll = D.employees.filter((e) => e.status === "active" && e.pay_type === "hourly").reduce((s, e) => s + (+e.pay_rate || 0), 0);
+  v.innerHTML = `<div class="wrap">
+    <div class="pagehead"><div><h2>Employees</h2><div class="sub">${n("active")} active${n("inactive") ? ` · ${n("inactive")} no longer working` : ""}</div></div><div class="spacer"></div>
+      <a class="btn" href="#/permissions">${ic("shield")}Roles &amp; permissions</a><a class="btn primary" href="#/employee/new">${ic("plus")}Add employee</a></div>
+    ${D.employees.length ? `<div class="totals">
+      <div class="tot main"><small>Active</small><b>${n("active")}</b></div>
+      ${D.roles.filter((ro) => ro.id !== "owner").map((ro) => `<div class="tot"><small>${esc(ro.name)}</small><b>${D.employees.filter((e) => e.status === "active" && e.role === ro.id).length}</b></div>`).join("")}
+      ${payroll ? `<div class="tot"><small>Hourly crew, per hour</small><b>${money(payroll)}</b></div>` : ""}</div>
+    <div class="toolbar"><div class="chips">${[["active", "Active"], ["inactive", "No longer working"], ["all", "All"]].map(([k, l]) =>
+      `<button class="chip ${k === f ? "on" : ""}" data-f="${k}">${l} <span class="n">${n(k)}</span></button>`).join("")}</div></div>` : ""}
+    ${list.length ? `<div class="grid g3">${list.map((e) => { const ro = roleOf(e.role), tn = (e.trainings || []).length, td = trainingDone(e);
+      return `<a class="card empcard" href="#/employee/${e.id}">
+        <div class="row" style="flex-wrap:nowrap">${empAvatar(e)}<div style="min-width:0;flex:1"><div class="t1 ell">${esc(X.empName(e))}</div><div class="small muted ell">${esc(e.phone || e.email || "No contact yet")}</div></div>
+          <span class="badge ${e.role === "owner" ? "acc" : e.role === "manager" ? "core" : ""}">${esc(ro.name)}</span></div>
+        <dl class="kv"><dt>Pay</dt><dd>${esc(X.payText(e))}</dd><dt>Started</dt><dd>${e.start ? X.niceDate(e.start, { year: true, weekday: false }) : "–"}</dd>
+          <dt>Trainings</dt><dd><div class="row" style="flex-wrap:nowrap;gap:8px"><div class="meter" style="flex:1"><div style="width:${tn ? td / tn * 100 : 0}%"></div></div><span class="small muted">${td}/${tn}</span></div></dd></dl>
+        ${e.status !== "active" ? '<span class="badge bad" style="align-self:flex-start">No longer working</span>' : ""}</a>`; }).join("")}</div>`
+      : `<div class="card">${emptyBox("team", D.employees.length ? "Nobody here" : "No employees yet", D.employees.length ? "" : "Add your crew and door knockers here: role, pay, trainings and what they're allowed to do.",
+          `<br><a class="btn primary" href="#/employee/new">${ic("plus")}Add your first employee</a>`)}</div>`}
+  </div>`;
+  v.addEventListener("click", (e) => { const c = e.target.closest("[data-f]"); if (c) go("employees?f=" + c.dataset.f); });
+}
+
+function viewEmployee(v, r) {
+  const isNew = r.args[0] === "new";
+  const src = isNew ? null : D.employees.find((e) => e.id === r.args[0]);
+  if (!isNew && !src) { v.innerHTML = emptyBox("team", "That employee isn't here."); return; }
+  const e = src ? JSON.parse(JSON.stringify(src)) : { id: X.uuid(), first: "", last: "", phone: "", email: "", role: "tech", status: "active", pay_type: "hourly", pay_rate: "", commission: "",
+    start: TODAY, address: "", emergency: "", color: String(HUES[D.employees.length % HUES.length]), notes: "", trainings: X.DEFAULT_TRAININGS.map((name) => ({ name, done: null })), overrides: {} };
+  e.overrides = e.overrides || {}; e.trainings = e.trainings || [];
+  let changed = false;
+  setTitle(isNew ? "Add employee" : X.empName(e));
+  const f = (k, label, type = "text", extra = "") => `<label class="f ${extra}">${label}<input data-k="${k}" type="${type}" value="${esc(e[k] ?? "")}" autocomplete="off"></label>`;
+  v.innerHTML = `<div class="wrap">
+    <div class="phead"><span id="eav">${empAvatar(e)}</span><div><h2 id="ename">${esc(isNew ? "New employee" : X.empName(e))}</h2>
+      <div class="row small"><span class="badge" id="erole">${esc(roleOf(e.role).name)}</span>${e.status !== "active" ? '<span class="badge bad">No longer working</span>' : ""}</div></div>
+      <div class="spacer"></div><div class="row">${isNew ? "" : `<button class="btn bad" id="del">${ic("trash")}Delete</button>`}<button class="btn primary" id="save">${ic("check")}${isNew ? "Add employee" : "Save"}</button></div></div>
+    <div class="twocol"><div class="stack">
+      <div class="card"><h3>${ic("users")}Profile</h3><div class="fgrid">
+        ${f("first", "First name")}${f("last", "Last name")}${f("phone", "Phone", "tel")}${f("email", "Email", "email")}
+        ${f("address", "Home address", "text", "full")}${f("start", "Start date", "date")}${f("emergency", "Emergency contact (name and phone)")}
+        <div class="full"><div class="lbl">Colour (on the calendar later)</div><div class="swatches">${HUES.map((h) => `<button type="button" class="sw ${String(e.color) === String(h) ? "on" : ""}" data-hue="${h}" style="--h:${h}" aria-label="Colour"></button>`).join("")}</div></div>
+        <label class="f full">Notes<textarea data-k="notes" rows="3">${esc(e.notes || "")}</textarea></label></div></div>
+      <div class="card"><h3>${ic("dollar")}Pay</h3>
+        <div class="seg" id="ptype">${Object.entries({ hourly: "Hourly", per_job: "Per job", commission: "Commission only", salary: "Salary" }).map(([k, l]) => `<button type="button" data-p="${k}" class="${e.pay_type === k ? "on" : ""}">${l}</button>`).join("")}</div>
+        <div class="fgrid" style="margin-top:12px"><label class="f" id="rateLbl">Rate<input data-k="pay_rate" inputmode="decimal" value="${e.pay_rate === "" ? "" : +e.pay_rate || ""}" placeholder="0.00"></label>
+          <label class="f">Commission on sales (%)<input data-k="commission" inputmode="decimal" value="${+e.commission || ""}" placeholder="e.g. 10 for door knockers"></label></div>
+        <div class="small muted" style="margin-top:10px" id="paySum"></div></div>
+      <div class="card"><h3>${ic("badge")}Trainings <span class="right" id="trCount"></span></h3><div class="list" id="trList"></div>
+        <div class="row" style="margin-top:10px"><input class="inp" id="trNew" placeholder="Add a training…" style="flex:1"><button class="btn sm" id="trAdd">${ic("plus")}Add</button></div></div>
+    </div>
+    <div class="stack sticky">
+      <div class="card"><h3>${ic("shield")}Role</h3>
+        <label class="f">Role<select id="role">${D.roles.map((ro) => `<option value="${ro.id}" ${ro.id === e.role ? "selected" : ""}>${esc(ro.name)}</option>`).join("")}</select></label>
+        <div class="small muted" id="roleDesc" style="margin-top:8px"></div>
+        <div class="row" style="margin-top:12px"><label class="check"><input type="checkbox" id="active" ${e.status === "active" ? "checked" : ""}>Working here</label></div></div>
+      <div class="card"><h3>${ic("lock")}What they can do <a class="right" href="#/permissions">Edit roles ›</a></h3>
+        <div class="small muted" style="margin-bottom:10px">Switches follow their role. Change one here to make an exception just for them.</div>
+        <div id="perms"></div>${loginNote}</div>
+    </div></div></div>`;
+  const $v = (sel) => $(sel, v);
+  const mark = () => { changed = true; };
+  dirty = () => changed;
+  const paySum = () => {
+    const row = { ...e, pay_rate: +e.pay_rate || 0, commission: +e.commission || 0 };
+    $v("#paySum").textContent = "Pay: " + X.payText(row);
+    $v("#rateLbl").firstChild.textContent = { hourly: "Per hour ($)", per_job: "Per job ($)", commission: "Base pay ($, optional)", salary: "Per year ($)" }[e.pay_type];
+  };
+  const drawPerms = () => {
+    const role = roleOf(e.role), eff = X.effectivePerms(e, D.roles), owner = e.role === "owner";
+    $v("#roleDesc").textContent = role.desc || "";
+    $v("#erole").textContent = role.name;
+    $v("#perms").innerHTML = X.PERMISSIONS.map(([grp, ps]) => `<div class="pgrp">${esc(grp)}</div>` + ps.map(([k, label]) => {
+      const custom = !owner && typeof e.overrides[k] === "boolean" && e.overrides[k] !== !!role.perms[k];
+      return `<label class="prow ${custom ? "custom" : ""}"><span>${esc(label)}${custom ? ` <em>only for them</em>` : ""}</span>
+        <span class="check"><input type="checkbox" data-perm="${k}" ${eff[k] ? "checked" : ""} ${owner ? "disabled" : ""}></span></label>`; }).join("")).join("");
+  };
+  const drawTrainings = () => {
+    $v("#trCount").textContent = `${trainingDone(e)} of ${e.trainings.length} done`;
+    $v("#trList").innerHTML = e.trainings.map((t, i) => `<div class="li" style="cursor:default"><label class="check" style="flex:1"><input type="checkbox" data-tr="${i}" ${t.done ? "checked" : ""}><span style="color:var(--ink)">${esc(t.name)}</span></label>
+      ${t.done ? `<span class="small muted">${X.niceDate(t.done, { weekday: false, year: true })}</span>` : ""}<button class="iconbtn" data-trdel="${i}" aria-label="Remove">${ic("x")}</button></div>`).join("") || emptyBox("badge", "No trainings listed");
+  };
+  paySum(); drawPerms(); drawTrainings();
+  v.addEventListener("input", (ev) => {
+    const k = ev.target.dataset.k; if (!k) return;
+    e[k] = ev.target.value; mark();
+    if (k === "first" || k === "last") $v("#ename").textContent = X.empName(e) === "(no name)" ? "New employee" : X.empName(e);
+    if (k === "pay_rate" || k === "commission") paySum();
+  });
+  v.addEventListener("click", (ev) => {
+    const sw = ev.target.closest("[data-hue]"); if (sw) { e.color = sw.dataset.hue; $$("[data-hue]", v).forEach((x) => x.classList.toggle("on", x === sw)); $v("#eav").innerHTML = empAvatar(e); mark(); return; }
+    const pt = ev.target.closest("[data-p]"); if (pt) { e.pay_type = pt.dataset.p; $$("[data-p]", v).forEach((x) => x.classList.toggle("on", x === pt)); paySum(); mark(); return; }
+    const td = ev.target.closest("[data-trdel]"); if (td) { e.trainings.splice(+td.dataset.trdel, 1); drawTrainings(); paintIcons(v); mark(); }
+  });
+  v.addEventListener("change", (ev) => {
+    const t = ev.target;
+    if (t.dataset.perm) {   // an exception for this person only when it differs from their role
+      const k = t.dataset.perm, role = roleOf(e.role);
+      if (t.checked === !!role.perms[k]) delete e.overrides[k]; else e.overrides[k] = t.checked;
+      drawPerms(); mark();
+    } else if (t.dataset.tr) { const tr = e.trainings[+t.dataset.tr]; tr.done = t.checked ? TODAY : null; drawTrainings(); paintIcons(v); mark(); }
+    else if (t.id === "role") { e.role = t.value; drawPerms(); mark(); }
+    else if (t.id === "active") { e.status = t.checked ? "active" : "inactive"; mark(); }
+  });
+  const addTraining = () => { const n = $v("#trNew").value.trim(); if (!n) return; e.trainings.push({ name: n.slice(0, 80), done: null }); $v("#trNew").value = ""; drawTrainings(); paintIcons(v); mark(); };
+  $v("#trAdd").onclick = addTraining;
+  $v("#trNew").onkeydown = (ev) => { if (ev.key === "Enter") { ev.preventDefault(); addTraining(); } };
+  $v("#save").onclick = (ev) => busy(ev.currentTarget, async () => {
+    if (!String(e.first || "").trim() && !String(e.last || "").trim()) throw new Error("Give them a name first.");
+    const row = { ...e, first: String(e.first || "").trim(), last: String(e.last || "").trim(), pay_rate: +String(e.pay_rate).replace(/[^0-9.]/g, "") || 0,
+      commission: +String(e.commission).replace(/[^0-9.]/g, "") || 0, start: e.start || null };
+    const saved = (await api("save", { table: "employees", row })).row;
+    put("employees", saved);
+    changed = false; dirty = null;
+    toast(isNew ? `${X.empName(saved)} added.` : "Saved.");
+    if (isNew) { history.replaceState(null, "", "#/employee/" + saved.id); render(); }
+  });
+  if ($v("#del")) $v("#del").onclick = (ev) => {
+    if (!confirm(`Delete ${X.empName(e)}? To keep their history, untick "Working here" instead.`)) return;
+    busy(ev.currentTarget, async () => { await remove("employees", e.id); dirty = null; toast("Deleted."); go("employees"); });
+  };
+}
+
+let permRole = null;   // phone: which role's switches are shown
+function viewPermissions(v) {
+  setTitle("Permissions");
+  const roles = JSON.parse(JSON.stringify(D.roles));
+  let changed = false;
+  if (!permRole || !roles.some((r) => r.id === permRole)) permRole = (roles[1] || roles[0]).id;
+  const people = (id) => D.employees.filter((e) => e.role === id && e.status === "active").length;
+  const draw = () => {
+    v.innerHTML = `<div class="wrap">
+      <div class="pagehead"><div><h2>Roles &amp; permissions</h2><div class="sub">What each kind of employee can see and do. Change one person's exceptions on their own page.</div></div>
+        <div class="spacer"></div><button class="btn" id="addRole">${ic("plus")}New role</button><button class="btn primary" id="saveRoles" ${changed ? "" : "disabled"}>${ic("check")}Save changes</button></div>
+      ${loginNote}
+      <div class="card hide-phone" style="padding:0;overflow:hidden"><div class="tablewrap" style="margin:0"><table class="ptable"><thead><tr><th class="pcol">Permission</th>
+        ${roles.map((ro) => `<th><button class="rolehead" data-edit="${ro.id}" ${ro.locked ? "disabled" : ""}><b>${esc(ro.name)}${ro.locked ? ` ${ic("lock")}` : ""}</b><small>${people(ro.id)} ${people(ro.id) === 1 ? "person" : "people"}</small></button></th>`).join("")}</tr></thead>
+        <tbody>${X.PERMISSIONS.map(([grp, ps]) => `<tr class="pgrow"><td colspan="${roles.length + 1}">${esc(grp)}</td></tr>` + ps.map(([k, label]) => `<tr><td class="pcol">${esc(label)}</td>
+          ${roles.map((ro) => `<td><span class="check"><input type="checkbox" data-role="${ro.id}" data-perm="${k}" ${ro.perms[k] ? "checked" : ""} ${ro.locked ? "disabled" : ""} aria-label="${esc(ro.name)}: ${esc(label)}"></span></td>`).join("")}</tr>`).join("")).join("")}</tbody></table></div></div>
+      <div class="show-phone">
+        <div class="chips" style="margin-bottom:12px">${roles.map((ro) => `<button class="chip ${ro.id === permRole ? "on" : ""}" data-pick="${ro.id}">${esc(ro.name)} <span class="n">${people(ro.id)}</span></button>`).join("")}</div>
+        ${(() => { const ro = roles.find((x) => x.id === permRole); return `<div class="card"><h3>${esc(ro.name)}${ro.locked ? "" : `<button class="btn sm right" data-edit="${ro.id}" style="margin-left:auto">${ic("edit")}Rename</button>`}</h3>
+          <div class="small muted" style="margin-bottom:8px">${esc(ro.desc || "")}</div>
+          ${X.PERMISSIONS.map(([grp, ps]) => `<div class="pgrp">${esc(grp)}</div>` + ps.map(([k, label]) => `<label class="prow"><span>${esc(label)}</span><span class="check"><input type="checkbox" data-role="${ro.id}" data-perm="${k}" ${ro.perms[k] ? "checked" : ""} ${ro.locked ? "disabled" : ""}></span></label>`).join("")).join("")}</div>`; })()}
+      </div></div>`;
+    paintIcons(v);
+  };
+  draw();
+  dirty = () => changed;
+  v.addEventListener("change", (ev) => {
+    const t = ev.target; if (!t.dataset.perm) return;
+    const ro = roles.find((r) => r.id === t.dataset.role); if (!ro || ro.locked) return;
+    ro.perms[t.dataset.perm] = t.checked; changed = true;
+    $("#saveRoles", v).disabled = false;
+  });
+  v.addEventListener("click", (ev) => {
+    const pk = ev.target.closest("[data-pick]"); if (pk) { permRole = pk.dataset.pick; draw(); return; }
+    const ed = ev.target.closest("[data-edit]"); if (ed && !ed.disabled) { roleSheet(roles, roles.find((r) => r.id === ed.dataset.edit), () => { changed = true; draw(); }); return; }
+    if (ev.target.closest("#addRole")) { roleSheet(roles, null, (r) => { changed = true; permRole = r.id; draw(); }); return; }
+    if (ev.target.closest("#saveRoles")) busy(ev.target.closest("#saveRoles"), async () => {
+      const { roles: saved } = await api("roles", { roles });
+      D.roles = saved; changed = false; dirty = null; toast("Permissions saved."); render();
+    });
+  });
+}
+function roleSheet(roles, role, done) {
+  const isNew = !role;
+  const used = role ? D.employees.filter((e) => e.role === role.id).length : 0;
+  openSheet(isNew ? "New role" : "Edit role", `<div class="fgrid"><label class="f full">Name<input id="rn" value="${esc(role ? role.name : "")}" placeholder="e.g. Office manager"></label>
+    <label class="f full">What this role is for<input id="rd" value="${esc(role ? role.desc : "")}"></label>
+    ${isNew ? `<label class="f full">Start with the switches of<select id="rc">${roles.map((r) => `<option value="${r.id}" ${r.id === "tech" ? "selected" : ""}>${esc(r.name)}</option>`).join("")}</select></label>` : ""}</div>
+    ${!isNew ? `<div class="small muted">${used ? `${used} ${used === 1 ? "person has" : "people have"} this role, so it can't be deleted.` : "Nobody has this role."}</div>` : ""}
+    <div class="sheetfoot">${!isNew && !used ? `<button class="btn bad" id="rx">${ic("trash")}Delete role</button>` : ""}<div class="spacer"></div><button class="btn primary" id="rs">${isNew ? "Add role" : "Done"}</button></div>`, (b) => {
+    $("#rs", b).onclick = () => {
+      const name = $("#rn", b).value.trim(); if (!name) return toast("Give the role a name.", true);
+      if (isNew) {
+        const from = roles.find((r) => r.id === $("#rc", b).value) || roles[0];
+        const r = { id: "r-" + X.uuid().slice(0, 8), name, desc: $("#rd", b).value.trim(), perms: { ...from.perms } };
+        roles.push(r); closeSheet(); done(r);
+      } else { role.name = name; role.desc = $("#rd", b).value.trim(); closeSheet(); done(role); }
+    };
+    if ($("#rx", b)) $("#rx", b).onclick = () => { roles.splice(roles.indexOf(role), 1); closeSheet(); done(roles[1] || roles[0]); };
+  });
+}
+
+const VIEWS = { employees: viewEmployees, employee: viewEmployee, permissions: viewPermissions, dashboard: viewDashboard, calendar: viewCalendar, prospects: viewProspects, customers: viewCustomers, person: viewPerson,
   estimates: viewEstimates, estimate: viewEstimate, invoices: viewInvoices, invoice: viewInvoice, search: viewSearch, settings: viewSettings };
 
 // ------------------------------------------------------------------ demo data (?demo=1): made-up people, nothing leaves the page
@@ -2711,7 +3035,11 @@ function demoData() {
   for (let m = 0; m < 10; m++) { const d = X.addMonths(t.slice(0, 4) + "-01-15", m); if (d >= t) break; const id = "d-ih" + m; INV.push({ id, number: String(1100 + m), person: "d-p" + (m % 8), date: d, due: d, lines: [L(0, 20 + m * 3)], total: 12 * (20 + m * 3), bad_debt: false, job: null, notes: "" }); PAY.push({ id: "d-ph" + m, invoice: id, amount: 12 * (20 + m * 3), date: X.addDays(d, 2), method: "check", note: "" }); }
   [8, 9, 10, 11].forEach((i, k) => E.push({ id: "d-e" + i, number: String(501 + k), person: "d-p" + i, date: X.addDays(t, -[2, 9, 21, 45][k]), status: "open", options: k === 1,
     lines: k === 1 ? [{ ...L(1, 28), service: "One-time exterior" }, { ...L(1, 28), service: "Every 6 months (per visit)", rate: 6 }] : [L(0, 30 + k * 4), L(2, 16)], notes: "", decided: null }));
-  return { people: P, services: svc, estimates: E, plans: PL, jobs: J, invoices: INV, payments: PAY, settings: { business: { name: "VITRA Window Washing" } }, today: t };
+  const EMP = [
+    { id: "d-emp1", first: "Marcus", last: "Reyes", phone: "(801) 555-0190", email: "marcus@example.com", role: "lead", status: "active", pay_type: "hourly", pay_rate: 22, commission: 0, start: "2026-03-02", address: "", emergency: "", color: "196", notes: "Runs crew 1.", trainings: X.DEFAULT_TRAININGS.map((n, i) => ({ name: n, done: i < 4 ? "2026-04-01" : null })), overrides: {} },
+    { id: "d-emp2", first: "Kayla", last: "Brooks", phone: "(801) 555-0191", email: "", role: "sales", status: "active", pay_type: "commission", pay_rate: 0, commission: 12, start: "2026-06-15", address: "", emergency: "", color: "328", notes: "", trainings: X.DEFAULT_TRAININGS.map((n, i) => ({ name: n, done: i === 5 ? "2026-06-20" : null })), overrides: { see_contact: true } },
+  ];
+  return { people: P, services: svc, estimates: E, plans: PL, jobs: J, invoices: INV, payments: PAY, settings: { business: { name: "VITRA Window Washing" } }, employees: EMP, roles: X.normalizeRoles(null), today: t };
 }
 let demoDb = null;
 function demoApi(route, b) {
@@ -2731,6 +3059,11 @@ function demoApi(route, b) {
     return { plan: b.plan, remove: r.remove, add: JSON.parse(JSON.stringify(r.add)) };
   }
   if (route === "settings") { if (b.settings) DB.settings = { ...DB.settings, ...b.settings }; return { settings: DB.settings }; }
+  if (route === "roles") {
+    const roles = X.normalizeRoles(b.roles);
+    if (DB.employees.some((e) => !roles.some((r) => r.id === e.role))) throw new Error("Someone still has a role you removed. Give them another role first.");
+    DB.roles = roles; return { roles };
+  }
   if (route === "import") return { counts: { people: 0, jobs: 0, estimates: 0, invoices: 0 } };
   throw new Error("Not in the demo.");
 }
