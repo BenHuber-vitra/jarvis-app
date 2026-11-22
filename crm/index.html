@@ -3228,7 +3228,9 @@ function viewSettings(v) {
   $("#addSvc", v).onclick = () => serviceSheet({ id: X.uuid(), name: "", description: "", rate: 0, unit: "", position: Math.max(0, ...D.services.map((s) => s.position)) + 1, archived: false }, true);
   $("#saveKey", v).onclick = (e) => busy(e.currentTarget, async () => {
     const { settings } = await api("settings", { settings: { maps_key: $("#mapsKey", v).value.trim() } });
-    D.settings = { ...D.settings, ...settings }; MAPENG = null; toast("Saved. The map uses it next time it opens.");
+    D.settings = { ...D.settings, ...settings }; MAPENG = null; GMAPS_REFUSED = false;
+    // Google's script can only be loaded once per page, so a changed key needs a fresh page
+    toast(window.google && window.google.maps ? "Saved. Reload the page to use the new key." : "Saved. The map uses it next time it opens.");
   });
   $("#saveBiz", v).onclick = (e) => busy(e.currentTarget, async () => {
     const business = Object.fromEntries($$("[data-biz]", v).map((x) => [x.dataset.biz, x.value.trim()]));
@@ -3520,17 +3522,24 @@ function roleSheet(roles, role, done) {
 // Google Maps when Ben has added a key (Settings), otherwise a free street map (Leaflet + OpenStreetMap).
 // Both sit behind one small "engine" so the page doesn't care which one is showing.
 let MAPENG = null;
+let GMAPS_REFUSED = false;   // Google refused the key this visit: use the free map until the page reloads
 const HOME = [40.3141, -112.0103];   // Eagle Mountain, UT (Ben's town) until his location or a saved view is known
 const scriptOnce = (src) => new Promise((res, rej) => { if ([...document.scripts].some((x) => x.src === src)) return res(); const sc = document.createElement("script"); sc.src = src; sc.async = true; sc.onload = res; sc.onerror = () => rej(new Error("Couldn't load " + src.split("/")[2])); document.head.appendChild(sc); });
 const cssOnce = (href) => { if (![...document.querySelectorAll("link")].some((l) => l.href === href)) { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; document.head.appendChild(l); } };
 async function mapEngine() {
   if (MAPENG) return MAPENG;
   const key = (D.settings && D.settings.maps_key) || "";
-  if (key && !DEMO) {
+  if (key && !DEMO && !GMAPS_REFUSED) {
     try {
       await new Promise((res, rej) => {
         if (window.google && window.google.maps) return res();
-        window.__vitraMapsReady = res; window.gm_authFailure = () => { toast("Google refused the Maps key. Check it in Settings; showing the free map for now.", true); };
+        // Google calls this AFTER loading when the key is refused (wrong key, API off, address not allowed, no billing):
+        // switch this visit to the free map instead of leaving Google's error page on screen
+        window.__vitraMapsReady = res; window.gm_authFailure = () => {
+          GMAPS_REFUSED = true; MAPENG = null;
+          toast("Google refused the Maps key (check it in Settings, and that billing and the Maps APIs are on). Showing the free map.", true);
+          if (location.hash.startsWith("#/knock")) render();
+        };
         scriptOnce(`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=weekly&callback=__vitraMapsReady`).catch(rej);
         setTimeout(() => rej(new Error("Google Maps took too long")), 15000);
       });
