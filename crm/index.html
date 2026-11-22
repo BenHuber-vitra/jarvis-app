@@ -591,6 +591,8 @@ details.prev .li .s.pre { white-space: pre-line; }
 .dlink { border: 0; background: none; color: var(--acc); font-weight: 650; font-size: 13px; white-space: nowrap; padding: 6px 2px; cursor: pointer; }
 .dlink.has::after { content: " \2022"; }
 .lrow .inp.num { text-align: right; font-variant-numeric: tabular-nums; }
+.lrow label.ltot { height: auto; display: block; padding-right: 0; font-weight: 400; }
+.lrow label.ltot .inp { font-weight: 700; }
 .lrow .ltot .show-phone { font-weight: 500; margin-right: 8px; }
 .presets { display: flex; gap: 6px; flex-wrap: wrap; }
 .presets .chip { height: 30px; font-size: 12.5px; background: rgba(255,255,255,.045); border-color: rgba(255,255,255,.14); color: var(--ink); }
@@ -3182,18 +3184,19 @@ function linesEditor(host, lines, onChange, minRows = 4) {
   const opened = new Set();      // rows whose Details (description) are showing
   let list = null;               // the open item list: { i, hits, hi }
   const num = (v) => (v === "" || v == null ? "" : +v);
+  const amt = (l) => (String(l.service || "").trim() || +l.rate || (l.total != null && l.total !== "") ? X.lineTotal(l) : "");
   for (const [i, l] of lines.entries()) if (String(l.description || "").trim() && !presetOf(l.service)) opened.add(i);   // their own wording shows
   const draw = () => {
     while (lines.length < minRows) lines.push(blank());
     list = null;
-    host.innerHTML = `<div class="lhead"><span>Item / service</span><span class="n">Qty</span><span class="n">Each</span><span class="n">Amount</span><span></span></div>
+    host.innerHTML = `<div class="lhead"><span>Item / service</span><span class="n">Qty</span><span class="n">Price</span><span class="n">Amount</span><span></span></div>
       <div class="lines-ed">${lines.map((l, i) => `<div class="lrow" data-i="${i}">
         <div class="svc"><div class="combo"><input class="inp" data-k="service" value="${esc(l.service)}" placeholder="Select or insert ${i ? "additional " : ""}item/service" autocomplete="off" spellcheck="false">
             <button type="button" class="cbtn" data-open tabindex="-1" aria-label="Show services">${ic("chev")}</button></div>
           <button type="button" class="dlink ${String(l.description || "").trim() ? "has" : ""}" data-details>${opened.has(i) ? "Hide details" : "Details"}</button></div>
         <label class="f"><span class="show-phone">Qty</span><input class="inp num" data-k="qty" value="${num(l.qty)}" inputmode="decimal" placeholder="1"></label>
-        <label class="f"><span class="show-phone">Each</span><input class="inp num" data-k="rate" value="${num(l.rate)}" inputmode="decimal" placeholder="$0.00">${l.unit ? `<span class="unit">${esc(l.unit)}</span>` : ""}</label>
-        <div class="ltot"><span class="show-phone muted">Amount</span><b>${money(X.lineTotal(l))}</b></div>
+        <label class="f"><span class="show-phone">Price</span><input class="inp num" data-k="rate" value="${num(l.rate)}" inputmode="decimal" placeholder="$0.00">${l.unit ? `<span class="unit">${esc(l.unit)}</span>` : ""}</label>
+        <label class="f ltot"><span class="show-phone">Amount</span><input class="inp num" data-k="total" value="${amt(l)}" inputmode="decimal" placeholder="$0.00"></label>
         <button type="button" class="iconbtn x" data-del="${i}" aria-label="Remove line">${ic("x")}</button>
         ${opened.has(i) ? `<label class="f desc"><textarea class="inp" data-k="description" rows="${Math.min(8, Math.max(2, String(l.description || "").split("\n").length))}" placeholder="Details the customer sees">${esc(l.description)}</textarea></label>` : ""}</div>`).join("")}</div>
       <div class="row" style="margin-top:12px"><button type="button" class="btn" data-addline>${ic("plus")}Add more items</button></div>`;
@@ -3230,11 +3233,19 @@ function linesEditor(host, lines, onChange, minRows = 4) {
     closeList(); draw(); onChange();
     const q = $(`[data-k="qty"]`, rowOf(i)); if (q) { q.focus(); q.select(); }
   };
-  const fixTotals = () => { for (const row of $$(".lrow", host)) $(".ltot b", row).textContent = money(X.lineTotal(lines[+row.dataset.i])); };
+  // Amount is editable too (Ben, 2026-11-22): typing it sets Price = Amount / Qty and never changes Qty; typing Qty or
+  // Price works the Amount out again. Boxes being typed in are left alone.
+  const fixTotals = () => { for (const row of $$(".lrow", host)) { const l = lines[+row.dataset.i];
+    for (const [k, v] of [["total", amt(l)], ["rate", num(l.rate)]]) { const box = $(`[data-k="${k}"]`, row); if (box && box !== document.activeElement) box.value = v; } } };
   host.oninput = (e) => {
     const inp = e.target.closest("[data-k]"); if (!inp) return;
     const i = +inp.closest(".lrow").dataset.i, l = lines[i], k = inp.dataset.k;
     if (k === "rate" || k === "qty") { const v = inp.value.replace(/[^0-9.\-]/g, ""); l[k] = v === "" ? "" : parseFloat(v) || 0; delete l.total; }
+    else if (k === "total") {
+      const v = inp.value.replace(/[^0-9.\-]/g, ""), q = l.qty === "" || l.qty == null ? 1 : +l.qty || 0;
+      if (v === "") { delete l.total; l.rate = ""; }
+      else { l.total = X.round2(parseFloat(v) || 0); l.rate = q ? X.round2(l.total / q) : l.total; }
+    }
     else l[k] = inp.value;
     if (k === "service") { if (!presetOf(l.service)) l.unit = ""; showList(i); }
     if (k === "description") { inp.rows = Math.min(8, Math.max(2, inp.value.split("\n").length)); $("[data-details]", rowOf(i))?.classList.toggle("has", !!inp.value.trim()); }
@@ -3242,7 +3253,8 @@ function linesEditor(host, lines, onChange, minRows = 4) {
   };
   host.addEventListener("focusin", (e) => { const inp = e.target.closest('[data-k="service"]'); if (inp) showList(+inp.closest(".lrow").dataset.i); });
   host.addEventListener("change", (e) => {   // leaving Qty / Each: show the number it was read as ("2o" -> 2)
-    const inp = e.target.closest('[data-k="qty"], [data-k="rate"]'); if (inp) inp.value = num(lines[+inp.closest(".lrow").dataset.i][inp.dataset.k]);
+    const inp = e.target.closest('[data-k="qty"], [data-k="rate"], [data-k="total"]');
+    if (inp) { const l = lines[+inp.closest(".lrow").dataset.i]; inp.value = inp.dataset.k === "total" ? amt(l) : num(l[inp.dataset.k]); }
   });
   host.addEventListener("focusout", (e) => { if (e.target.closest('[data-k="service"]')) setTimeout(() => { if (!host.contains(document.activeElement) || !document.activeElement.closest(".combo")) closeList(); }, 120); });
   host.addEventListener("keydown", (e) => {
@@ -3918,7 +3930,7 @@ async function makePdf(kind, doc) {
     if (d) body.push([{ content: d, colSpan: 4, styles: { fontSize: 9, textColor: [80, 80, 80], cellPadding: { top: 0, right: 6, bottom: 9, left: 6 }, lineWidth: { bottom: 0.5 }, lineColor: [225, 225, 225] } }]);
   }
   pdf.autoTable({
-    startY: y, margin: { left: M, right: M }, theme: "plain", head: [["Service", "Qty", "Each", "Amount"]], body,
+    startY: y, margin: { left: M, right: M }, theme: "plain", head: [["Service", "Qty", "Price", "Amount"]], body,
     styles: { font: "helvetica", fontSize: 10, textColor: ink, cellPadding: { top: 7, right: 6, bottom: 6, left: 6 }, overflow: "linebreak" },
     headStyles: { fontSize: 8, fontStyle: "bold", textColor: [70, 70, 70], lineWidth: { bottom: 1.2 }, lineColor: ink },
     columnStyles: { 1: { halign: "right", cellWidth: 70 }, 2: { halign: "right", cellWidth: 78 }, 3: { halign: "right", cellWidth: 84 } },
