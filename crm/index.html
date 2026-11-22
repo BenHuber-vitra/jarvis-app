@@ -550,6 +550,52 @@ table.t .t2 { color: var(--ink3); font-size: 12.5px; }
 .rolehead small { color: var(--ink3); font-size: 11.5px; font-weight: 500; }
 .check input:disabled { opacity: .55; cursor: default; }
 
+/* ---------------------------------------------------------------- books */
+.in { color: var(--good); }
+.nowrap { white-space: nowrap; }
+.inp.sm { min-height: 34px; height: 34px; padding: 0 10px; font-size: 13px; width: auto; }
+.bulk { display: none; align-items: center; gap: 8px; flex-wrap: wrap; padding: 10px 12px; margin-bottom: 12px; border-radius: 12px; background: rgba(var(--acc-rgb), .1); border: 1px solid rgba(var(--acc-rgb), .3); }
+.bulk.on { display: flex; }
+.bulk .catsel { width: auto; min-height: 30px; height: 30px; padding: 0 8px; font-size: 12.5px; }
+table.bk td { padding: 10px 10px; }
+table.bk .amt2 { font-weight: 650; white-space: nowrap; font-variant-numeric: tabular-nums; }
+table.bk tr.selrow td { background: rgba(var(--acc-rgb), .07); }
+.sugg { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.sugg .catsel { width: 170px; min-height: 30px; height: 30px; padding: 0 8px; font-size: 12.5px; color: var(--ink3); }
+.rulebox { border: 1px solid var(--line2); border-radius: 12px; padding: 10px 12px; }
+.rulebox summary { cursor: pointer; font-weight: 600; font-size: 13.5px; display: flex; align-items: center; gap: 8px; list-style: none; }
+.rulebox summary::-webkit-details-marker { display: none; }
+.rulebox summary i { color: var(--acc); width: 16px; height: 16px; }
+.stackb.pair { flex-direction: row; align-items: flex-end; gap: 3px; }
+.stackb.pair .fill { flex: 1; }
+.bar .fill.exp { background: linear-gradient(180deg, rgba(var(--core-rgb), .9), rgba(var(--core-rgb), .45)); }
+table.pl td, table.pl th { padding: 9px 12px; }
+table.pl .pcol2 { text-align: left; min-width: 220px; }
+table.pl tr.sec td { padding-top: 18px; font-size: 11.5px; font-weight: 650; letter-spacing: .05em; text-transform: uppercase; color: var(--ink3); border-bottom: 1px solid var(--line2); }
+table.pl tr.totrow td { font-weight: 650; border-top: 1px solid var(--line2); background: rgba(0,0,0,.12); }
+table.pl tr.totrow.net td { font-size: 15px; background: rgba(var(--acc-rgb), .1); border-top: 2px solid rgba(var(--acc-rgb), .45); }
+.hbar { display: flex; flex-direction: column; gap: 5px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.hbar:last-child { border-bottom: 0; }
+.hbar:hover b { color: var(--acc); }
+.acct { display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 12px; border: 1px solid var(--line2); background: var(--raise); color: var(--ink); transition: border-color .15s, transform .15s var(--ease); }
+.acct:hover { border-color: var(--lineacc); transform: translateY(-1px); }
+.drop { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 26px 18px; border: 1.5px dashed rgba(255,255,255,.2); border-radius: 14px; cursor: pointer; transition: border-color .15s, background .15s; }
+.drop:hover, .drop.over { border-color: rgba(var(--acc-rgb), .6); background: rgba(var(--acc-rgb), .06); }
+.drop > i { width: 28px; height: 28px; color: var(--acc); }
+.drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.drop .small { max-width: 560px; }
+.chip.addcat { border-style: dashed; color: var(--ink3); }
+.chip i[data-icon] { width: 14px; height: 14px; }
+@media (max-width: 900px) {
+  table.bk.cards td:first-child { flex: 0 0 auto; }
+  table.bk.cards td:nth-child(2) { order: 3; flex: 1 1 auto; font-size: 12px; color: var(--ink3); }
+  table.bk.cards td:nth-child(3) { flex: 1 1 60%; min-width: 0; }
+  table.bk.cards td.amt2 { margin-left: auto; }
+  table.bk.cards td:nth-child(4) { order: 5; flex: 1 1 100%; }
+  .sugg .catsel { width: 100%; }
+  .toolbar .inp.sm { flex: 1 1 45%; }
+}
+
 /* ---------------------------------------------------------------- sheet, toast, loading */
 #sheetWrap { position: fixed; inset: 0; z-index: 60; background: rgba(3,4,16,.5); display: flex; justify-content: flex-end;
   opacity: 0; visibility: hidden; transition: opacity .25s, visibility 0s .25s; }
@@ -704,6 +750,10 @@ table.t .t2 { color: var(--ink3); font-size: 12.5px; }
   #print .sign div { flex: 1; border-top: 1px solid #111; padding-top: 4px; font-size: 11px; color: #444; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+/* square tick boxes for selecting rows (switches are for settings) */
+.check.box input { width: 18px; height: 18px; border-radius: 5px; background: transparent; border: 1.5px solid rgba(255,255,255,.3); }
+.check.box input::before { display: none; }
+.check.box input:checked { background: var(--acc); border-color: var(--acc); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E"); background-size: 14px; background-position: center; background-repeat: no-repeat; }
 
 </style>
 </head>
@@ -1600,6 +1650,229 @@ function niceDate(iso, withYear = false) {
 
 return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, find, visits, schedule, balanceOf, owed, estimateValue, estimateState, daysBetween, profile, summary, months, usd, niceDate };
  })();   // parseDump, for importing a Customer Factor backup
+const B = (() => { // VITRA CRM Books (2026-11-21): QuickBooks-style bookkeeping for the business. Shared like crmapp_calc.js:
+// the CRM page inlines it (app/build.py build_crm) and cloud Jarvis imports it (tools_books.ts).
+// Plain JavaScript, no imports. Amounts: positive = money in, negative = money out.
+
+// ------------------------------------------------------------------ chart of accounts
+// type: income / expense count in profit and loss; transfer / owner never do (moving money, not earning it).
+// Expense names follow the IRS Schedule C lines an accountant files them under.
+const DEFAULT_CATEGORIES = [
+  { id: "inc_service", name: "Window cleaning & services", type: "income" },
+  { id: "inc_other", name: "Other income (interest, refunds)", type: "income" },
+  { id: "exp_ads", name: "Advertising & marketing", type: "expense" },
+  { id: "exp_vehicle", name: "Vehicle & fuel", type: "expense" },
+  { id: "exp_contract", name: "Contract labor", type: "expense" },
+  { id: "exp_payroll", name: "Wages & payroll", type: "expense" },
+  { id: "exp_supplies", name: "Cleaning supplies", type: "expense" },
+  { id: "exp_equipment", name: "Equipment & tools", type: "expense" },
+  { id: "exp_uniforms", name: "Uniforms & gear", type: "expense" },
+  { id: "exp_insurance", name: "Insurance", type: "expense" },
+  { id: "exp_professional", name: "Legal & accounting", type: "expense" },
+  { id: "exp_software", name: "Office & software", type: "expense" },
+  { id: "exp_phone", name: "Phone & internet", type: "expense" },
+  { id: "exp_rent", name: "Rent & storage", type: "expense" },
+  { id: "exp_repairs", name: "Repairs & maintenance", type: "expense" },
+  { id: "exp_shipping", name: "Postage & shipping", type: "expense" },
+  { id: "exp_education", name: "Training & education", type: "expense" },
+  { id: "exp_travel", name: "Travel", type: "expense" },
+  { id: "exp_meals", name: "Meals", type: "expense" },
+  { id: "exp_utilities", name: "Utilities", type: "expense" },
+  { id: "exp_taxes", name: "Taxes & licenses", type: "expense" },
+  { id: "exp_bank", name: "Bank & card fees", type: "expense" },
+  { id: "exp_interest", name: "Interest paid", type: "expense" },
+  { id: "exp_other", name: "Other business expenses", type: "expense" },
+  { id: "tr_transfer", name: "Transfer between my accounts", type: "transfer" },
+  { id: "tr_card", name: "Credit card payment", type: "transfer" },
+  { id: "tr_loan", name: "Loan payment", type: "transfer" },
+  { id: "own_draw", name: "Owner's draw / personal", type: "owner" },
+  { id: "own_in", name: "Owner money put in", type: "owner" },
+];
+const TYPE_NAMES = { income: "Income", expense: "Expenses", transfer: "Transfers (not profit or loss)", owner: "Owner (not profit or loss)" };
+function categories(saved) {
+  const list = Array.isArray(saved) && saved.length ? saved : DEFAULT_CATEGORIES;
+  const out = [];
+  for (const c of list) if (c && c.id && !out.some((x) => x.id === c.id) && TYPE_NAMES[c.type])
+    out.push({ id: String(c.id).slice(0, 40), name: String(c.name || "Category").slice(0, 80), type: c.type, hidden: !!c.hidden });
+  for (const c of DEFAULT_CATEGORIES) if (!out.some((x) => x.id === c.id)) out.push({ ...c, hidden: true });   // never lose an id a row uses
+  return out;
+}
+
+// ------------------------------------------------------------------ suggestions (rules first, then the bank's category)
+const BANK_MAP = [
+  ["TRANSFER_IN_DEPOSIT", "inc_service"], ["TRANSFER_IN_TRANSFER_IN_FROM_APPS", "inc_service"], ["INCOME_CONTRACTOR", "inc_service"],
+  ["INCOME_WAGES", "inc_service"], ["INCOME_", "inc_other"],
+  ["TRANSFER_IN_ACCOUNT_TRANSFER", "tr_transfer"], ["TRANSFER_OUT_ACCOUNT_TRANSFER", "tr_transfer"],
+  ["TRANSFER_OUT_WITHDRAWAL", "own_draw"], ["TRANSFER_IN_CASH_ADVANCES_AND_LOANS", "tr_loan"],
+  ["LOAN_PAYMENTS_CREDIT_CARD_PAYMENT", "tr_card"], ["LOAN_PAYMENTS_", "tr_loan"],
+  ["HOME_IMPROVEMENT_REPAIR", "exp_repairs"], ["HOME_IMPROVEMENT_", "exp_supplies"],
+  ["TRANSPORTATION_GAS", "exp_vehicle"], ["GENERAL_SERVICES_AUTOMOTIVE", "exp_vehicle"], ["TRANSPORTATION_", "exp_travel"],
+  ["GENERAL_SERVICES_INSURANCE", "exp_insurance"], ["GENERAL_SERVICES_ACCOUNTING", "exp_professional"], ["GENERAL_SERVICES_CONSULTING_AND_LEGAL", "exp_professional"],
+  ["GENERAL_SERVICES_POSTAGE", "exp_shipping"], ["GENERAL_SERVICES_EDUCATION", "exp_education"], ["GENERAL_SERVICES_STORAGE", "exp_rent"],
+  ["GENERAL_SERVICES_", "exp_other"],
+  ["GENERAL_MERCHANDISE_ELECTRONICS", "exp_equipment"], ["GENERAL_MERCHANDISE_CLOTHING", "exp_uniforms"], ["GENERAL_MERCHANDISE_OFFICE", "exp_software"],
+  ["GENERAL_MERCHANDISE_", "exp_supplies"],
+  ["FOOD_AND_DRINK_GROCERIES", "own_draw"], ["FOOD_AND_DRINK_", "exp_meals"], ["TRAVEL_", "exp_travel"],
+  ["BANK_FEES_INTEREST", "exp_interest"], ["BANK_FEES_", "exp_bank"],
+  ["RENT_AND_UTILITIES_RENT", "exp_rent"], ["RENT_AND_UTILITIES_TELEPHONE", "exp_phone"], ["RENT_AND_UTILITIES_INTERNET", "exp_phone"], ["RENT_AND_UTILITIES_", "exp_utilities"],
+  ["GOVERNMENT_AND_NON_PROFIT_TAX", "exp_taxes"], ["GOVERNMENT_AND_NON_PROFIT_GOVERNMENT", "exp_taxes"],
+  ["MEDICAL_", "own_draw"], ["PERSONAL_CARE_", "own_draw"], ["ENTERTAINMENT_", "own_draw"], ["GOVERNMENT_AND_NON_PROFIT_DONATIONS", "own_draw"],
+];
+const lc = (s) => String(s || "").toLowerCase();
+/** Does a rule apply to a transaction? rule = {id, text, dir: in|out|any, category, auto} */
+function ruleMatches(r, t) {
+  if (!r || !r.text || !r.category) return false;
+  if (r.dir === "in" && !(t.amount > 0)) return false;
+  if (r.dir === "out" && !(t.amount < 0)) return false;
+  const hay = lc(t.name) + " " + lc(t.merchant);
+  return hay.includes(lc(r.text).trim());
+}
+function suggest(t, rules, cats) {
+  for (const r of rules || []) if (ruleMatches(r, t) && cats.some((c) => c.id === r.category)) return { category: r.category, why: "rule", rule: r.id };
+  const bc = String(t.bank_category || "");
+  for (const [pre, cat] of BANK_MAP) if (bc.startsWith(pre)) {
+    const c = cats.find((x) => x.id === cat);
+    if (!c) break;
+    if (c.type === "income" && !(t.amount > 0)) break;            // the bank's guess must fit the direction
+    if (c.type === "expense" && t.amount > 0 && !/REFUND/.test(bc)) break;
+    return { category: cat, why: "bank" };
+  }
+  return null;
+}
+/** A short name for a merchant, used as the default text of a new rule. */
+function ruleTextFor(t) {
+  const m = String(t.merchant || "").trim();
+  if (m) return m;
+  return String(t.name || "").replace(/\d{3,}|#\S+|\*\S*/g, " ").replace(/\s+/g, " ").trim().split(" ").slice(0, 3).join(" ");
+}
+
+// ------------------------------------------------------------------ matching deposits to CRM payments
+/** CRM payments a deposit could be: same amount (to the cent), recorded 0-10 days before the deposit. */
+function paymentMatches(t, payments, taken) {
+  if (!(t.amount > 0)) return [];
+  return payments.filter((p) => !taken.has(p.id) && p.method !== "credit" && Math.abs((+p.amount || 0) - t.amount) < 0.005 && p.date
+    && dayDiff(p.date, t.date) >= -2 && dayDiff(p.date, t.date) <= 10);
+}
+const dayDiff = (a, b) => Math.round((Date.parse(b + "T12:00:00Z") - Date.parse(a + "T12:00:00Z")) / 864e5);
+
+// ------------------------------------------------------------------ reports
+/** Profit and loss from categorised rows between from and to. months = also split by month. */
+function profitLoss(rows, cats, from, to, months = false) {
+  const byId = new Map(cats.map((c) => [c.id, c]));
+  const keys = [];
+  if (months) for (let m = from.slice(0, 7); m <= to.slice(0, 7); m = nextMonth(m)) keys.push(m);
+  const line = () => ({ total: 0, months: Object.fromEntries(keys.map((k) => [k, 0])), n: 0 });
+  const lines = {};
+  let uncategorised = 0, review = 0;
+  for (const t of rows) {
+    if (t.date < from || t.date > to || t.status === "excluded") continue;
+    if (t.status !== "done" || !t.category) { review++; uncategorised += t.amount; continue; }
+    const c = byId.get(t.category);
+    if (!c || (c.type !== "income" && c.type !== "expense")) continue;
+    const L = (lines[c.id] ||= line());
+    const v = c.type === "income" ? t.amount : -t.amount;   // expenses shown as positive numbers
+    L.total += v; L.n++;
+    if (months) L.months[t.date.slice(0, 7)] += v;
+  }
+  const sect = (type) => cats.filter((c) => c.type === type && lines[c.id]).map((c) => ({ id: c.id, name: c.name, ...lines[c.id] }))
+    .sort((a, b) => b.total - a.total);
+  const income = sect("income"), expense = sect("expense");
+  const sum = (ls, k) => ls.reduce((s, l) => s + (k ? l.months[k] : l.total), 0);
+  const totals = { income: sum(income), expense: sum(expense) };
+  totals.net = totals.income - totals.expense;
+  const monthTotals = Object.fromEntries(keys.map((k) => [k, { income: sum(income, k), expense: sum(expense, k), net: sum(income, k) - sum(expense, k) }]));
+  return { from, to, months: keys, income, expense, totals, monthTotals, review, uncategorised };
+}
+const nextMonth = (m) => { const [y, mm] = m.split("-").map(Number); return mm === 12 ? `${y + 1}-01` : `${y}-${String(mm + 1).padStart(2, "0")}`; };
+
+// ------------------------------------------------------------------ bank files: CSV and QuickBooks / OFX
+function parseCSV(text) {
+  const rows = [];
+  let row = [], cell = "", q = false;
+  const s = String(text || "").replace(/^﻿/, "");
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (q) { if (c === '"') { if (s[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; continue; }
+    if (c === '"') q = true;
+    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") { if (c === "\r" && s[i + 1] === "\n") i++; row.push(cell); cell = ""; if (row.some((x) => x.trim())) rows.push(row); row = []; }
+    else cell += c;
+  }
+  row.push(cell); if (row.some((x) => x.trim())) rows.push(row);
+  return rows;
+}
+/** Which CSV columns hold the date, description and amount (or debit + credit). */
+function guessColumns(header) {
+  const h = header.map((x) => lc(x).trim());
+  const find = (...ws) => h.findIndex((x) => ws.some((w) => x === w || x.includes(w)));
+  const date = find("posted date", "posting date", "transaction date", "date");
+  const desc = find("description", "payee", "merchant", "name", "memo", "details");
+  const debit = find("debit", "withdrawal", "money out");
+  const credit = find("credit", "deposit", "money in");
+  const amount = find("amount");
+  return { date, desc, amount, debit, credit };
+}
+function parseDate(s) {
+  const t = String(s || "").trim();
+  let m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
+  m = t.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})/);
+  if (m) { const y = m[3].length === 2 ? "20" + m[3] : m[3]; return `${y}-${m[1].padStart(2, "0")}-${m[2].padStart(2, "0")}`; }
+  m = t.match(/^(\d{4})(\d{2})(\d{2})/);   // OFX: 20261121120000
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  return null;
+}
+const parseMoney = (s) => { const t = String(s ?? "").trim(); if (!t) return null; const neg = /^\(.*\)$/.test(t) || /^-/.test(t) || /-$/.test(t);
+  const n = parseFloat(t.replace(/[^0-9.]/g, "")); return Number.isFinite(n) ? (neg ? -n : n) : null; };
+/** CSV rows -> entries [{date, amount, name}]; flip = the file shows money out as positive numbers. */
+function csvEntries(rows, cols, flip = false) {
+  const out = [];
+  for (const r of rows) {
+    const date = parseDate(r[cols.date]);
+    if (!date) continue;
+    let amount = null;
+    if (cols.amount >= 0 && cols.debit < 0 && cols.credit < 0) amount = parseMoney(r[cols.amount]);
+    else {
+      const d = cols.debit >= 0 ? parseMoney(r[cols.debit]) : null, c = cols.credit >= 0 ? parseMoney(r[cols.credit]) : null;
+      if (d || c) amount = (c ? Math.abs(c) : 0) - (d ? Math.abs(d) : 0);
+      else if (cols.amount >= 0) amount = parseMoney(r[cols.amount]);
+    }
+    if (amount == null || !Number.isFinite(amount)) continue;
+    if (flip) amount = -amount;
+    out.push({ date, amount: Math.round(amount * 100) / 100, name: String(r[cols.desc] ?? "").trim().slice(0, 200) });
+  }
+  return out;
+}
+/** QuickBooks Web Connect (.qbo), Quicken (.qfx) and OFX files: the same <STMTTRN> blocks. */
+function parseOFX(text) {
+  const out = [];
+  const tag = (b, n) => { const m = b.match(new RegExp("<" + n + ">([^<\\r\\n]*)", "i")); return m ? m[1].trim() : ""; };
+  for (const m of String(text || "").matchAll(/<STMTTRN>([\s\S]*?)(?:<\/STMTTRN>|(?=<STMTTRN>)|<\/BANKTRANLIST>)/gi)) {
+    const b = m[1], date = parseDate(tag(b, "DTPOSTED")), amount = parseMoney(tag(b, "TRNAMT"));
+    if (!date || amount == null) continue;
+    const name = [tag(b, "NAME"), tag(b, "MEMO")].filter(Boolean).join(" · ").replace(/&amp;/g, "&").slice(0, 200);
+    out.push({ date, amount: Math.round(amount * 100) / 100, name, fitid: tag(b, "FITID") });
+  }
+  return out;
+}
+/** Stable ids for uploaded rows, so uploading the same file twice adds nothing new. */
+function uploadIds(account, entries) {
+  const seen = new Map();
+  return entries.map((e) => {
+    const base = e.fitid ? `${account}|fit|${e.fitid}` : `${account}|${e.date}|${e.amount}|${lc(e.name)}`;
+    const n = (seen.get(base) || 0) + 1; seen.set(base, n);
+    return { ...e, id: "u-" + hash(base + "|" + n) };
+  });
+}
+function hash(s) {   // two 32-bit FNV-1a passes -> 16 hex characters
+  let a = 0x811c9dc5, b = 0x01000193 ^ 0x5bd1e995;
+  for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); a = Math.imul(a ^ c, 0x01000193) >>> 0; b = Math.imul(b ^ c, 0x5bd1e995) >>> 0; }
+  return a.toString(16).padStart(8, "0") + b.toString(16).padStart(8, "0");
+}
+const csvCell = (v) => { const s = String(v ?? ""); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+
+return { DEFAULT_CATEGORIES, TYPE_NAMES, categories, lc, ruleMatches, suggest, ruleTextFor, paymentMatches, profitLoss, parseCSV, guessColumns, parseDate, parseMoney, csvEntries, parseOFX, uploadIds, csvCell };
+ })();   // Books: categories, suggestions, profit and loss, bank files
 
 const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Denver";
 const DEMO = new URLSearchParams(location.search).has("demo");
@@ -1646,6 +1919,13 @@ const P = {
   dollar: "M12 2v20M17 6.5C16 5 14.3 4.5 12 4.5c-3 0-5 1.4-5 3.6 0 5 10 2.6 10 7.6 0 2.3-2.2 3.8-5 3.8-2.6 0-4.4-.8-5.4-2.4",
   star: "M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z",
   up: "M12 19V5M6 11l6-6 6 6", down: "M12 5v14M6 13l6 6 6-6",
+  bank: "M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18",
+  chart: "M4 20V10M10 20V4M16 20v-7M22 20H2",
+  upload: "M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3",
+  sync: "M20 11a8 8 0 0 0-14.6-4.5L4 8M4 4v4h4M4 13a8 8 0 0 0 14.6 4.5L20 16M20 20v-4h-4",
+  wand: "M15 4V2M15 10V8M11 6h2M17 6h2M13 6l-9 9 3 3 9-9zM19 13v2M18 14h2",
+  eyeoff: "M3 3l18 18M10.6 6.1A9.7 9.7 0 0 1 12 6c5 0 9 6 9 6a17 17 0 0 1-3.2 3.7M6.6 6.6C4.3 8.2 3 12 3 12s4 6 9 6a9 9 0 0 0 4-.9M9.9 9.9a3 3 0 0 0 4.2 4.2",
+  link: "M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1",
   team: "M8 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM16.5 10a3 3 0 1 0 0-6M2 20v-1a6 6 0 0 1 12 0v1M15 14.2a5 5 0 0 1 7 4.6V20",
   shield: "M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6zM9 12l2 2 4-4",
   lock: "M6 11h12v10H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3",
@@ -1664,11 +1944,12 @@ const LOGO = {"w": 420, "h": 333, "letters": "data:image/png;base64,iVBORw0KGgoA
 const logoLayers = () => LOGO ? ["frame", "letters", "white"].map((k) => `<i style="-webkit-mask-image:url(${LOGO[k]});mask-image:url(${LOGO[k]});background:${k === "frame" ? "var(--core)" : k === "letters" ? "var(--acc)" : "#fff"};${k === "white" ? "opacity:.85" : ""}"></i>`).join("") : "";
 
 // ------------------------------------------------------------------ talking to cloud Jarvis
-async function api(route, body = {}) {
-  if (DEMO) return demoApi(route, JSON.parse(JSON.stringify(body)));
+const api = (route, body = {}) => call("crmapp", route, body);
+async function call(group, route, body = {}) {
+  if (DEMO) return group === "books" ? demoBooks(route, JSON.parse(JSON.stringify(body))) : group === "crmapp" ? demoApi(route, JSON.parse(JSON.stringify(body))) : Promise.reject(new Error("Not in the demo."));
   const h = await authHeaders();
   if (!h) throw new Error("not paired");
-  const r = await fetch(FN + "/crmapp/" + route, { method: "POST", headers: { "content-type": "application/json", ...h }, body: JSON.stringify({ tz: TZ, ...body }) });
+  const r = await fetch(FN + "/" + group + "/" + route, { method: "POST", headers: { "content-type": "application/json", ...h }, body: JSON.stringify({ tz: TZ, ...body }) });
   const j = await r.json().catch(() => ({}));
   if (r.status === 401) { $("#gate").classList.add("on"); throw new Error("not paired"); }
   if (!r.ok) throw new Error(j.error || `The CRM couldn't be reached (${r.status}).`);
@@ -1727,9 +2008,10 @@ const NAV = [
   ["dashboard", "Dashboard", "home"], ["calendar", "Calendar", "cal"], ["prospects", "Prospects", "target"],
   ["customers", "Customers", "users"], ["estimates", "Estimates", "file"], ["invoices", "Invoices", "receipt"],
   ["employees", "Employees", "team"], ["permissions", "Permissions", "shield"],
+  ["books", "Transactions", "bank"], ["reports", "Reports", "chart"], ["banking", "Bank & uploads", "upload"],
 ];
 const BOTTOM = ["dashboard", "calendar", "prospects", "customers"];   // + the New button in the middle; Invoices is in the menu
-const SECTIONS = [["Overview", ["dashboard", "calendar"]], ["Sales", ["prospects", "estimates"]], ["Customers", ["customers", "invoices"]], ["Team", ["employees", "permissions"]]];
+const SECTIONS = [["Overview", ["dashboard", "calendar"]], ["Sales", ["prospects", "estimates"]], ["Customers", ["customers", "invoices"]], ["Books", ["books", "reports", "banking"]], ["Team", ["employees", "permissions"]]];
 const NEW_ITEMS = [
   ["estimate", "file", "New estimate", "Price a job for someone"],
   ["job", "cal", "Book a job", "One-time or recurring"],
@@ -3001,7 +3283,453 @@ function roleSheet(roles, role, done) {
   });
 }
 
-const VIEWS = { employees: viewEmployees, employee: viewEmployee, permissions: viewPermissions, dashboard: viewDashboard, calendar: viewCalendar, prospects: viewProspects, customers: viewCustomers, person: viewPerson,
+// ------------------------------------------------------------------ Books (2026-11-21): QuickBooks-style bookkeeping
+// The business bank comes from Jarvis's Money link (Plaid, read-only); files can be uploaded; every row gets a
+// category (chart of accounts), and Reports build profit and loss from the categorised rows.
+let BK = null, BKI = null, bkLoading = null;
+const bkSel = new Set();
+let bkShow = 200;
+function bkIndex() {
+  const cats = BK.categories, byId = new Map(cats.map((c) => [c.id, c]));
+  const taken = new Set(BK.tx.map((t) => t.match).filter(Boolean));
+  BKI = { cats, byId, taken, review: BK.tx.filter((t) => t.status === "review").length };
+  BK.tx.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : (a.id < b.id ? -1 : 1)));
+  const badge = $('[data-count="books"]');
+  if (badge) { badge.hidden = !BKI.review; badge.textContent = BKI.review; badge.className = "badge warn"; }
+}
+async function loadBooks(refresh = "stale") {
+  if (bkLoading) return bkLoading;
+  bkLoading = (async () => { try { BK = await call("books", "data", { refresh }); bkIndex(); } finally { bkLoading = null; } })();
+  return bkLoading;
+}
+function needBooks(v, then) {   // Books load on first visit (the bank sync can take a few seconds)
+  if (BK) return then();
+  v.innerHTML = `<div class="wrap skel"><div class="sk" style="height:44px;width:36%"></div><div class="grid g4 kpis">${'<div class="sk" style="height:96px"></div>'.repeat(4)}</div><div class="sk" style="height:420px"></div></div>`;
+  loadBooks().then(() => { if (/^#\/(books|reports|banking)/.test(location.hash || "#/")) render(); })
+    .catch((e) => { v.innerHTML = `<div class="card">${emptyBox("bank", "Couldn't load the books", esc(e.message), `<br><button class="btn" onclick="location.reload()">Try again</button>`)}</div>`; paintIcons(v); });
+}
+const catName = (id) => (BKI.byId.get(id) || { name: id ? "(removed category)" : "Uncategorised" }).name;
+const amt = (n) => `<span class="${n > 0 ? "in" : ""}">${n > 0 ? "+" : "−"}${X.usd(Math.abs(n), true)}</span>`;
+function periodRange(key) {
+  const y = +TODAY.slice(0, 4), m = +TODAY.slice(5, 7), pad = (n) => String(n).padStart(2, "0");
+  const end = (yy, mm) => X.addDays(X.addMonths(`${yy}-${pad(mm)}-01`, 1), -1);
+  switch (key) {
+    case "month": return [`${y}-${pad(m)}-01`, TODAY, "This month"];
+    case "lastmonth": { const d = X.addMonths(`${y}-${pad(m)}-01`, -1); return [d, end(+d.slice(0, 4), +d.slice(5, 7)), "Last month"]; }
+    case "quarter": { const qm = Math.floor((m - 1) / 3) * 3 + 1; return [`${y}-${pad(qm)}-01`, TODAY, "This quarter"]; }
+    case "year": return [`${y}-01-01`, TODAY, `${y} so far`];
+    case "lastyear": return [`${y - 1}-01-01`, `${y - 1}-12-31`, String(y - 1)];
+    case "12m": return [X.addDays(X.addMonths(`${y}-${pad(m)}-01`, -11), 0), TODAY, "Last 12 months"];
+    default: return ["0000-01-01", "9999-12-31", "All time"];
+  }
+}
+const PERIODS = [["month", "This month"], ["lastmonth", "Last month"], ["quarter", "This quarter"], ["year", "This year"], ["lastyear", "Last year"], ["12m", "Last 12 months"], ["all", "All time"]];
+function catSelect(value, attrs = "", withBlank = true) {
+  const groups = Object.entries(B.TYPE_NAMES).map(([type, label]) => `<optgroup label="${esc(label)}">${BKI.cats.filter((c) => c.type === type && (!c.hidden || c.id === value))
+    .map((c) => `<option value="${c.id}" ${c.id === value ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</optgroup>`).join("");
+  return `<select class="inp catsel" ${attrs}>${withBlank ? `<option value="">Choose a category…</option>` : ""}${groups}</select>`;
+}
+
+function viewBooks(v, r) {
+  setTitle("Transactions");
+  needBooks(v, () => {
+    const f = r.q.get("f") || "review", per = r.q.get("p") || "all", acct = r.q.get("a") || "", cat = r.q.get("cat") || "", q = (r.q.get("q") || "").toLowerCase();
+    const [from, to] = r.q.get("from") ? [r.q.get("from"), r.q.get("to") || TODAY] : periodRange(per);
+    const inPeriod = BK.tx.filter((t) => t.date >= from && t.date <= to && (!acct || t.account_id === acct));
+    const by = { review: inPeriod.filter((t) => t.status === "review"), done: inPeriod.filter((t) => t.status === "done"), excluded: inPeriod.filter((t) => t.status === "excluded"), all: inPeriod };
+    let list = by[f] || by.review;
+    if (cat) list = list.filter((t) => t.category === cat);
+    if (q) list = list.filter((t) => (lc(t.name) + " " + lc(t.merchant) + " " + lc(t.note) + " " + catName(t.category).toLowerCase() + " " + Math.abs(t.amount).toFixed(2)).includes(q));
+    // money in / out leave out moves between Ben's own accounts and card payments (filed or suggested as transfers)
+    const isMove = (t) => { const c = t.category || (B.suggest(t, BK.rules, BKI.cats) || {}).category; return (BKI.byId.get(c) || {}).type === "transfer"; };
+    const real = inPeriod.filter((t) => t.status !== "excluded" && !isMove(t));
+    const moneyIn = real.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
+    const moneyOut = real.filter((t) => t.amount < 0).reduce((s, t) => s - t.amount, 0);
+    const lastSync = BK.accounts.filter((a) => a.linked && a.synced_at).map((a) => a.synced_at).sort().pop();
+    const qs = (o) => "books?" + new URLSearchParams(Object.entries({ f, p: per, a: acct, cat, q: r.q.get("q") || "", ...(r.q.get("from") ? { from, to } : {}), ...o }).filter(([, x]) => x)).toString();
+    for (const id of [...bkSel]) if (!list.some((t) => t.id === id)) bkSel.delete(id);
+    const shown = list.slice(0, bkShow);
+    v.innerHTML = `<div class="wrap">
+      <div class="pagehead"><div><h2>Transactions</h2><div class="sub">Business bank${BK.accounts.some((a) => !a.linked) ? " and uploads" : ""} · ${lastSync ? "bank synced " + ago2(lastSync) : "bank not synced yet"}</div></div><div class="spacer"></div>
+        <button class="btn" id="bkSync">${ic("sync")}Sync bank</button><button class="btn" id="bkRules">${ic("wand")}Rules</button><button class="btn" id="bkAdd">${ic("plus")}Add</button><a class="btn primary" href="#/banking">${ic("upload")}Upload a file</a></div>
+      ${BK.synced && BK.synced.error ? `<div class="note" style="border-color:rgba(251,113,133,.35);background:rgba(251,113,133,.08)">${ic("x")}<span>The bank sync had a problem: ${esc(BK.synced.error)}</span></div>` : ""}
+      <div class="totals">
+        <div class="tot main"><small>For review</small><b>${by.review.length}</b></div>
+        <div class="tot"><small>Money in</small><b class="in">${X.usd(moneyIn)}</b></div>
+        <div class="tot"><small>Money out</small><b>${X.usd(moneyOut)}</b></div>
+        <div class="tot"><small>Categorised</small><b>${inPeriod.length ? Math.round(by.done.length / Math.max(1, inPeriod.length - by.excluded.length) * 100) : 0}%</b></div>
+      </div>
+      <div class="toolbar">
+        <div class="chips">${[["review", "For review"], ["done", "Categorised"], ["excluded", "Excluded"], ["all", "All"]].map(([k, l]) =>
+          `<button class="chip ${k === f ? "on" : ""}" data-go="${qs({ f: k })}">${l} <span class="n">${by[k].length}</span></button>`).join("")}</div>
+        <div class="spacer"></div>
+        <select class="inp sm" id="bkPer">${PERIODS.map(([k, l]) => `<option value="${k}" ${k === per && !r.q.get("from") ? "selected" : ""}>${l}</option>`).join("")}${r.q.get("from") ? `<option selected>${X.niceDate(from, { weekday: false })} – ${X.niceDate(to, { weekday: false })}</option>` : ""}</select>
+        <select class="inp sm" id="bkAcct"><option value="">All accounts</option>${BK.accounts.map((a) => `<option value="${esc(a.id)}" ${a.id === acct ? "selected" : ""}>${esc(a.name)}${a.mask ? " ••" + esc(a.mask) : ""}</option>`).join("")}</select>
+        <input class="search2" id="bkQ" placeholder="Search description, amount, note" value="${esc(r.q.get("q") || "")}">
+      </div>
+      ${f === "review" && list.some((t) => B.suggest(t, BK.rules, BKI.cats)) ? `<div class="row" style="margin-bottom:12px"><button class="btn sm good" id="bkAcceptAll">${ic("check")}Accept all ${list.filter((t) => B.suggest(t, BK.rules, BKI.cats)).length} suggestions in this list</button>
+        <span class="small muted">Look them over first: you can change any of them later.</span></div>` : ""}
+      ${cat ? `<div class="row" style="margin-bottom:12px"><span class="badge acc">${esc(catName(cat))}</span><a class="small muted" href="#/${qs({ cat: "" })}">clear</a></div>` : ""}
+      <div class="bulk ${bkSel.size ? "on" : ""}" id="bkBulk"><b id="bkN">${bkSel.size} selected</b>
+        <button class="btn sm" data-bulk="accept">${ic("check")}Accept suggestions</button>${catSelect("", 'id="bkBulkCat"')}<button class="btn sm" data-bulk="exclude">${ic("eyeoff")}Exclude</button>
+        ${f !== "review" ? `<button class="btn sm" data-bulk="review">Back to review</button>` : ""}<button class="btn sm ghost" data-bulk="clear">Clear</button></div>
+      <div class="card" style="padding:6px 8px">${shown.length ? `<div class="tablewrap" style="margin:0"><table class="t bk cards"><thead><tr><th style="width:34px"><span class="check box"><input type="checkbox" id="bkAll" aria-label="Select all"></span></th><th>Date</th><th>Description</th><th>Category</th><th class="n">Amount</th></tr></thead><tbody>
+        ${shown.map((t) => bkRow(t)).join("")}</tbody></table></div>
+        ${list.length > shown.length ? `<div class="row" style="justify-content:center;padding:12px"><button class="btn" id="bkMore">Show more (${list.length - shown.length} left)</button></div>` : ""}`
+        : emptyBox(f === "review" ? "check" : "bank", f === "review" ? "Nothing waiting for review" : "No transactions here", f === "review" ? "Every transaction in this period has a category." : "")}</div>
+    </div>`;
+    const go2 = (o) => go(qs(o));
+    $("#bkPer", v).onchange = (e) => { const x = e.target.value; if (PERIODS.some((p2) => p2[0] === x)) go("books?" + new URLSearchParams(Object.entries({ f, p: x, a: acct, cat }).filter(([, y]) => y))); };
+    $("#bkAcct", v).onchange = (e) => go2({ a: e.target.value });
+    $("#bkQ", v).onkeydown = (e) => { if (e.key === "Enter") go2({ q: e.target.value }); };
+    $("#bkSync", v).onclick = (e) => busy(e.currentTarget, async () => { toast("Asking the bank for new transactions…"); await loadBooks("force"); toast(BK.synced && BK.synced.added ? `${BK.synced.added} new transactions.` : "Up to date."); render(); });
+    $("#bkRules", v).onclick = () => rulesSheet();
+    $("#bkAdd", v).onclick = () => manualSheet();
+    if ($("#bkMore", v)) $("#bkMore", v).onclick = () => { bkShow += 300; render(); };
+    if ($("#bkAcceptAll", v)) $("#bkAcceptAll", v).onclick = (e) => {
+      const groups = new Map();
+      for (const t of list) { const s2 = B.suggest(t, BK.rules, BKI.cats); if (s2) (groups.get(s2.category) || groups.set(s2.category, []).get(s2.category)).push(t.id); }
+      const n = [...groups.values()].reduce((a2, g) => a2 + g.length, 0);
+      const NL = String.fromCharCode(10);
+      if (!confirm(`File ${n} transactions under their suggested categories?` + NL + NL + [...groups].sort((a2, b2) => b2[1].length - a2[1].length).map(([c, g]) => `${g.length} × ${catName(c)}`).join(NL))) return;
+      busy(e.currentTarget, async () => { for (const [c, g] of groups) await bkPatch(g, { category: c, status: "done" }, null, true, true); toast(`${n} filed.`); render(); });
+    };
+    if ($("#bkAll", v)) $("#bkAll", v).onchange = (e) => { for (const t of shown) e.target.checked ? bkSel.add(t.id) : bkSel.delete(t.id); render(); };
+    v.addEventListener("change", (e) => {
+      const sel = e.target.closest("[data-sel]"); if (sel) { sel.checked ? bkSel.add(sel.dataset.sel) : bkSel.delete(sel.dataset.sel); $("#bkN", v).textContent = bkSel.size + " selected"; $("#bkBulk", v).classList.toggle("on", bkSel.size > 0); return; }
+      const cs = e.target.closest("[data-setcat]"); if (cs && cs.value) return bkPatch([cs.dataset.setcat], { category: cs.value, status: "done" }, `Filed under ${catName(cs.value)}.`);
+      if (e.target.id === "bkBulkCat" && e.target.value) return bkPatch([...bkSel], { category: e.target.value, status: "done" }, `${bkSel.size} filed under ${catName(e.target.value)}.`, true);
+    });
+    v.addEventListener("click", (e) => {
+      const acc = e.target.closest("[data-accept]"); if (acc) { e.stopPropagation(); const [id, c] = acc.dataset.accept.split("|"); return bkPatch([id], { category: c, status: "done" }, `Filed under ${catName(c)}.`); }
+      const mt = e.target.closest("[data-match]"); if (mt) { e.stopPropagation(); const [id, pid] = mt.dataset.match.split("|"); return bkPatch([id], { match: pid, category: "inc_service", status: "done" }, "Matched to the CRM payment."); }
+      const bk = e.target.closest("[data-bulk]");
+      if (bk) {
+        const ids = [...bkSel];
+        if (bk.dataset.bulk === "clear") { bkSel.clear(); return render(); }
+        if (bk.dataset.bulk === "exclude") return bkPatch(ids, { status: "excluded" }, `${ids.length} excluded.`, true);
+        if (bk.dataset.bulk === "review") return bkPatch(ids, { status: "review" }, `${ids.length} back to review.`, true);
+        if (bk.dataset.bulk === "accept") {
+          const groups = new Map();
+          for (const id of ids) { const t = BK.tx.find((x) => x.id === id); const s2 = t && (t.category ? { category: t.category } : B.suggest(t, BK.rules, BKI.cats)); if (s2) (groups.get(s2.category) || groups.set(s2.category, []).get(s2.category)).push(id); }
+          if (!groups.size) return toast("None of those have a suggestion yet. Pick a category instead.", true);
+          return busy(bk, async () => { let n = 0; for (const [c, g] of groups) { await bkPatch(g, { category: c, status: "done" }, null, true, true); n += g.length; } bkSel.clear(); toast(`${n} accepted.`); render(); });
+        }
+      }
+      if (e.target.closest("input, select, button, a")) return;
+      const row = e.target.closest("[data-tx]"); if (row) txSheet(BK.tx.find((t) => t.id === row.dataset.tx));
+    });
+    wire(v);
+  });
+}
+const lc = (s) => String(s || "").toLowerCase();
+function ago2(iso) { const m = Math.round((Date.now() - Date.parse(iso)) / 60000); return m < 2 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " days ago"; }
+function bkRow(t) {
+  const sug = t.status === "review" ? B.suggest(t, BK.rules, BKI.cats) : null;
+  const matches = t.status === "review" && t.amount > 0 && !t.match ? B.paymentMatches(t, BK.payments, BKI.taken) : [];
+  let catCell;
+  if (t.status === "excluded") catCell = `<span class="badge">Excluded</span>`;
+  else if (t.status === "done") catCell = `<span class="badge ${BKI.byId.get(t.category)?.type === "income" ? "good" : BKI.byId.get(t.category)?.type === "expense" ? "" : "core"}">${esc(catName(t.category))}</span>${t.match ? ` <span class="badge acc">${ic("link")}matched</span>` : ""}`;
+  else catCell = `<div class="sugg">${matches.length ? `<button class="btn sm good" data-match="${t.id}|${matches[0].id}">${ic("link")}Match ${esc(matches[0].who || "CRM payment")}${matches[0].number ? " · #" + esc(matches[0].number) : ""}</button>` : ""}
+    ${sug ? `<button class="btn sm" data-accept="${t.id}|${sug.category}" title="${sug.why === "rule" ? "From your rule" : "The bank's guess"}">${ic("check")}${esc(catName(sug.category))}</button>` : ""}
+    ${catSelect("", `data-setcat="${t.id}" aria-label="Category"`)}</div>`;
+  return `<tr class="click ${bkSel.has(t.id) ? "selrow" : ""}" data-tx="${t.id}"><td><span class="check box"><input type="checkbox" data-sel="${t.id}" ${bkSel.has(t.id) ? "checked" : ""} aria-label="Select"></span></td>
+    <td class="nowrap">${X.niceDate(t.date, { weekday: false })}${t.pending ? ' <span class="badge warn">pending</span>' : ""}</td>
+    <td><div class="t1">${esc(t.merchant || t.name || "(no description)")}</div><div class="t2">${t.merchant && t.name ? esc(t.name) + " · " : ""}${esc(t.account || "")}${t.note ? " · " + esc(t.note) : ""}</div></td>
+    <td>${catCell}</td><td class="n amt2">${amt(t.amount)}</td></tr>`;
+}
+async function bkPatch(ids, patch, msg, clearSel = false, quiet = false) {
+  if (!ids.length) return;
+  await call("books", "update", { ids, patch });
+  const set = new Set(ids);
+  for (const t of BK.tx) if (set.has(t.id)) Object.assign(t, patch);
+  bkIndex();
+  if (clearSel) bkSel.clear();
+  if (msg) toast(msg);
+  if (!quiet) render();
+}
+function txSheet(t) {
+  if (!t) return;
+  const sug = B.suggest(t, BK.rules, BKI.cats), matches = t.amount > 0 ? B.paymentMatches(t, BK.payments, new Set([...BKI.taken].filter((x) => x !== t.match))) : [];
+  const matched = t.match && BK.payments.find((p2) => p2.id === t.match);
+  openSheet(t.merchant || t.name || "Transaction", `
+    <div class="totalbox"><div class="big">${amt(t.amount)}</div><div class="small muted">${X.niceDate(t.date, { year: true })} · ${esc(t.account || "")}${t.pending ? " · pending" : ""}</div></div>
+    <dl class="kv"><dt>Bank text</dt><dd>${esc(t.name || "–")}</dd>${t.bank_category ? `<dt>Bank's guess</dt><dd>${esc(t.bank_category.toLowerCase().replace(/_/g, " "))}</dd>` : ""}<dt>Source</dt><dd>${t.source === "bank" ? "Linked bank" : t.source === "upload" ? "Uploaded file" : "Added by hand"}</dd></dl>
+    <label class="f">Category${catSelect(t.category || (sug ? sug.category : ""), 'id="txCat"')}</label>
+    ${sug && !t.category ? `<div class="small muted">Suggested by ${sug.why === "rule" ? "your rule" : "the bank's category"}.</div>` : ""}
+    <label class="f">Note<input id="txNote" value="${esc(t.note || "")}" placeholder="e.g. squeegees and scrubbers for crew 2"></label>
+    ${t.amount > 0 ? `<div><div class="lbl">CRM payment</div>${matched ? `<div class="row"><span class="badge acc">${ic("link")}${esc(matched.who)} · invoice #${esc(matched.number)} · ${money(matched.amount)}</span><button class="btn sm ghost" id="txUnmatch">Unmatch</button></div>`
+      : matches.length ? matches.map((m) => `<button class="btn sm good" data-m="${m.id}" style="margin:0 6px 6px 0">${ic("link")}${esc(m.who)} · #${esc(m.number)} · ${X.niceDate(m.date, { weekday: false })}</button>`).join("") : '<div class="small muted">No CRM payment with this amount in the 10 days before it.</div>'}</div>` : ""}
+    <details class="rulebox"><summary>${ic("wand")}Make a rule for transactions like this</summary>
+      <div class="fgrid" style="margin-top:10px"><label class="f full">When the description contains<input id="rText" value="${esc(B.ruleTextFor(t))}"></label>
+        <label class="f">Money<select class="inp" id="rDir"><option value="${t.amount > 0 ? "in" : "out"}">${t.amount > 0 ? "coming in" : "going out"}</option><option value="any">either way</option></select></label>
+        <label class="f">File it under${catSelect(t.category || (sug ? sug.category : ""), 'id="rCat"', false)}</label>
+        <label class="check full"><input type="checkbox" id="rAuto" checked>File them automatically (no review)</label></div>
+      <button class="btn sm" id="rSave" style="margin-top:10px">${ic("wand")}Save rule</button></details>
+    <div class="sheetfoot">${t.source !== "bank" ? `<button class="btn bad" id="txDel">${ic("trash")}</button>` : ""}
+      ${t.status !== "excluded" ? `<button class="btn" id="txEx">${ic("eyeoff")}Exclude</button>` : `<button class="btn" id="txRev">Back to review</button>`}
+      <div class="spacer"></div><button class="btn primary" id="txOk">${ic("check")}${t.status === "done" ? "Save" : "Accept"}</button></div>`, (b) => {
+    $("#txOk", b).onclick = (e) => busy(e.currentTarget, async () => {
+      const c = $("#txCat", b).value; if (!c) throw new Error("Pick a category first.");
+      await bkPatch([t.id], { category: c, status: "done", note: $("#txNote", b).value }, `Filed under ${catName(c)}.`, false, true); closeSheet(); render();
+    });
+    if ($("#txEx", b)) $("#txEx", b).onclick = (e) => busy(e.currentTarget, async () => { await bkPatch([t.id], { status: "excluded", note: $("#txNote", b).value }, "Excluded from the books.", false, true); closeSheet(); render(); });
+    if ($("#txRev", b)) $("#txRev", b).onclick = (e) => busy(e.currentTarget, async () => { await bkPatch([t.id], { status: "review" }, "Back to review.", false, true); closeSheet(); render(); });
+    if ($("#txUnmatch", b)) $("#txUnmatch", b).onclick = (e) => busy(e.currentTarget, async () => { await bkPatch([t.id], { match: null }, "Unmatched.", false, true); closeSheet(); render(); });
+    b.addEventListener("click", (e) => { const m = e.target.closest("[data-m]"); if (m) busy(m, async () => { await bkPatch([t.id], { match: m.dataset.m, category: "inc_service", status: "done" }, "Matched to the CRM payment.", false, true); closeSheet(); render(); }); });
+    if ($("#txDel", b)) $("#txDel", b).onclick = (e) => { if (!confirm("Delete this transaction from the books?")) return; busy(e.currentTarget, async () => { await call("books", "delete", { ids: [t.id] }); BK.tx = BK.tx.filter((x) => x.id !== t.id); bkIndex(); closeSheet(); render(); }); };
+    $("#rSave", b).onclick = (e) => busy(e.currentTarget, async () => {
+      const rule = { id: X.uuid().slice(0, 8), text: $("#rText", b).value.trim(), dir: $("#rDir", b).value, category: $("#rCat", b).value, auto: $("#rAuto", b).checked };
+      if (!rule.text) throw new Error("Type the words to look for.");
+      const res = await call("books", "rules", { rules: [...BK.rules, rule] });
+      BK.rules = res.rules;
+      if (res.applied || rule.auto) await loadBooks(false);
+      toast(res.applied ? `Rule saved; it filed ${res.applied} transactions.` : "Rule saved."); closeSheet(); render();
+    });
+  });
+}
+function rulesSheet() {
+  const draw = () => BK.rules.length ? BK.rules.map((r2, i) => `<div class="li" style="cursor:default"><div class="main"><div class="t">“${esc(r2.text)}” → ${esc(catName(r2.category))}</div>
+    <div class="s">${r2.dir === "in" ? "money in" : r2.dir === "out" ? "money out" : "either way"} · ${r2.auto ? "files automatically" : "suggests only"}</div></div>
+    <button class="iconbtn" data-rdel="${i}" aria-label="Delete rule">${ic("trash")}</button></div>`).join("") : emptyBox("wand", "No rules yet", "Open a transaction and choose “Make a rule” to file every one like it the same way.");
+  openSheet("Rules", `<div class="small muted">Rules file transactions by their description, e.g. everything from “Home Depot” goes to Cleaning supplies.</div><div class="list" id="rl">${draw()}</div>`, (b) => {
+    b.addEventListener("click", (e) => { const d = e.target.closest("[data-rdel]"); if (!d) return; busy(d, async () => {
+      const rules = BK.rules.filter((_, i) => i !== +d.dataset.rdel); BK.rules = (await call("books", "rules", { rules })).rules; $("#rl", b).innerHTML = draw(); paintIcons(b); toast("Rule deleted."); }); });
+  });
+}
+function manualSheet() {
+  const accts = [...new Set(["Cash", ...BK.accounts.filter((a) => !a.linked).map((a) => a.name)])];
+  openSheet("Add a transaction", `<div class="small muted">For things the bank doesn't see, like a cash purchase or a check you haven't deposited.</div>
+    <div class="fgrid"><label class="f">Date<input type="date" id="mDate" value="${TODAY}"></label>
+      <div><div class="lbl">Money</div><div class="seg" id="mDir"><button type="button" data-d="-1" class="on">Out</button><button type="button" data-d="1">In</button></div></div>
+      <label class="f">Amount<input id="mAmt" inputmode="decimal" placeholder="0.00"></label>
+      <label class="f">Paid from / into<input id="mAcct" value="Cash" list="mAccts"><datalist id="mAccts">${accts.map((a) => `<option value="${esc(a)}">`).join("")}</datalist></label>
+      <label class="f full">Description<input id="mName" placeholder="e.g. Squeegee rubbers, Lowe's"></label>
+      <label class="f full">Category${catSelect("", 'id="mCat"')}</label>
+      <label class="f full">Note<input id="mNote"></label></div>
+    <div class="sheetfoot"><div class="spacer"></div><button class="btn primary" id="mSave">${ic("check")}Add</button></div>`, (b) => {
+    $("#mDir", b).onclick = (e) => { const x = e.target.closest("[data-d]"); if (x) $$("[data-d]", b).forEach((y) => y.classList.toggle("on", y === x)); };
+    $("#mSave", b).onclick = (e) => busy(e.currentTarget, async () => {
+      const a = parseFloat($("#mAmt", b).value.replace(/[^0-9.]/g, "")); if (!(a > 0)) throw new Error("Enter the amount.");
+      const dir = +$("[data-d].on", b).dataset.d;
+      const { row } = await call("books", "manual", { row: { id: "m-" + X.uuid(), date: $("#mDate", b).value || TODAY, amount: dir * a, name: $("#mName", b).value.trim(),
+        account: $("#mAcct", b).value.trim() || "Cash", category: $("#mCat", b).value || null, note: $("#mNote", b).value.trim() } });
+      if (row) BK.tx.push(row); bkIndex(); toast("Added."); closeSheet(); render();
+    });
+  });
+}
+
+function viewReports(v, r) {
+  setTitle("Reports");
+  needBooks(v, () => {
+    const per = r.q.get("p") || "year", byMonth = r.q.get("m") === "1";
+    const [from, to, label] = periodRange(per);
+    const pl = B.profitLoss(BK.tx, BKI.cats, from, to, true);
+    const margin = pl.totals.income ? Math.round(pl.totals.net / pl.totals.income * 100) : 0;
+    const months = pl.months.filter((m) => m >= from.slice(0, 7) && m <= to.slice(0, 7)).slice(-24);
+    const top = niceMax(Math.max(1, ...months.map((m) => Math.max(pl.monthTotals[m].income, pl.monthTotals[m].expense))));
+    const cols = byMonth ? months : [];
+    const line = (l, kind) => `<tr class="click" data-go="books?f=done&cat=${l.id}&from=${from}&to=${to}"><td class="pcol2">${esc(l.name)} <span class="t2">${l.n}</span></td>
+      ${cols.map((m) => `<td class="n">${l.months[m] ? X.usd(l.months[m]) : '<span class="muted">–</span>'}</td>`).join("")}<td class="n"><b>${X.usd(l.total, true)}</b></td></tr>`;
+    const totalRow = (labelT, key, cls = "") => `<tr class="totrow ${cls}"><td class="pcol2">${labelT}</td>${cols.map((m) => `<td class="n">${X.usd(pl.monthTotals[m][key])}</td>`).join("")}<td class="n"><b>${X.usd(pl.totals[key], true)}</b></td></tr>`;
+    const expTop = pl.expense.slice(0, 8), expMax = Math.max(1, ...expTop.map((l) => l.total));
+    v.innerHTML = `<div class="wrap stack">
+      <div class="pagehead"><div><h2>Profit &amp; loss</h2><div class="sub">${esc(label)} · ${X.niceDate(from, { weekday: false, year: true })} – ${X.niceDate(to, { weekday: false, year: true })}</div></div><div class="spacer"></div>
+        <select class="inp sm" id="rpPer">${PERIODS.filter((p2) => p2[0] !== "all").map(([k, l]) => `<option value="${k}" ${k === per ? "selected" : ""}>${l}</option>`).join("")}</select>
+        <label class="check"><input type="checkbox" id="rpM" ${byMonth ? "checked" : ""}>By month</label>
+        <button class="btn" id="rpCsv">${ic("file")}Export</button><button class="btn" id="rpPrint">${ic("print")}Print</button></div>
+      ${pl.review ? `<div class="note" style="margin:0">${ic("receipt")}<span><b>${pl.review} transaction${pl.review > 1 ? "s" : ""} in this period still need a category</b> and aren't in this report yet. <a href="#/books?f=review&from=${from}&to=${to}" style="color:var(--acc)">Review them ›</a></span></div>` : ""}
+      <div class="grid g4 kpis">
+        <div class="card kpi"><div class="label">${ic("dollar")}Income</div><div class="value">${X.usd(pl.totals.income)}</div><div class="sub">${pl.income.reduce((s, l) => s + l.n, 0)} deposits</div></div>
+        <div class="card kpi"><div class="label">${ic("receipt")}Expenses</div><div class="value">${X.usd(pl.totals.expense)}</div><div class="sub">${pl.expense.reduce((s, l) => s + l.n, 0)} transactions</div></div>
+        <div class="card kpi"><div class="label">${ic("chart")}Net profit</div><div class="value ${pl.totals.net < 0 ? "down" : ""}">${X.usd(pl.totals.net)}</div><div class="sub"><span class="delta ${margin >= 0 ? "up" : "down"}">${margin}%</span>profit margin</div></div>
+        <div class="card kpi link" data-go="books?f=review"><div class="label">${ic("bank")}Waiting for review</div><div class="value">${BKI.review}</div><div class="sub">all dates</div></div>
+      </div>
+      ${months.length > 1 ? `<div class="card"><h3>Income and expenses by month</h3>
+        <div class="chart"><div class="yaxis">${[0, .25, .5, .75, 1].map((t) => `<span style="bottom:${t * 100}%">${X.usdShort(top * t)}</span>`).join("")}</div>
+          <div style="position:relative"><div class="gridlines" style="left:0">${[0, .25, .5, .75, 1].map((t) => `<i style="bottom:${t * 100}%"></i>`).join("")}</div>
+          <div class="bars">${months.map((m) => { const mt = pl.monthTotals[m]; return `<div class="bar"><div class="tip"><b>${MONTHS[+m.slice(5) - 1]} ${m.slice(0, 4)}</b><br>Income <b>${X.usd(mt.income)}</b><br>Expenses <b>${X.usd(mt.expense)}</b><br>Profit <b>${X.usd(mt.net)}</b></div>
+            <div class="stackb pair"><div class="fill" style="height:${mt.income / top * 100}%"></div><div class="fill exp" style="height:${mt.expense / top * 100}%"></div></div><div class="m">${MONTHS[+m.slice(5) - 1]}</div></div>`; }).join("")}</div></div></div>
+        <div class="legend"><span><i class="sw" style="background:var(--acc)"></i>Income</span><span><i class="sw" style="background:rgba(var(--core-rgb),.75)"></i>Expenses</span></div></div>` : ""}
+      <div class="grid g3">
+        <div class="card span2" style="padding:8px 8px 14px"><div class="tablewrap" style="margin:0"><table class="t pl"><thead><tr><th class="pcol2">Category</th>${cols.map((m) => `<th class="n">${MONTHS[+m.slice(5) - 1]}</th>`).join("")}<th class="n">Total</th></tr></thead><tbody>
+          <tr class="sec"><td colspan="${cols.length + 2}">Income</td></tr>${pl.income.map((l) => line(l)).join("") || `<tr><td class="pcol2 muted" colspan="${cols.length + 2}">No income categorised yet</td></tr>`}${totalRow("Total income", "income")}
+          <tr class="sec"><td colspan="${cols.length + 2}">Expenses</td></tr>${pl.expense.map((l) => line(l)).join("") || `<tr><td class="pcol2 muted" colspan="${cols.length + 2}">No expenses categorised yet</td></tr>`}${totalRow("Total expenses", "expense")}
+          ${totalRow("Net profit", "net", "net")}</tbody></table></div></div>
+        <div class="card"><h3>Where the money goes</h3>${expTop.length ? expTop.map((l) => `<a class="hbar" href="#/books?f=done&cat=${l.id}&from=${from}&to=${to}"><div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span class="ell">${esc(l.name)}</span><b>${X.usd(l.total)}</b></div>
+          <div class="meter"><div style="width:${l.total / expMax * 100}%"></div></div><small class="muted">${pl.totals.expense ? Math.round(l.total / pl.totals.expense * 100) : 0}% of expenses</small></a>`).join("") : emptyBox("chart", "No expenses yet")}</div>
+      </div></div>`;
+    $("#rpPer", v).onchange = (e) => go(`reports?p=${e.target.value}${byMonth ? "&m=1" : ""}`);
+    $("#rpM", v).onchange = (e) => go(`reports?p=${per}${e.target.checked ? "&m=1" : ""}`);
+    $("#rpPrint", v).onclick = () => printPL(pl, label);
+    $("#rpCsv", v).onclick = () => {
+      const rows = [["Date", "Account", "Description", "Category", "Type", "Amount", "Note"]];
+      for (const t of BK.tx) if (t.date >= from && t.date <= to && t.status !== "excluded") rows.push([t.date, t.account, t.merchant || t.name, t.status === "done" ? catName(t.category) : "(for review)", (BKI.byId.get(t.category) || {}).type || "", t.amount.toFixed(2), t.note || ""]);
+      rows.push([], ["Profit and loss", label], ...pl.income.map((l) => ["", "", "", l.name, "income", l.total.toFixed(2)]), ...pl.expense.map((l) => ["", "", "", l.name, "expense", (-l.total).toFixed(2)]), ["", "", "", "Net profit", "", pl.totals.net.toFixed(2)]);
+      download(`VITRA books ${from} to ${to}.csv`, rows.map((r2) => r2.map(B.csvCell).join(",")).join("\r\n"));
+    };
+    wire(v);
+  });
+}
+function download(name, text) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "text/csv" })); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function printPL(pl, label) {
+  const biz = (D.settings && D.settings.business) || {};
+  const rowsOf = (ls) => ls.map((l) => `<tr><td>${esc(l.name)}</td><td class="n">${X.usd(l.total, true)}</td></tr>`).join("");
+  $("#print").innerHTML = `<div class="ph"><div class="bizl">${LOGO ? `<div class="plogo">${logoLayers()}</div>` : ""}<div><div class="biz">${esc(biz.name || "VITRA")}</div></div></div>
+    <div class="doc"><b>PROFIT &amp; LOSS</b>${esc(label)}<br>${X.niceDate(pl.from, { weekday: false, year: true })} – ${X.niceDate(pl.to, { weekday: false, year: true })}</div></div>
+    <table><thead><tr><th>Income</th><th class="n">Amount</th></tr></thead><tbody>${rowsOf(pl.income)}<tr><td><b>Total income</b></td><td class="n"><b>${X.usd(pl.totals.income, true)}</b></td></tr></tbody></table><br>
+    <table><thead><tr><th>Expenses</th><th class="n">Amount</th></tr></thead><tbody>${rowsOf(pl.expense)}<tr><td><b>Total expenses</b></td><td class="n"><b>${X.usd(pl.totals.expense, true)}</b></td></tr></tbody></table>
+    <div class="tot"><div><div class="r g"><span>Net profit</span><span>${X.usd(pl.totals.net, true)}</span></div></div></div>
+    ${pl.review ? `<div class="notes">${pl.review} transactions in this period were still waiting for a category and are not included.</div>` : ""}`;
+  setTimeout(() => window.print(), 50);
+}
+
+function viewBanking(v) {
+  setTitle("Bank & uploads");
+  needBooks(v, () => {
+    const linked = BK.accounts.filter((a) => a.linked), uploads = BK.accounts.filter((a) => !a.linked);
+    v.innerHTML = `<div class="wrap stack">
+      <div class="pagehead"><div><h2>Bank &amp; uploads</h2><div class="sub">Where the books' transactions come from.</div></div><div class="spacer"></div>
+        <button class="btn" id="bnSync">${ic("sync")}Sync now</button><button class="btn primary" id="bnLink">${ic("link")}Connect a bank</button></div>
+      <div class="card"><h3>${ic("bank")}Linked business accounts <span class="right">read-only through Plaid, shared with Jarvis › Money › Business</span></h3>
+        ${linked.length ? `<div class="grid g3">${linked.map((a) => `<a class="acct" href="#/books?f=all&p=all&a=${encodeURIComponent(a.id)}"><div class="row" style="flex-wrap:nowrap"><div class="avatar" data-n="${esc(a.institution)}">${ic(a.kind === "credit" ? "receipt" : "bank")}</div>
+          <div style="min-width:0"><div class="t1 ell">${esc(a.name)}${a.mask ? " ••" + esc(a.mask) : ""}</div><div class="small muted ell">${esc(a.institution)} · ${esc(a.kind)}</div></div></div>
+          <div class="row" style="justify-content:space-between"><b style="font-size:18px">${X.usd(+a.balance || 0, true)}</b><span class="small muted">${a.count} transactions</span></div>
+          <div class="small ${a.error ? "down" : "muted"}">${a.error ? "Needs attention: " + esc(a.error) : a.synced_at ? "Synced " + ago2(a.synced_at) : "Not synced yet"}</div></a>`).join("")}</div>`
+          : emptyBox("bank", "No bank linked to the business book", BK.configured ? "Connect your business bank to bring every transaction in." : "Bank linking needs Plaid set up first.")}</div>
+      <div class="card"><h3>${ic("upload")}Upload a bank file</h3>
+        <div class="drop" id="drop"><input type="file" id="bnFile" accept=".csv,.qbo,.ofx,.qfx,text/csv">${ic("upload")}<b>Choose a file or drop it here</b>
+          <span class="small muted">CSV from any bank or card, or a QuickBooks (.qbo), Quicken (.qfx) or .ofx download. Use it for accounts that aren't linked, or older history. Uploading the same file twice adds nothing new.</span></div>
+        ${uploads.length ? `<div class="list" style="margin-top:14px">${uploads.map((a) => `<div class="li" style="cursor:default"><div class="avatar" data-n="${esc(a.name)}">${ic("file")}</div><div class="main"><div class="t">${esc(a.name)}</div>
+          <div class="s">${a.count} transactions · ${X.niceDate(a.first, { weekday: false, year: true })} – ${X.niceDate(a.last, { weekday: false, year: true })}</div></div>
+          <a class="btn sm" href="#/books?f=all&p=all&a=${encodeURIComponent(a.id)}">View</a><button class="btn sm bad" data-rmup="${esc(a.id)}">${ic("trash")}Remove</button></div>`).join("")}</div>` : ""}</div>
+      <div class="card"><h3>${ic("file")}Chart of accounts <span class="right">the categories transactions are filed under</span></h3>
+        ${Object.entries(B.TYPE_NAMES).map(([type, labelT]) => `<div class="pgrp">${esc(labelT)}</div><div class="chips">${BKI.cats.filter((c) => c.type === type && !c.hidden).map((c) => `<button class="chip" data-cat="${c.id}">${esc(c.name)}</button>`).join("")}
+          <button class="chip addcat" data-newcat="${type}">${ic("plus")}Add</button></div>`).join("")}</div>
+    </div>`;
+    $("#bnSync", v).onclick = (e) => busy(e.currentTarget, async () => { await loadBooks("force"); toast(BK.synced && BK.synced.added ? `${BK.synced.added} new transactions.` : "Up to date."); render(); });
+    $("#bnLink", v).onclick = (e) => busy(e.currentTarget, () => linkBank());
+    const file = $("#bnFile", v);
+    file.onchange = () => { if (file.files[0]) uploadSheet(file.files[0]); file.value = ""; };
+    const drop = $("#drop", v);
+    drop.ondragover = (e) => { e.preventDefault(); drop.classList.add("over"); };
+    drop.ondragleave = () => drop.classList.remove("over");
+    drop.ondrop = (e) => { e.preventDefault(); drop.classList.remove("over"); if (e.dataTransfer.files[0]) uploadSheet(e.dataTransfer.files[0]); };
+    v.addEventListener("click", (e) => {
+      const rm = e.target.closest("[data-rmup]"); if (rm) { const ids = BK.tx.filter((t) => t.account_id === rm.dataset.rmup && t.source !== "bank").map((t) => t.id);
+        if (!confirm(`Remove all ${ids.length} uploaded transactions of this account from the books?`)) return;
+        return busy(rm, async () => { await call("books", "delete", { ids }); BK.tx = BK.tx.filter((t) => !ids.includes(t.id)); bkIndex(); toast("Removed."); render(); }); }
+      const c = e.target.closest("[data-cat]"); if (c) return catSheet(BKI.byId.get(c.dataset.cat));
+      const n = e.target.closest("[data-newcat]"); if (n) return catSheet({ id: "c-" + X.uuid().slice(0, 8), name: "", type: n.dataset.newcat }, true);
+    });
+  });
+}
+function catSheet(c, isNew = false) {
+  const used = BK.tx.filter((t) => t.category === c.id).length;
+  openSheet(isNew ? "New category" : "Edit category", `<label class="f">Name<input id="cn" value="${esc(c.name)}"></label>
+    <div class="small muted">${esc(B.TYPE_NAMES[c.type])}${isNew ? "" : ` · ${used} transactions filed here`}</div>
+    <div class="sheetfoot">${isNew ? "" : `<button class="btn" id="ch">${ic("eyeoff")}Hide from lists</button>`}<div class="spacer"></div><button class="btn primary" id="cs">Save</button></div>`, (b) => {
+    const saveCats = async (list) => { BK.categories = (await call("books", "categories", { categories: list })).categories; bkIndex(); closeSheet(); render(); };
+    $("#cs", b).onclick = (e) => busy(e.currentTarget, async () => { const name = $("#cn", b).value.trim(); if (!name) throw new Error("Give it a name.");
+      await saveCats(isNew ? [...BK.categories, { ...c, name }] : BK.categories.map((x) => (x.id === c.id ? { ...x, name } : x))); });
+    if ($("#ch", b)) $("#ch", b).onclick = (e) => busy(e.currentTarget, async () => { await saveCats(BK.categories.map((x) => (x.id === c.id ? { ...x, hidden: true } : x))); });
+  });
+}
+async function uploadSheet(f) {
+  const text = await f.text();
+  const isOfx = /\.(qbo|ofx|qfx)$/i.test(f.name) || /<OFX>|OFXHEADER/i.test(text.slice(0, 2000));
+  let entries = [], rows = null, cols = null, flip = false;
+  if (isOfx) entries = B.parseOFX(text);
+  else { rows = B.parseCSV(text); cols = B.guessColumns(rows[0] || []); }
+  const guessName = f.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").slice(0, 60);
+  const header = rows ? rows[0] : [];
+  const colSel = (k, label) => `<label class="f">${label}<select class="inp" data-col="${k}"><option value="-1">—</option>${header.map((h, i) => `<option value="${i}" ${cols[k] === i ? "selected" : ""}>${esc(h || "Column " + (i + 1))}</option>`).join("")}</select></label>`;
+  openSheet("Upload " + f.name, `
+    <label class="f">Which account is this?<input id="upAcct" value="${esc(guessName)}" list="upAccts"><datalist id="upAccts">${BK.accounts.filter((a) => !a.linked).map((a) => `<option value="${esc(a.name)}">`).join("")}</datalist></label>
+    ${rows ? `<div class="fgrid">${colSel("date", "Date column")}${colSel("desc", "Description column")}${colSel("amount", "Amount column")}${colSel("debit", "Money out column (if separate)")}${colSel("credit", "Money in column (if separate)")}
+      <label class="check full"><input type="checkbox" id="upFlip">Money going out shows as positive numbers in this file</label></div>` : ""}
+    <div id="upPrev"></div>
+    <div class="sheetfoot"><div class="spacer"></div><button class="btn primary" id="upGo">${ic("upload")}Import</button></div>`, (b) => {
+    const read = () => {
+      if (rows) { for (const s2 of $$("[data-col]", b)) cols[s2.dataset.col] = +s2.value; flip = $("#upFlip", b).checked; entries = B.csvEntries(rows.slice(1), cols, flip); }
+      const tin = entries.filter((e) => e.amount > 0).reduce((s2, e) => s2 + e.amount, 0), tout = entries.filter((e) => e.amount < 0).reduce((s2, e) => s2 - e.amount, 0);
+      const dates = entries.map((e) => e.date).sort();
+      $("#upPrev", b).innerHTML = entries.length ? `<div class="small muted" style="margin-bottom:8px">${entries.length} transactions · ${X.niceDate(dates[0], { weekday: false, year: true })} – ${X.niceDate(dates[dates.length - 1], { weekday: false, year: true })} · in ${X.usd(tin)} · out ${X.usd(tout)}</div>
+        <div class="list">${entries.slice(0, 6).map((e) => `<div class="li" style="cursor:default"><div class="main"><div class="t">${esc(e.name || "(no description)")}</div><div class="s">${X.niceDate(e.date, { year: true })}</div></div><div class="amt">${amt(e.amount)}</div></div>`).join("")}</div>`
+        : emptyBox("file", "No transactions found", rows ? "Pick the right columns above." : "That file has no transactions in it.");
+    };
+    read();
+    b.addEventListener("change", (e) => { if (e.target.closest("[data-col]") || e.target.id === "upFlip") read(); });
+    $("#upGo", b).onclick = (e) => busy(e.currentTarget, async () => {
+      if (!entries.length) throw new Error("Nothing to import.");
+      const account = $("#upAcct", b).value.trim() || "Uploaded";
+      const res = await call("books", "upload", { account, batch: X.uuid().slice(0, 8), rows: B.uploadIds(account, entries) });
+      await loadBooks(false);
+      toast(`${res.added} added${res.skipped ? `, ${res.skipped} were already in` : ""}.`); leaveSheet("books?f=review&p=all&a=" + encodeURIComponent("upload:" + account.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 60)));
+    });
+  });
+}
+// Connect a bank: the same Plaid Link as Jarvis › Money, into the business book.
+function plaidScript() {
+  if (window.Plaid) return Promise.resolve();
+  return new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = "https://cdn.plaid.com/link/v2/stable/link-initialize.js"; sc.onload = res; sc.onerror = () => rej(new Error("Couldn't load Plaid.")); document.head.appendChild(sc); });
+}
+async function linkBank() {
+  if (DEMO) throw new Error("The demo can't link a bank.");
+  const [{ link_token }] = await Promise.all([call("money", "link", { book: "business" }), plaidScript()]);
+  try { localStorage.setItem("jarvis.plaidLink", link_token); localStorage.setItem("jarvis.plaidBook", "business"); } catch {}   // banks that sign in on their own site finish in Jarvis › Money
+  window.Plaid.create({ token: link_token,
+    onSuccess: async (public_token, meta) => {
+      toast(`Connecting ${(meta.institution && meta.institution.name) || "your bank"}… the first sync can take a minute.`);
+      try { await call("money", "exchange", { public_token, institution: meta.institution && meta.institution.name, book: "business" }); await loadBooks(false); toast("Bank connected."); render(); }
+      catch (e) { toast(e.message, true); }
+      try { localStorage.removeItem("jarvis.plaidLink"); } catch {}
+    },
+    onExit: (err) => { try { localStorage.removeItem("jarvis.plaidLink"); } catch {} if (err) toast(err.display_message || err.error_message || "Linking stopped.", true); },
+  }).open();
+}
+// demo books: made-up bank lines for ?demo=1
+let demoBk = null;
+function demoBooks(route, b) {
+  if (!demoBk) {
+    const tx = [], add = (d, amount, name, bc, acct = "d-chk") => { if (d <= TODAY) tx.push({ id: "p-d" + tx.length, source: "bank", account_id: acct, account: acct === "d-chk" ? "Business Checking ••4412" : "Business Visa ••9020",
+      date: d, amount, name, merchant: name.split(" ")[0] === "DEPOSIT" ? null : name.replace(/ #\d+.*/, ""), bank_category: bc, category: null, status: "review", note: null, match: null, pending: false }); };
+    for (let m = 0; m < 11; m++) {
+      const d = (day) => X.addMonths(TODAY.slice(0, 4) + "-01-" + String(day).padStart(2, "0"), m);
+      add(d(3), 432, "DEPOSIT MOBILE CHECK", "TRANSFER_IN_DEPOSIT"); add(d(12), 980 + m * 40, "DEPOSIT MOBILE CHECK", "TRANSFER_IN_DEPOSIT");
+      add(d(18), 576, "ZELLE FROM CASEY MORENO", "TRANSFER_IN_TRANSFER_IN_FROM_APPS");
+      add(d(5), -(84.37 + m), "HOME DEPOT #4412 EAGLE MTN", "HOME_IMPROVEMENT_HARDWARE", "d-visa"); add(d(9), -(61.2 + m * 2), "MAVERIK #322", "TRANSPORTATION_GAS", "d-visa");
+      add(d(14), -142.5, "PROGRESSIVE INSURANCE", "GENERAL_SERVICES_INSURANCE"); add(d(20), -18.99, "GOOGLE WORKSPACE", "GENERAL_SERVICES_OTHER_GENERAL_SERVICES", "d-visa");
+      add(d(22), -500, "TRANSFER TO SAVINGS", "TRANSFER_OUT_ACCOUNT_TRANSFER"); add(d(25), -(23.4 + m), "CHICK-FIL-A #1771", "FOOD_AND_DRINK_FAST_FOOD", "d-visa");
+    }
+    tx.forEach((t, i) => { if (t.date < X.addMonths(TODAY, -2) && i % 5) { const s2 = B.suggest(t, [], B.categories()); if (s2) { t.category = s2.category; t.status = "done"; } } });
+    const pays = (demoDb || demoData()).payments.map((p2) => ({ ...p2, number: "1201", who: "Demo customer" }));
+    demoBk = { tx, categories: B.categories(), rules: [], payments: pays, synced: { added: 0 }, configured: true,
+      accounts: [{ id: "d-chk", name: "Business Checking", mask: "4412", kind: "checking", institution: "Demo Credit Union", balance: 8421.33, synced_at: new Date().toISOString(), count: 0, linked: true },
+        { id: "d-visa", name: "Business Visa", mask: "9020", kind: "credit", institution: "Demo Credit Union", balance: 612.4, synced_at: new Date().toISOString(), count: 0, linked: true }] };
+    for (const a of demoBk.accounts) a.count = tx.filter((t) => t.account_id === a.id).length;
+  }
+  const DB = demoBk;
+  if (route === "data") return JSON.parse(JSON.stringify(DB));
+  if (route === "update") { const set = new Set(b.ids); for (const t of DB.tx) if (set.has(t.id)) Object.assign(t, b.patch); return { ok: true }; }
+  if (route === "rules") { DB.rules = b.rules; let applied = 0; for (const t of DB.tx) if (t.status === "review") { const s2 = B.suggest(t, b.rules.filter((r2) => r2.auto), DB.categories); if (s2 && s2.why === "rule") { t.category = s2.category; t.status = "done"; applied++; } } return { rules: b.rules, applied }; }
+  if (route === "categories") { DB.categories = B.categories(b.categories); return { categories: DB.categories }; }
+  if (route === "upload" || route === "manual") {
+    const list = route === "manual" ? [b.row] : b.rows, acct = b.account || b.row.account, id = "upload:" + acct.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    let added = 0; let last = null;
+    for (const r2 of list) if (!DB.tx.some((t) => t.id === r2.id)) { last = { ...r2, source: route === "manual" ? "manual" : "upload", account_id: id, account: acct, merchant: null, bank_category: null, status: r2.category ? "done" : "review", category: r2.category || null, match: null, pending: false }; DB.tx.push(last); added++; }
+    if (!DB.accounts.some((a) => a.id === id)) DB.accounts.push({ id, name: acct, count: 0, first: TODAY, last: TODAY, linked: false });
+    return route === "manual" ? { row: last } : { added, skipped: list.length - added };
+  }
+  if (route === "delete") { DB.tx = DB.tx.filter((t) => !b.ids.includes(t.id)); return { ok: true }; }
+  throw new Error("Not in the demo.");
+}
+
+const VIEWS = { books: viewBooks, reports: viewReports, banking: viewBanking, employees: viewEmployees, employee: viewEmployee, permissions: viewPermissions, dashboard: viewDashboard, calendar: viewCalendar, prospects: viewProspects, customers: viewCustomers, person: viewPerson,
   estimates: viewEstimates, estimate: viewEstimate, invoices: viewInvoices, invoice: viewInvoice, search: viewSearch, settings: viewSettings };
 
 // ------------------------------------------------------------------ demo data (?demo=1): made-up people, nothing leaves the page
