@@ -502,6 +502,19 @@ table.t .t2 { color: var(--ink3); font-size: 12.5px; }
 #sheet .lrow .ltot { justify-content: flex-start; }
 #sheet .lrow .show-phone { display: inline !important; }
 /* automatic messages (2026-11-22) */
+.autop { min-width: 0; max-width: 100%; overflow: hidden; }
+.autop select, .autop input { max-width: 100%; min-width: 0; }
+.aprow .seg { flex: none; }
+.aprow > .row { flex-wrap: wrap; }
+.twocol > * { min-width: 0; }   /* a wide card must not stretch the page's columns past the screen */
+.autop summary { list-style: none; cursor: pointer; }
+.autop summary::-webkit-details-marker { display: none; }
+.autop .apchev svg { width: 18px; height: 18px; transition: transform .2s; color: var(--ink3); }
+.autop[open] .apchev svg { transform: rotate(180deg); }
+.autop .apbody { margin-top: 12px; }
+.aprow { border-top: 1px solid var(--line); padding: 12px 0 4px; margin-top: 10px; }
+.aprow .seg button { padding: 0 10px; font-size: 12.5px; }
+
 .msgcard textarea { font-size: 14px; }
 .autorule { border-left: 3px solid transparent; }
 .autorule.is-on { border-left-color: var(--good); }
@@ -944,7 +957,7 @@ const TABLES = { people: "crm_people", services: "crm_services", estimates: "crm
   jobs: "crm_jobs", invoices: "crm_invoices", payments: "crm_payments", employees: "crm_employees",
   pins: "knock_pins", areas: "knock_areas" };
 const COLUMNS = {
-  people: ["id", "kind", "type", "first", "last", "company", "phones", "emails", "address", "city", "state", "zip", "notes", "source", "status", "created", "tcf", "edited", "lat", "lng", "follow_up", "follow_note", "lost_reason", "no_auto"],
+  people: ["id", "kind", "type", "first", "last", "company", "phones", "emails", "address", "city", "state", "zip", "notes", "source", "status", "created", "tcf", "edited", "lat", "lng", "follow_up", "follow_note", "lost_reason", "no_auto", "auto"],
   services: ["id", "name", "description", "rate", "unit", "position", "archived"],
   estimates: ["id", "number", "person", "date", "status", "options", "lines", "notes", "decided", "tcf", "edited", "sent", "sent_to", "lost_reason"],
   plans: ["id", "person", "every", "unit", "start", "time", "lines", "active", "notes", "tcf", "assignee"],
@@ -1563,7 +1576,7 @@ const AUTO_RULES = [
   ["checkin", "Follow-up check-ins", "When a follow-up date you set on someone comes up. Your own note isn't sent."],
   ["est_delivery", "Estimate delivery", "A new estimate, sent to the customer: by email with the PDF, or a short text if there's no email."],
 ];
-const AUTO_FIELDS = ["first", "name", "business", "phone", "date", "time", "services", "total", "estimate"];
+const AUTO_FIELDS = ["first", "name", "business", "phone", "when", "date", "time", "services", "total", "estimate"];
 const AUTO_DEFAULT = {
   quiet: { from: "09:00", to: "19:00" }, channel: "text_else_email", daily_cap: 25,
   rules: {
@@ -1574,9 +1587,9 @@ const AUTO_DEFAULT = {
       email1: "Hi {first},\n\nJust making sure you got the estimate for {services} ({total}). Happy to answer any questions, or just reply when you'd like to get on the schedule.\n\nThank you,\nBen Huber\n{business}\n{phone}",
       email2: "Hi {first},\n\nChecking in once more on your estimate for {services}. We have openings coming up if you'd like to get on the schedule.\n\nThank you,\nBen Huber\n{business}\n{phone}" },
     job_reminder: { on: false, since: null, approve: false, at: "16:00",
-      text: "Hi {first}, this is {business}. Just a reminder we're scheduled at your place tomorrow, {date}{time}. Reply here if you need to reschedule. Thank you!",
-      subject: "Reminder: {business} tomorrow, {date}",
-      email: "Hi {first},\n\nJust a reminder that we're scheduled at your place tomorrow, {date}{time}, for {services}. Reply to this email if you need to reschedule.\n\nThank you,\nBen Huber\n{business}\n{phone}" },
+      text: "Hi {first}, this is {business}. Just a reminder we're scheduled at your place {when}, {date}{time}. Reply here if you need to reschedule. Thank you!",
+      subject: "Reminder: {business} {when}, {date}",
+      email: "Hi {first},\n\nJust a reminder that we're scheduled at your place {when}, {date}{time}, for {services}. Reply to this email if you need to reschedule.\n\nThank you,\nBen Huber\n{business}\n{phone}" },
     checkin: { on: false, since: null, approve: true,
       text: "Hi {first}, it's Ben with {business}, just checking in. Let me know if there's anything I can help with!",
       subject: "Checking in from {business}",
@@ -1594,7 +1607,7 @@ function normalizeAuto(saved) {
   const out = { ...AUTO_DEFAULT, ...s, quiet: { ...AUTO_DEFAULT.quiet, ...(s.quiet || {}) }, rules: {} };
   for (const [k] of AUTO_RULES) out.rules[k] = { ...AUTO_DEFAULT.rules[k], ...((s.rules || {})[k] || {}) };
   out.rules.est_delivery.approve = true;
-  out.rules.est_follow.days = (Array.isArray(out.rules.est_follow.days) ? out.rules.est_follow.days : [2, 7]).map(Number).filter((n) => n >= 1 && n <= 60).slice(0, 2);
+  out.rules.est_follow.days = (Array.isArray(out.rules.est_follow.days) ? out.rules.est_follow.days : [2, 7]).map(Number).filter((n) => n >= 1 && n <= 60).slice(0, 3);
   if (!out.rules.est_follow.days.length) out.rules.est_follow.days = [2, 7];
   out.daily_cap = Math.max(1, Math.min(100, +out.daily_cap || 25));
   return out;
@@ -1602,10 +1615,36 @@ function normalizeAuto(saved) {
 const fillTemplate = (tpl, v) => String(tpl || "").replace(/\{(\w+)\}/g, (m, k) => (k in v ? String(v[k] ?? "") : m)).replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
 const mobileOf = (p) => { const ph = (p.phones || []).filter((x) => String(x.n || "").replace(/\D/g, "").length >= 10);
   return (ph.find((x) => /mobile|cell/i.test(x.label || "")) || ph.find((x) => !/home|work|office|fax/i.test(x.label || "")) || ph[0] || {}).n || ""; };
-/** Who it goes to and how: { channel, to } or null (no way to reach them). */
+// Each person can have their own settings (Ben, 2026-11-22: person page > Automatic messages):
+//   p.auto = { channel: "default" | "text" | "email",
+//              rules: { <rule>: { mode: "default" | "on" | "off", since, days: [n, ...] (check-ins), lead: 1-3 (reminders) } } }
+// "default" follows the main switch on the Messages page; "on" sends to them even when the main switch is off (from
+// `since`, the day it was switched on for them); "off" never. p.no_auto still stops everything for that person.
+const AUTO_LEADS = [1, 2, 3];
+function personAuto(p) {
+  const a = p && p.auto && typeof p.auto === "object" ? p.auto : {}, rules = {};
+  for (const [k] of AUTO_RULES) {
+    const r = (a.rules || {})[k] || {};
+    rules[k] = { mode: r.mode === "on" || r.mode === "off" ? r.mode : "default", since: /^\d{4}-\d\d-\d\d$/.test(r.since || "") ? r.since : null,
+      days: Array.isArray(r.days) ? r.days.map(Number).filter((n) => n >= 1 && n <= 60).slice(0, 3) : [], lead: AUTO_LEADS.includes(+r.lead) ? +r.lead : null };
+  }
+  return { channel: a.channel === "text" || a.channel === "email" ? a.channel : "default", rules };
+}
+/** Is this rule on for this person, and with what timing? null = not for them. relax = ignore 'since' and the main
+ * switch (previews, and checking whether a waiting message still applies). */
+function autoFor(p, rule, auto, relax = false, today = "") {
+  if (!p || p.status !== "active" || p.no_auto) return null;
+  const pa = personAuto(p).rules[rule], R = auto.rules[rule];
+  if (pa.mode === "off") return null;
+  if (pa.mode === "default" && !relax && !(R.on && R.since)) return null;
+  const since = relax ? "0000" : pa.mode === "on" ? pa.since || today : R.since;
+  return { since, days: pa.days.length ? pa.days : R.days || [], lead: pa.lead || 1, own: pa.mode === "on" };
+}
+/** Who it goes to and how: { channel, to } or null (no way to reach them). The person's own channel wins. */
 function autoRoute(p, auto, preferEmail = false) {
   const phone = mobileOf(p), email = (p.emails || []).find((e) => /@/.test(e)) || "";
-  const ch = auto.channel || "text_else_email";
+  const own = personAuto(p).channel;
+  const ch = own === "text" ? "text_only" : own === "email" ? "email_only" : auto.channel || "text_else_email";
   if (preferEmail && email && ch !== "text_only") return { channel: "email", to: email };
   if (ch === "email_only") return email ? { channel: "email", to: email } : null;
   if (ch === "text_only") return phone ? { channel: "text", to: phone } : null;
@@ -1619,11 +1658,15 @@ function autoVars(D, p, extra = {}) {
 const hm = (s) => { const m = String(s || "").match(/^(\d{1,2}):(\d{2})/); return m ? +m[1] * 60 + +m[2] : 0; };
 /** Is `nowHM` ("HH:MM") inside the hours messages may go out? */
 const canSendNow = (auto, nowHM) => hm(nowHM) >= hm(auto.quiet.from) && hm(nowHM) < hm(auto.quiet.to);
-/** Every message the switched-on rules call for right now: [{ref_key, rule, person, ref, channel, to_addr, subject, body, attach, approve}]. */
-function autoCandidates(D, I, autoSaved, today, nowHM, onlyRule = null) {
-  const auto = normalizeAuto(autoSaved), out = [];
-  const R = auto.rules, ok = (k) => (onlyRule ? onlyRule === k : R[k].on && R[k].since);
-  const live = (p) => p && p.status === "active" && !p.no_auto;
+const WHEN = { 1: "tomorrow", 2: "in two days", 3: "in three days" };
+// wording saved before {when} existed says "tomorrow": swap it for the person's own lead
+const withWhen = (tpl) => (String(tpl || "").includes("{when}") ? tpl : String(tpl || "").replace(/\btomorrow\b/gi, "{when}"));
+/** Every message due right now: [{ref_key, rule, person, ref, channel, to_addr, subject, body, attach, approve}].
+ * onlyRule = one rule, ignoring the switches (the settings preview); relax = ignore switches and 'since'. */
+function autoCandidates(D, I, autoSaved, today, nowHM, onlyRule = null, relax = false) {
+  const auto = normalizeAuto(autoSaved), out = [], R = auto.rules;
+  relax = relax || !!onlyRule;
+  const eff = (p, k) => (onlyRule && onlyRule !== k ? null : autoFor(p, k, auto, relax, today));
   const make = (rule, p, ref, key, tplText, tplEmail, subject, vars, preferEmail = false) => {
     const r = autoRoute(p, auto, preferEmail); if (!r) return;
     const v = autoVars(D, p, vars);
@@ -1631,40 +1674,35 @@ function autoCandidates(D, I, autoSaved, today, nowHM, onlyRule = null) {
       body: fillTemplate(r.channel === "email" ? tplEmail : tplText, v), attach: rule === "est_delivery" && r.channel === "email", approve: !!R[rule].approve });
   };
   const estVars = (e) => ({ services: serviceNames(e.lines).slice(0, 3).join(", ").toLowerCase() || "the work", total: usd(estimateValue(e).value, false) + (e.options ? " (options)" : ""), estimate: e.number, date: niceDate(e.date, { weekday: false }), time: "" });
-  if (ok("est_follow")) {
-    const since = onlyRule ? "0000" : R.est_follow.since;
-    for (const e of D.estimates) {
-      if (e.status !== "open" || !e.date || e.date < since) continue;
-      const p = I.people.get(e.person); if (!live(p)) continue;
-      const base = e.sent && e.sent > e.date ? e.sent : e.date, age = daysBetween(base, today);
-      R.est_follow.days.forEach((d, k) => { if (age >= d && age < d + 3) make("est_follow", p, e.id, `est_follow:${e.id}:${d}`, k ? R.est_follow.text2 : R.est_follow.text1, k ? R.est_follow.email2 : R.est_follow.email1, R.est_follow.subject, estVars(e)); });
-    }
+  for (const e of D.estimates) {   // estimate follow-ups
+    if (e.status !== "open" || !e.date) continue;
+    const p = I.people.get(e.person), ef = eff(p, "est_follow"); if (!ef || e.date < ef.since) continue;
+    const base = e.sent && e.sent > e.date ? e.sent : e.date, age = daysBetween(base, today);
+    ef.days.forEach((d, k) => { if (age >= d && age < d + 3) make("est_follow", p, e.id, `est_follow:${e.id}:${d}`, k ? R.est_follow.text2 : R.est_follow.text1, k ? R.est_follow.email2 : R.est_follow.email1, R.est_follow.subject, estVars(e)); });
   }
-  if (ok("job_reminder") && (onlyRule || hm(nowHM) >= hm(R.job_reminder.at))) {
-    const tm = addDays(today, 1);
+  if (relax || hm(nowHM) >= hm(R.job_reminder.at)) {   // job reminders, 1-3 days ahead (the person's own lead)
     for (const j of D.jobs) {
-      if (j.status !== "scheduled" || j.date !== tm) continue;
-      const p = I.people.get(j.person); if (!live(p)) continue;
-      make("job_reminder", p, j.id, `job_reminder:${j.id}:${j.date}`, R.job_reminder.text, R.job_reminder.email, R.job_reminder.subject,
-        { date: niceDate(j.date, { weekday: true }).replace(",", ""), time: j.time ? ` around ${j.time}` : "", services: serviceNames(j.lines).join(", ").toLowerCase() || "your service", total: usd(jobTotal(j)) });
+      if (j.status !== "scheduled" || j.date <= today) continue;
+      const p = I.people.get(j.person), ef = eff(p, "job_reminder"); if (!ef || j.date !== addDays(today, ef.lead)) continue;
+      make("job_reminder", p, j.id, `job_reminder:${j.id}:${j.date}`, withWhen(R.job_reminder.text), withWhen(R.job_reminder.email), withWhen(R.job_reminder.subject),
+        { when: WHEN[ef.lead], date: niceDate(j.date, { weekday: true }).replace(",", ""), time: j.time ? ` around ${j.time}` : "", services: serviceNames(j.lines).join(", ").toLowerCase() || "your service", total: usd(jobTotal(j)) });
     }
   }
-  if (ok("checkin")) {
-    for (const p of D.people) {
-      if (!live(p) || !p.follow_up || p.follow_up !== today || (!onlyRule && p.follow_up < R.checkin.since)) continue;
-      make("checkin", p, p.id, `checkin:${p.id}:${p.follow_up}`, R.checkin.text, R.checkin.email, R.checkin.subject, {});
-    }
+  for (const p of D.people) {   // follow-up check-ins
+    if (!p.follow_up || p.follow_up !== today) continue;
+    const ef = eff(p, "checkin"); if (!ef || p.follow_up < ef.since) continue;
+    make("checkin", p, p.id, `checkin:${p.id}:${p.follow_up}`, R.checkin.text, R.checkin.email, R.checkin.subject, {});
   }
-  if (ok("est_delivery")) {
-    const since = onlyRule ? addDays(today, -14) : R.est_delivery.since;
-    for (const e of D.estimates) {
-      if (e.status !== "open" || e.sent || !e.date || e.date < since) continue;
-      const p = I.people.get(e.person); if (!live(p)) continue;
-      make("est_delivery", p, e.id, `est_delivery:${e.id}`, R.est_delivery.text, R.est_delivery.email, R.est_delivery.subject, estVars(e), true);
-    }
+  for (const e of D.estimates) {   // estimate delivery
+    if (e.status !== "open" || e.sent || !e.date) continue;
+    const p = I.people.get(e.person), ef = eff(p, "est_delivery"); if (!ef) continue;
+    if (e.date < (relax ? addDays(today, -14) : ef.since)) continue;
+    make("est_delivery", p, e.id, `est_delivery:${e.id}`, R.est_delivery.text, R.est_delivery.email, R.est_delivery.subject, estVars(e), true);
   }
   return out;
 }
+/** Does anyone have a rule switched on just for them? (the scan runs then even with every main switch off) */
+const anyPersonOn = (people) => people.some((p) => p && p.auto && Object.values((p.auto.rules || {})).some((r) => r && r.mode === "on"));
 
 // ------------------------------------------------------------------ door knocking (2026-11-21)
 const KNOCK = {
@@ -1709,7 +1747,7 @@ function metres(a, b) {
 }
 function trackLength(points) { let m = 0; for (let i = 1; i < points.length; i++) m += metres(points[i - 1], points[i]); return m; }
 
-return { TABLES, COLUMNS, PERMISSIONS, PERM_KEYS, DEFAULT_ROLES, normalizeRoles, effectivePerms, empName, PAY_TYPES, payText, DEFAULT_TRAININGS, METHODS, HORIZON_DAYS, round2, usd, usdShort, localDay, addDays, addMonths, daysBetween, weekday, niceDate, uuid, nameOf, addressOf, lineTotal, linesTotal, estimateValue, jobTotal, serviceNames, freqText, FREQS, index, paidOf, balanceOf, jobDays, jobsBetween, moneyBetween, nextJob, lastJob, activePlan, servicesFor, nextOpenDay, dashboard, occurrences, regenPlan, topUp, freqFromGap, search, nextNumber, fixMojibake, htmlText, fromDump, LOST_REASONS, SOURCES, NUDGE_DAYS, STALE_DAYS, sourceOf, pipeline, followUps, winRate, sourceStats, AUTO_RULES, AUTO_FIELDS, AUTO_DEFAULT, normalizeAuto, fillTemplate, autoRoute, autoVars, canSendNow, autoCandidates, KNOCK, knockStats, areaFreshness, inPolygon, metres, trackLength };
+return { TABLES, COLUMNS, PERMISSIONS, PERM_KEYS, DEFAULT_ROLES, normalizeRoles, effectivePerms, empName, PAY_TYPES, payText, DEFAULT_TRAININGS, METHODS, HORIZON_DAYS, round2, usd, usdShort, localDay, addDays, addMonths, daysBetween, weekday, niceDate, uuid, nameOf, addressOf, lineTotal, linesTotal, estimateValue, jobTotal, serviceNames, freqText, FREQS, index, paidOf, balanceOf, jobDays, jobsBetween, moneyBetween, nextJob, lastJob, activePlan, servicesFor, nextOpenDay, dashboard, occurrences, regenPlan, topUp, freqFromGap, search, nextNumber, fixMojibake, htmlText, fromDump, LOST_REASONS, SOURCES, NUDGE_DAYS, STALE_DAYS, sourceOf, pipeline, followUps, winRate, sourceStats, AUTO_RULES, AUTO_FIELDS, AUTO_DEFAULT, normalizeAuto, fillTemplate, AUTO_LEADS, personAuto, autoFor, autoRoute, autoVars, canSendNow, autoCandidates, anyPersonOn, KNOCK, knockStats, areaFreshness, inPolygon, metres, trackLength };
  })();
 const TCF = (() => { // The Customer Factor (Ben's CRM) inside Jarvis (2026-11-19). Ben exports a full backup from The
 // Customer Factor (a MySQL dump, .sql) about once a month and uploads it on the Customers screen.
@@ -2379,7 +2417,7 @@ async function load() {
   if (ME.owner) await loadMsgs().catch((e) => console.warn("messages", e));
 }
 let MSGS = [];   // automatic texts & emails (owner only; Messages page)
-async function loadMsgs() { MSGS = (await api("messages", {})).messages || []; }
+async function loadMsgs() { const [m, a] = await Promise.all([api("messages", {}), api("auto", {})]); MSGS = m.messages || []; D.auto = a.auto; }
 let toastT = 0;
 function toast(msg, err = false) {
   const t = $("#toast"); t.innerHTML = ic(err ? "x" : "check") + `<span>${esc(msg)}</span>`; t.className = "on" + (err ? " err" : "");
@@ -3033,8 +3071,8 @@ function viewPerson(v, r) {
         <dt>address</dt><dd>${esc(X.addressOf(p) || "–")}</dd>
         ${p.source ? `<dt>found us</dt><dd>${esc(X.sourceOf(p))}</dd>` : ""}
         ${p.created ? `<dt>added</dt><dd>${X.niceDate(p.created, { year: true })}</dd>` : ""}
-        <dt>billed</dt><dd>${money(billed)}</dd></dl>${contactLinks(p)}
-        ${ME.owner ? `<label class="check small" style="margin-top:12px"><input type="checkbox" id="autoOk" ${p.no_auto ? "" : "checked"}>Automatic texts &amp; emails</label>` : ""}</div>
+        <dt>billed</dt><dd>${money(billed)}</dd></dl>${contactLinks(p)}</div>
+      ${ME.owner ? autoCard(p) : ""}
       <div class="card"><h3>${ic("bell")}Follow-up</h3>${p.follow_up ? `<div class="row" style="gap:8px">${dueBadge(p.follow_up)}</div>${p.follow_note ? `<div class="small" style="margin-top:6px">${esc(p.follow_note)}</div>` : ""}` : '<div class="small muted">None set</div>'}
         <div class="row" style="margin-top:10px"><button class="btn sm" id="fu">${ic("bell")}${p.follow_up ? "Change or mark done" : "Set a follow-up"}</button></div>${p.lost_reason && p.status === "lost" ? `<div class="small muted" style="margin-top:8px">Lost: ${esc(p.lost_reason)}</div>` : ""}</div>
       <div class="card"><h3>Notes</h3><div class="pre small">${esc(p.notes || "") || '<span class="muted">No notes</span>'}</div></div>
@@ -3045,7 +3083,7 @@ function viewPerson(v, r) {
   $("#edit", v).onclick = () => personSheet(p);
   $("#inv", v).onclick = () => go("invoice/new?person=" + p.id);
   $("#fu", v).onclick = () => followUpSheet(p);
-  if ($("#autoOk", v)) $("#autoOk", v).onchange = (ev) => busy(null, async () => { await save("people", { ...p, no_auto: !ev.target.checked }); toast(ev.target.checked ? "Automatic messages on for them." : "They won't get automatic messages."); });
+  if ($("#apSave", v)) wireAutoCard(v, p);
   if ($("#mkCust", v)) $("#mkCust", v).onclick = (e) => busy(e.target, async () => { await save("people", { ...p, kind: "customer" }); toast("Now a customer."); render(); });
   if ($("#mkLost", v)) $("#mkLost", v).onclick = (e) => busy(e.target, async () => { await save("people", { ...p, status: "lost", follow_up: null, follow_note: "" }); render(); });
   if ($("#reopen", v)) $("#reopen", v).onclick = (e) => busy(e.target, async () => { await save("people", { ...p, status: "active" }); render(); });
@@ -4895,6 +4933,57 @@ function demoBooks(route, b) {
   }
   if (route === "delete") { DB.tx = DB.tx.filter((t) => !b.ids.includes(t.id)); return { ok: true }; }
   throw new Error("Not in the demo.");
+}
+
+// A person's own automatic messages (Ben, 2026-11-22): a drop-down card on their page. Each message follows the main
+// switch ("Default"), or is On / Off just for them; their own check-in days, reminder lead and channel; and the
+// messages made for them. Saved on the person (p.auto, crmapp_calc.js personAuto / autoFor).
+let AUTO_OPEN = false;
+const CH_LABEL = { text_else_email: "text, else email", text_only: "text", email_only: "email" };
+function autoCard(p) {
+  const A = X.normalizeAuto(D.auto), pa = X.personAuto(p);
+  const onNow = X.AUTO_RULES.filter(([k]) => X.autoFor(p, k, A, false, TODAY)).map(([, l]) => l);
+  const sum = p.no_auto ? "Off for them" : onNow.length ? onNow.join(" · ") : "None switched on";
+  const mine = MSGS.filter((m) => m.person === p.id).slice(0, 6);
+  return `<details class="card autop" ${AUTO_OPEN ? "open" : ""}><summary><div class="row" style="flex-wrap:nowrap"><h3 style="margin:0">${ic("mail")}Automatic messages</h3><div class="spacer"></div><span class="apchev">${ic("chev")}</span></div>
+      <div class="small muted" style="margin-top:4px">${esc(sum)}</div></summary>
+    <div class="apbody">
+      <label class="check"><input type="checkbox" id="apAll" ${p.no_auto ? "" : "checked"}>Send them automatic texts &amp; emails</label>
+      <div id="apOpts" ${p.no_auto ? "hidden" : ""}>
+        <label class="f" style="margin-top:10px">Send by<select id="apCh"><option value="default" ${pa.channel === "default" ? "selected" : ""}>Your setting (${esc(CH_LABEL[A.channel] || "text, else email")})</option>
+          <option value="text" ${pa.channel === "text" ? "selected" : ""}>Text only</option><option value="email" ${pa.channel === "email" ? "selected" : ""}>Email only</option></select></label>
+        ${X.AUTO_RULES.map(([k, l]) => { const r = pa.rules[k], g = A.rules[k];
+          return `<div class="aprow" data-k="${k}"><div class="row" style="gap:8px"><b style="flex:1;min-width:140px">${esc(l)}</b>
+            <div class="seg">${[["default", `Default (${g.on ? "on" : "off"})`], ["on", "On"], ["off", "Off"]].map(([m, txt]) => `<button type="button" data-m="${m}" class="${r.mode === m ? "on" : ""}">${txt}</button>`).join("")}</div></div>
+            ${k === "est_follow" ? `<label class="f small" style="margin-top:8px">Check in after (days, up to 3)<input data-days inputmode="numeric" value="${esc(r.days.join(", "))}" placeholder="${esc(g.days.join(", "))} (your default)"></label>` : ""}
+            ${k === "job_reminder" ? `<label class="f small" style="margin-top:8px">Remind them<select data-lead><option value="" ${r.lead ? "" : "selected"}>The day before (default)</option>${[2, 3].map((n) => `<option value="${n}" ${r.lead === n ? "selected" : ""}>${n} days before</option>`).join("")}</select></label>` : ""}
+            ${r.mode === "on" && r.since ? `<div class="small muted" style="margin-top:4px">On for them since ${X.niceDate(r.since, { weekday: false })}</div>` : ""}</div>`; }).join("")}
+      </div>
+      <div class="lbl" style="margin-top:14px">Messages for them</div>
+      <div class="list">${mine.map((m) => `<div class="li"><div class="main"><div class="t">${esc(RULE_LABEL[m.rule] || m.rule)} · ${m.channel === "text" ? "text" : "email"}</div><div class="s">${esc(String(m.body).slice(0, 110))}</div></div>
+        <span class="badge ${(msgStatus[m.status] || [""])[0]}">${(msgStatus[m.status] || ["", m.status])[1]}</span></div>`).join("") || '<div class="small muted">None yet.</div>'}</div>
+      <div class="row" style="margin-top:12px"><a class="small" href="#/messages?t=settings">Wording and main switches</a><div class="spacer"></div><button class="btn primary sm" id="apSave">${ic("check")}Save</button></div>
+    </div></details>`;
+}
+function wireAutoCard(v, p) {
+  const card = $(".autop", v);
+  card.addEventListener("toggle", () => { AUTO_OPEN = card.open; });
+  $("#apAll", card).onchange = (e) => { $("#apOpts", card).hidden = !e.target.checked; };
+  for (const row of $$(".aprow", card)) row.onclick = (e) => { const b = e.target.closest("[data-m]"); if (b) $$("[data-m]", row).forEach((x) => x.classList.toggle("on", x === b)); };
+  $("#apSave", card).onclick = (ev) => busy(ev.currentTarget, async () => {
+    const before = X.personAuto(p), rules = {};
+    for (const row of $$(".aprow", card)) {
+      const k = row.dataset.k, mode = ($("[data-m].on", row) || {}).dataset?.m || "default";
+      const days = $("[data-days]", row) ? $("[data-days]", row).value.split(/[^0-9]+/).map(Number).filter((n) => n >= 1 && n <= 60).slice(0, 3) : [];
+      const lead = $("[data-lead]", row) ? +$("[data-lead]", row).value || null : null;
+      // switched on just for them now: only things from today on (like the main switches)
+      rules[k] = { mode, since: mode === "on" ? (before.rules[k].mode === "on" && before.rules[k].since ? before.rules[k].since : TODAY) : null, days, lead };
+    }
+    const auto = { channel: $("#apCh", card).value, rules };
+    const plain = Object.values(rules).every((r) => r.mode === "default" && !r.days.length && !r.lead) && auto.channel === "default";
+    await save("people", { ...I.people.get(p.id), no_auto: !$("#apAll", card).checked, auto: plain ? null : auto });
+    AUTO_OPEN = true; toast("Saved."); render();
+  });
 }
 
 // ------------------------------------------------------------------ automatic texts & emails (2026-11-22, Ben)
