@@ -1411,6 +1411,24 @@
     background: linear-gradient(145deg, var(--th-a-hex), rgb(var(--th-g2))); box-shadow: 0 0 10px rgba(var(--th-a),0.45); }
   #msheet .dstep div b { color: #fff; } #msheet .dstep i { color: var(--th-pale); font-style: normal; }
   #msheet .dstep code { font-family: ui-monospace, Consolas, monospace; font-size: 12px; padding: 1px 6px; border-radius: 6px; background: rgba(0,0,0,0.35); color: #fff; }
+  /* ---- Phone performance (Ben's screen recording, 2026-11-21: on Play, cards, packs and half the tab bar went black for
+     about a second when switching tabs). Android Chrome couldn't draw fast enough: every card in the collection repainted
+     each frame (moving rims, gradients and text, blend modes, SVG animation) under a frosted tab bar that re-blurs whatever
+     moves beneath it. Now the tab bar is solid, nothing on a card blends, and the collection's small cards move only by
+     transform (drawn by the GPU, no repaint): foil and shiny keep their glint sweep while on screen (play.js adds .pvis),
+     the rest stand still. The big card view and pack opening keep every effect. */
+  #money nav { background: rgba(var(--th-nav),0.96); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  #money .mhead h1 { animation: none; }
+  #money .plpacks { animation: none; box-shadow: 0 0 20px rgba(var(--th-a),0.5); }
+  .pcard::before, .pcard::after { mix-blend-mode: normal !important; }
+  #money .pcard, #money .pcard::before, #money .pcard::after, #money .pcard * { animation: none !important; }
+  #money .pcard.m-foil::after, #money .pcard.m-shiny::after { inset: -10% auto -10% 0; width: 55%; border-radius: 0; transform: translateX(-130%);
+    background: linear-gradient(105deg, transparent 15%, rgba(235,242,255,0.16) 40%, rgba(255,255,255,0.42) 50%, rgba(235,242,255,0.16) 60%, transparent 85%) !important; }
+  #money .pcard.m-shiny::after { background: linear-gradient(105deg, transparent 15%, rgba(255,236,180,0.22) 40%, rgba(255,252,235,0.6) 50%, rgba(255,236,180,0.22) 60%, transparent 85%) !important; }
+  #money .pcard.pvis.m-foil::after { animation: pcsweepf 5.5s ease-in-out infinite !important; }
+  #money .pcard.pvis.m-shiny::after { animation: pcsweeps 3.8s cubic-bezier(0.4,0,0.2,1) infinite !important; }
+  @keyframes pcsweepf { 0% { transform: translateX(-130%); } 55%, 100% { transform: translateX(330%); } }
+  @keyframes pcsweeps { 0%, 35% { transform: translateX(-130%); } 100% { transform: translateX(330%); } }
   /* ================================================================ the talk screen, premium (Ben, 2026-11-21)
      Shared by the phone app (index.template.html) and the laptop window (jarvis/ui/static/index.html): build.py puts it in
      the shared CSS. The shared CSS sits in the middle of each page's own styles, so these rules start with "body" to win.
@@ -1510,6 +1528,8 @@
   @media (prefers-reduced-motion: reduce) { body .brand, body #talk::before, body #talk.rec::after { animation: none !important; } }
   /* laptop: the transcript sits inside the side panel, which is already the glass panel */
   body aside #log { background: none; border: 0; border-radius: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
+  /* The talk screen stands still while a menu screen covers it (2026-11-21, phone performance). */
+  body:has(#money.on) .brand, body:has(#money.on) #talk::before { animation-play-state: paused; }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -6676,7 +6696,8 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
       const ps = packStyle(p);
       return `<div class="plpk" style="${ps.style}"><span>J</span><em>${esc(ps.tag)}</em>${p.kind !== "standard" ? `<i class="pkrib">${p.kind === "epic" ? "EPIC" : "RARE"}</i>` : ""}</div>${extra || ""}`;
     }
-    function cardArt(icon, rar, mod) {
+    // still = no SVG animation (the collection grid: dozens of cards animating at once made the phone drop whole areas of the screen).
+    function cardArt(icon, rar, mod, still) {
       const lines = ci[icon] || ci.gem; let [c1, c2] = rarOf(rar)[3];
       const path = (dx, dy) => lines.map((pl) => "M" + pl.map(([x, y]) => `${(50 + (x + dx) * 36).toFixed(1)} ${(50 + (y + dy) * 36).toFixed(1)}`).join(" L")).join(" ");
       const G = { legendary: ["#fff3b0", "#ffcf3f", "#ff8c00"], mythic: ["#ffd0a0", "#ff4d2e", "#8b0000"], godlike: ["#ff4fd8", "#ffd36a", "#4fffb0", "#4fd8ff", "#b46bff"] }[rar];
@@ -6691,9 +6712,9 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
       return `<svg viewBox="0 0 100 100" class="pcart"><defs><pattern id="pg" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M10 0H0V10" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5"/></pattern>
         ${G ? `<linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1">${G.map((c, i) => `<stop offset="${i / (G.length - 1)}" stop-color="${c}"/>`).join("")}</linearGradient>` : ""}
         ${holo ? `<linearGradient id="${hid}" x1="0" y1="0" x2="1" y2="1" spreadMethod="reflect">${["#ffc4ec", "#c4e4ff", "#c8ffe4", "#fff2c4", "#e6ccff"].map((c, i) => `<stop offset="${i / 4}" stop-color="${c}"/>`).join("")}
-          <animateTransform attributeName="gradientTransform" type="translate" values="-1 -1; 1 1" dur="7s" repeatCount="indefinite"/></linearGradient>` : ""}
+          ${still ? "" : `<animateTransform attributeName="gradientTransform" type="translate" values="-1 -1; 1 1" dur="7s" repeatCount="indefinite"/>`}</linearGradient>` : ""}
         ${foil ? `<linearGradient id="${fid}" x1="0" y1="0" x2="0.6" y2="1" spreadMethod="reflect">${["#ffffff", "#aab3c2", "#f4f7fb", "#6e7889", "#e6ebf2"].map((c, i) => `<stop offset="${i / 4}" stop-color="${c}"/>`).join("")}
-          <animateTransform attributeName="gradientTransform" type="translate" values="0 -1; 0 1" dur="9s" repeatCount="indefinite"/></linearGradient>` : ""}</defs>
+          ${still ? "" : `<animateTransform attributeName="gradientTransform" type="translate" values="0 -1; 0 1" dur="9s" repeatCount="indefinite"/>`}</linearGradient>` : ""}</defs>
         <rect width="100" height="100" fill="url(#pg)"/>${!mod ? `<radialGradient id="${gid}s" cx="0.5" cy="0.48" r="0.5"><stop offset="0" stop-color="${rarOf(rar)[3][0]}" stop-opacity="0.2"/><stop offset="1" stop-color="${rarOf(rar)[3][0]}" stop-opacity="0"/></radialGradient>
         <circle cx="50" cy="48" r="46" fill="url(#${gid}s)"/>` : ""}<circle cx="50" cy="50" r="40" fill="none" stroke="${c2}" stroke-opacity="0.35" stroke-dasharray="2 3"/>
         <path d="${path(0.06, 0.06)}" fill="none" stroke="${c2}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="0.7"/>
@@ -6703,7 +6724,7 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
       const c = cardOf(x.card); if (!c) return "";
       const r = rarOf(x.rarity || c.rarity);
       return `<div class="pcard r-${r[0]}${x.mod ? " m-" + x.mod : ""}${opts.big ? " big" : ""}" style="--c1:${r[3][0]};--c2:${r[3][1]}" ${opts.attr || ""}>
-        <div class="pctop"><b>${esc(c.name)}</b><span>#${String(c.no).padStart(2, "0")}</span></div>${cardArt(c.icon, r[0], x.mod)}
+        <div class="pctop"><b>${esc(c.name)}</b><span>#${String(c.no).padStart(2, "0")}</span></div>${cardArt(c.icon, r[0], x.mod, opts.still)}
         <div class="pcbot"><span class="prar">${r[1]}${x.mod ? " · " + MOD_NAME[x.mod] : ""}</span>${opts.big ? `<i>${esc(c.flavor)}</i>` : ""}</div>${opts.n > 1 ? `<em class="pcn">×${opts.n}</em>` : ""}</div>`;
     }
 
@@ -6781,6 +6802,7 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
       body.querySelectorAll("[data-open]").forEach((b) => (b.onclick = () => openPack([ps.find((p) => p.id === b.dataset.open)])));
       const all = $("plall"); if (all) all.onclick = () => openPack(ps.slice());
     }
+    const pvisIO = "IntersectionObserver" in window ? new IntersectionObserver((es) => es.forEach((e) => e.target.classList.toggle("pvis", e.isIntersecting))) : null;
     function plCards() {
       const own = new Map();   // card -> { n, mods: Set, by: { none, foil, holo, shiny } }
       for (const x of PS.st.cards) { const o = own.get(x.card) || { n: 0, mods: new Set(), by: {} }; o.n++; if (x.mod) o.mods.add(x.mod);
@@ -6791,9 +6813,12 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
         <div class="fbar"><i style="width:${(own.size / PL.CARDS.length) * 100}%"></i></div></div>
         <div class="plrars"><button data-rar="" class="${!PS.rar ? "on" : ""}">All</button>${PL.RARITIES.map(([id, n, , c]) => `<button data-rar="${id}" class="${PS.rar === id ? "on" : ""}" style="--c1:${c[0]}">${n}</button>`).join("")}</div>
         <div class="plcards">${list.map((c) => { const o = own.get(c.id);
-          return o ? cardHTML({ card: c.id, rarity: c.rarity, mod: best(o.mods) }, { n: o.n, attr: `data-card="${c.id}"` })
+          return o ? cardHTML({ card: c.id, rarity: c.rarity, mod: best(o.mods) }, { n: o.n, still: true, attr: `data-card="${c.id}"` })
             : `<div class="pcard locked" style="--c1:${rarOf(c.rarity)[3][0]};--c2:${rarOf(c.rarity)[3][1]}"><div class="pctop"><b>???</b><span>#${String(c.no).padStart(2, "0")}</span></div><div class="pcq">?</div><div class="pcbot"><span class="prar">${rarOf(c.rarity)[1]}</span></div></div>`; }).join("")}</div>`;
       $("plodds").onclick = oddsSheet;
+      // Only cards on screen get their glint sweep (class pvis; money.css "Phone performance").
+      if (pvisIO) { pvisIO.disconnect(); body.querySelectorAll(".plcards .pcard.m-foil, .plcards .pcard.m-shiny").forEach((x) => pvisIO.observe(x)); }
+      else body.querySelectorAll(".plcards .pcard").forEach((x) => x.classList.add("pvis"));
       body.querySelectorAll("[data-rar]").forEach((b) => (b.onclick = () => { PS.rar = b.dataset.rar; plCards(); }));
       // Tap a card: the showcase (your rarest version) big, and every version underneath with how many you have of each (Ben, 2026-11-20).
       body.querySelectorAll("[data-card]").forEach((b) => (b.onclick = () => { const c = cardOf(b.dataset.card), o = own.get(c.id);
@@ -8250,7 +8275,10 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
   let edges = null, nbrAge = 0, nbrMorphDone = null;
   const GLOW_BLUR = false;   // the phone build turns this off (canvas shadow blur is costly on phones)
   const MAX_DPR = 1.5;        // the phone build lowers this
-  let PAUSED = () => document.hidden || document.body.classList.contains('typing'); // the phone pauses drawing while the keyboard is up
+  // Nothing is drawn while a menu screen (Money, Play, ...) covers the talk screen: drawing the core behind an opaque
+  // screen every frame helped starve the phone's GPU (2026-11-21: parts of the Play screen went black).
+  const COVERED = () => { const m = document.getElementById("money"); return !!(m && m.classList.contains("on")); };
+  let PAUSED = () => COVERED() || document.hidden || document.body.classList.contains('typing'); // the phone also pauses drawing while the keyboard is up
   const cv = document.getElementById("core"), cx = cv.getContext("2d");
   let W = 0, H = 0, DPR = 1;
   function resize() { DPR = Math.min(MAX_DPR, window.devicePixelRatio || 1); W = cv.clientWidth; H = cv.clientHeight; cv.width = W * DPR; cv.height = H * DPR; }
