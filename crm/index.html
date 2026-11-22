@@ -755,6 +755,58 @@ table.pl tr.totrow.net td { font-size: 15px; background: rgba(var(--acc-rgb), .1
 .check.box input::before { display: none; }
 .check.box input:checked { background: var(--acc); border-color: var(--acc); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E"); background-size: 14px; background-position: center; background-repeat: no-repeat; }
 
+/* ---------------------------------------------------------------- door knocking map (2026-11-21) */
+#view.full { padding: 0; overflow: hidden; }
+.knock { position: relative; height: 100%; min-height: 420px; }
+.kmap { position: absolute; inset: 0; z-index: 0; isolation: isolate; background: #1b2236; }
+.kmap .leaflet-control-attribution { background: rgba(10,14,30,.7); color: #cbd5e1; font-size: 10.5px; }
+.kmap .leaflet-control-attribution a { color: #93c5fd; }
+.ktop { position: absolute; top: 12px; left: 12px; right: 12px; z-index: 5; display: flex; gap: 8px; align-items: center; pointer-events: none; }
+.ktop > * { pointer-events: auto; }
+.ksearch { flex: 1; max-width: 380px; display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 12px; border-radius: 12px; background: var(--solid); border: 1px solid var(--line2); box-shadow: var(--sh2); }
+.ksearch i { color: var(--ink3); width: 16px; height: 16px; }
+.ksearch input { flex: 1; min-width: 0; border: 0; background: transparent; outline: none; font-size: 14px; color: var(--ink); }
+.kbtns { display: flex; gap: 6px; margin-left: auto; }
+.kbtn { height: 42px; min-width: 42px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; border-radius: 12px; border: 1px solid var(--line2); background: var(--solid); color: var(--ink); font-weight: 600; font-size: 13px; cursor: pointer; box-shadow: var(--sh2); }
+.kbtn i { width: 17px; height: 17px; }
+.kbtn.on { background: var(--acc); color: var(--th-on, #fff); border-color: transparent; }
+.kdraw { position: absolute; top: 64px; left: 50%; transform: translateX(-50%); z-index: 6; display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--solid); border: 1px solid rgba(var(--acc-rgb), .5); box-shadow: var(--sh2); width: min(560px, calc(100% - 24px)); flex-wrap: wrap; }
+.kdraw[hidden] { display: none; }
+.kpanel { position: absolute; z-index: 4; right: 12px; top: 66px; bottom: 12px; width: 340px; display: flex; flex-direction: column; border-radius: 16px; background: var(--solid); border: 1px solid var(--line2); box-shadow: var(--sh2); overflow: hidden; transition: transform .3s var(--ease); }
+.kpanel:not(.open) { bottom: auto; }
+.kpanel:not(.open) .kbody { display: none; }
+.khandle { border: 0; background: transparent; padding: 8px 0 2px; cursor: pointer; display: flex; justify-content: center; }
+.khandle span { width: 38px; height: 4px; border-radius: 99px; background: rgba(255,255,255,.25); }
+.kstats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border-bottom: 1px solid var(--line); }
+.kstats > div { background: var(--solid); padding: 9px 10px; }
+.kstats b { display: block; font-size: 19px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.kstats small { color: var(--ink3); font-size: 11px; }
+.kbody { flex: 1; overflow-y: auto; padding: 14px 14px 18px; }
+.kbody .list { margin: 0 -6px; }
+.kbody .li { padding: 8px 6px; }
+.kdot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: none; box-shadow: 0 0 0 2px rgba(255,255,255,.85); }
+.kdot.sq { border-radius: 3px; box-shadow: none; width: 12px; height: 12px; }
+.chip.kf .kdot { width: 9px; height: 9px; box-shadow: none; }
+.chip.kf:not(.on) { opacity: .55; }
+.kattrib { margin-top: 16px; }
+.kres { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.kres button { display: flex; align-items: center; gap: 9px; height: 46px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line2); background: rgba(255,255,255,.04); color: var(--ink); font-weight: 600; font-size: 14px; cursor: pointer; text-align: left; transition: background .12s, border-color .12s; }
+.kres button:hover { background: rgba(255,255,255,.08); }
+.kres button.on { border-color: var(--c); background: color-mix(in srgb, var(--c) 18%, transparent); }
+@media (max-width: 900px) {
+  #view.full { padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+  .ktop { top: 10px; left: 10px; right: 10px; }
+  .ksearch { max-width: none; }
+  .kbtn span { display: none; }
+  .kbtn { padding: 0; width: 42px; }
+  .kpanel { left: 8px; right: 8px; width: auto; top: auto; bottom: 8px; max-height: 62%; border-radius: 18px; }
+  .kpanel:not(.open) { bottom: 8px; }
+  .kdraw { top: 60px; }
+}
+#view.full > div { height: 100%; }
+.kbtn[hidden] { display: none; }
+[hidden] { display: none !important; }   /* the hidden attribute always wins over layout classes */
+
 </style>
 </head>
 <body>
@@ -818,15 +870,18 @@ const X = (() => { // Ben's own CRM (2026-11-21; docs/crm-plan.md). Shared like 
 //   line      {service, description, rate, qty, total, unit?}   total = rate x qty (imported lines keep their own total)
 
 const TABLES = { people: "crm_people", services: "crm_services", estimates: "crm_estimates", plans: "crm_plans",
-  jobs: "crm_jobs", invoices: "crm_invoices", payments: "crm_payments", employees: "crm_employees" };
+  jobs: "crm_jobs", invoices: "crm_invoices", payments: "crm_payments", employees: "crm_employees",
+  pins: "knock_pins", areas: "knock_areas" };
 const COLUMNS = {
-  people: ["id", "kind", "type", "first", "last", "company", "phones", "emails", "address", "city", "state", "zip", "notes", "source", "status", "created", "tcf", "edited"],
+  people: ["id", "kind", "type", "first", "last", "company", "phones", "emails", "address", "city", "state", "zip", "notes", "source", "status", "created", "tcf", "edited", "lat", "lng"],
   services: ["id", "name", "description", "rate", "unit", "position", "archived"],
   estimates: ["id", "number", "person", "date", "status", "options", "lines", "notes", "decided", "tcf", "edited"],
   plans: ["id", "person", "every", "unit", "start", "time", "lines", "active", "notes", "tcf"],
   jobs: ["id", "person", "date", "days", "time", "lines", "status", "plan", "estimate", "invoice", "notes", "tcf", "edited"],
   invoices: ["id", "number", "person", "date", "due", "lines", "total", "bad_debt", "job", "notes", "tcf", "edited"],
   payments: ["id", "invoice", "amount", "date", "method", "note", "tcf"],
+  pins: ["id", "lat", "lng", "address", "status", "note", "person", "come_back", "visits", "by"],
+  areas: ["id", "name", "path", "status", "date", "assignee", "notes"],
   employees: ["id", "first", "last", "phone", "email", "role", "status", "pay_type", "pay_rate", "commission", "start", "address", "emergency", "color", "notes", "trainings", "overrides"],
 };
 
@@ -1342,7 +1397,50 @@ function fromDump(t, tz, today) {
   return { people, estimates, jobs, plans, invoices, payments, services };
 }
 
-return { TABLES, COLUMNS, PERMISSIONS, PERM_KEYS, DEFAULT_ROLES, normalizeRoles, effectivePerms, empName, PAY_TYPES, payText, DEFAULT_TRAININGS, METHODS, HORIZON_DAYS, round2, usd, usdShort, localDay, addDays, addMonths, daysBetween, weekday, niceDate, uuid, nameOf, addressOf, lineTotal, linesTotal, estimateValue, jobTotal, serviceNames, freqText, FREQS, index, paidOf, balanceOf, jobDays, jobsBetween, moneyBetween, nextJob, lastJob, activePlan, servicesFor, nextOpenDay, dashboard, occurrences, regenPlan, topUp, freqFromGap, search, nextNumber, fixMojibake, htmlText, fromDump };
+// ------------------------------------------------------------------ door knocking (2026-11-21)
+const KNOCK = {
+  not_home: { label: "Not home", color: "#94a3b8", talked: false },
+  not_interested: { label: "Not interested", color: "#f87171", talked: true },
+  come_back: { label: "Come back", color: "#fbbf24", talked: true },
+  estimate: { label: "Estimate given", color: "#a78bfa", talked: true },
+  sold: { label: "Sold", color: "#34d399", talked: true },
+  do_not_knock: { label: "Do not knock", color: "#475569", talked: false },
+  customer: { label: "Customer", color: "#38bdf8", talked: false },
+};
+/** Today's (or any day's) door-knocking numbers from the pins' visit history. day = local "YYYY-MM-DD". */
+function knockStats(pins, day, tz, who = null) {
+  const visits = [];
+  for (const p of pins) for (const v of p.visits || []) if (v.at && localDay(tz, new Date(v.at)) === day && (!who || v.by === who)) visits.push(v);
+  visits.sort((a, b) => (a.at < b.at ? -1 : 1));
+  const doors = visits.length, talked = visits.filter((v) => KNOCK[v.status] && KNOCK[v.status].talked).length;
+  const estimates = visits.filter((v) => v.status === "estimate").length, sold = visits.filter((v) => v.status === "sold").length;
+  const hours = doors > 1 ? Math.max(0.25, (Date.parse(visits[doors - 1].at) - Date.parse(visits[0].at)) / 36e5) : 0;
+  return { doors, talked, estimates, sold, hours, perHour: hours ? doors / hours : 0, first: visits[0]?.at || null, last: visits[doors - 1]?.at || null };
+}
+/** How long ago an area was knocked, as a strength 0..1 for its colour (fresh = strong, a year old = faint). */
+function areaFreshness(a, today) {
+  if (a.status !== "knocked" || !a.date) return 0;
+  const days = daysBetween(a.date, today);
+  return days <= 30 ? 1 : days <= 90 ? 0.65 : days <= 180 ? 0.4 : 0.2;
+}
+/** Is [lat, lng] inside the polygon path [[lat, lng], ...]? */
+function inPolygon(pt, path) {
+  let inside = false;
+  for (let i = 0, j = path.length - 1; i < path.length; j = i++) {
+    const [yi, xi] = path[i], [yj, xj] = path[j];
+    if ((yi > pt[0]) !== (yj > pt[0]) && pt[1] < ((xj - xi) * (pt[0] - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+/** Metres between two [lat, lng] points. */
+function metres(a, b) {
+  const R = 6371000, r = Math.PI / 180, dLat = (b[0] - a[0]) * r, dLng = (b[1] - a[1]) * r;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+function trackLength(points) { let m = 0; for (let i = 1; i < points.length; i++) m += metres(points[i - 1], points[i]); return m; }
+
+return { TABLES, COLUMNS, PERMISSIONS, PERM_KEYS, DEFAULT_ROLES, normalizeRoles, effectivePerms, empName, PAY_TYPES, payText, DEFAULT_TRAININGS, METHODS, HORIZON_DAYS, round2, usd, usdShort, localDay, addDays, addMonths, daysBetween, weekday, niceDate, uuid, nameOf, addressOf, lineTotal, linesTotal, estimateValue, jobTotal, serviceNames, freqText, FREQS, index, paidOf, balanceOf, jobDays, jobsBetween, moneyBetween, nextJob, lastJob, activePlan, servicesFor, nextOpenDay, dashboard, occurrences, regenPlan, topUp, freqFromGap, search, nextNumber, fixMojibake, htmlText, fromDump, KNOCK, knockStats, areaFreshness, inPolygon, metres, trackLength };
  })();
 const TCF = (() => { // The Customer Factor (Ben's CRM) inside Jarvis (2026-11-19). Ben exports a full backup from The
 // Customer Factor (a MySQL dump, .sql) about once a month and uploads it on the Customers screen.
@@ -1987,7 +2085,7 @@ async function savePlan(plan, from, anchor) {
 async function load() {
   const d = await api("data", {});
   D = { people: d.people, services: d.services, estimates: d.estimates, plans: d.plans, jobs: d.jobs, invoices: d.invoices, payments: d.payments, settings: d.settings || {},
-    employees: d.employees || [], roles: d.roles || X.normalizeRoles(null) };
+    employees: d.employees || [], roles: d.roles || X.normalizeRoles(null), pins: d.pins || [], areas: d.areas || [], tracks: d.tracks || [] };
   if (d.today) TODAY = d.today;
   reindex();
 }
@@ -2008,10 +2106,11 @@ const NAV = [
   ["dashboard", "Dashboard", "home"], ["calendar", "Calendar", "cal"], ["prospects", "Prospects", "target"],
   ["customers", "Customers", "users"], ["estimates", "Estimates", "file"], ["invoices", "Invoices", "receipt"],
   ["employees", "Employees", "team"], ["permissions", "Permissions", "shield"],
+  ["knock", "Door knocking", "map"],
   ["books", "Transactions", "bank"], ["reports", "Reports", "chart"], ["banking", "Bank & uploads", "upload"],
 ];
 const BOTTOM = ["dashboard", "calendar", "prospects", "customers"];   // + the New button in the middle; Invoices is in the menu
-const SECTIONS = [["Overview", ["dashboard", "calendar"]], ["Sales", ["prospects", "estimates"]], ["Customers", ["customers", "invoices"]], ["Books", ["books", "reports", "banking"]], ["Team", ["employees", "permissions"]]];
+const SECTIONS = [["Overview", ["dashboard", "calendar"]], ["Sales", ["knock", "prospects", "estimates"]], ["Customers", ["customers", "invoices"]], ["Books", ["books", "reports", "banking"]], ["Team", ["employees", "permissions"]]];
 const NEW_ITEMS = [
   ["estimate", "file", "New estimate", "Price a job for someone"],
   ["job", "cal", "Book a job", "One-time or recurring"],
@@ -2081,6 +2180,7 @@ function render() {
   const v = document.createElement("div");
   v.className = "fade";
   host.replaceChildren(v);
+  host.classList.toggle("full", r.name === "knock");   // the map uses the whole page
   try { (VIEWS[r.name] || VIEWS.dashboard)(v, r); }
   catch (e) { console.error(e); v.innerHTML = `<div class="empty"><b>Something went wrong on this page.</b>${esc(e.message)}</div>`; }
   paintIcons(v);
@@ -3021,6 +3121,10 @@ function viewSettings(v) {
     <div class="card"><h3>The Customer Factor</h3><p class="muted" style="margin-top:0">While you use both, import a fresh backup (.sql) now and then: new customers, jobs, estimates and invoices come in; anything you've changed here is left alone. Card numbers in the backup are never read.</p>
       ${imp ? `<p class="small">Last import: <b>${esc(imp.file || "backup")}</b> on ${new Date(imp.at).toLocaleString()}${imp.counts ? ` · ${imp.counts.people} people, ${imp.counts.jobs} jobs, ${imp.counts.estimates} estimates, ${imp.counts.invoices} invoices` : ""}</p>` : ""}
       <label class="btn" style="position:relative;overflow:hidden">${ic("file")}Import a backup…<input type="file" id="tcf" style="position:absolute;inset:0;opacity:0;cursor:pointer"></label><span id="tcfMsg" class="small muted" style="margin-left:10px"></span></div>
+    <div class="card"><h3>${ic("map")}Door-knocking map</h3>
+      <p class="muted" style="margin-top:0">The map uses a free street map until you add a Google Maps key; with the key you get Google's map and satellite view of the houses.</p>
+      <label class="f">Google Maps key<input id="mapsKey" value="${esc(D.settings.maps_key || "")}" placeholder="AIza…" autocomplete="off" spellcheck="false"></label>
+      <div class="row end" style="margin-top:12px"><button class="btn primary" id="saveKey">Save key</button></div></div>
     <div class="card"><h3>Look</h3><p class="muted" style="margin:0">The CRM uses the colours you picked in Jarvis (Settings › Colours).</p></div>
   </div>`;
   $("#svcs", v).addEventListener("click", (e) => {
@@ -3030,6 +3134,10 @@ function viewSettings(v) {
     const row = e.target.closest("[data-svc]"); if (row) serviceSheet(I.services.get(row.dataset.svc));
   });
   $("#addSvc", v).onclick = () => serviceSheet({ id: X.uuid(), name: "", description: "", rate: 0, unit: "", position: Math.max(0, ...D.services.map((s) => s.position)) + 1, archived: false }, true);
+  $("#saveKey", v).onclick = (e) => busy(e.currentTarget, async () => {
+    const { settings } = await api("settings", { settings: { maps_key: $("#mapsKey", v).value.trim() } });
+    D.settings = { ...D.settings, ...settings }; MAPENG = null; toast("Saved. The map uses it next time it opens.");
+  });
   $("#saveBiz", v).onclick = (e) => busy(e.currentTarget, async () => {
     const business = Object.fromEntries($$("[data-biz]", v).map((x) => [x.dataset.biz, x.value.trim()]));
     const { settings } = await api("settings", { settings: { business, terms: $("#terms", v).value } });
@@ -3281,6 +3389,404 @@ function roleSheet(roles, role, done) {
     };
     if ($("#rx", b)) $("#rx", b).onclick = () => { roles.splice(roles.indexOf(role), 1); closeSheet(); done(roles[1] || roles[0]); };
   });
+}
+
+// ------------------------------------------------------------------ door knocking (2026-11-21)
+// Google Maps when Ben has added a key (Settings), otherwise a free street map (Leaflet + OpenStreetMap).
+// Both sit behind one small "engine" so the page doesn't care which one is showing.
+let MAPENG = null;
+const HOME = [40.3141, -112.0103];   // Eagle Mountain, UT (Ben's town) until his location or a saved view is known
+const scriptOnce = (src) => new Promise((res, rej) => { if ([...document.scripts].some((x) => x.src === src)) return res(); const sc = document.createElement("script"); sc.src = src; sc.async = true; sc.onload = res; sc.onerror = () => rej(new Error("Couldn't load " + src.split("/")[2])); document.head.appendChild(sc); });
+const cssOnce = (href) => { if (![...document.querySelectorAll("link")].some((l) => l.href === href)) { const l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; document.head.appendChild(l); } };
+async function mapEngine() {
+  if (MAPENG) return MAPENG;
+  const key = (D.settings && D.settings.maps_key) || "";
+  if (key && !DEMO) {
+    try {
+      await new Promise((res, rej) => {
+        if (window.google && window.google.maps) return res();
+        window.__vitraMapsReady = res; window.gm_authFailure = () => { toast("Google refused the Maps key. Check it in Settings; showing the free map for now.", true); };
+        scriptOnce(`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&v=weekly&callback=__vitraMapsReady`).catch(rej);
+        setTimeout(() => rej(new Error("Google Maps took too long")), 15000);
+      });
+      return (MAPENG = googleEngine());
+    } catch (e) { console.warn(e); toast("Google Maps didn't load; showing the free map.", true); }
+  }
+  cssOnce("https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css");
+  await scriptOnce("https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js");
+  return (MAPENG = leafletEngine());
+}
+function leafletEngine() {
+  const L = window.L;
+  return {
+    name: "free", satellite: false,
+    create(el, center, zoom) {
+      const m = L.map(el, { zoomControl: false, attributionControl: true, preferCanvas: true }).setView(center, zoom);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: "© OpenStreetMap contributors" }).addTo(m);
+      L.control.zoom({ position: "bottomright" }).addTo(m);
+      const api = {
+        raw: m,
+        onClick: (fn) => m.on("click", (e) => fn([e.latlng.lat, e.latlng.lng])),
+        onMove: (fn) => m.on("moveend", () => { const c = m.getCenter(); fn([c.lat, c.lng], m.getZoom()); }),
+        setView: (c, z) => m.setView(c, z ?? m.getZoom()), zoom: () => m.getZoom(),
+        fit: (path) => path.length && m.fitBounds(L.latLngBounds(path), { padding: [40, 40], maxZoom: 18 }),
+        marker(ll, st, onClick) {
+          const o = L.circleMarker(ll, { radius: st.size || 8, color: st.ring || "#fff", weight: st.ringW ?? 2, fillColor: st.color, fillOpacity: st.opacity ?? 1, bubblingMouseEvents: false }).addTo(m);
+          if (onClick) o.on("click", (e) => { L.DomEvent.stopPropagation(e); onClick(); });
+          return { remove: () => o.remove(), set: (s2) => o.setStyle({ fillColor: s2.color, radius: s2.size || 8, color: s2.ring || "#fff", fillOpacity: s2.opacity ?? 1 }), move: (p) => o.setLatLng(p) };
+        },
+        polygon(path, st) {
+          const o = L.polygon(path, { color: st.stroke, weight: st.weight || 2, dashArray: st.dashed ? "6 6" : null, fillColor: st.fill, fillOpacity: st.fillOpacity, interactive: false }).addTo(m);
+          return { remove: () => o.remove(), setPath: (p) => o.setLatLngs(p) };
+        },
+        line(path, st) {
+          const o = L.polyline(path, { color: st.color, weight: st.weight || 3, opacity: st.opacity ?? 0.9, dashArray: st.dashed ? "6 6" : null, interactive: false }).addTo(m);
+          return { remove: () => o.remove(), setPath: (p) => o.setLatLngs(p) };
+        },
+        circle(ll, r, st) { const o = L.circle(ll, { radius: r, color: st.color, weight: 1, fillColor: st.color, fillOpacity: 0.12, interactive: false }).addTo(m);
+          return { remove: () => o.remove(), move: (p, r2) => { o.setLatLng(p); if (r2) o.setRadius(r2); } }; },
+        setLayer() {}, resize: () => m.invalidateSize(),
+      };
+      return api;
+    },
+    async reverse(ll) {   // OpenStreetMap's address lookup (one at a time, only when Ben taps a house)
+      try { const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=18&lat=${ll[0]}&lon=${ll[1]}`); const j = await r.json();
+        const a = j.address || {}; return [[a.house_number, a.road].filter(Boolean).join(" "), a.city || a.town || a.village || ""].filter(Boolean).join(", ") || j.display_name || ""; } catch { return ""; }
+    },
+    async geocode(q) {
+      try { const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=us&q=${encodeURIComponent(q)}`); const j = await r.json(); return j[0] ? [+j[0].lat, +j[0].lon] : null; } catch { return null; }
+    },
+  };
+}
+function googleEngine() {
+  const G = window.google.maps;
+  let geocoder = null;
+  const gc = () => (geocoder ||= new G.Geocoder());
+  const ll = (p) => ({ lat: p[0], lng: p[1] });
+  return {
+    name: "google", satellite: true,
+    create(el, center, zoom) {
+      const m = new G.Map(el, { center: ll(center), zoom, mapTypeId: "roadmap", disableDefaultUI: true, zoomControl: true, clickableIcons: false, gestureHandling: "greedy",
+        zoomControlOptions: { position: G.ControlPosition.RIGHT_BOTTOM }, styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }] });
+      const sym = (st) => ({ path: G.SymbolPath.CIRCLE, scale: st.size || 8, fillColor: st.color, fillOpacity: st.opacity ?? 1, strokeColor: st.ring || "#fff", strokeWeight: st.ringW ?? 2 });
+      return {
+        raw: m,
+        onClick: (fn) => m.addListener("click", (e) => fn([e.latLng.lat(), e.latLng.lng()])),
+        onMove: (fn) => m.addListener("idle", () => { const c = m.getCenter(); fn([c.lat(), c.lng()], m.getZoom()); }),
+        setView: (c, z) => { m.panTo(ll(c)); if (z) m.setZoom(z); }, zoom: () => m.getZoom(),
+        fit: (path) => { if (!path.length) return; const b = new G.LatLngBounds(); path.forEach((p) => b.extend(ll(p))); m.fitBounds(b, 40); },
+        marker(p, st, onClick) {
+          const o = new G.Marker({ position: ll(p), map: m, icon: sym(st), clickable: !!onClick, zIndex: st.z || 1 });
+          if (onClick) o.addListener("click", onClick);
+          return { remove: () => o.setMap(null), set: (s2) => o.setIcon(sym(s2)), move: (q) => o.setPosition(ll(q)) };
+        },
+        polygon(path, st) {
+          const o = new G.Polygon({ paths: path.map(ll), map: m, strokeColor: st.stroke, strokeOpacity: st.dashed ? 0 : 0.95, strokeWeight: st.weight || 2, fillColor: st.fill, fillOpacity: st.fillOpacity, clickable: false });
+          const dash = st.dashed ? new G.Polyline({ path: [...path, path[0]].map(ll), map: m, strokeOpacity: 0, clickable: false,
+            icons: [{ icon: { path: "M 0,-1 0,1", strokeOpacity: 1, strokeColor: st.stroke, scale: 2.5 }, offset: "0", repeat: "11px" }] }) : null;
+          return { remove: () => { o.setMap(null); if (dash) dash.setMap(null); }, setPath: (q) => { o.setPaths(q.map(ll)); if (dash) dash.setPath([...q, q[0]].map(ll)); } };
+        },
+        line(path, st) {
+          const o = new G.Polyline({ path: path.map(ll), map: m, strokeColor: st.color, strokeOpacity: st.dashed ? 0 : (st.opacity ?? 0.9), strokeWeight: st.weight || 3, clickable: false,
+            icons: st.dashed ? [{ icon: { path: "M 0,-1 0,1", strokeOpacity: 1, strokeColor: st.color, scale: 2.5 }, offset: "0", repeat: "11px" }] : [] });
+          return { remove: () => o.setMap(null), setPath: (q) => o.setPath(q.map(ll)) };
+        },
+        circle(p, r, st) { const o = new G.Circle({ center: ll(p), radius: r, map: m, strokeColor: st.color, strokeWeight: 1, fillColor: st.color, fillOpacity: 0.12, clickable: false });
+          return { remove: () => o.setMap(null), move: (q, r2) => { o.setCenter(ll(q)); if (r2) o.setRadius(r2); } }; },
+        setLayer: (k) => m.setMapTypeId(k === "satellite" ? "hybrid" : "roadmap"), resize: () => {},
+      };
+    },
+    reverse: (p) => gc().geocode({ location: ll(p) }).then((r) => { const a = r.results[0]; return a ? a.formatted_address.replace(/, USA$/, "").replace(/ \d{5}(-\d{4})?$/, "") : ""; }).catch(() => ""),
+    geocode: (q) => gc().geocode({ address: q }).then((r) => { const g = r.results[0]; return g ? [g.geometry.location.lat(), g.geometry.location.lng()] : null; }).catch(() => null),
+  };
+}
+
+// offline-safe saves: a pin saved with no signal waits on the phone and goes up when the signal is back
+const KQ_KEY = "vitra.knockQueue";
+const kqGet = () => { try { return JSON.parse(localStorage.getItem(KQ_KEY) || "[]"); } catch { return []; } };
+const kqSet = (q) => { try { localStorage.setItem(KQ_KEY, JSON.stringify(q)); } catch {} };
+async function savePin(row) {
+  put("pins", row);
+  try { return await save("pins", row); }
+  catch (e) { if (e.message === "not paired") throw e; kqSet([...kqGet().filter((x) => x.id !== row.id), row]); toast("No signal: saved on this phone, it'll upload when you're back online."); return row; }
+}
+async function flushKnockQueue() {
+  const q = kqGet(); if (!q.length || DEMO) return;
+  const left = [];
+  for (const row of q) { try { await save("pins", row); } catch { left.push(row); } }
+  kqSet(left);
+  if (q.length > left.length) toast(`${q.length - left.length} saved pins uploaded.`);
+}
+window.addEventListener("online", () => flushKnockQueue());
+setInterval(() => { if (navigator.onLine) flushKnockQueue(); }, 30000);
+
+const KV_KEY = "vitra.knockView";
+let KN = null;   // live map state while the door-knocking page is open
+function viewKnock(v) {
+  setTitle("Door knocking");
+  const saved = (() => { try { return JSON.parse(localStorage.getItem(KV_KEY) || "null"); } catch { return null; } })();
+  const today = TODAY, stats = X.knockStats(D.pins, today, TZ), myTrack = (D.tracks.find((t) => t.day === today && t.who === "ben") || { points: [] }).points;
+  const show = (() => { try { return JSON.parse(localStorage.getItem("vitra.knockShow") || "null"); } catch { return null; } })() || { ...Object.fromEntries(Object.keys(X.KNOCK).map((k) => [k, true])), areas: true };
+  const comeBack = D.pins.filter((p) => p.status === "come_back").sort((a, b) => ((a.come_back || "9") < (b.come_back || "9") ? -1 : 1));
+  v.innerHTML = `<div class="knock">
+    <div id="kmap" class="kmap"></div>
+    <div class="ktop">
+      <form class="ksearch" id="kSearch"><i data-icon="search"></i><input id="kQ" placeholder="Find an address or street" autocomplete="off"></form>
+      <div class="kbtns">
+        <button class="kbtn" id="kLayer" title="Map / satellite" hidden>${ic("map")}<span>Satellite</span></button>
+        <button class="kbtn" id="kLocate" title="Where am I">${ic("target")}</button>
+        <button class="kbtn" id="kTrack" title="Record the path I walk">${ic("sync")}<span>Track walk</span></button>
+      </div>
+    </div>
+    <div class="kdraw" id="kDraw" hidden><b>Drawing an area</b><span class="small muted" id="kDrawN">Tap the corners on the map</span><div class="spacer"></div>
+      <button class="btn sm" id="kUndo">Undo</button><button class="btn sm" id="kCancel">Cancel</button><button class="btn sm primary" id="kFinish" disabled>Finish</button></div>
+    <div class="kpanel ${innerWidth < 900 ? "" : "open"}" id="kPanel">
+      <button class="khandle" id="kHandle" aria-label="Show or hide the panel"><span></span></button>
+      <div class="kstats">
+        <div><b>${stats.doors}</b><small>doors today</small></div><div><b>${stats.talked}</b><small>talked</small></div>
+        <div><b>${stats.estimates}</b><small>estimates</small></div><div><b>${stats.sold}</b><small>sold</small></div>
+        <div><b>${stats.perHour ? stats.perHour.toFixed(1) : "–"}</b><small>doors / hour</small></div><div><b id="kMiles">${(X.trackLength(myTrack) / 1609.34).toFixed(1)}</b><small>miles walked</small></div>
+      </div>
+      <div class="kbody">
+        <div class="row" style="gap:8px"><button class="btn sm primary" id="kDrawBtn">${ic("edit")}Draw an area</button><span class="small muted">Tap a house on the map to mark it.</span></div>
+        <div class="pgrp">Show</div>
+        <div class="chips">${Object.entries(X.KNOCK).map(([k, s2]) => `<button class="chip kf ${show[k] ? "on" : ""}" data-kf="${k}"><i class="kdot" style="background:${s2.color}"></i>${s2.label} <span class="n">${D.pins.filter((p) => p.status === k).length || ""}</span></button>`).join("")}
+          <button class="chip kf ${show.areas ? "on" : ""}" data-kf="areas">${ic("map")}Areas</button></div>
+        ${comeBack.length ? `<div class="pgrp">Come back (${comeBack.length})</div><div class="list">${comeBack.slice(0, 12).map((p) => `<div class="li" data-pin="${p.id}"><i class="kdot" style="background:${X.KNOCK.come_back.color}"></i><div class="main"><div class="t">${esc(p.address || "House")}</div>
+          <div class="s">${p.come_back ? (p.come_back < today ? "overdue · " : "") + X.niceDate(p.come_back) : "no date"}${p.note ? " · " + esc(p.note) : ""}</div></div></div>`).join("")}</div>` : ""}
+        <div class="pgrp">Areas (${D.areas.length})</div>
+        ${D.areas.length ? `<div class="list">${D.areas.slice().sort((a, b) => (a.status === b.status ? ((a.date || "") < (b.date || "") ? 1 : -1) : a.status === "planned" ? -1 : 1)).map((a) => {
+          const emp = a.assignee && D.employees.find((e) => e.id === a.assignee);
+          return `<div class="li" data-area="${a.id}"><i class="kdot sq" style="background:${a.status === "planned" ? "var(--core)" : "var(--acc)"};opacity:${a.status === "planned" ? 1 : 0.4 + 0.6 * X.areaFreshness(a, today)}"></i><div class="main"><div class="t">${esc(a.name || "Area")}</div>
+            <div class="s">${a.status === "planned" ? "Planned " + (a.date ? X.niceDate(a.date) : "") + (emp ? " · " + esc(X.empName(emp)) : "") : "Knocked " + (a.date ? ago(a.date) : "")}</div></div></div>`; }).join("")}</div>`
+          : `<div class="small muted">Draw an area to mark a neighbourhood as knocked, or plan one for a future day.</div>`}
+        <div class="small muted kattrib" id="kEngine"></div>
+      </div>
+    </div>
+  </div>`;
+  paintIcons(v);
+  KN = { v, layers: { pins: new Map(), areas: [], track: null, me: null, acc: null, draft: null, draftDots: [] }, show, drawing: null, watch: null, tracking: false, pending: [], lastPt: null, flushT: null };
+  (async () => {
+    let E;
+    try { E = await mapEngine(); } catch (e) { $("#kmap", v).innerHTML = emptyBox("map", "The map couldn't load", esc(e.message)); paintIcons(v); return; }
+    if (!document.body.contains(v)) return;
+    const map = E.create($("#kmap", v), saved ? saved.c : HOME, saved ? saved.z : 16);
+    KN.E = E; KN.map = map;
+    $("#kEngine", v).textContent = E.name === "google" ? "Map: Google Maps" : "Map: OpenStreetMap (free). Add a Google Maps key in Settings for satellite view.";
+    if (E.satellite) { const b = $("#kLayer", v); b.hidden = false; let sat = false; b.onclick = () => { sat = !sat; map.setLayer(sat ? "satellite" : "map"); b.querySelector("span").textContent = sat ? "Map" : "Satellite"; b.classList.toggle("on", sat); }; }
+    map.onMove((c, z) => { try { localStorage.setItem(KV_KEY, JSON.stringify({ c, z })); } catch {} });
+    map.onClick((p) => { if (KN.drawing) return addDrawPoint(p); newPinSheet(p); });
+    drawAreas(); drawPins(); drawTrack(myTrack);
+    if (!saved) locate(true);
+    geocodeCustomers();
+  })();
+  $("#kHandle", v).onclick = () => $("#kPanel", v).classList.toggle("open");
+  $("#kLocate", v).onclick = () => locate(true);
+  $("#kTrack", v).onclick = () => toggleTracking();
+  $("#kDrawBtn", v).onclick = () => startDraw();
+  $("#kUndo", v).onclick = () => { if (KN.drawing) { KN.drawing.pop(); drawDraft(); } };
+  $("#kCancel", v).onclick = () => stopDraw();
+  $("#kFinish", v).onclick = () => { const path = KN.drawing.slice(); stopDraw(); areaSheet({ id: X.uuid(), name: "", path, status: "knocked", date: TODAY, assignee: null, notes: "" }, true); };
+  $("#kSearch", v).onsubmit = async (e) => { e.preventDefault(); const q = $("#kQ", v).value.trim(); if (!q || !KN.E) return;
+    const p = await KN.E.geocode(/utah|ut\b|\d{5}/i.test(q) ? q : q + ", Utah"); if (p) { KN.map.setView(p, 18); $("#kQ", v).blur(); } else toast("Couldn't find that address.", true); };
+  v.addEventListener("click", (e) => {
+    const f = e.target.closest("[data-kf]"); if (f) { const k = f.dataset.kf; KN.show[k] = !KN.show[k]; f.classList.toggle("on", KN.show[k]); try { localStorage.setItem("vitra.knockShow", JSON.stringify(KN.show)); } catch {} k === "areas" ? drawAreas() : drawPins(); return; }
+    const pn = e.target.closest("[data-pin]"); if (pn) { const p = D.pins.find((x) => x.id === pn.dataset.pin); if (p) { KN.map && KN.map.setView([p.lat, p.lng], 19); pinSheet(p); } return; }
+    const ar = e.target.closest("[data-area]"); if (ar) { const a = D.areas.find((x) => x.id === ar.dataset.area); if (a) { KN.map && KN.map.fit(a.path); areaSheet(a); } return; }
+  });
+}
+function refreshKnockPanel() {   // today's numbers after a knock, without rebuilding the map
+  if (!KN || !KN.v || !document.body.contains(KN.v)) return;
+  const st = X.knockStats(D.pins, TODAY, TZ), cells = $$(".kstats b", KN.v);
+  if (cells.length >= 5) { cells[0].textContent = st.doors; cells[1].textContent = st.talked; cells[2].textContent = st.estimates; cells[3].textContent = st.sold; cells[4].textContent = st.perHour ? st.perHour.toFixed(1) : "–"; }
+  for (const c of $$("[data-kf]", KN.v)) { const n = c.querySelector(".n"); if (n) n.textContent = D.pins.filter((p) => p.status === c.dataset.kf).length || ""; }
+}
+function knockAlive() { return KN && KN.v && document.body.contains(KN.v) && KN.map; }
+function drawPins() {
+  if (!knockAlive()) return;
+  for (const m of KN.layers.pins.values()) m.remove();
+  KN.layers.pins.clear();
+  for (const p of D.pins) if (KN.show[p.status] !== false) KN.layers.pins.set(p.id, KN.map.marker([p.lat, p.lng], { color: X.KNOCK[p.status].color, size: 8, z: 2 }, () => pinSheet(D.pins.find((x) => x.id === p.id))));
+  if (KN.show.customer !== false) for (const c of D.people) if (c.kind === "customer" && c.status === "active" && c.lat && c.lng && !D.pins.some((p) => p.person === c.id))
+    KN.layers.pins.set("c-" + c.id, KN.map.marker([c.lat, c.lng], { color: X.KNOCK.customer.color, size: 7, ring: "#0b1730", z: 1 }, () => customerOnMap(c)));
+}
+function drawAreas() {
+  if (!knockAlive()) return;
+  for (const a of KN.layers.areas) a.remove();
+  KN.layers.areas = [];
+  if (!KN.show.areas) return;
+  const css = getComputedStyle(document.documentElement);
+  const acc = (css.getPropertyValue("--th-a-hex") || "#ff4fb8").trim(), core = "rgb(" + (css.getPropertyValue("--th-core1") || "79,216,255").trim() + ")";
+  for (const a of D.areas) if (a.path && a.path.length > 2) {
+    const fresh = X.areaFreshness(a, TODAY);
+    KN.layers.areas.push(a.status === "planned"
+      ? KN.map.polygon(a.path, { stroke: core, fill: core, fillOpacity: 0.08, dashed: true, weight: 2 })
+      : KN.map.polygon(a.path, { stroke: acc, fill: acc, fillOpacity: 0.08 + 0.22 * fresh, weight: 1.5 }));
+  }
+}
+function drawTrack(points) {
+  if (!knockAlive()) return;
+  const path = points.map((p) => [p[0], p[1]]);
+  if (KN.layers.track) KN.layers.track.setPath(path); else if (path.length > 1) KN.layers.track = KN.map.line(path, { color: "#38bdf8", weight: 4, opacity: 0.75 });
+}
+function locate(pan) {
+  if (!navigator.geolocation) return toast("This device can't share its location.", true);
+  if (KN.watch == null) KN.watch = navigator.geolocation.watchPosition((pos) => {
+    if (!knockAlive()) { navigator.geolocation.clearWatch(KN.watch); return; }
+    const p = [pos.coords.latitude, pos.coords.longitude], acc = Math.min(200, pos.coords.accuracy || 30);
+    if (KN.layers.me) { KN.layers.me.move(p); KN.layers.acc.move(p, acc); }
+    else { KN.layers.acc = KN.map.circle(p, acc, { color: "#38bdf8" }); KN.layers.me = KN.map.marker(p, { color: "#38bdf8", size: 7, ring: "#fff", ringW: 3, z: 5 }); }
+    if (KN.panNext) { KN.map.setView(p, 18); KN.panNext = false; }
+    if (KN.tracking && acc < 50 && (!KN.lastPt || X.metres(KN.lastPt, p) > 8)) {
+      KN.lastPt = p; const pt = [+p[0].toFixed(6), +p[1].toFixed(6), Math.round(Date.now() / 1000)];
+      KN.pending.push(pt);
+      const tr = D.tracks.find((t) => t.day === TODAY && t.who === "ben") || (D.tracks.push({ id: TODAY + "|ben", day: TODAY, who: "ben", points: [] }), D.tracks[D.tracks.length - 1]);
+      tr.points.push(pt); drawTrack(tr.points);
+      const el = $("#kMiles", KN.v); if (el) el.textContent = (X.trackLength(tr.points) / 1609.34).toFixed(1);
+    }
+  }, (err) => toast(err.code === 1 ? "Location is blocked for this site. Allow it in the browser to see where you are." : "Couldn't get your location.", true), { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
+  KN.panNext = !!pan;
+}
+function toggleTracking() {
+  KN.tracking = !KN.tracking;
+  $("#kTrack", KN.v).classList.toggle("on", KN.tracking);
+  $("#kTrack", KN.v).querySelector("span").textContent = KN.tracking ? "Tracking…" : "Track walk";
+  if (KN.tracking) { locate(false); toast("Recording your walk while this page is open."); KN.flushT = setInterval(flushTrack, 30000); }
+  else { clearInterval(KN.flushT); flushTrack(); }
+}
+async function flushTrack() {
+  if (!KN || !KN.pending.length) return;
+  const pts = KN.pending.splice(0);
+  try { await api("track", { day: TODAY, who: "ben", points: pts }); } catch { KN.pending.unshift(...pts); }
+}
+window.addEventListener("hashchange", () => { if (KN && KN.watch != null && !/^#\/knock/.test(location.hash)) { navigator.geolocation.clearWatch(KN.watch); KN.watch = null; clearInterval(KN.flushT); flushTrack(); } });
+function startDraw() {
+  if (!knockAlive()) return;
+  KN.drawing = [];
+  $("#kDraw", KN.v).hidden = false; $("#kPanel", KN.v).classList.remove("open");
+  drawDraft();
+}
+function addDrawPoint(p) { KN.drawing.push(p); drawDraft(); }
+function drawDraft() {
+  const d = KN.drawing || [];
+  for (const m of KN.layers.draftDots) m.remove();
+  KN.layers.draftDots = d.map((p) => KN.map.marker(p, { color: "#fff", size: 5, ring: "#0b1730", z: 6 }));
+  if (KN.layers.draft) { KN.layers.draft.remove(); KN.layers.draft = null; }
+  if (d.length > 1) KN.layers.draft = KN.map.line(d.length > 2 ? [...d, d[0]] : d, { color: "#fff", weight: 2, dashed: true });
+  $("#kDrawN", KN.v).textContent = d.length ? `${d.length} corner${d.length > 1 ? "s" : ""}${d.length < 3 ? " · tap at least 3" : ""}` : "Tap the corners on the map";
+  $("#kFinish", KN.v).disabled = d.length < 3;
+}
+function stopDraw() {
+  KN.drawing = null;
+  for (const m of KN.layers.draftDots) m.remove(); KN.layers.draftDots = [];
+  if (KN.layers.draft) { KN.layers.draft.remove(); KN.layers.draft = null; }
+  if (KN.v) $("#kDraw", KN.v).hidden = true;
+}
+
+const RESULTS = ["not_home", "not_interested", "come_back", "estimate", "sold", "do_not_knock"];
+const QUICK = new Set(["not_home", "not_interested", "do_not_knock"]);   // one tap saves; the others ask for a name / date first
+function resultButtons(cur) {
+  return `<div class="kres">${RESULTS.map((k) => `<button type="button" data-res="${k}" class="${k === cur ? "on" : ""}" style="--c:${X.KNOCK[k].color}"><i class="kdot" style="background:${X.KNOCK[k].color}"></i>${X.KNOCK[k].label}</button>`).join("")}</div>`;
+}
+function newPinSheet(p) {
+  const temp = KN.map.marker(p, { color: "#fff", size: 9, ring: "#0b1730", z: 7 });
+  const pin = { id: X.uuid(), lat: +p[0].toFixed(6), lng: +p[1].toFixed(6), address: "", status: "not_home", note: "", person: null, come_back: null, visits: [], by: "ben" };
+  pinForm(pin, true, () => temp.remove());
+  KN.E.reverse(p).then((addr) => { const i = $("#pAddr"); if (i && !i.value) { i.value = addr; pin.address = addr; } const h = $("#pFinding"); if (h) h.remove(); });
+}
+function pinSheet(pin) { if (pin) pinForm(JSON.parse(JSON.stringify(pin)), false); }
+function pinForm(pin, isNew, onClose) {
+  const person = pin.person && I.people.get(pin.person);
+  let chosen = null;
+  openSheet(isNew ? "Mark this house" : (pin.address || "House"), `
+    <label class="f">Address${isNew ? ' <span class="small muted" id="pFinding">finding it…</span>' : ""}<input id="pAddr" value="${esc(pin.address || "")}" placeholder="House number and street"></label>
+    ${!isNew ? `<div class="row"><span class="badge" style="background:${X.KNOCK[pin.status].color}33;color:${X.KNOCK[pin.status].color}">${X.KNOCK[pin.status].label}</span>${person ? `<a class="btn sm" href="#/person/${person.id}">${ic("users")}${esc(X.nameOf(person))}</a>` : ""}</div>` : ""}
+    <div><div class="lbl">${isNew ? "What happened?" : "Knocked again? What happened?"}</div>${resultButtons(isNew ? null : null)}</div>
+    <div id="pMore" hidden class="stack" style="gap:12px">
+      <div class="fgrid"><label class="f">Name<input id="pName" placeholder="First and last name" value="${esc(person ? X.nameOf(person) : "")}"></label><label class="f">Phone<input id="pPhone" type="tel" value="${esc(person && person.phones[0] ? person.phones[0].n : "")}"></label></div>
+      <label class="f" id="pWhenL" hidden>Come back on<input type="date" id="pWhen" value="${esc(pin.come_back || X.addDays(TODAY, 2))}"></label>
+    </div>
+    <label class="f">Note<input id="pNote" value="${esc(pin.note || "")}" placeholder="e.g. big dog, ask for Sarah, wants a quote in spring"></label>
+    ${pin.visits.length ? `<div><div class="lbl">History</div><div class="list">${pin.visits.slice().reverse().map((vv) => `<div class="li" style="cursor:default"><i class="kdot" style="background:${(X.KNOCK[vv.status] || X.KNOCK.not_home).color}"></i><div class="main"><div class="t">${(X.KNOCK[vv.status] || {}).label || vv.status}</div>
+      <div class="s">${new Date(vv.at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}${vv.note ? " · " + esc(vv.note) : ""}</div></div></div>`).join("")}</div></div>` : ""}
+    <div class="sheetfoot">${!isNew ? `<button class="btn bad" id="pDel">${ic("trash")}</button>` : ""}<div class="spacer"></div><button class="btn primary" id="pSave" hidden>${ic("check")}Save</button>${!isNew ? `<button class="btn" id="pNoteSave">Save note</button>` : ""}</div>`, (b) => {
+    const commit = async (status) => {
+      const now = new Date().toISOString(), note = $("#pNote", b).value.trim();
+      const row = { ...pin, address: $("#pAddr", b).value.trim(), status, note, by: "ben", come_back: status === "come_back" ? ($("#pWhen", b).value || null) : null,
+        visits: [...pin.visits, { at: now, status, by: "ben", ...(note && note !== pin.note ? { note } : {}) }] };
+      // a name or an estimate makes them a person in the CRM (prospect; a sale makes a customer)
+      const nm = $("#pName", b).value.trim(), ph = $("#pPhone", b).value.trim();
+      if ((nm || ph || status === "estimate" || status === "sold") && !row.person) {
+        const parts = nm.split(/\s+/);
+        const city = (row.address.split(",")[1] || "").trim();
+        const pr = { id: X.uuid(), kind: status === "sold" ? "customer" : "prospect", type: "residential", first: parts[0] || "", last: parts.slice(1).join(" "), company: "",
+          phones: ph ? [{ n: ph, label: "mobile" }] : [], emails: [], address: row.address.split(",")[0].trim(), city, state: "UT", zip: "", notes: note, source: "Door knocking",
+          status: "active", created: TODAY, lat: row.lat, lng: row.lng };
+        if (!pr.first && !pr.last) pr.first = row.address.split(",")[0].trim() || "Door knock";
+        await save("people", pr); row.person = pr.id;
+      } else if (row.person && status === "sold") { const pp = I.people.get(row.person); if (pp && pp.kind !== "customer") await save("people", { ...pp, kind: "customer", status: "active" }); }
+      await savePin(row);
+      if (onClose) onClose();
+      toast(`${X.KNOCK[status].label}${row.address ? " · " + row.address.split(",")[0] : ""}`);
+      if (status === "estimate") return leaveSheet("estimate/new?person=" + row.person);
+      refreshKnockPanel();
+      if (status === "sold") { sheetPushed = false; closeSheet(true); history.replaceState(null, ""); drawPins(); return newJob({ person: row.person, date: X.nextOpenDay(D, I, X.addDays(TODAY, 1)) }); }
+      closeSheet(); drawPins();
+    };
+    b.addEventListener("click", (e) => {
+      const r = e.target.closest("[data-res]"); if (!r) return;
+      const k = r.dataset.res; chosen = k;
+      $$("[data-res]", b).forEach((x) => x.classList.toggle("on", x === r));
+      if (QUICK.has(k)) return busy(r, () => commit(k));
+      $("#pMore", b).hidden = false; $("#pWhenL", b).hidden = k !== "come_back";
+      const sv = $("#pSave", b); sv.hidden = false; sv.innerHTML = ic("check") + (k === "estimate" ? "Save and write the estimate" : k === "sold" ? "Save and book the job" : "Save");
+      (k === "come_back" ? $("#pWhen", b) : $("#pName", b)).focus();
+    });
+    $("#pSave", b).onclick = (e) => busy(e.currentTarget, () => commit(chosen));
+    if ($("#pNoteSave", b)) $("#pNoteSave", b).onclick = (e) => busy(e.currentTarget, async () => { await savePin({ ...pin, note: $("#pNote", b).value.trim(), address: $("#pAddr", b).value.trim() }); toast("Saved."); closeSheet(); drawPins(); });
+    if ($("#pDel", b)) $("#pDel", b).onclick = (e) => { if (!confirm("Remove this pin and its history?")) return; busy(e.currentTarget, async () => { await remove("pins", pin.id); closeSheet(); drawPins(); }); };
+  }, onClose);
+}
+function customerOnMap(c) {
+  const next = X.nextJob(I, c.id, TODAY), plan = X.activePlan(I, c.id, TODAY);
+  openSheet(X.nameOf(c), `<div class="row"><span class="badge core">customer</span>${plan ? `<span class="badge core">${ic("repeat")} ${esc(X.freqText(plan))}</span>` : '<span class="badge">one-time</span>'}</div>
+    <div class="small muted">${esc(X.addressOf(c))}</div><div>${next ? `Next job: <b>${X.niceDate(next.date, { year: true })}</b>` : "Nothing scheduled."}</div>
+    <div class="sheetfoot"><div class="spacer"></div><button class="btn primary" id="cOpen">Open customer</button></div>`, (b) => { $("#cOpen", b).onclick = () => leaveSheet("person/" + c.id); });
+}
+function areaSheet(a, isNew = false) {
+  const inside = D.pins.filter((p) => a.path && a.path.length > 2 && X.inPolygon([p.lat, p.lng], a.path));
+  const st = X.knockStats(inside, a.date || TODAY, TZ);
+  openSheet(isNew ? "New area" : (a.name || "Area"), `
+    <label class="f">Name<input id="aName" value="${esc(a.name || "")}" placeholder="e.g. Sweetwater Rd loop"></label>
+    <div><div class="lbl">This area is</div><div class="seg" id="aSt"><button type="button" data-st="knocked" class="${a.status === "knocked" ? "on" : ""}">Knocked</button><button type="button" data-st="planned" class="${a.status === "planned" ? "on" : ""}">Planned</button></div></div>
+    <div class="fgrid"><label class="f"><span id="aDateL">${a.status === "planned" ? "Planned for" : "Knocked on"}</span><input type="date" id="aDate" value="${esc(a.date || TODAY)}"></label>
+      <label class="f">Who<select class="inp" id="aWho"><option value="">Me</option>${D.employees.filter((e) => e.status === "active").map((e) => `<option value="${e.id}" ${e.id === a.assignee ? "selected" : ""}>${esc(X.empName(e))}</option>`).join("")}</select></label></div>
+    <label class="f">Notes<input id="aNotes" value="${esc(a.notes || "")}"></label>
+    <div class="small muted">${inside.length} marked house${inside.length === 1 ? "" : "s"} inside${inside.length ? ` · ${inside.filter((p) => p.status === "estimate").length} estimates · ${inside.filter((p) => p.status === "sold").length} sold` : ""}.</div>
+    <div class="sheetfoot">${!isNew ? `<button class="btn bad" id="aDel">${ic("trash")}</button>${a.status === "planned" ? `<button class="btn good" id="aDone">${ic("check")}Knocked it today</button>` : ""}` : ""}<div class="spacer"></div><button class="btn primary" id="aSave">${ic("check")}Save area</button></div>`, (b) => {
+    let status = a.status;
+    $("#aSt", b).onclick = (e) => { const x = e.target.closest("[data-st]"); if (!x) return; status = x.dataset.st; $$("[data-st]", b).forEach((y) => y.classList.toggle("on", y === x)); $("#aDateL", b).textContent = status === "planned" ? "Planned for" : "Knocked on"; };
+    const finish = async (row) => { await save("areas", row); closeSheet(); drawAreas(); toast("Area saved."); if (KN && KN.v) render(); };
+    $("#aSave", b).onclick = (e) => busy(e.currentTarget, () => finish({ ...a, name: $("#aName", b).value.trim() || "Area", status, date: $("#aDate", b).value || TODAY, assignee: $("#aWho", b).value || null, notes: $("#aNotes", b).value.trim() }));
+    if ($("#aDone", b)) $("#aDone", b).onclick = (e) => busy(e.currentTarget, () => finish({ ...a, status: "knocked", date: TODAY }));
+    if ($("#aDel", b)) $("#aDel", b).onclick = (e) => { if (!confirm("Delete this area? Its pins stay.")) return; busy(e.currentTarget, async () => { await remove("areas", a.id); closeSheet(); drawAreas(); render(); }); };
+  });
+}
+// customers with an address get a spot on the map (Google only: a few per visit, saved so it happens once)
+let geoBusy = false;
+async function geocodeCustomers() {
+  if (geoBusy || !KN || !KN.E || KN.E.name !== "google" || DEMO) return;
+  geoBusy = true;
+  try {
+    const todo = D.people.filter((p) => p.kind === "customer" && p.status === "active" && p.lat == null && p.address).slice(0, 25);
+    for (const p of todo) {
+      const ll = await KN.E.geocode(X.addressOf(p) + (p.state ? "" : ", UT"));
+      if (ll) { p.lat = ll[0]; p.lng = ll[1]; await api("geo", { id: p.id, lat: ll[0], lng: ll[1] }).catch(() => {}); }
+      else { p.lat = 0; p.lng = 0; }   // not found: don't try again this visit
+      await new Promise((r) => setTimeout(r, 250));
+    }
+    reindex(); drawPins();
+  } finally { geoBusy = false; }
 }
 
 // ------------------------------------------------------------------ Books (2026-11-21): QuickBooks-style bookkeeping
@@ -3729,7 +4235,7 @@ function demoBooks(route, b) {
   throw new Error("Not in the demo.");
 }
 
-const VIEWS = { books: viewBooks, reports: viewReports, banking: viewBanking, employees: viewEmployees, employee: viewEmployee, permissions: viewPermissions, dashboard: viewDashboard, calendar: viewCalendar, prospects: viewProspects, customers: viewCustomers, person: viewPerson,
+const VIEWS = { knock: viewKnock, books: viewBooks, reports: viewReports, banking: viewBanking, employees: viewEmployees, employee: viewEmployee, permissions: viewPermissions, dashboard: viewDashboard, calendar: viewCalendar, prospects: viewProspects, customers: viewCustomers, person: viewPerson,
   estimates: viewEstimates, estimate: viewEstimate, invoices: viewInvoices, invoice: viewInvoice, search: viewSearch, settings: viewSettings };
 
 // ------------------------------------------------------------------ demo data (?demo=1): made-up people, nothing leaves the page
@@ -3767,7 +4273,13 @@ function demoData() {
     { id: "d-emp1", first: "Marcus", last: "Reyes", phone: "(801) 555-0190", email: "marcus@example.com", role: "lead", status: "active", pay_type: "hourly", pay_rate: 22, commission: 0, start: "2026-03-02", address: "", emergency: "", color: "196", notes: "Runs crew 1.", trainings: X.DEFAULT_TRAININGS.map((n, i) => ({ name: n, done: i < 4 ? "2026-04-01" : null })), overrides: {} },
     { id: "d-emp2", first: "Kayla", last: "Brooks", phone: "(801) 555-0191", email: "", role: "sales", status: "active", pay_type: "commission", pay_rate: 0, commission: 12, start: "2026-06-15", address: "", emergency: "", color: "328", notes: "", trainings: X.DEFAULT_TRAININGS.map((n, i) => ({ name: n, done: i === 5 ? "2026-06-20" : null })), overrides: { see_contact: true } },
   ];
-  return { people: P, services: svc, estimates: E, plans: PL, jobs: J, invoices: INV, payments: PAY, settings: { business: { name: "VITRA Window Washing" } }, employees: EMP, roles: X.normalizeRoles(null), today: t };
+  return { people: P, services: svc, estimates: E, plans: PL, jobs: J, invoices: INV, payments: PAY, settings: { business: { name: "VITRA Window Washing" } }, employees: EMP, roles: X.normalizeRoles(null), today: t,
+    pins: [[40.3172, -112.0121, "not_home"], [40.3174, -112.0113, "not_interested"], [40.3176, -112.0105, "come_back"], [40.3168, -112.0098, "estimate"], [40.3165, -112.0109, "sold"], [40.3163, -112.0119, "not_home"], [40.3179, -112.0127, "do_not_knock"]]
+      .map(([lat, lng, st], i) => ({ id: "d-pin" + i, lat, lng, address: `${3100 + i * 12} N Demo Way, Eagle Mountain`, status: st, note: "", person: st === "estimate" ? "d-p8" : null,
+        come_back: st === "come_back" ? X.addDays(t, 2) : null, visits: [{ at: new Date(Date.now() - (7 - i) * 9 * 60000).toISOString(), status: st, by: "ben" }], by: "ben" })),
+    areas: [{ id: "d-area1", name: "Demo Way loop", path: [[40.3185, -112.0135], [40.3185, -112.0090], [40.3158, -112.0090], [40.3158, -112.0135]], status: "knocked", date: X.addDays(t, -12), assignee: null, notes: "" },
+      { id: "d-area2", name: "Ranches east", path: [[40.3205, -112.0080], [40.3205, -112.0035], [40.3180, -112.0035], [40.3180, -112.0080]], status: "planned", date: X.addDays(t, 4), assignee: "d-emp2", notes: "" }],
+    tracks: [] };
 }
 let demoDb = null;
 function demoApi(route, b) {
@@ -3787,6 +4299,7 @@ function demoApi(route, b) {
     return { plan: b.plan, remove: r.remove, add: JSON.parse(JSON.stringify(r.add)) };
   }
   if (route === "settings") { if (b.settings) DB.settings = { ...DB.settings, ...b.settings }; return { settings: DB.settings }; }
+  if (route === "track" || route === "geo") return { ok: true };
   if (route === "roles") {
     const roles = X.normalizeRoles(b.roles);
     if (DB.employees.some((e) => !roles.some((r) => r.id === e.role))) throw new Error("Someone still has a role you removed. Give them another role first.");
