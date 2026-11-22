@@ -3970,7 +3970,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
     // "Business Goals by the end of <year>": a time-left bar that fills a little each day, then one card per
     // goal: a row of number boxes to tap as he hits each one (crossed off like his paper sheet), or a single
     // checkbox. Saved per year in the cloud (/jarvis/goals/biz, kv "biz-goals-<year>"); the gross goal also
-    // shows billed / collected for the year from the Customer Factor backup. Appended to goals.js by build.py.
+    // shows billed / collected for the year, live from Ben's own CRM (was the Customer Factor backup). Appended to goals.js by build.py.
     const BZ = { year: new Date().getFullYear(), goals: null, crm: null, error: "", saving: false };
     const range = (...parts) => parts.flatMap(([a, b, step]) => { const o = []; for (let v = a; v <= b; v += step) o.push(v); return o; });
     // Ben's sheet for 2026, as he'd crossed it off (gross through $65K, all 5 trainings); used until he saves his own
@@ -4054,7 +4054,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
           g.values.forEach((v, vi) => { h += `<button class="bbox${g.done.includes(vi) ? " on" : ""}${bonus(g, v) ? " over" : ""}" data-g="${gi}" data-v="${vi}"${bonus(g, v) ? ' title="Beyond the goal: bonus"' : ""}>${esc(fmtVal(g, v))}</button>`; });
           h += `</div>`;
         }
-        if (g.crm === "gross" && BZ.crm) h += `<div class="note">The Customer Factor (backup ${esc(MC.shortDate(BZ.crm.asOf))}): ${f0(BZ.crm.billed)} billed, ${f0(BZ.crm.collected)} collected in ${y}.</div>`;
+        if (g.crm === "gross" && BZ.crm) h += `<div class="note">From your CRM: ${f0(BZ.crm.billed)} billed, ${f0(BZ.crm.collected)} collected in ${y} so far.</div>`;
         h += `</div>`;
       });
       h += `<div class="btns"><button class="btn quiet" id="baddgoal">+ Add a goal</button></div>`;
@@ -4439,7 +4439,8 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
 
     // ---- Ask-first rules
     const RULE_ROWS = [["texts", "Texts", "\"Text Amber I'm on my way\""], ["emails", "Emails", "\"Email Charlie the invoice\""], ["calls", "Calls", "\"Call Amber\", \"you call the shop and ask...\""],
-      ["calendar", "Calendar", "\"Add the dentist Tuesday at 3\", moving and deleting events"], ["files", "Google Drive files", "Making, renaming, moving, trashing files"], ["mail", "Tidying email", "Drafts, archiving, marking read, trash"]];
+      ["calendar", "Calendar", "\"Add the dentist Tuesday at 3\", moving and deleting events"], ["files", "Google Drive files", "Making, renaming, moving, trashing files"], ["mail", "Tidying email", "Drafts, archiving, marking read, trash"],
+      ["crm", "Business CRM", "\"Book the Smiths Tuesday\", payments, marking jobs done, estimates won or lost"]];
     function renderRules() {
       const r = SP.rules;
       if (!r) { body.innerHTML = M.error ? `<div class="note err">${esc(M.error)}</div>` : `<div class="note">Loading…</div>`; return; }
@@ -4485,7 +4486,7 @@ return { PAYMENT_FORMS, parseDump, dateOf, compact, problem, nameOf, people, fin
     function spDemo(page, p) {
       SP.demo = SP.demo || { alerts: { people: ["Charlie"], muted: [], quiet: ["22:00", "06:30"], lead: 15, textsAt: "21:00", meetings: true, emails: true, texts: true },
         schedule: { briefing: { on: true, time: "05:30" }, recap: { on: true, time: "20:00" } }, facts: [{ id: "f1", text: "Amber is Ben's wife.", source: "asked", created_at: new Date().toISOString() }],
-        rules: { texts: "direct", emails: "direct", calls: "direct", calendar: "direct", files: "direct", mail: "direct" },
+        rules: { texts: "direct", emails: "direct", calls: "direct", calendar: "direct", files: "direct", mail: "direct", crm: "direct" },
         voice: { speed: 1, spoken: true, idle: 15, followup: 7, wake: "normal", place: { name: "Eagle Mountain, Utah" } } };
       const D = SP.demo, ok = (x) => Promise.resolve(JSON.parse(JSON.stringify(x)));
       if (page === "alerts") { Object.assign(D.alerts, p); return ok({ alerts: D.alerts }); }
@@ -7911,17 +7912,17 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
       });
     }
 
-    // Business book: what customers owe (2026-11-19). From the Customer Factor backup (read-only here)
+    // Business book: what customers owe (2026-11-19). Live from Ben's own CRM since 2026-11-21 (read-only here)
     // plus any Ben adds by hand (kind "receivable"); a switch counts them in the business total.
     function invoicesCard() {
       const crm = (d().invoices && d().invoices.items) || [], byHand = d().accounts.filter((a) => a.kind === "receivable" && !a.hidden);
       const total = crm.reduce((s, i) => s + i.amount, 0) + byHand.reduce((s, a) => s + +a.balance, 0);
       const on = !!(d().settings && d().settings.invoicesInTotal);
       let h = `<div class="sect"><span class="label">Unpaid invoices</span><span class="note" style="margin:0">${f(total)}</span></div><div class="card">`;
-      for (const i of crm) h += `<div class="row"><div class="grow"><div class="name">${esc(i.name)}</div><div class="meta">#${esc(i.num)} · ${esc(MC.shortDate(i.date))} · ${i.days} days · from The Customer Factor</div></div><div class="amt">${f(i.amount)}</div></div>`;
+      for (const i of crm) h += `<div class="row"><div class="grow"><div class="name">${esc(i.name)}</div><div class="meta">#${esc(i.num)} · ${esc(MC.shortDate(i.date))} · ${i.days} days · from your CRM</div></div><div class="amt">${f(i.amount)}</div></div>`;
       for (const a of byHand) h += `<div class="row click" data-acct="${esc(a.id)}"><div class="grow"><div class="name">${esc(a.name)}</div><div class="meta">Added by hand · tap to change or mark paid</div></div><div class="amt">${f(+a.balance)}</div></div>`;
-      if (!crm.length && !byHand.length) h += `<div class="empty">Nothing owed. Add one below${d().invoices ? "" : ", or upload a Customer Factor backup (menu > Customers)"}.</div>`;
-      if (d().invoices && crm.length) h += `<div class="note">Customer Factor invoices as of ${esc(MC.shortDate(d().invoices.asOf))}; they update with each upload.</div>`;
+      if (!crm.length && !byHand.length) h += `<div class="empty">Nothing owed. Add one below${d().invoices ? "" : " (the CRM couldn't be reached just now)"}.</div>`;
+      if (d().invoices && crm.length) h += `<div class="note">Live from your CRM: record a payment there (or tell Jarvis) and it drops off here.</div>`;
       h += `<label class="check" style="margin-top:10px"><input type="checkbox" id="minv" ${on ? "checked" : ""}> Count unpaid invoices in the business total</label>
         <div class="btns"><button class="btn quiet" id="maddinv">+ Add an unpaid invoice</button></div></div>`;
       return { html: h, total, on };
