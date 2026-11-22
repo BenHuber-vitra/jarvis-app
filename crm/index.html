@@ -2009,6 +2009,20 @@ return { DEFAULT_CATEGORIES, TYPE_NAMES, categories, lc, ruleMatches, suggest, r
 
 const TZ = Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Denver";
 const DEMO = new URLSearchParams(location.search).has("demo");
+// Feedback & Bugs (2026-11-22): errors on this page become draft bugs in Jarvis's Auto tab (Ben's devices only:
+// employees can't reach the feedback list, so their errors are just ignored by the server). Keys are scrubbed there.
+{ const sent = new Map();
+  const report = async (where, message, stack) => {
+    message = String(message || "").trim();
+    if (DEMO || !message || /failed to fetch|networkerror|load failed|aborted|resizeobserver|script error/i.test(message)) return;
+    const k = where + message.replace(/\d+/g, "#"); if (Date.now() - (sent.get(k) || 0) < 30000 || sent.size > 25) return; sent.set(k, Date.now());
+    try { const h = await authHeaders(); if (!h || h["x-crm-token"]) return;
+      await fetch(FN + "/feedback/auto", { method: "POST", headers: { ...h, "content-type": "application/json" },
+        body: JSON.stringify({ where, message, stack: String(stack || "").slice(0, 1500), page: "VITRA CRM " + location.hash, device: IS_LAPTOP ? "laptop" : "phone" }) }); } catch {}
+  };
+  addEventListener("error", (e) => report("crm page", (e.error && e.error.message) || e.message, e.error && e.error.stack));
+  addEventListener("unhandledrejection", (e) => report("crm page (promise)", (e.reason && e.reason.message) || String(e.reason), e.reason && e.reason.stack));
+}
 let TODAY = X.localDay(TZ);
 let D = null, I = null;
 let ME = { owner: true, id: "ben", name: "Ben Huber", role: "owner", perms: {} };

@@ -1435,6 +1435,77 @@
      (sheets, tooltip, menu, overlays) are left alone. */
   body.cov-talk > :not(#money):not(#msheet):not(#mtip):not(#drawer):not(#scrim):not(#fitlive):not(#playgame):not(#tapany):not(#unpaired):not(#signin):not(script):not(style) { visibility: hidden; }
   body.cov-money #money.on > * { visibility: hidden; }
+
+  /* ---------------------------------------------------------- Feedback & Bugs (2026-11-22): theme colours only */
+  #money .fbform { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
+  #money .fbform label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; letter-spacing: 0.06em; }
+  #money .fbform .label { margin-top: 14px; }
+  #money .fbform input, #money .fbform textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: rgba(var(--th-input, 2,10,20),0.7); color: var(--text, #fff); resize: vertical; }
+  #money .fbform input:focus, #money .fbform textarea:focus { outline: none; border-color: rgba(var(--th-a),0.8); box-shadow: 0 0 0 3px rgba(var(--th-a),0.18); }
+  #money .fbsend { width: 100%; padding: 13px; font-size: 17px; margin-top: 6px; }
+  #money .fbshots, #msheet .fbshots { display: flex; gap: 10px; flex-wrap: wrap; margin: 4px 0 10px; }
+  #money .fbthumb { position: relative; width: 78px; height: 78px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); }
+  #money .fbthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  #money .fbthumb button { position: absolute; top: 3px; right: 3px; width: 24px; height: 24px; border-radius: 50%; border: 0; background: rgba(0,0,0,0.65); color: #fff; font-size: 12px; cursor: pointer; }
+  #money .fbform label.fbadd, #money .fbadd { width: 78px; height: 78px; border-radius: 10px; border: 1px dashed rgba(var(--th-a),0.6); display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px; color: var(--th-pale, #fff); font-size: 12px; cursor: pointer; margin: 0 !important; letter-spacing: 0 !important; background: rgba(var(--th-a),0.08); }
+  #money .fbadd input { display: none; }
+  #money .fbadd svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
+  #money .fbctx .meta { margin-top: 8px; white-space: normal; }
+  .fbctxl { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: 14px; border-top: 1px solid var(--grid, rgba(255,255,255,0.06)); }
+  .fbctxl:first-of-type { border-top: 0; } .fbctxl span { color: var(--ink3, #8aa); flex: none; } .fbctxl b { font-weight: 500; text-align: right; color: var(--ink, #fff); word-break: break-word; }
+  #money .fbsent { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-color: rgba(var(--th-a),0.6); }
+  #money .fbsent .meta { white-space: normal; }
+  #money .fbchips { display: flex; gap: 6px; overflow-x: auto; padding: 2px 0 10px; scrollbar-width: none; }
+  #money .fbchips::-webkit-scrollbar { display: none; }
+  #money .fbchip { flex: none; padding: 6px 13px; border-radius: 16px; border: 1px solid var(--line); background: rgba(0,0,0,0.18); color: var(--ink2); font: inherit; font-size: 14px; cursor: pointer; }
+  #money .fbchip.on { background: var(--th-a-hex); border-color: var(--th-a-hex); color: var(--th-on, #02060d); font-weight: 600; }
+  #money .fblist { padding-top: 4px; padding-bottom: 4px; }
+  #money .fblist .row:first-child { border-top: 0; }
+  #money .fbrow.pinned .name { color: var(--th-pale, #fff); }
+  .fbpin { color: #ff6b6b; font-size: 11px; margin-right: 6px; vertical-align: 2px; }
+  .fbpills { display: flex; gap: 5px; align-items: center; justify-content: flex-end; flex-wrap: wrap; flex: none; max-width: 46%; }
+  .fbpill { font-size: 12px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line); color: var(--ink2, #cde); white-space: nowrap; }
+  .fbpill.s-open { border-color: rgba(var(--th-a),0.7); color: var(--th-pale, #fff); background: rgba(var(--th-a),0.16); }
+  .fbpill.s-in_progress { border-color: rgba(255,190,70,0.7); color: #ffd27a; background: rgba(255,190,70,0.12); }
+  .fbpill.s-fixed { border-color: rgba(61,220,132,0.7); color: #7ff0b0; background: rgba(61,220,132,0.12); }
+  .fbpill.s-wont_fix, .fbpill.s-dismissed { color: var(--ink3, #899); }
+  .fbpill.s-draft { border-style: dashed; color: var(--ink2, #cde); }
+  .fbpill.p-urgent { border-color: rgba(255,107,107,0.75); color: #ff9c9c; background: rgba(255,107,107,0.13); }
+  .fbpill.p-low { color: var(--ink3, #899); }
+  .fbpill.fbcommit { font-family: ui-monospace, Consolas, monospace; font-size: 11px; }
+  .fbico { width: 32px; height: 32px; flex: none; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; vertical-align: middle;
+    background: rgba(var(--th-a),0.14); border: 1px solid rgba(var(--th-a),0.35); }
+  .fbico svg { width: 19px; height: 19px; fill: none; stroke: var(--th-pale, #fff); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .fbico.t-idea { background: rgba(var(--th-a2, 255,200,80),0.14); border-color: rgba(var(--th-a2, 255,200,80),0.4); }
+  .fbico.t-tweak { background: rgba(var(--th-g2, 120,200,255),0.14); border-color: rgba(var(--th-g2, 120,200,255),0.4); }
+  #msheet h2 .fbico { width: 28px; height: 28px; margin-right: 6px; vertical-align: -6px; }
+  .fbbadge { display: inline-block; min-width: 18px; padding: 0 5px; margin-left: 3px; border-radius: 9px; background: #ff6b6b; color: #fff; font-size: 11px; line-height: 18px; font-weight: 700; }
+  #money .fbday { margin: 16px 2px 6px; }
+  #money .row .meta.fbwrap { white-space: normal; overflow: visible; }
+  #money .row.fbauto { align-items: center; } #money .row.fbauto .grow { cursor: pointer; }
+  .fbacts { display: flex; flex-direction: column; gap: 6px; flex: none; }
+  #money .btn.small { padding: 6px 12px; font-size: 13px; min-width: 0; }
+  #msheet .fbdesc { white-space: pre-wrap; font-size: 16px; line-height: 1.45; color: var(--ink, #fff); margin: 4px 0 12px; word-break: break-word; }
+  #msheet .fbshots.big img { max-width: calc(50% - 6px); max-height: 220px; border-radius: 10px; border: 1px solid var(--line); cursor: zoom-in; object-fit: cover; }
+  #msheet .fbshots.big img.full { max-width: 100%; max-height: none; width: 100%; cursor: zoom-out; }
+  #msheet .fbfix { border-color: rgba(61,220,132,0.55); }
+  #msheet .fbpromo { border-color: rgba(var(--th-a),0.6); }
+  .fbnotes { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+  .fbnote { padding: 8px 10px; border-radius: 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--line); font-size: 15px; white-space: pre-wrap; word-break: break-word; }
+  .fbnote .meta { display: block; margin: 0 0 3px !important; font-size: 12px !important; }
+  .fbnote.by-claude { border-color: rgba(var(--th-core1, 79,216,255),0.5); }
+  .fbdet { margin: 12px 0 0; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; background: rgba(0,0,0,0.15); }
+  .fbdet summary { cursor: pointer; color: var(--ink2, #cde); font-size: 14px; }
+  .fbdet .label { margin-top: 12px; }
+  .fbex { padding: 6px 0; border-top: 1px solid var(--grid, rgba(255,255,255,0.06)); font-size: 14px; }
+  .fbex > div { margin: 2px 0; word-break: break-word; }
+  .fbex .who { display: inline-block; min-width: 46px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; margin-right: 6px; }
+  .fbex .who.b { color: var(--th-a-hex, #ff4fb8); } .fbex .who.j { color: var(--th-core1-hex, #4fd8ff); }
+  .fberrl { padding: 5px 0; border-top: 1px solid var(--grid, rgba(255,255,255,0.06)); font-size: 13px; word-break: break-word; }
+  .fberrl .meta { display: block; margin: 0 !important; font-size: 12px !important; }
+  .fbpre { white-space: pre-wrap; word-break: break-all; font-size: 12px; max-height: 200px; overflow: auto; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px; margin: 4px 0; }
   /* ================================================================ the talk screen, premium (Ben, 2026-11-21)
      Shared by the phone app (index.template.html) and the laptop window (jarvis/ui/static/index.html): build.py puts it in
      the shared CSS. The shared CSS sits in the middle of each page's own styles, so these rules start with "body" to win.
@@ -1641,6 +1712,7 @@
   </div>
   <a href="#" id="navPlay" class="ditem"><span>Play<small>Games, quests and card packs</small></span><em>›</em></a>
   <a href="#" id="navCalls" class="ditem"><span>Calls<small>Calls Jarvis made for you, with transcripts</small></span><em>›</em></a>
+  <a href="#" id="navFeedback" class="ditem"><span>Feedback &amp; bugs<small>Report a problem or an idea for later</small></span><em>›</em></a>
   </div>
   <!-- Settings (the cog next to the name, Ben 2026-11-19): Jarvis costs, then this device's own rows -->
   <div id="dset">
@@ -1859,7 +1931,7 @@
     abortCtl = new AbortController();
     try {
       const r = await call("", { method: "POST", headers: { "content-type": "application/json" }, signal: abortCtl.signal,
-        body: JSON.stringify({ text, tz: TZ, device: "phone" }) });
+        body: JSON.stringify({ text, tz: TZ, device: "phone", page: (window.jarvisPage && window.jarvisPage()) || "Talk", version: window.JARVIS_VERSION || "" }) });   // page + version: for "log a bug" (Feedback & Bugs)
       const reader = r.body.pipeThrough(new TextDecoderStream()).getReader();
       let sse = "";
       while (true) {
@@ -2173,7 +2245,7 @@
     menuBtn.setAttribute("aria-expanded", open); drawer.setAttribute("aria-hidden", !open);
     if (open && !was) {   // show which screen you're on
       const m = $("money").classList.contains("on") && $("mtitle").textContent;
-      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["navLook", m === "COLOURS"], ["navAlerts", m === "ALERTS"], ["navRules", m === "ASK FIRST"], ["navMemory", m === "MEMORY"], ["navVoice", m === "VOICE"], ["navCalls", m === "CALLS"], ["navFit", m === "WORKOUTS"], ["navFood", m === "NUTRITION"], ["navDope", m === "DOPAMINE HOLE"], ["navPlay", m === "PLAY"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || / BINGO$/.test(m)]]) $(id).classList.toggle("cur", on);
+      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["navLook", m === "COLOURS"], ["navAlerts", m === "ALERTS"], ["navRules", m === "ASK FIRST"], ["navMemory", m === "MEMORY"], ["navVoice", m === "VOICE"], ["navCalls", m === "CALLS"], ["navFit", m === "WORKOUTS"], ["navFood", m === "NUTRITION"], ["navDope", m === "DOPAMINE HOLE"], ["navPlay", m === "PLAY"], ["navFeedback", m === "FEEDBACK"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || / BINGO$/.test(m)]]) $(id).classList.toggle("cur", on);
       showSettings(["JARVIS COSTS", "PERSONALITY", "COLOURS", "ALERTS", "ASK FIRST", "MEMORY", "VOICE"].includes(m));   // the cog's page holds Jarvis costs, so open there from it
       subOpen("Money", m === "BUSINESS" || m === "PERSONAL" || m === "CUSTOMERS");   // on one of their screens, show the group open
       subOpen("Health", m === "WORKOUTS" || m === "NUTRITION" || m === "DOPAMINE HOLE");
@@ -2615,6 +2687,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       if (M.book === "fit") return loadFit();
       if (M.book === "food") return loadFood();
       if (M.book === "dope") return loadDope();
+      if (M.book === "fb") return loadFb();
       if (M.book === "play") return loadPlay();
       if (M.book === "look") { M.data = { look: true }; return render(); }
       if (["alerts", "memory", "rules", "voice"].includes(M.book)) return loadSetPage(M.book);
@@ -2639,11 +2712,11 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
         M.book = book; M.data = M.cache[book] || null; M.open = {}; M.q = ""; M.cat = ""; M.error = "";
         try { localStorage.setItem("jarvis.moneyBook", book); } catch {}
       }
-      const tabs = M.book === "crm" ? CRM_TABS : M.book === "fit" ? FIT_TABS : M.book === "food" ? FOOD_TABS : M.book === "dope" ? DOPE_TABS : M.book === "play" ? PLAY_TABS : MONEY_TABS;   // the Customers screen has its own four tabs
+      const tabs = M.book === "crm" ? CRM_TABS : M.book === "fit" ? FIT_TABS : M.book === "food" ? FOOD_TABS : M.book === "dope" ? DOPE_TABS : M.book === "fb" ? FB_TABS : M.book === "play" ? PLAY_TABS : MONEY_TABS;   // the Customers screen has its own four tabs
       if (!tabs.some(([k]) => k === tab) && !(M.book === "fit" && (tab === "fset" || tab === "ranks")) && !(M.book === "food" && tab === "calc")) tab = tabs[0][0];   // Workouts' Settings: reached from Home
       el.querySelectorAll("nav button").forEach((b, i) => { b.style.display = tabs[i] ? "" : "none"; if (tabs[i]) { b.dataset.tab = tabs[i][0]; b.textContent = tabs[i][1]; } });   // screens with fewer than 4 tabs hide the rest
       M.tab = tab;
-      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY", calls: "CALLS", fit: "WORKOUTS", food: "NUTRITION", dope: "DOPAMINE HOLE", play: "PLAY", look: "COLOURS", alerts: "ALERTS", rules: "ASK FIRST", memory: "MEMORY", voice: "VOICE" }[M.book];
+      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY", calls: "CALLS", fit: "WORKOUTS", food: "NUTRITION", dope: "DOPAMINE HOLE", fb: "FEEDBACK", play: "PLAY", look: "COLOURS", alerts: "ALERTS", rules: "ASK FIRST", memory: "MEMORY", voice: "VOICE" }[M.book];
       el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book] || M.book === "bingo" || M.book === "persona" || M.book === "calls" || M.book === "look" || ["alerts", "memory", "rules", "voice"].includes(M.book));   // no Dashboard/Spending/... tabs there
       el.classList.toggle("look", M.book === "look");   // the Colours page lays out its own two halves
       el.classList.toggle("fit", M.book === "fit"); document.body.classList.toggle("fitui", M.book === "fit");   // Workouts' brighter, pinker look
@@ -2674,6 +2747,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     $("navFood").onclick = (e) => { e.preventDefault(); goBook("food"); };
     $("navDope").onclick = (e) => { e.preventDefault(); goBook("dope"); };
     $("navPlay").onclick = (e) => { e.preventDefault(); goBook("play"); };
+    $("navFeedback").onclick = (e) => { e.preventDefault(); if (M.book !== "fb" || !el.classList.contains("on")) FBS.from = window.jarvisPage(); FBS.sent = null; goBook("fb"); };   // remember where he was
     $("navLook").onclick = (e) => { e.preventDefault(); goBook("look"); };
     for (const b of ["alerts", "rules", "memory", "voice"]) $("nav" + b[0].toUpperCase() + b.slice(1)).onclick = (e) => { e.preventDefault(); goBook(b); };
     $("mmenu").onclick = (e) => { e.preventDefault(); setMenu(true); };
@@ -6509,6 +6583,391 @@ return { addDays, dayDiff, weekStart, defaultHabits, HABIT_COLOURS, JUNK_WORDS, 
       return Promise.reject(new Error("demo: " + action));
     }
 
+    // -------------------------------------------------------------- Feedback & Bugs (2026-11-22, Ben)
+    // Report problems and ideas from the phone the moment they happen; Claude Code works through them later on the PC
+    // (feedback/OPEN.md, made by tools/feedback.py sync). A "book" of the money screen called fb (title FEEDBACK), tabs
+    // Report / List / Fixed / Auto. Every report carries its context: the screen Ben came from, the app version, his
+    // last 5 exchanges with Jarvis (added by the cloud) and errors from the last 10 minutes. Uncaught errors and failed
+    // calls to the cloud are reported automatically as draft bugs (the Auto tab), repeats collapse into one with a count.
+    // Cloud: tools_feedback.ts (/jarvis/feedback/*). Rules shared with it: feedback_calc.js (inlined at FEEDBACK_CALC).
+    // Inserted into money.js by app/build.py.
+    const FB_TABS = [["fbnew", "Report"], ["fblist", "List"], ["fbfixed", "Fixed"], ["fbauto", "Auto"]];
+    const FBC = (() => { // Feedback & Bugs (2026-11-22, Ben): rules shared by cloud Jarvis (tools_feedback.ts) and the app (app/feedback.js,
+// inlined by app/build.py), so both scrub, group and sort the same way. jarvis/feedback_sync.py has the Python twin
+// of scrub() for the laptop's log lines.
+
+const TYPES = { bug: "Bug", idea: "Idea", tweak: "Tweak" };
+const PRIORITIES = { low: "Low", normal: "Normal", urgent: "Urgent" };
+const STATUSES = { draft: "Draft", open: "Open", in_progress: "In progress", fixed: "Fixed", wont_fix: "Won't fix", dismissed: "Dismissed" };
+const ACTIVE = ["open", "in_progress"];
+
+const fbId = (n) => "FB-" + String(n).padStart(4, "0");
+
+// ---- keys and tokens never get saved (Ben's rule). Applied to every text field before it's stored.
+const SECRET_PATTERNS = [
+  [/sk-ant-[A-Za-z0-9_-]{8,}/g, "[key removed]"],                       // Anthropic
+  [/sb_(secret|publishable)_[A-Za-z0-9_-]{8,}/g, "[key removed]"],       // Supabase
+  [/\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/g, "[token removed]"],   // JWTs
+  [/\bBearer\s+[A-Za-z0-9._~+\/=-]{8,}/gi, "Bearer [token removed]"],
+  [/\baccess-(sandbox|development|production)-[A-Za-z0-9-]{8,}/g, "[token removed]"],     // Plaid
+  [/https?:\/\/trigger\.macrodroid\.com\/\S+/gi, "[MacroDroid link removed]"],
+  [/\b((?:x-)?(?:api[-_]?key|apikey|xi-api-key|jarvis-token|crm-token|access[-_]?token|refresh[-_]?token|client[-_]?secret|secret|password|passwd|token|authorization|auth))(["']?\s*[:=]\s*["']?)(?!\[)[^\s"',;&}]+/gi, "$1$2[removed]"],
+  [/([?&#](?:token|key|k|code|secret|pair|invite|sig|signature)=)(?!\[)[^&\s"'#]+/gi, "$1[removed]"],
+  [/\b[A-Fa-f0-9]{40,}\b/g, "[long code removed]"],                        // long hex strings (keys, hashes)
+  [/\b(?=[A-Za-z0-9_-]*\d)(?=[A-Za-z0-9_-]*[A-Za-z])[A-Za-z0-9_-]{40,}\b/g, "[long code removed]"],   // long mixed tokens
+];
+function scrub(s) {
+  let t = String(s ?? "");
+  for (const [re, to] of SECRET_PATTERNS) t = t.replace(re, to);
+  return t;
+}
+/** scrub every string inside an object / array (pictures are stored apart and never passed through here). */
+function scrubDeep(v) {
+  if (typeof v === "string") return scrub(v);
+  if (Array.isArray(v)) return v.map(scrubDeep);
+  if (v && typeof v === "object") { const o = {}; for (const k in v) o[k] = scrubDeep(v[k]); return o; }
+  return v;
+}
+
+// ---- automatic errors: the same problem twice = one entry with a count
+/** The error with its changing parts (numbers, ids, quoted names, addresses) taken out. */
+function normalizeError(where, message) {
+  const m = String(message ?? "").toLowerCase()
+    .replace(/https?:\/\/\S+/g, "<url>")
+    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g, "<id>")
+    .replace(/\b[0-9a-f]{12,}\b/g, "<id>")
+    .replace(/"[^"]{0,80}"|'[^']{0,80}'|`[^`]{0,80}`/g, "<q>")
+    .replace(/\d+(\.\d+)?/g, "#")
+    .replace(/\s+/g, " ").trim().slice(0, 240);
+  return String(where ?? "").toLowerCase().trim() + " | " + m;
+}
+/** A short title for an automatic entry: where it happened + the first line of the error. */
+function autoTitle(where, message) {
+  const first = String(message ?? "").split("\n")[0].replace(/\s+/g, " ").trim();
+  const t = (where ? `${where}: ` : "") + (first || "unknown error");
+  return t.length > 110 ? t.slice(0, 107) + "…" : t;
+}
+/** Does a tool's error message look like something broke (worth a draft bug), rather than a normal
+ * "which one did you mean?" or "nothing found" answer? */
+function looksLikeFailure(msg) {
+  const m = String(msg ?? "");
+  if (/which one|did you mean|ask ben which|be more specific/i.test(m)) return false;
+  return /\b(answered|status|http|error|returned)\s*:?\s*[45]\d\d\b|\b[45]\d\d\b\s*(not found|error|forbidden|unauthori[sz]ed|bad request)|\bnot found\b.*\b(webhook|url|route|endpoint|device|link)\b|\b(webhook|url|route|endpoint|link)\b.*\bnot found\b|\(\s*(?:http\s*)?[45]\d\d\s*\)|\b(failed|failure|timed out|timeout|couldn't reach|could not reach|isn't reachable|unreachable|service error|exception|crashed)\b/i.test(m);
+}
+
+// ---- lists
+const PRI = { urgent: 0, normal: 1, low: 2 };
+/** Urgent ones (not finished) pinned on top, then newest first. */
+function sortItems(items) {
+  const done = (x) => !ACTIVE.includes(x.status) && x.status !== "draft";
+  return [...items].sort((a, b) => {
+    const ua = a.priority === "urgent" && !done(a) ? 0 : 1, ub = b.priority === "urgent" && !done(b) ? 0 : 1;
+    if (ua !== ub) return ua - ub;
+    return String(b.created_at).localeCompare(String(a.created_at));
+  });
+}
+/** For OPEN.md: priority first (urgent, normal, low), newest first inside each. */
+function byPriority(items) {
+  return [...items].sort((a, b) => (PRI[a.priority] ?? 1) - (PRI[b.priority] ?? 1) || String(b.created_at).localeCompare(String(a.created_at)));
+}
+/** The Fixed tab / CHANGELOG: newest fix first, grouped by the day it was fixed (local date). */
+function changelog(items, tz) {
+  const fixed = items.filter((x) => x.status === "fixed").sort((a, b) => String((b.fix && b.fix.at) || b.updated_at).localeCompare(String((a.fix && a.fix.at) || a.updated_at)));
+  const day = (iso) => { try { return new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso)); } catch { return String(iso).slice(0, 10); } };
+  const groups = [];
+  for (const x of fixed) {
+    const d = day((x.fix && x.fix.at) || x.updated_at), g = groups[groups.length - 1];
+    if (g && g.day === d) g.items.push(x); else groups.push({ day: d, items: [x] });
+  }
+  return groups;
+}
+
+return { TYPES, PRIORITIES, STATUSES, ACTIVE, fbId, scrub, scrubDeep, normalizeError, autoTitle, looksLikeFailure, sortItems, byPriority, changelog };
+ })();
+    const APP_VERSION = "phone 968c7f2+changes \u00b7 built 2026-11-22 01:11";
+    window.JARVIS_VERSION = APP_VERSION;
+    const FB_DEVICE = /\/cloud$/.test(FN) ? "laptop" : "phone";
+    const FBS = { items: null, typeF: "all", statusF: "active", from: "Talk", sent: null, showDismissed: false,
+      draft: { type: "bug", priority: "normal", title: "", description: "", shots: [] } };
+    try { Object.assign(FBS.draft, JSON.parse(localStorage.getItem("jarvis.fbDraft") || "{}"), { shots: [] }); } catch {}
+    const saveDraft = () => { try { const { shots, ...t } = FBS.draft; localStorage.setItem("jarvis.fbDraft", JSON.stringify(t)); } catch {} };
+
+    // ---- where Ben is: "WORKOUTS › History", "Talk", ... (also sent with every chat, for "log a bug" by voice)
+    window.jarvisPage = () => {
+      try {
+        if (document.querySelector("#playgame.on")) return "PLAY › a game";
+        if (document.querySelector("#fitlive.on")) return "WORKOUTS › live workout";
+        if (el.classList.contains("on")) { const t = el.querySelector("nav button.on"); return $("mtitle").textContent + (t && t.offsetParent ? " › " + t.textContent.replace(/\s*\d+$/, "") : ""); }
+      } catch {}
+      return "Talk";
+    };
+
+    // ---- errors: a ring of the last 30 (sent with a report) + automatic draft bugs
+    const FB_ERR = [], fbSent = new Map(), origFetch = window.fetch.bind(window);
+    let fbAutoCount = 0;
+    const FB_NOISE = /failed to fetch|networkerror|load failed|network request failed|the user aborted|aborterror|isn't paired|not signed in|resizeobserver loop|script error\.?$/i;
+    function fbNote(where, message) {
+      FB_ERR.push({ at: new Date().toISOString(), where, message: FBC.scrub(String(message).slice(0, 600)) });
+      while (FB_ERR.length > 30) FB_ERR.shift();
+    }
+    const recentErrors = () => FB_ERR.filter((e) => Date.now() - Date.parse(e.at) < 600000);
+    function fbAuto(where, message, stack) {
+      message = String(message || "").trim();
+      if (!message || FB_NOISE.test(message)) return;
+      fbNote(where, message);
+      const key = FBC.normalizeError(where, message), last = fbSent.get(key) || 0;
+      if (Date.now() - last < 30000 || fbAutoCount >= 25) return;   // the cloud counts repeats; don't hammer it
+      fbSent.set(key, Date.now()); fbAutoCount++;
+      const payload = { where, message: FBC.scrub(message), stack: FBC.scrub(String(stack || "").slice(0, 1500)), page: window.jarvisPage(), version: APP_VERSION, device: FB_DEVICE };
+      if (DEMO) { fbDemo("auto", payload); return; }
+      (async () => { try { const auth = await authHeaders(); if (!auth) return;
+        await origFetch(FN + "/feedback/auto", { method: "POST", headers: { ...auth, apikey: PUBLISHABLE_KEY, "content-type": "application/json" }, body: JSON.stringify(payload) }); } catch {} })();
+    }
+    window.addEventListener("error", (e) => { if (e.error || e.message) fbAuto("app", (e.error && e.error.message) || e.message, (e.error && e.error.stack) || `${e.filename || ""}:${e.lineno || ""}:${e.colno || ""}`); });
+    window.addEventListener("unhandledrejection", (e) => { const r = e.reason; fbAuto("app (promise)", (r && r.message) || String(r), r && r.stack); });
+    { const ce = console.error.bind(console);   // screens catch their own drawing errors and console.error them
+      console.error = (...a) => { try { const er = a.find((x) => x instanceof Error); if (er) fbAuto("app screen " + window.jarvisPage(), er.message, er.stack); else fbNote("console", a.map(String).join(" ")); } catch {} ce(...a); }; }
+    // failed calls to cloud Jarvis (server errors, not "you typed it wrong" answers)
+    window.fetch = async (input, init) => {
+      const r = await origFetch(input, init);
+      try { const url = String((input && input.url) || input);
+        if (r.status >= 500 && (url.startsWith(FN) || url.includes("/functions/v1/jarvis")) && !url.includes("/feedback/auto")) {
+          const path = url.replace(/^.*?\/(cloud|functions\/v1\/jarvis)\//, "").split("?")[0];
+          let why = ""; try { why = (await r.clone().json()).error || ""; } catch {}
+          fbAuto("app → cloud", `${path} answered ${r.status}${why ? ": " + why : ""}`);
+        } } catch {}
+      return r;
+    };
+
+    // ---- network
+    async function fbcall(action, payload) {
+      if (DEMO) return fbDemo(action, payload || {});
+      const auth = await authHeaders();
+      if (!auth) { showSignin(true); throw new Error("This phone isn't paired."); }
+      const r = await fetch(FN + "/feedback/" + action, { method: "POST",
+        headers: { ...auth, apikey: PUBLISHABLE_KEY, "content-type": "application/json" }, body: JSON.stringify(payload || {}) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || `Feedback service error (${r.status})`);
+      return j;
+    }
+    async function loadFb() {
+      M.busy = FBS.items ? "" : "Loading…"; M.error = ""; if (!M.data) M.data = { fb: true }; render();
+      try { FBS.items = (await fbcall("list")).items; }
+      catch (e) { if (M.book !== "fb") return; M.error = e.message; }
+      M.busy = ""; if (M.book === "fb") render();
+    }
+    async function fbRefresh() { try { FBS.items = (await fbcall("list")).items; } catch {} if (M.book === "fb" && el.classList.contains("on")) render(); }
+    window.addEventListener("jarvis:reply", () => { if (M.book === "fb" && el.classList.contains("on")) setTimeout(fbRefresh, 600); });   // he logged one by voice
+
+    // ---- helpers
+    const fbAgo = (iso) => { const m = Math.round((Date.now() - Date.parse(iso)) / 60000);
+      return m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : m < 2880 ? "yesterday" : `${Math.round(m / 1440)} days ago`; };
+    const fbWhen = (iso) => new Date(iso).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    const FB_ICON = { bug: "M9 9h6v8a3 3 0 0 1-6 0zM9.5 6.5a2.5 2.5 0 0 1 5 0V9h-5zM5 11h4M15 11h4M5 15.5h4M15 15.5h4M6.5 7.5l2 1.5M17.5 7.5l-2 1.5",
+      idea: "M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z",
+      tweak: "M4 7h10M18 7h2M4 17h4M12 17h8M16 5v4M10 15v4" };
+    const fbIco = (t) => `<span class="fbico t-${t}"><svg viewBox="0 0 24 24"><path d="${FB_ICON[t] || FB_ICON.bug}"/></svg></span>`;
+    const stPill = (s) => `<span class="fbpill s-${s}">${esc(FBC.STATUSES[s] || s)}</span>`;
+    const priPill = (p) => (p === "normal" ? "" : `<span class="fbpill p-${p}">${esc(FBC.PRIORITIES[p])}</span>`);
+    const fbSegHtml = (id, map, on) => `<div class="seg" id="${id}">${Object.entries(map).map(([k, v]) => `<button data-v="${k}" class="${k === on ? "on" : ""}">${esc(v)}</button>`).join("")}</div>`;
+    const fbWireSeg = (box, id, fn) => box.querySelectorAll(`#${id} button`).forEach((b) => (b.onclick = () => { box.querySelectorAll(`#${id} button`).forEach((y) => y.classList.toggle("on", y === b)); fn(b.dataset.v); }));
+    const drafts = () => (FBS.items || []).filter((x) => x.status === "draft");
+    function fbTabCount() {   // "Auto 3" on the tab bar while drafts wait
+      if (M.book !== "fb") return;
+      const b = el.querySelector('nav button[data-tab="fbauto"]'), n = drafts().length;
+      if (b) b.innerHTML = n ? `Auto <span class="fbbadge">${n}</span>` : "Auto";
+    }
+    function shrinkShot(file) {   // photo / screenshot -> JPEG data URL, at most 1280 px and ~600 KB
+      return new Promise((ok, no) => {
+        const img = new Image(), url = URL.createObjectURL(file);
+        img.onload = () => { URL.revokeObjectURL(url);
+          const k = Math.min(1, 1280 / Math.max(img.width, img.height)), cv = document.createElement("canvas");
+          cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+          cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+          let q = 0.82, out = cv.toDataURL("image/jpeg", q); while (out.length > 800000 && q > 0.4) { q -= 0.12; out = cv.toDataURL("image/jpeg", q); }
+          ok(out); };
+        img.onerror = () => { URL.revokeObjectURL(url); no(new Error("That picture couldn't be read.")); };
+        img.src = url;
+      });
+    }
+
+    function renderFb() {
+      fbTabCount();
+      if (!FBS.items && M.tab !== "fbnew") { body.innerHTML = status() || `<div class="note">Loading…</div>`; return; }
+      ({ fbnew: fbReport, fblist: fbList, fbfixed: fbFixed, fbauto: fbAutoTab }[M.tab] || fbReport)();
+    }
+
+    // ---- Report
+    function fbReport() {
+      const D = FBS.draft, errs = recentErrors().length;
+      body.innerHTML = status() + (FBS.sent ? `<div class="card fbsent"><div><b>Sent as ${esc(FBS.sent.id)}</b><div class="meta">Claude will see it in OPEN.md on the PC.</div></div><button class="linkish" id="fbview">View</button></div>` : "") + `
+        <div class="fbform">
+        <div class="label">What kind</div>${fbSegHtml("fbt", FBC.TYPES, D.type)}
+        <label for="fbti">Short title</label><input id="fbti" maxlength="120" value="${esc(D.title)}" placeholder="${D.type === "idea" ? "A weekly money summary" : D.type === "tweak" ? "Bigger chess clock" : "Pack opening froze on the last card"}">
+        <label for="fbde">${D.type === "bug" ? "What happened" : "What you'd like"}</label><textarea id="fbde" rows="5" maxlength="4000" placeholder="${D.type === "bug" ? "What you did, what you expected, what happened instead." : "Describe it in your own words."}">${esc(D.description)}</textarea>
+        <div class="label">Priority</div>${fbSegHtml("fbp", FBC.PRIORITIES, D.priority)}
+        <div class="label">Screenshot or photo (optional)</div>
+        <div class="fbshots">${D.shots.map((s, i) => `<span class="fbthumb"><img src="${s}" alt="Picture ${i + 1}"><button data-rm="${i}" aria-label="Remove picture">✕</button></span>`).join("")}
+          ${D.shots.length < 3 ? `<label class="fbadd"><input type="file" accept="image/*" id="fbfile"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg><span>Add</span></label>` : ""}</div>
+        <div class="card fbctx"><div class="label">Attached automatically</div>
+          <div class="fbctxl"><span>Screen</span><b>${esc(FBS.from)}</b></div>
+          <div class="fbctxl"><span>Version</span><b>${esc(APP_VERSION)}</b></div>
+          <div class="fbctxl"><span>Conversation</span><b>your last 5 exchanges with Jarvis</b></div>
+          <div class="fbctxl"><span>Errors</span><b>${errs ? `${errs} in the last 10 minutes` : "none in the last 10 minutes"}</b></div>
+          <div class="meta">Keys and tokens are removed before anything is saved.</div></div>
+        <div class="err" id="fberr"></div>
+        <button class="btn fbsend" id="fbsend">Send report</button></div>`;
+      const v = $("fbview"); if (v) v.onclick = () => fbSheet(FBS.sent.id);
+      fbWireSeg(body, "fbt", (t) => { D.type = t; saveDraft(); fbReport(); });
+      fbWireSeg(body, "fbp", (p) => { D.priority = p; saveDraft(); });
+      $("fbti").oninput = (e) => { D.title = e.target.value; saveDraft(); };
+      $("fbde").oninput = (e) => { D.description = e.target.value; saveDraft(); };
+      body.querySelectorAll("[data-rm]").forEach((b) => (b.onclick = () => { D.shots.splice(+b.dataset.rm, 1); fbReport(); }));
+      const fi = $("fbfile"); if (fi) fi.onchange = async () => { const f = fi.files[0]; if (!f) return;
+        try { D.shots.push(await shrinkShot(f)); fbReport(); } catch (e) { $("fberr").textContent = e.message; } };
+      $("fbsend").onclick = async () => {
+        const btn = $("fbsend");
+        if (!D.title.trim() && !D.description.trim()) { $("fberr").textContent = "Give it a short title or a description."; return; }
+        btn.disabled = true; btn.textContent = "Sending…";
+        try {
+          const { item } = await fbcall("submit", { type: D.type, title: D.title, description: D.description, priority: D.priority, page: FBS.from, version: APP_VERSION,
+            device: FB_DEVICE, source: FB_DEVICE, errors: recentErrors(), shots: D.shots, screen: `${innerWidth}x${innerHeight}`, ua: navigator.userAgent });
+          FBS.sent = item; FBS.draft = { type: D.type, priority: "normal", title: "", description: "", shots: [] }; saveDraft();
+          if (FBS.items) FBS.items.unshift(item);
+          fbReport(); body.scrollTop = 0;
+        } catch (e) { $("fberr").textContent = e.message; btn.disabled = false; btn.textContent = "Send report"; }
+      };
+    }
+
+    // ---- List
+    const FB_FILTERS = { active: "Active", open: "Open", in_progress: "In progress", fixed: "Fixed", wont_fix: "Won't fix", all: "All" };
+    function fbList() {
+      const items = FBC.sortItems((FBS.items || []).filter((x) => x.status !== "draft" && x.status !== "dismissed"
+        && (FBS.typeF === "all" || x.type === FBS.typeF)
+        && (FBS.statusF === "all" ? true : FBS.statusF === "active" ? FBC.ACTIVE.includes(x.status) : x.status === FBS.statusF)));
+      const chip = (k, v, on, attr) => `<button class="fbchip${on ? " on" : ""}" data-${attr}="${k}">${esc(v)}</button>`;
+      body.innerHTML = status() + `
+        <div class="fbchips">${chip("all", "All", FBS.typeF === "all", "ft")}${Object.entries(FBC.TYPES).map(([k, v]) => chip(k, v, FBS.typeF === k, "ft")).join("")}</div>
+        <div class="fbchips">${Object.entries(FB_FILTERS).map(([k, v]) => chip(k, v, FBS.statusF === k, "fs")).join("")}</div>
+        <div class="card fblist">${items.length ? items.map(fbRow).join("") : `<div class="empty">${FBS.statusF === "active" ? "Nothing open. Report something from the Report tab, or tell Jarvis \"log a bug: …\"." : "Nothing here."}</div>`}</div>`;
+      body.querySelectorAll("[data-ft]").forEach((b) => (b.onclick = () => { FBS.typeF = b.dataset.ft; fbList(); }));
+      body.querySelectorAll("[data-fs]").forEach((b) => (b.onclick = () => { FBS.statusF = b.dataset.fs; fbList(); }));
+      body.querySelectorAll("[data-fb]").forEach((r) => (r.onclick = () => fbSheet(r.dataset.fb)));
+    }
+    function fbRow(x) {
+      const pinned = x.priority === "urgent" && FBC.ACTIVE.includes(x.status);
+      return `<div class="row click fbrow${pinned ? " pinned" : ""}" data-fb="${x.id}">${fbIco(x.type)}<div class="grow"><div class="name">${pinned ? `<span class="fbpin" aria-label="Pinned">▲</span>` : ""}${esc(x.title)}</div>
+        <div class="meta">${esc(x.id)} · ${esc(FBC.TYPES[x.type])} · ${esc(fbAgo(x.created_at))}${x.auto ? ` · auto${x.count > 1 ? " ×" + x.count : ""}` : ""}${x.shots ? " · 📷" : ""}</div></div>
+        <div class="fbpills">${priPill(x.priority)}${stPill(x.status)}</div></div>`;
+    }
+
+    // ---- Fixed: the changelog
+    function fbFixed() {
+      const groups = FBC.changelog(FBS.items || [], TZ);
+      const n = groups.reduce((a, g) => a + g.items.length, 0);
+      body.innerHTML = status() + (n ? `<div class="note" style="margin-top:0">${n} fixed so far. Newest first.</div>` + groups.map((g) => `
+        <div class="label fbday">${esc(new Date(g.day + "T12:00").toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" }))}</div>
+        <div class="card fblist">${g.items.map((x) => `<div class="row click" data-fb="${x.id}">${fbIco(x.type)}<div class="grow"><div class="name">${esc(x.title)}</div>
+          <div class="meta fbwrap">${esc((x.fix && x.fix.note) || "Marked fixed")}</div></div><div class="fbpills">${x.fix && x.fix.commit ? `<span class="fbpill fbcommit">${esc(x.fix.commit.slice(0, 7))}</span>` : ""}<span class="meta">${esc(x.id)}</span></div></div>`).join("")}</div>`).join("")
+        : `<div class="empty">Nothing fixed yet. When Claude fixes an item on the PC, it shows up here with what changed and when.</div>`);
+      body.querySelectorAll("[data-fb]").forEach((r) => (r.onclick = () => fbSheet(r.dataset.fb)));
+    }
+
+    // ---- Auto: errors caught automatically, waiting to be promoted or dismissed
+    function fbAutoTab() {
+      const list = (FBS.items || []).filter((x) => x.status === "draft").sort((a, b) => String(b.last_seen).localeCompare(String(a.last_seen)));
+      const dismissed = (FBS.items || []).filter((x) => x.status === "dismissed");
+      body.innerHTML = status() + `<div class="note" style="margin-top:0">Errors Jarvis caught by himself. The same error again only raises its count.</div>
+        <div class="card fblist">${list.length ? list.map((x) => `<div class="row fbauto" data-fb="${x.id}">${fbIco("bug")}<div class="grow click" data-open="${x.id}"><div class="name">${esc(x.title)}</div>
+          <div class="meta">${esc(x.where || "app")} · ×${x.count} · last ${esc(fbAgo(x.last_seen || x.updated_at))}</div></div>
+          <div class="fbacts"><button class="btn small" data-promote="${x.id}">Promote</button><button class="btn quiet small" data-dismiss="${x.id}">Dismiss</button></div></div>`).join("")
+          : `<div class="empty">No errors waiting. Nice.</div>`}</div>
+        ${dismissed.length ? `<button class="linkish" id="fbshowd">${FBS.showDismissed ? "Hide" : "Show"} dismissed (${dismissed.length})</button>` : ""}
+        ${FBS.showDismissed ? `<div class="card fblist">${dismissed.map((x) => `<div class="row click" data-open="${x.id}">${fbIco("bug")}<div class="grow"><div class="name">${esc(x.title)}</div><div class="meta">×${x.count} · dismissed</div></div></div>`).join("")}</div>` : ""}`;
+      body.querySelectorAll("[data-open]").forEach((r) => (r.onclick = () => fbSheet(r.dataset.open)));
+      body.querySelectorAll("[data-promote]").forEach((b) => (b.onclick = () => fbSheet(b.dataset.promote)));
+      body.querySelectorAll("[data-dismiss]").forEach((b) => (b.onclick = async () => { b.disabled = true; try { await fbSet(b.dataset.dismiss, { status: "dismissed" }); } catch (e) { M.error = e.message; } fbAutoTab(); fbTabCount(); }));
+      const sd = $("fbshowd"); if (sd) sd.onclick = () => { FBS.showDismissed = !FBS.showDismissed; fbAutoTab(); };
+    }
+
+    async function fbSet(id, patch) {
+      const { item } = await fbcall("update", { id, ...patch });
+      if (FBS.items) { const i = FBS.items.findIndex((x) => x.id === item.id); if (i >= 0) FBS.items[i] = { ...FBS.items[i], ...item }; }
+      return item;
+    }
+
+    // ---- one item: details, status, notes, context
+    async function fbSheet(id) {
+      openSheet(`<div class="note">Loading ${esc(id)}…</div>`, () => {});
+      let got; try { got = await fbcall("get", { id }); } catch (e) { openSheet(`<div class="note err">${esc(e.message)}</div><div class="btns"><button class="btn quiet" id="fbx">Close</button></div>`, (b) => (b.querySelector("#fbx").onclick = closeSheet)); return; }
+      fbSheetDraw(got.item, got.shots);
+    }
+    function fbSheetDraw(x, shots) {
+      const c = x.context || {}, draft = x.status === "draft";
+      const ctxRows = [["Screen", c.page], ["Device", c.device || x.device], ["Version", c.version], ["Screen size", c.screen], ["Where", x.where], ["Came back after", c.came_back_after]].filter(([, v]) => v);
+      const ex = (c.exchanges || []).map((e) => `<div class="fbex"><div><span class="who b">Ben</span>${esc(e.ben)}</div>${e.jarvis ? `<div><span class="who j">Jarvis</span>${esc(e.jarvis)}</div>` : ""}</div>`).join("");
+      const errs = (c.errors || []).map((e) => `<div class="fberrl"><span class="meta">${esc(e.at ? fbWhen(e.at) : "")} · ${esc(e.where || "")}${e.ref ? " · " + esc(e.ref) : ""}</span>${esc(e.message)}</div>`).join("");
+      const last = c.last || (x.auto ? c : null);
+      openSheet(`<h2>${fbIco(x.type)} ${esc(x.title)}</h2>
+        <div class="meta">${esc(x.id)} · ${esc(FBC.TYPES[x.type])} · ${esc(FBC.PRIORITIES[x.priority])} · ${esc(x.auto ? "caught automatically" : "from " + (x.source || x.device || "phone"))} · ${esc(fbWhen(x.created_at))}</div>
+        <div class="fbpills" style="justify-content:flex-start;margin-bottom:10px">${stPill(x.status)}${priPill(x.priority)}${x.auto ? `<span class="fbpill">×${x.count}</span>` : ""}</div>
+        ${draft ? `<div class="card fbpromo"><div class="label">Promote this error to a bug</div>
+          <label for="fbpt">Title</label><input id="fbpt" maxlength="120" value="${esc(x.title)}">
+          <label>Priority</label>${fbSegHtml("fbpp", FBC.PRIORITIES, x.priority)}
+          <div class="btns"><button class="btn" id="fbpromote">Promote</button><button class="btn quiet" id="fbdismiss">Dismiss</button></div></div>` : ""}
+        ${x.auto ? `<div class="note">Seen ${x.count} time${x.count === 1 ? "" : "s"}${x.first_seen ? ` · first ${esc(fbWhen(x.first_seen))}` : ""}${x.last_seen ? ` · last ${esc(fbWhen(x.last_seen))}` : ""}</div>` : ""}
+        ${x.description ? `<div class="fbdesc">${esc(x.description)}</div>` : ""}
+        ${shots && shots.length ? `<div class="fbshots big">${shots.map((s, i) => `<img src="${s}" alt="Picture ${i + 1}" data-big>`).join("")}</div>` : ""}
+        ${x.fix ? `<div class="card fbfix"><div class="label">Fixed ${esc(fbWhen(x.fix.at))}</div><div>${esc(x.fix.note)}</div>${x.fix.commit ? `<div class="meta">Commit ${esc(x.fix.commit)}</div>` : ""}</div>` : ""}
+        ${draft ? "" : `<label>Status</label>${fbSegHtml("fbss", { open: "Open", in_progress: "Doing", fixed: "Fixed", wont_fix: "Won't fix" }, x.status)}
+        <label>Priority</label>${fbSegHtml("fbsp", FBC.PRIORITIES, x.priority)}`}
+        <label>Notes</label>
+        <div class="fbnotes">${(x.notes || []).map((n) => `<div class="fbnote by-${esc(n.by)}"><span class="meta">${n.by === "claude" ? "Claude" : "Ben"} · ${esc(fbWhen(n.at))}</span>${esc(n.text)}</div>`).join("") || `<div class="meta">No notes yet.</div>`}</div>
+        <textarea id="fbnote" rows="2" maxlength="2000" placeholder="Add a note"></textarea>
+        <div class="btns"><button class="btn quiet" id="fbaddn">Add note</button></div>
+        <details class="fbdet"><summary>Context: ${esc(c.page || "")}${(c.exchanges || []).length ? ` · ${(c.exchanges || []).length} exchanges` : ""}${(c.errors || []).length ? ` · ${(c.errors || []).length} errors` : ""}</summary>
+          ${ctxRows.map(([k, v]) => `<div class="fbctxl"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}
+          ${last && last.stack ? `<div class="label">Stack</div><pre class="fbpre">${esc(last.stack)}</pre>` : ""}
+          ${last && last.request ? `<div class="fbctxl"><span>Ben had asked</span><b>${esc(last.request)}</b></div>` : ""}
+          ${ex ? `<div class="label">Last exchanges with Jarvis</div>${ex}` : ""}
+          ${errs ? `<div class="label">Errors around then</div>${errs}` : ""}</details>
+        <details class="fbdet"><summary>History</summary>${(x.history || []).map((h) => `<div class="meta">${esc(fbWhen(h.at))} · ${esc(h.by)}: ${esc(h.from ? FBC.STATUSES[h.from] || h.from : "new")} → ${esc(FBC.STATUSES[h.to] || h.to)}</div>`).join("")}</details>
+        <div class="err"></div><div class="btns"><button class="btn quiet" id="fbclose">Close</button></div>`, (box) => {
+        box.querySelector("#fbclose").onclick = closeSheet;
+        box.querySelectorAll("[data-big]").forEach((im) => (im.onclick = () => im.classList.toggle("full")));
+        const act = async (patch) => { try { const it = await fbSet(x.id, patch); fbSheetDraw(it, shots); renderFb(); } catch (e) { sheetErr(e.message); } };
+        fbWireSeg(box, "fbss", (s) => act({ status: s }));
+        fbWireSeg(box, "fbsp", (p) => act({ priority: p }));
+        let pri = x.priority; fbWireSeg(box, "fbpp", (p) => { pri = p; });
+        const pr = box.querySelector("#fbpromote"); if (pr) pr.onclick = () => act({ status: "open", priority: pri, title: box.querySelector("#fbpt").value });
+        const di = box.querySelector("#fbdismiss"); if (di) di.onclick = async () => { await act({ status: "dismissed" }); closeSheet(); };
+        box.querySelector("#fbaddn").onclick = () => { const t = box.querySelector("#fbnote").value.trim(); if (t) act({ note: t }); };
+      });
+    }
+
+    // ---- #money-demo: sample items, nothing leaves the page
+    function fbDemo(action, p) {
+      const t = (min) => new Date(Date.now() - min * 60000).toISOString();
+      if (!FBS.demo) FBS.demo = { n: 4, items: [
+        { num: 4, type: "bug", title: "Pack opening froze on the last card", description: "Opened an epic pack, the last card never flipped.", priority: "urgent", status: "open", source: "phone", auto: false, count: 1, created_at: t(120), updated_at: t(120), shots: 0, notes: [], history: [{ at: t(120), from: null, to: "open", by: "ben" }], context: { page: "PLAY › Packs", device: "phone", version: APP_VERSION, exchanges: [{ ben: "Open my epic pack", jarvis: "Opening it now, sir." }], errors: [] } },
+        { num: 3, type: "bug", title: "app → cloud: fit/live answered 500", description: "fit/live answered 500", priority: "normal", status: "draft", source: "auto", auto: true, count: 7, where: "app → cloud", first_seen: t(300), last_seen: t(3), created_at: t(300), updated_at: t(3), shots: 0, notes: [], history: [], context: { page: "WORKOUTS › Home", stack: "" } },
+        { num: 2, type: "tweak", title: "Bigger chess clock", description: "The clock is hard to read during blitz.", priority: "normal", status: "in_progress", source: "phone", auto: false, count: 1, created_at: t(1500), updated_at: t(200), shots: 0, notes: [{ at: t(200), by: "claude", text: "Working on it: 1.4x font in blitz." }], history: [], context: { page: "PLAY › a game" } },
+        { num: 1, type: "bug", title: "Dialer said not found", description: "Asked Jarvis to call Amber and he said not found.", priority: "normal", status: "fixed", source: "voice", auto: false, count: 1, created_at: t(3000), updated_at: t(1400), shots: 0, fix: { at: t(1400), commit: "a1b2c3d", note: "The MacroDroid link had its start doubled; the call now uses the last two parts." }, notes: [], history: [], context: { page: "Talk" } }] };
+      const D = FBS.demo, view = (x) => ({ ...x, id: FBC.fbId(x.num) }), find = (id) => D.items.find((x) => FBC.fbId(x.num) === id || x.num === +String(id).replace(/\D/g, ""));
+      const ok = (x) => Promise.resolve(JSON.parse(JSON.stringify(x)));
+      if (action === "list") return ok({ items: D.items.map(view) });
+      if (action === "get") { const x = find(p.id); return x ? ok({ item: view(x), shots: x.shotData || [] }) : Promise.reject(new Error("There's no " + p.id + ".")); }
+      if (action === "submit") { const x = { num: ++D.n, type: p.type, title: p.title || p.description.slice(0, 60), description: p.description, priority: p.priority, status: "open", source: p.source, auto: false, count: 1,
+        created_at: t(0), updated_at: t(0), shots: (p.shots || []).length, shotData: p.shots, notes: [], history: [{ at: t(0), from: null, to: "open", by: "ben" }],
+        context: { page: p.page, device: p.device, version: p.version, errors: p.errors, exchanges: [{ ben: "(demo) What's on today?", jarvis: "(demo) Two meetings, sir." }] } }; D.items.unshift(x); return ok({ item: view(x) }); }
+      if (action === "update") { const x = find(p.id); if (p.status) { x.history.push({ at: t(0), from: x.status, to: p.status, by: "ben" }); x.status = p.status; }
+        if (p.priority) x.priority = p.priority; if (p.title) x.title = p.title; if (p.note) x.notes.push({ at: t(0), by: "ben", text: p.note }); x.updated_at = t(0); return ok({ item: view(x) }); }
+      if (action === "auto") { const fp = FBC.normalizeError(p.where, p.message), x = D.items.find((y) => y.fp === fp && y.status !== "fixed");
+        if (x) { x.count++; x.last_seen = t(0); } else D.items.unshift({ num: ++D.n, fp, type: "bug", title: FBC.autoTitle(p.where, p.message), description: p.message, priority: "normal", status: "draft", source: "auto", auto: true, count: 1, where: p.where, first_seen: t(0), last_seen: t(0), created_at: t(0), updated_at: t(0), shots: 0, notes: [], history: [], context: { page: p.page, stack: p.stack } });
+        if (FBS.items) FBS.items = D.items.map(view); return ok({}); }
+      return ok({});
+    }
+
     // -------------------------------------------------------------- Play (2026-11-20, Ben): games, quests, trading cards
     // A "book" of the money screen called play (title PLAY), tabs Games / Quests / Packs / Cards. The games run in a
     // full-screen layer (#playgame). Wins and finished quests earn packs; packs are rolled by cloud Jarvis
@@ -7861,6 +8320,7 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
         else if (M.book === "fit") renderFit();
         else if (M.book === "food") renderFood();
         else if (M.book === "dope") renderDope();
+        else if (M.book === "fb") renderFb();
         else if (M.book === "play") renderPlay();
         else if (M.book === "look") renderLook();
         else if (["alerts", "memory", "rules", "voice"].includes(M.book)) renderSetPage();
