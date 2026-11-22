@@ -903,6 +903,49 @@ table.pl tr.totrow.net td { font-size: 15px; background: rgba(var(--acc-rgb), .1
 .ro .presets, .ro [data-addline], .ro .x, .ro [data-change] { display: none; }
 .crew { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border-radius: 99px; font-size: 11px; font-weight: 650; color: #fff; background: hsl(var(--h, 212) 48% 40%); vertical-align: middle; }
 
+/* ---- drag and drop + day timeline (2026-11-22, Ben's switch-over step 4) ---- */
+[data-drag] { cursor: grab; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+body.dragging, body.dragging * { cursor: grabbing !important; -webkit-user-select: none; user-select: none; }
+.dragghost { position: fixed; left: 0; top: 0; z-index: 200; pointer-events: none; opacity: .92; box-shadow: 0 16px 36px rgba(0,0,0,.5); transform-origin: 0 0; border-radius: 9px; }
+.dragghost.tlb { height: auto !important; min-height: 40px; }
+.dragghost .gt:not(:empty) { display: block; color: var(--acc); font-weight: 650; }
+.dragsrc { opacity: .35; }
+.dropon { outline: 2px dashed rgba(var(--acc-rgb), .8); outline-offset: -2px; background: rgba(var(--acc-rgb), .08) !important; }
+.tl { padding: 0; overflow: hidden; margin-bottom: 16px; }
+.tlany { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 12px 14px; border-bottom: 1px solid var(--line); min-height: 48px; }
+.tlany > b { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink3); margin-right: 6px; }
+.tlany .pill { cursor: grab; }
+.tlany .pill .gt { display: none; }
+.tlscroll { overflow-x: auto; }
+.tlwrap { min-width: calc(52px + var(--lanes) * 150px); }
+.tlheads { display: grid; grid-template-columns: 52px repeat(var(--lanes), minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
+.tlhead { padding: 8px 10px; border-left: 1px solid var(--line); display: flex; justify-content: space-between; gap: 6px; align-items: baseline; min-width: 0; }
+.tlhead small { color: var(--ink3); white-space: nowrap; }
+.tlbody { position: relative; display: grid; grid-template-columns: 52px repeat(var(--lanes), minmax(0, 1fr)); padding: 8px 0 12px; }
+.tlhours { position: relative; }
+.tlhours span { position: absolute; right: 8px; transform: translateY(-50%); font-size: 11px; color: var(--ink3); white-space: nowrap; }
+.tllane { position: relative; border-left: 1px solid var(--line); min-width: 0;
+  background-image: repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 30px, rgba(255,255,255,.025) 30px 31px, transparent 31px 60px); }
+.tlb { position: absolute; border-radius: 8px; padding: 5px 8px 7px; overflow: hidden; display: flex; flex-direction: column; gap: 1px; font-size: 12px; line-height: 1.25;
+  background: linear-gradient(180deg, rgba(var(--acc-rgb), .30), rgba(var(--acc-rgb), .18)); border: 1px solid rgba(var(--acc-rgb), .5); border-left: 3px solid var(--acc); box-shadow: var(--sh1); transition: box-shadow .15s; }
+.tlb.rec { background: linear-gradient(180deg, rgba(var(--core-rgb), .26), rgba(var(--core-rgb), .14)); border-color: rgba(var(--core-rgb), .45); border-left-color: var(--core); }
+.tlb.done { opacity: .55; }
+.tlb.nolen { border-bottom-style: dashed; }
+.tlb:hover { box-shadow: 0 6px 18px rgba(0,0,0,.35); z-index: 2; }
+.tlb b { font-size: 12.5px; }
+.tlb small { color: var(--ink2); font-size: 11px; }
+.tlb .rz { position: absolute; left: 0; right: 0; bottom: 0; height: 9px; cursor: ns-resize; touch-action: none; }
+.tlb .rz::after { content: ""; position: absolute; left: 50%; bottom: 3px; width: 22px; height: 3px; margin-left: -11px; border-radius: 2px; background: rgba(255,255,255,.35); }
+.tlb.resizing { z-index: 5; box-shadow: 0 0 0 2px var(--acc), 0 10px 26px rgba(0,0,0,.45); }
+.tlwin { position: absolute; border-radius: 8px; border: 1px dashed rgba(var(--acc-rgb), .35); background: rgba(var(--acc-rgb), .05); pointer-events: none; }
+.tlnow { position: absolute; left: 52px; right: 0; height: 2px; background: var(--bad, #ef4444); box-shadow: 0 0 8px rgba(239,68,68,.6); pointer-events: none; z-index: 3; }
+.tlnow::before { content: ""; position: absolute; left: -5px; top: -4px; width: 10px; height: 10px; border-radius: 50%; background: inherit; }
+.tlhint { padding: 0 14px 12px; }
+@media (max-width: 900px) { .tlwrap { min-width: calc(44px + var(--lanes) * 132px); } .tlheads, .tlbody { grid-template-columns: 44px repeat(var(--lanes), minmax(0, 1fr)); } .tlnow { left: 44px; } }
+#toast #tUndo { pointer-events: auto; margin-left: 4px; }
+#toast { width: max-content; }
+@media (max-width: 900px) { #toast { bottom: calc(78px + env(safe-area-inset-bottom, 0px)); } }
+
 </style>
 </head>
 <body>
@@ -987,8 +1030,8 @@ const COLUMNS = {
   people: ["id", "kind", "type", "first", "last", "company", "phones", "emails", "address", "city", "state", "zip", "notes", "source", "status", "created", "tcf", "edited", "lat", "lng", "follow_up", "follow_note", "lost_reason", "no_auto", "auto", "bill_monthly"],
   services: ["id", "name", "description", "rate", "unit", "position", "archived"],
   estimates: ["id", "number", "person", "date", "status", "options", "lines", "notes", "decided", "tcf", "edited", "sent", "sent_to", "lost_reason", "tax_rate"],
-  plans: ["id", "person", "every", "unit", "start", "time", "lines", "active", "notes", "tcf", "assignee"],
-  jobs: ["id", "person", "date", "days", "time", "lines", "status", "plan", "estimate", "invoice", "notes", "tcf", "edited", "assignee"],
+  plans: ["id", "person", "every", "unit", "start", "time", "lines", "active", "notes", "tcf", "assignee", "window_end", "minutes"],
+  jobs: ["id", "person", "date", "days", "time", "lines", "status", "plan", "estimate", "invoice", "notes", "tcf", "edited", "assignee", "window_end", "minutes", "on_way_at", "started_at", "finished_at"],
   invoices: ["id", "number", "person", "date", "due", "lines", "total", "bad_debt", "job", "notes", "tcf", "edited", "sent", "sent_to", "tax_rate"],
   payments: ["id", "invoice", "amount", "date", "method", "note", "tcf"],
   pins: ["id", "lat", "lng", "address", "status", "note", "person", "come_back", "visits", "by"],
@@ -1177,7 +1220,35 @@ function jobsBetween(D, I, from, to) {
     if (j.status === "cancelled") continue;
     for (const d of jobDays(j)) if (d >= from && d <= to) out.push({ job: j, day: d, first: d === j.date });
   }
-  return out.sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : (a.job.time || "~") < (b.job.time || "~") ? -1 : 1));
+  return out.sort((a, b) => (a.day < b.day ? -1 : a.day > b.day ? 1 : (timeMin(a.job.time) ?? 9999) - (timeMin(b.job.time) ?? 9999)));
+}
+// ------------------------------------------------------------------ times of day (2026-11-22, Ben's switch-over)
+// A job's `time` is when the crew arrives ("9:00 AM"); `window_end` makes it an arrival window ("9-11 AM");
+// `minutes` is how long the job takes. All optional; "" / null = any time.
+/** "9:30 AM" / "14:05" -> minutes after midnight, or null. */
+function timeMin(t) {
+  const m = String(t || "").match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i); if (!m) return null;
+  let h = +m[1]; if (m[3]) { if (/pm/i.test(m[3]) && h < 12) h += 12; if (/am/i.test(m[3]) && h === 12) h = 0; }
+  return h > 23 || +m[2] > 59 ? null : h * 60 + +m[2];
+}
+/** minutes after midnight -> "9:30 AM" (the format jobs keep). */
+const minText = (n) => { n = ((Math.round(n) % 1440) + 1440) % 1440; const h = Math.floor(n / 60), m = n % 60; return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`; };
+const shortT = (n, ampm = true) => { const h = Math.floor(n / 60), m = n % 60; return `${h % 12 || 12}${m ? ":" + String(m).padStart(2, "0") : ""}${ampm ? (h < 12 ? " AM" : " PM") : ""}`; };
+/** 90 -> "1 h 30 min" ; 45 -> "45 min" */
+const lenText = (m) => !(+m > 0) ? "" : m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}`;
+/** A job's time for screens and texts: "9-11 AM", "11:30 AM-1 PM", "9:00 AM", or "" when it has none. */
+function timeText(j) {
+  const a = timeMin(j && j.time), b = timeMin(j && j.window_end);
+  if (a == null) return "";
+  if (b == null || b <= a) return minText(a);
+  const same = (a < 720) === (b < 720);
+  return `${shortT(a, !same)}-${shortT(b)}`;
+}
+/** Minutes booked on a day (jobs with a length; others count as `dflt`), optionally for one person (null = Ben). */
+function dayLoad(D, I, day, assignee, dflt = 60) {
+  let n = 0;
+  for (const x of jobsBetween(D, I, day, day)) if (x.job.status !== "skipped" && (assignee === undefined || (x.job.assignee || null) === assignee)) n += +x.job.minutes || dflt;
+  return n;
 }
 function moneyBetween(D, I, from, to) {
   let total = 0, n = 0, done = 0;
@@ -1267,7 +1338,7 @@ function occurrences(anchor, every, unit, until) {
   }
   return out;
 }
-const jobFrom = (plan, date) => ({ id: uuid(), person: plan.person, date, days: null, time: plan.time || "", lines: plan.lines || [],
+const jobFrom = (plan, date) => ({ id: uuid(), person: plan.person, date, days: null, time: plan.time || "", window_end: plan.window_end || "", minutes: plan.minutes || null, lines: plan.lines || [],
   status: "scheduled", plan: plan.id, estimate: null, invoice: null, notes: "", tcf: null, edited: false, assignee: plan.assignee || null });
 /** Change a plan from one visit on: drop its scheduled visits from `from` and make new ones from `anchor`. */
 function regenPlan(plan, jobs, from, anchor, today) {
@@ -1746,7 +1817,7 @@ function autoCandidates(D, I, autoSaved, today, nowHM, onlyRule = null, relax = 
       if (j.status !== "scheduled" || j.date <= today) continue;
       const p = I.people.get(j.person), ef = eff(p, "job_reminder"); if (!ef || j.date !== addDays(today, ef.lead)) continue;
       make("job_reminder", p, j.id, `job_reminder:${j.id}:${j.date}`, withWhen(R.job_reminder.text), withWhen(R.job_reminder.email), withWhen(R.job_reminder.subject),
-        { when: WHEN[ef.lead], date: niceDate(j.date, { weekday: true }).replace(",", ""), time: j.time ? ` around ${j.time}` : "", services: serviceNames(j.lines).join(", ").toLowerCase() || "your service", total: usd(jobTotal(j)) });
+        { when: WHEN[ef.lead], date: niceDate(j.date, { weekday: true }).replace(",", ""), time: timeMin(j.window_end) != null && timeMin(j.time) != null ? ` between ${timeText(j).replace("-", " and ")}` : j.time ? ` around ${j.time}` : "", services: serviceNames(j.lines).join(", ").toLowerCase() || "your service", total: usd(jobTotal(j)) });
     }
   }
   for (const p of D.people) {   // follow-up check-ins
@@ -1827,7 +1898,7 @@ function metres(a, b) {
 }
 function trackLength(points) { let m = 0; for (let i = 1; i < points.length; i++) m += metres(points[i - 1], points[i]); return m; }
 
-return { TABLES, COLUMNS, PERMISSIONS, PERM_KEYS, DEFAULT_ROLES, normalizeRoles, effectivePerms, empName, PAY_TYPES, payText, DEFAULT_TRAININGS, METHODS, HORIZON_DAYS, round2, usd, usdShort, localDay, addDays, addMonths, daysBetween, weekday, niceDate, uuid, nameOf, addressOf, lineTotal, linesTotal, taxOf, docTotal, defaultTax, estimateValue, uninvoicedVisits, monthlyLines, monthlyDue, jobTotal, serviceNames, freqText, FREQS, index, paidOf, balanceOf, jobDays, jobsBetween, moneyBetween, nextJob, lastJob, activePlan, servicesFor, nextOpenDay, dashboard, occurrences, regenPlan, topUp, freqFromGap, search, nextNumber, fixMojibake, htmlText, fromDump, LOST_REASONS, SOURCES, NUDGE_DAYS, STALE_DAYS, sourceOf, pipeline, followUps, winRate, sourceStats, AUTO_RULES, AUTO_DAYS, AUTO_FIELDS, AUTO_DEFAULT, normalizeAuto, fillTemplate, AUTO_LEADS, personAuto, autoFor, autoRoute, autoVars, canSendNow, autoCandidates, anyPersonOn, KNOCK, knockStats, areaFreshness, inPolygon, metres, trackLength };
+return { TABLES, COLUMNS, PERMISSIONS, PERM_KEYS, DEFAULT_ROLES, normalizeRoles, effectivePerms, empName, PAY_TYPES, payText, DEFAULT_TRAININGS, METHODS, HORIZON_DAYS, round2, usd, usdShort, localDay, addDays, addMonths, daysBetween, weekday, niceDate, uuid, nameOf, addressOf, lineTotal, linesTotal, taxOf, docTotal, defaultTax, estimateValue, uninvoicedVisits, monthlyLines, monthlyDue, jobTotal, serviceNames, freqText, FREQS, index, paidOf, balanceOf, jobDays, jobsBetween, timeMin, minText, lenText, timeText, dayLoad, moneyBetween, nextJob, lastJob, activePlan, servicesFor, nextOpenDay, dashboard, occurrences, regenPlan, topUp, freqFromGap, search, nextNumber, fixMojibake, htmlText, fromDump, LOST_REASONS, SOURCES, NUDGE_DAYS, STALE_DAYS, sourceOf, pipeline, followUps, winRate, sourceStats, AUTO_RULES, AUTO_DAYS, AUTO_FIELDS, AUTO_DEFAULT, normalizeAuto, fillTemplate, AUTO_LEADS, personAuto, autoFor, autoRoute, autoVars, canSendNow, autoCandidates, anyPersonOn, KNOCK, knockStats, areaFreshness, inPolygon, metres, trackLength };
  })();
 const TCF = (() => { // The Customer Factor (Ben's CRM) inside Jarvis (2026-11-19). Ben exports a full backup from The
 // Customer Factor (a MySQL dump, .sql) about once a month and uploads it on the Customers screen.
@@ -2763,7 +2834,7 @@ function viewMyDay(v) {
     <div class="grid g2">
       <div class="card"><h3>${ic("cal")}Today</h3><div class="list">${today.map((x) => jobLi(x.job, x.first)).join("") || emptyBox("cal", "No jobs today")}</div></div>
       <div class="card"><h3>${ic("cal")}Coming up <a class="right" href="#/calendar/week/${TODAY}">Calendar ›</a></h3><div class="list">${week.slice(0, 10).map((x) => `<div class="li" data-job="${x.job.id}"><div class="main"><div class="t">${esc(name(x.job.person))}</div>
-        <div class="s">${X.niceDate(x.day)}${x.job.time ? " · " + esc(x.job.time) : ""} · ${esc(X.serviceNames(x.job.lines).join(", "))}</div></div></div>`).join("") || emptyBox("cal", "Nothing in the next week")}</div></div>
+        <div class="s">${X.niceDate(x.day)}${X.timeText(x.job) ? " · " + esc(X.timeText(x.job)) : ""} · ${esc(X.serviceNames(x.job.lines).join(", "))}</div></div></div>`).join("") || emptyBox("cal", "Nothing in the next week")}</div></div>
     </div></div>`;
   wire(v);
 }
@@ -2874,7 +2945,7 @@ function jobLi(j, first = true) {
   const p = I.people.get(j.person);
   return `<div class="li" data-job="${j.id}"><div class="avatar ${p && p.type === "commercial" ? "com" : ""}" data-n="${esc(X.nameOf(p))}">${j.plan ? ic("repeat") : esc(initials(p))}</div>
     <div class="main"><div class="t">${esc(name(j.person))}${j.status === "done" ? ' <span class="badge good">done</span>' : ""}</div>
-    <div class="s">${j.time ? esc(j.time) + " · " : ""}${esc(X.serviceNames(j.lines).join(", "))}</div></div><div class="amt">${first ? money(X.jobTotal(j)) : '<small>project</small>'}</div></div>`;
+    <div class="s">${X.timeText(j) ? esc(X.timeText(j)) + " · " : ""}${esc(X.serviceNames(j.lines).join(", "))}</div></div><div class="amt">${first ? money(X.jobTotal(j)) : '<small>project</small>'}</div></div>`;
 }
 
 // ------------------------------------------------------------------ calendar
@@ -2910,7 +2981,8 @@ function viewCalendar(v, r) {
   const body = $("#calbody", v);
   if (mode === "month") body.innerHTML = monthGrid(date, from, to);
   else if (mode === "week") body.innerHTML = weekCols(from);
-  else body.innerHTML = dayList(date);
+  else body.innerHTML = dayTimeline(date) + dayList(date);
+  calDrag(body, mode, date);
   v.addEventListener("click", (e) => {
     const s = e.target.closest("[data-step]"); if (s) return go(`calendar/${mode}/${s.dataset.step}`);
     const md = e.target.closest("[data-mode]"); if (md) return go(`calendar/${md.dataset.mode}/${date}`);
@@ -2928,8 +3000,8 @@ function monthGrid(date, from, to) {
     if (d > to && w >= 4) break;
     for (let i = 0; i < 7; i++, d = X.addDays(d, 1)) {
       const xs = X.jobsBetween(D, I, d, d), mm = dayMoney(d);
-      const pills = xs.slice(0, 3).map((x) => `<div class="pill ${x.job.plan ? "rec" : ""} ${x.job.status === "done" ? "done" : ""}" data-job="${x.job.id}">${esc(name(x.job.person))}</div>`).join("");
-      cells.push(`<div class="cell ${d < from || d > to ? "out" : ""} ${d === TODAY ? "today" : ""}" data-day="${d}">
+      const pills = xs.slice(0, 3).map((x) => `<div class="pill ${x.job.plan ? "rec" : ""} ${x.job.status === "done" ? "done" : ""}" data-job="${x.job.id}"${dragAttr(x)}>${esc(name(x.job.person))}</div>`).join("");
+      cells.push(`<div class="cell ${d < from || d > to ? "out" : ""} ${d === TODAY ? "today" : ""}" data-day="${d}" data-dropday="${d}">
         <div class="dn"><span>${+d.slice(8)}</span>${mm.total ? `<span class="money">${X.usdShort(mm.total)}</span>` : ""}</div>${pills}
         ${xs.length > 3 ? `<div class="pill more">+${xs.length - 3} more</div>` : ""}
         <div class="dots">${xs.slice(0, 6).map((x) => `<span class="dot ${x.job.plan ? "rec" : ""} ${x.job.status === "done" ? "done" : ""}"></span>`).join("")}</div></div>`);
@@ -2943,7 +3015,7 @@ function weekCols(from) {
   const cols = [];
   for (let i = 0; i < 7; i++) {
     const d = X.addDays(from, i), xs = X.jobsBetween(D, I, d, d), mm = dayMoney(d);
-    cols.push(`<div class="wday ${d === TODAY ? "today" : ""}"><div class="wh" data-day="${d}"><b>${DOW[i]}<span>${+d.slice(8)}</span></b><span class="money">${mm.total ? money(mm.total) : ""}</span></div>
+    cols.push(`<div class="wday ${d === TODAY ? "today" : ""}" data-dropday="${d}"><div class="wh" data-day="${d}"><b>${DOW[i]}<span>${+d.slice(8)}</span></b><span class="money">${mm.total ? money(mm.total) : ""}</span></div>
       <div class="wb">${xs.map((x) => jobCard(x.job, x.first)).join("") || '<div class="muted small" style="padding:4px 2px">No jobs</div>'}
       <button class="btn sm ghost add" data-newjob="|${d}">${ic("plus")}Add job</button></div></div>`);
   }
@@ -2951,9 +3023,9 @@ function weekCols(from) {
 }
 function jobCard(j, first) {
   const svc = X.serviceNames(j.lines).join(", ");
-  return `<div class="jc ${j.plan ? "rec" : ""} ${j.status === "done" ? "done" : ""}" data-job="${j.id}"><div class="jt">${esc(name(j.person))}</div>
+  return `<div class="jc ${j.plan ? "rec" : ""} ${j.status === "done" ? "done" : ""}" data-job="${j.id}"${dragAttr({ job: j, first })}><div class="jt">${esc(name(j.person))}</div>
     <div class="js">${esc(svc || "No services listed")}</div>
-    <div class="jm"><span class="muted">${j.time ? esc(j.time) : ""}${j.plan ? " ↻" : ""}${j.status === "done" ? " ✓" : ""}${j.status === "skipped" ? " skipped" : ""}${crewTag(j)}</span><b>${first ? money(X.jobTotal(j)) : "project"}</b></div></div>`;
+    <div class="jm"><span class="muted">${esc(X.timeText(j))}${j.plan ? " ↻" : ""}${j.status === "done" ? " ✓" : ""}${j.status === "skipped" ? " skipped" : ""}${crewTag(j)}</span><b>${first ? money(X.jobTotal(j)) : "project"}</b></div></div>`;
 }
 // who's doing a job, as a small coloured name (nothing when it's Ben's own)
 function crewTag(j) {
@@ -2964,7 +3036,7 @@ function dayList(date) {
   const xs = X.jobsBetween(D, I, date, date);
   if (!xs.length) return `<div class="card">${emptyBox("cal", `Nothing booked on ${X.niceDate(date)}`, "", `<br><button class="btn primary" data-newjob="|${date}">${ic("plus")}Book a job</button>`)}</div>`;
   return `<div class="dayjobs">${xs.map((x) => { const j = x.job, p = I.people.get(j.person) || {};
-    return `<div class="card jbig" data-job="${j.id}"><div class="time">${esc(j.time || "Any time")}<small>${j.plan ? "↻ " + X.freqText(I.plans.get(j.plan)) : "one-time"}</small></div>
+    return `<div class="card jbig" data-job="${j.id}"><div class="time">${esc(X.timeText(j) || "Any time")}<small>${j.minutes ? X.lenText(j.minutes) + " · " : ""}${j.plan ? "↻ " + X.freqText(I.plans.get(j.plan)) : "one-time"}</small></div>
       <div><h4>${esc(X.nameOf(p))} ${j.status !== "scheduled" ? `<span class="badge ${j.status === "done" ? "good" : "warn"}">${j.status}</span>` : ""}${crewTag(j)}</h4>
         <div class="muted small">${esc(X.addressOf(p))}</div>
         <div class="lines">${(j.lines || []).map((l) => `<div><span>${esc(l.service)}${l.qty && +l.qty !== 1 ? ` × ${+l.qty}` : ""}</span><span>${money(X.lineTotal(l))}</span></div>`).join("")}</div>
@@ -3165,12 +3237,12 @@ function viewPerson(v, r) {
         <button class="btn" data-newjob="${p.id}|${open}">${ic("cal")}Schedule</button>${p.bill_monthly ? `<button class="btn" id="monthly">${ic("receipt")}Monthly invoice</button>` : ""}<button class="btn primary" id="inv">${ic("receipt")}Invoice</button></div></div>
     <div class="twocol"><div class="stack">
       <div class="card"><h3>Upcoming jobs <span class="right">${upcoming.length ? money(upcoming.slice(0, 12).reduce((s, j) => s + X.jobTotal(j), 0)) + " in the next " + Math.min(12, upcoming.length) : ""}</span></h3>
-        <div class="list">${upcoming.slice(0, 8).map((j) => `<div class="li" data-job="${j.id}"><div class="main"><div class="t">${X.niceDate(j.date, { year: true })}${j.time ? " · " + esc(j.time) : ""}</div>
+        <div class="list">${upcoming.slice(0, 8).map((j) => `<div class="li" data-job="${j.id}"><div class="main"><div class="t">${X.niceDate(j.date, { year: true })}${X.timeText(j) ? " · " + esc(X.timeText(j)) : ""}</div>
           <div class="s">${j.plan ? "↻ " : ""}${esc(X.serviceNames(j.lines).join(", "))}</div></div><div class="amt">${money(X.jobTotal(j))}</div></div>`).join("")
           || `<div class="empty"><b>Nothing scheduled</b><button class="btn sm" data-newjob="${p.id}|${open}">${ic("cal")}Book ${X.niceDate(open)} (next open day)</button></div>`}
           ${upcoming.length > 8 ? `<div class="small muted" style="padding-top:8px">and ${upcoming.length - 8} more</div>` : ""}</div></div>
       ${plans.map((pl) => `<div class="card"><h3>${ic("repeat")} Recurring: ${esc(X.freqText(pl))} <span class="right">${money(X.linesTotal(pl.lines))} a visit</span></h3>
-        <div class="small muted">${esc(X.serviceNames(pl.lines).join(", "))}${pl.time ? " · " + esc(pl.time) : ""} · since ${X.niceDate(pl.start, { year: true })}</div>
+        <div class="small muted">${esc(X.serviceNames(pl.lines).join(", "))}${X.timeText(pl) ? " · " + esc(X.timeText(pl)) : ""}${pl.minutes ? " · " + X.lenText(pl.minutes) : ""} · since ${X.niceDate(pl.start, { year: true })}</div>
         <div class="row" style="margin-top:10px"><button class="btn sm bad" data-stop="${pl.id}">Stop this schedule</button></div></div>`).join("")}
       <div class="card"><h3>Estimates <a class="right" href="#/estimate/new?person=${p.id}">+ New</a></h3><div class="list">${ests.map((e) => `<div class="li" data-go="estimate/${e.id}"><div class="main"><div class="t">#${esc(e.number)} · ${X.niceDate(e.date, { year: true })}</div>
           <div class="s">${esc(X.serviceNames(e.lines).slice(0, 3).join(", "))}</div></div>${statusBadge(e.status)}<div class="amt">${money(X.estimateValue(e).value)}${e.options ? "<small>options</small>" : ""}</div></div>`).join("") || '<div class="empty">No estimates</div>'}</div></div>
@@ -3534,7 +3606,10 @@ function jobSheet(job, isNew = false, optionsFrom = null) {
   openSheet(isNew ? "New job" : `${name(j.person)} · ${X.niceDate(j.date)}`, `
     ${optionsFrom ? `<div class="card"><h3>Which option did they pick?</h3><div class="chips">${optionsFrom.lines.map((l, i) => `<button type="button" class="chip" data-opt="${i}">${esc(l.service)} · ${money(X.lineTotal(l))}</button>`).join("")}</div></div>` : ""}
     <div><div class="lbl">Customer</div><div id="jwho"></div></div>
-    <div class="fgrid"><label class="f">Date<input type="date" id="jdate" value="${esc(j.date)}"></label><label class="f">Time (optional)<input type="time" id="jtime" value="${esc(t24)}"></label>
+    <div class="fgrid"><label class="f">Date<input type="date" id="jdate" value="${esc(j.date)}"></label>
+      <label class="f">How long<select id="jlen"><option value="">Not set</option>${[...new Set([...LEN_OPTS, ...(+j.minutes > 0 ? [+j.minutes] : [])])].sort((a, b) => a - b).map((m) => `<option value="${m}" ${+j.minutes === m ? "selected" : ""}>${X.lenText(m)}</option>`).join("")}</select></label>
+      <label class="f">Arrive at (optional)<input type="time" id="jtime" value="${esc(t24)}"></label>
+      <label class="f">Window until (optional)<input type="time" id="jwin" value="${esc(to24(j.window_end))}"></label>
       <label class="f">Who's doing it<select class="inp" id="jwho2"><option value="">Me (Ben)</option>${D.employees.filter((e) => e.status === "active" || e.id === j.assignee).map((e) => `<option value="${e.id}" ${e.id === j.assignee ? "selected" : ""}>${esc(X.empName(e))}</option>`).join("")}</select></label>
       <label class="f">Repeats<select id="jfreq"><option value="none">Doesn't repeat (one-time)</option>${X.FREQS.map(([n, u]) => `<option value="${n}-${u}" ${freq === `${n}-${u}` ? "selected" : ""}>${esc(X.freqText({ every: n, unit: u }))}</option>`).join("")}</select></label></div>
     <div id="jlines"></div>
@@ -3567,8 +3642,10 @@ function jobSheet(job, isNew = false, optionsFrom = null) {
       const person = await picker.resolve();
       const lines = cleanLines(j.lines);
       if (!lines.length) throw new Error("Add what you'll be doing.");
-      const date = $("#jdate", b).value || j.date;
-      return { ...j, person, date, time: from24($("#jtime", b).value), lines, notes: $("#jnotes", b).value.trim(), assignee: $("#jwho2", b).value || null };
+      const date = $("#jdate", b).value || j.date, time = from24($("#jtime", b).value), win = from24($("#jwin", b).value);
+      if (win && !time) throw new Error("Set the arrival time first; the window runs from it.");
+      if (win && X.timeMin(win) <= X.timeMin(time)) throw new Error("The window has to end after the arrival time.");
+      return { ...j, person, date, time, window_end: win, minutes: +$("#jlen", b).value || null, lines, notes: $("#jnotes", b).value.trim(), assignee: $("#jwho2", b).value || null };
     };
     const freqOf = () => { const v = $("#jfreq", b).value; if (v === "none") return null; const [n, u] = v.split("-"); return { every: +n, unit: u }; };
     const finish = (msg) => { toast(msg); closeSheet(); render(); };
@@ -3577,7 +3654,7 @@ function jobSheet(job, isNew = false, optionsFrom = null) {
       const row = await read(), f = freqOf();
       if (isNew || !plan) {
         if (f) {   // a new recurring schedule starting with this visit
-          const pl = { id: X.uuid(), person: row.person, every: f.every, unit: f.unit, start: row.date, time: row.time, lines: row.lines, active: true, notes: "", assignee: row.assignee };
+          const pl = { id: X.uuid(), person: row.person, every: f.every, unit: f.unit, start: row.date, time: row.time, window_end: row.window_end, minutes: row.minutes, lines: row.lines, active: true, notes: "", assignee: row.assignee };
           if (!isNew) { await saveOne({ ...row, plan: pl.id }); await savePlan(pl, X.addDays(row.date, 1), row.date); }
           else await savePlan(pl, row.date, row.date);
           if (row.estimate) { const first = D.jobs.find((x) => x.plan === pl.id && x.date === row.date); if (first) await save("jobs", { ...first, estimate: row.estimate }); }
@@ -3588,7 +3665,7 @@ function jobSheet(job, isNew = false, optionsFrom = null) {
       }
       // a visit of a recurring plan: ask whether the change is for this visit only or from here on
       const sameSchedule = f && f.every === plan.every && f.unit === plan.unit;
-      const changedPlan = !sameSchedule || row.assignee !== (job.assignee || null) || row.time !== j.time || JSON.stringify(row.lines) !== JSON.stringify(cleanLines(job.lines)) || row.date !== job.date;
+      const changedPlan = !sameSchedule || row.assignee !== (job.assignee || null) || row.time !== j.time || (row.window_end || "") !== (job.window_end || "") || (row.minutes || null) !== (job.minutes || null) || JSON.stringify(row.lines) !== JSON.stringify(cleanLines(job.lines)) || row.date !== job.date;
       if (!changedPlan) { await saveOne(row); return finish("Saved."); }
       $("#scope", b).hidden = false; $("#scope", b).scrollIntoView({ behavior: "smooth", block: "nearest" });
       $("#scope", b).onclick = (e2) => {
@@ -3596,7 +3673,7 @@ function jobSheet(job, isNew = false, optionsFrom = null) {
         busy(s, async () => {
           if (s.dataset.scope === "one") { await saveOne({ ...row, edited: true }); return finish("This visit changed."); }
           if (!f) { await saveOne(row); await savePlan({ ...plan, active: false }, X.addDays(row.date, 1), row.date); return finish("Schedule stopped after this visit."); }
-          await savePlan({ ...plan, every: f.every, unit: f.unit, time: row.time, lines: row.lines, assignee: row.assignee }, row.date < job.date ? row.date : job.date, row.date);
+          await savePlan({ ...plan, every: f.every, unit: f.unit, time: row.time, window_end: row.window_end, minutes: row.minutes, lines: row.lines, assignee: row.assignee }, row.date < job.date ? row.date : job.date, row.date);
           finish(`Schedule updated from ${X.niceDate(row.date)}.`);
         });
       };
@@ -3639,6 +3716,164 @@ function from24(v) {
   if (!v) return "";
   const [h, m] = v.split(":").map(Number);
   return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "AM" : "PM"}`;
+}
+const LEN_OPTS = [15, 30, 45, 60, 75, 90, 120, 150, 180, 240, 300, 360, 420, 480];
+
+// ------------------------------------------------------------------ moving jobs (drag and drop; 2026-11-22, Ben's switch-over)
+// A moved visit of a recurring plan changes only that visit (edited, so the plan leaves it alone); a project
+// keeps its other days the same distance apart; an arrival window keeps its length. Every move can be undone.
+function toastUndo(msg, undo) {
+  const t = $("#toast"); t.innerHTML = ic("check") + `<span>${esc(msg)}</span><button class="btn sm ghost" id="tUndo">Undo</button>`; t.className = "on";
+  $("#tUndo", t).onclick = () => { t.className = ""; busy(null, undo); };
+  clearTimeout(toastT); toastT = setTimeout(() => (t.className = ""), 7000);
+}
+function rerenderKeep() { const s = $("#view").scrollTop, l = $(".tlscroll") ? $(".tlscroll").scrollLeft : 0; render(); $("#view").scrollTop = s; if ($(".tlscroll")) $(".tlscroll").scrollLeft = l; }
+async function moveJob(j, to) {
+  const old = JSON.parse(JSON.stringify(j)), row = { ...old, ...to };
+  if (to.date && to.date !== j.date && Array.isArray(j.days) && j.days.length) { const n = X.daysBetween(j.date, to.date); row.days = j.days.map((d) => X.addDays(d, n)); }
+  if ("time" in to) {
+    const a = X.timeMin(j.time), b = X.timeMin(j.window_end);
+    row.window_end = !to.time ? "" : a != null && b != null && b > a ? X.minText(X.timeMin(to.time) + (b - a)) : (j.window_end || "");
+  }
+  const same = ["date", "time", "window_end", "minutes", "assignee"].every((k) => (row[k] || null) === (old[k] || null));
+  if (same) return;
+  if (j.plan) row.edited = true;
+  await save("jobs", row); rerenderKeep();
+  const bits = [];
+  if (row.date !== old.date) bits.push(X.niceDate(row.date));
+  if ((row.time || "") !== (old.time || "")) bits.push(X.timeText(row) || "any time");
+  if ((row.assignee || null) !== (old.assignee || null)) { const e = D.employees.find((x) => x.id === row.assignee); bits.push(e ? "for " + (e.first || X.empName(e)) : "for you"); }
+  if ((row.minutes || null) !== (old.minutes || null)) bits.push(X.lenText(row.minutes) || "no length");
+  toastUndo(`${name(j.person)}: ${bits.join(", ")}${j.plan ? " (this visit only)" : ""}`, async () => { await save("jobs", old); rerenderKeep(); });
+}
+const dragAttr = (x) => (x.first && x.job.status === "scheduled" && can("schedule_jobs") ? ` data-drag="${x.job.id}"` : "");
+
+// Drag: mouse = press and move; touch = press and hold ~0.35 s, then move (a quick swipe still scrolls). Drop on a
+// day ([data-dropday], week / month) = new date, same time; on a timeline lane ([data-lane]) = new time (15-min
+// steps) and who does it; on "Any time" = no set time. The handle at a block's foot changes the job's length.
+const TL = { from: 6 * 60, to: 21 * 60, px: 1 };          // timeline: 6 AM - 9 PM, 1 px a minute
+const snap15 = (m) => Math.round(m / 15) * 15;
+let dragEndedAt = 0, dragAC = null;
+function calDrag(root, mode, date) {
+  if (dragAC) dragAC.abort();   // the calendar was redrawn: drop the last one's window listeners
+  dragAC = null;
+  if (!can("schedule_jobs")) return;
+  let st = null;
+  const scroller = $("#view");
+  root.addEventListener("click", (e) => { if (Date.now() - dragEndedAt < 450) { e.stopPropagation(); e.preventDefault(); } }, true);
+  root.addEventListener("contextmenu", (e) => { if (e.target.closest("[data-drag]")) e.preventDefault(); });
+  const start = (e, x, y, touch) => {
+    const el = e.target.closest("[data-drag]"); if (!el) return;
+    const j = I.jobs.get(el.dataset.drag); if (!j) return;
+    const r = el.getBoundingClientRect();
+    st = { el, j, x, y, dx: x - r.left, dy: y - r.top, w: r.width, top: r.top, rz: !!e.target.closest(".rz"), on: false, touch, timer: 0, ghost: null, target: null };
+    if (st.rz) { begin(); if (touch) e.preventDefault(); }
+    else if (touch) st.timer = setTimeout(begin, 350);
+  };
+  const begin = () => {
+    if (!st) return; st.on = true; clearTimeout(st.timer);
+    document.body.classList.add("dragging");
+    if (st.touch && navigator.vibrate) navigator.vibrate(12);
+    if (st.rz) { st.el.classList.add("resizing"); return; }
+    const g = st.el.cloneNode(true); g.classList.add("dragghost"); g.removeAttribute("data-drag"); g.style.width = st.w + "px";
+    document.body.appendChild(g); st.ghost = g; st.el.classList.add("dragsrc");
+    place(st.x, st.y);
+  };
+  const lbl = (txt) => { const s = st.ghost && st.ghost.querySelector(".gt"); if (s) s.textContent = txt; };
+  const place = (x, y) => {
+    if (st.rz) {   // resizing: the block's foot follows the finger
+      const m = Math.max(15, snap15((y - st.top) / TL.px)); st.el.style.height = m * TL.px + "px"; st.target = { minutes: m };
+      const s = st.el.querySelector(".gt"); if (s) s.textContent = [X.timeText(st.j), X.lenText(m)].filter(Boolean).join(" · ");
+      return;
+    }
+    st.ghost.style.transform = `translate(${x - st.dx}px, ${y - st.dy}px)`;
+    const hit = document.elementFromPoint(x, y), tgt = hit && hit.closest("[data-dropday],[data-lane],[data-anytime]");
+    for (const el of $$(".dropon")) if (el !== tgt) el.classList.remove("dropon");
+    st.target = null;
+    if (!tgt) return lbl("");
+    tgt.classList.add("dropon");
+    if (tgt.dataset.dropday) { st.target = { date: tgt.dataset.dropday }; lbl(X.niceDate(tgt.dataset.dropday)); }
+    else if (tgt.dataset.anytime !== undefined) { st.target = { time: "" }; lbl("Any time"); }
+    else {
+      const r = tgt.getBoundingClientRect(), m = Math.max(TL.from, Math.min(TL.to - 15, TL.from + snap15((y - st.dy - r.top) / TL.px)));
+      st.target = { time: X.minText(m), assignee: tgt.dataset.lane === "me" ? null : tgt.dataset.lane };
+      lbl(X.minText(m) + (D.employees.length ? " · " + tgt.dataset.name : ""));
+    }
+  };
+  const move = (x, y, e) => {
+    if (!st) return;
+    if (!st.on) {
+      const far = Math.hypot(x - st.x, y - st.y);
+      if (st.touch) { if (far > 10) { clearTimeout(st.timer); st = null; } return; }   // a swipe: let it scroll
+      if (far < 6) return; begin();
+    }
+    if (e && e.cancelable) e.preventDefault();
+    place(x, y);
+    const r = scroller.getBoundingClientRect();   // near the top / bottom edge: scroll the page along
+    if (y < r.top + 50) scroller.scrollTop -= 14; else if (y > r.bottom - 50) scroller.scrollTop += 14;
+  };
+  const end = (cancel) => {
+    if (!st) return;
+    const s = st; st = null; clearTimeout(s.timer);
+    if (!s.on) return;
+    dragEndedAt = Date.now();
+    document.body.classList.remove("dragging");
+    if (s.ghost) s.ghost.remove();
+    s.el.classList.remove("dragsrc", "resizing");
+    for (const el of $$(".dropon")) el.classList.remove("dropon");
+    if (cancel || !s.target) { if (s.rz) s.el.style.height = ""; return; }
+    busy(null, () => moveJob(s.j, s.target));
+  };
+  root.addEventListener("pointerdown", (e) => { if (e.pointerType === "mouse" && e.button === 0) start(e, e.clientX, e.clientY, false); });
+  root.addEventListener("touchstart", (e) => { if (e.touches.length === 1) start(e, e.touches[0].clientX, e.touches[0].clientY, true); }, { passive: false });
+  const ac = (dragAC = new AbortController()), o = { signal: ac.signal };
+  window.addEventListener("pointermove", (e) => { if (st && !st.touch) move(e.clientX, e.clientY, e); }, o);
+  window.addEventListener("pointerup", () => { if (st && !st.touch) end(false); }, o);
+  window.addEventListener("touchmove", (e) => { if (st && st.touch) move(e.touches[0].clientX, e.touches[0].clientY, e); }, { passive: false, signal: ac.signal });
+  window.addEventListener("touchend", () => { if (st && st.touch) end(false); }, o);
+  window.addEventListener("touchcancel", () => end(true), o);
+  window.addEventListener("keydown", (e) => { if (e.key === "Escape" && st) end(true); }, o);
+}
+
+// The day's timeline: one lane for Ben and one per active employee, blocks as long as the job (1 h if not set),
+// the arrival window as a faint band, a red line at the time now. Jobs with no time wait in "Any time" above.
+function dayTimeline(date) {
+  const xs = X.jobsBetween(D, I, date, date).filter((x) => x.job.status !== "skipped");
+  const staff = D.employees.filter((e) => e.status === "active" || xs.some((x) => x.job.assignee === e.id));
+  const lanes = [{ id: "me", name: "Me", key: null }, ...staff.map((e) => ({ id: e.id, name: e.first || X.empName(e), key: e.id, e }))];
+  const H = (TL.to - TL.from) * TL.px, anyT = xs.filter((x) => X.timeMin(x.job.time) == null);
+  const block = (x, col, cols) => {
+    const j = x.job, a = Math.max(TL.from, X.timeMin(j.time)), len = +j.minutes || 60, w = X.timeMin(j.window_end);
+    const style = `top:${(a - TL.from) * TL.px}px;height:${Math.max(22, len * TL.px)}px;left:calc(${(100 / cols) * col}% + 3px);width:calc(${100 / cols}% - 6px)`;
+    const band = w != null && w > a ? `<div class="tlwin" style="top:${(a - TL.from) * TL.px}px;height:${(w - a) * TL.px}px;left:calc(${(100 / cols) * col}% + 1px);width:calc(${100 / cols}% - 2px)"></div>` : "";
+    return band + `<div class="tlb ${j.plan ? "rec" : ""} ${j.status === "done" ? "done" : ""} ${!j.minutes ? "nolen" : ""}" data-job="${j.id}"${dragAttr(x)} style="${style}">
+      <b class="ell">${esc(name(j.person))}${j.status === "done" ? " ✓" : ""}</b><small class="gt ell">${esc([X.timeText(j), X.lenText(j.minutes)].filter(Boolean).join(" · "))}</small>
+      <small class="ell">${esc(X.serviceNames(j.lines).join(", "))}</small>${dragAttr(x) ? '<i class="rz" title="Drag to change how long"></i>' : ""}</div>`;
+  };
+  const laneHtml = (L) => {
+    const mine = xs.filter((x) => X.timeMin(x.job.time) != null && (x.job.assignee || null) === L.key)
+      .map((x) => ({ x, a: X.timeMin(x.job.time), b: X.timeMin(x.job.time) + (+x.job.minutes || 60) })).sort((p, q) => p.a - q.a);
+    // side by side where jobs overlap: greedy columns within each cluster of overlapping jobs
+    let out = "", cluster = [], end = -1;
+    const flush = () => { const colEnd = []; for (const c of cluster) { let k = colEnd.findIndex((e) => e <= c.a); if (k < 0) { k = colEnd.length; colEnd.push(0); } colEnd[k] = c.b; c.col = k; }
+      for (const c of cluster) out += block(c.x, c.col, colEnd.length); cluster = []; };
+    for (const c of mine) { if (c.a >= end && cluster.length) flush(); cluster.push(c); end = Math.max(end, c.b); }
+    if (cluster.length) flush();
+    return `<div class="tllane" data-lane="${L.id}" data-name="${esc(L.name)}" style="height:${H}px">${out}</div>`;
+  };
+  const hours = []; for (let m = TL.from; m < TL.to; m += 60) hours.push(`<span style="top:${(m - TL.from) * TL.px}px">${X.minText(m).replace(":00", "")}</span>`);
+  const nowM = (() => { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); })();
+  const nowLine = date === TODAY && nowM > TL.from && nowM < TL.to ? `<div class="tlnow" style="top:${(nowM - TL.from) * TL.px}px"></div>` : "";
+  const load = (L) => { const n = X.dayLoad(D, I, date, L.key); return n ? X.lenText(n) : "free"; };
+  return `<div class="card tl">
+    <div class="tlany" data-anytime><b>Any time</b>${anyT.map((x) => `<span class="pill ${x.job.plan ? "rec" : ""} ${x.job.status === "done" ? "done" : ""}" data-job="${x.job.id}"${dragAttr(x)}>${esc(name(x.job.person))}<small class="gt"></small></span>`).join("")
+      || `<span class="small muted">${can("schedule_jobs") ? "Drag a job here to take its time off" : "Nothing without a time"}</span>`}</div>
+    <div class="tlscroll"><div class="tlwrap" style="--lanes:${lanes.length}">
+      ${lanes.length > 1 ? `<div class="tlheads"><span></span>${lanes.map((L) => `<div class="tlhead"><b class="ell">${esc(L.name)}</b><small>${load(L)}</small></div>`).join("")}</div>` : ""}
+      <div class="tlbody"><div class="tlhours" style="height:${H}px">${hours.join("")}</div>${lanes.map(laneHtml).join("")}${nowLine}</div>
+    </div></div>
+    ${can("schedule_jobs") && xs.length ? `<div class="small muted tlhint">${matchMedia("(hover: none)").matches ? "Press and hold a job to move it" : "Drag a job to move it"}; drag its bottom edge to change how long it takes.</div>` : ""}
+  </div>`;
 }
 
 // ------------------------------------------------------------------ invoices
