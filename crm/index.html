@@ -501,6 +501,15 @@ table.t .t2 { color: var(--ink3); font-size: 12.5px; }
 #sheet .lrow .svc, #sheet .lrow .desc { grid-column: 1 / -1; }
 #sheet .lrow .ltot { justify-content: flex-start; }
 #sheet .lrow .show-phone { display: inline !important; }
+/* automatic messages (2026-11-22) */
+.msgcard textarea { font-size: 14px; }
+.autorule { border-left: 3px solid transparent; }
+.autorule.is-on { border-left-color: var(--good); }
+.autorule .fgrid { align-items: end; }
+.autorule > .f { margin-top: 10px; display: block; }
+details.prev { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 10px; }
+details.prev summary { cursor: pointer; color: var(--acc); font-weight: 600; font-size: 13px; }
+details.prev .li .s.pre { white-space: pre-line; }
 /* pipeline board (2026-11-22): five columns on a computer, one at a time (chips) on a phone */
 .board { display: grid; grid-template-columns: repeat(5, minmax(196px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 6px; align-items: start; }
 .bcol { background: rgba(0,0,0,.14); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; min-width: 0; }
@@ -935,7 +944,7 @@ const TABLES = { people: "crm_people", services: "crm_services", estimates: "crm
   jobs: "crm_jobs", invoices: "crm_invoices", payments: "crm_payments", employees: "crm_employees",
   pins: "knock_pins", areas: "knock_areas" };
 const COLUMNS = {
-  people: ["id", "kind", "type", "first", "last", "company", "phones", "emails", "address", "city", "state", "zip", "notes", "source", "status", "created", "tcf", "edited", "lat", "lng", "follow_up", "follow_note", "lost_reason"],
+  people: ["id", "kind", "type", "first", "last", "company", "phones", "emails", "address", "city", "state", "zip", "notes", "source", "status", "created", "tcf", "edited", "lat", "lng", "follow_up", "follow_note", "lost_reason", "no_auto"],
   services: ["id", "name", "description", "rate", "unit", "position", "archived"],
   estimates: ["id", "number", "person", "date", "status", "options", "lines", "notes", "decided", "tcf", "edited", "sent", "sent_to", "lost_reason"],
   plans: ["id", "person", "every", "unit", "start", "time", "lines", "active", "notes", "tcf", "assignee"],
@@ -1543,6 +1552,120 @@ function sourceStats(D, I, from = "") {
     .sort((a, b) => b.collected - a.collected || b.leads - a.leads);
 }
 
+// ------------------------------------------------------------------ automatic texts & emails (2026-11-22, Ben)
+// Settings in kv "crm_auto"; the cloud's scan (tools_crmauto.ts) turns these rules into rows of crm_messages, the
+// Messages page shows / previews the same thing. Every rule starts OFF, and a rule only covers things from the day it
+// was switched on (`since`), so switching on follow-ups doesn't message every old estimate. Channel (Ben's pick): a
+// text from his own number when there's a phone, else an email from his Gmail. Estimate delivery prefers email (the PDF).
+const AUTO_RULES = [
+  ["est_follow", "Estimate follow-ups", "A friendly check-in if an estimate is still open a few days after it went out. Stops when it's won or lost."],
+  ["job_reminder", "Job reminders", "The day before a booked visit (recurring visits too)."],
+  ["checkin", "Follow-up check-ins", "When a follow-up date you set on someone comes up. Your own note isn't sent."],
+  ["est_delivery", "Estimate delivery", "A new estimate, sent to the customer: by email with the PDF, or a short text if there's no email."],
+];
+const AUTO_FIELDS = ["first", "name", "business", "phone", "date", "time", "services", "total", "estimate"];
+const AUTO_DEFAULT = {
+  quiet: { from: "09:00", to: "19:00" }, channel: "text_else_email", daily_cap: 25,
+  rules: {
+    est_follow: { on: false, since: null, approve: true, days: [2, 7],
+      text1: "Hi {first}, it's Ben with {business}. Just making sure you got the estimate for {services}. Happy to answer any questions or get you on the schedule!",
+      text2: "Hi {first}, Ben from {business} again. Any questions on your estimate? We have openings coming up if you'd like to get on the schedule.",
+      subject: "Your estimate from {business}",
+      email1: "Hi {first},\n\nJust making sure you got the estimate for {services} ({total}). Happy to answer any questions, or just reply when you'd like to get on the schedule.\n\nThank you,\nBen Huber\n{business}\n{phone}",
+      email2: "Hi {first},\n\nChecking in once more on your estimate for {services}. We have openings coming up if you'd like to get on the schedule.\n\nThank you,\nBen Huber\n{business}\n{phone}" },
+    job_reminder: { on: false, since: null, approve: false, at: "16:00",
+      text: "Hi {first}, this is {business}. Just a reminder we're scheduled at your place tomorrow, {date}{time}. Reply here if you need to reschedule. Thank you!",
+      subject: "Reminder: {business} tomorrow, {date}",
+      email: "Hi {first},\n\nJust a reminder that we're scheduled at your place tomorrow, {date}{time}, for {services}. Reply to this email if you need to reschedule.\n\nThank you,\nBen Huber\n{business}\n{phone}" },
+    checkin: { on: false, since: null, approve: true,
+      text: "Hi {first}, it's Ben with {business}, just checking in. Let me know if there's anything I can help with!",
+      subject: "Checking in from {business}",
+      email: "Hi {first},\n\nJust checking in. Let me know if there's anything I can help with.\n\nThank you,\nBen Huber\n{business}\n{phone}" },
+    est_delivery: { on: false, since: null, approve: true,
+      text: "Hi {first}, here's your estimate from {business}: {services}, {total}. Reply with any questions or when you'd like to get on the schedule!",
+      subject: "Estimate #{estimate} from {business}",
+      email: "Hi {first},\n\nThanks for having us out. Your estimate is attached. Just reply to this email if you have any questions, or when you'd like to get on the schedule.\n\nThank you,\nBen Huber\n{business}\n{phone}" },
+  },
+};
+/** Saved settings on top of the defaults (anything missing falls back). Estimate delivery always waits for Ben's OK:
+ * the PDF can only be made on the CRM page. */
+function normalizeAuto(saved) {
+  const s = saved && typeof saved === "object" ? saved : {};
+  const out = { ...AUTO_DEFAULT, ...s, quiet: { ...AUTO_DEFAULT.quiet, ...(s.quiet || {}) }, rules: {} };
+  for (const [k] of AUTO_RULES) out.rules[k] = { ...AUTO_DEFAULT.rules[k], ...((s.rules || {})[k] || {}) };
+  out.rules.est_delivery.approve = true;
+  out.rules.est_follow.days = (Array.isArray(out.rules.est_follow.days) ? out.rules.est_follow.days : [2, 7]).map(Number).filter((n) => n >= 1 && n <= 60).slice(0, 2);
+  if (!out.rules.est_follow.days.length) out.rules.est_follow.days = [2, 7];
+  out.daily_cap = Math.max(1, Math.min(100, +out.daily_cap || 25));
+  return out;
+}
+const fillTemplate = (tpl, v) => String(tpl || "").replace(/\{(\w+)\}/g, (m, k) => (k in v ? String(v[k] ?? "") : m)).replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+const mobileOf = (p) => { const ph = (p.phones || []).filter((x) => String(x.n || "").replace(/\D/g, "").length >= 10);
+  return (ph.find((x) => /mobile|cell/i.test(x.label || "")) || ph.find((x) => !/home|work|office|fax/i.test(x.label || "")) || ph[0] || {}).n || ""; };
+/** Who it goes to and how: { channel, to } or null (no way to reach them). */
+function autoRoute(p, auto, preferEmail = false) {
+  const phone = mobileOf(p), email = (p.emails || []).find((e) => /@/.test(e)) || "";
+  const ch = auto.channel || "text_else_email";
+  if (preferEmail && email && ch !== "text_only") return { channel: "email", to: email };
+  if (ch === "email_only") return email ? { channel: "email", to: email } : null;
+  if (ch === "text_only") return phone ? { channel: "text", to: phone } : null;
+  if (phone) return { channel: "text", to: phone };
+  return email ? { channel: "email", to: email } : null;
+}
+function autoVars(D, p, extra = {}) {
+  const biz = (D.settings && D.settings.business) || {};
+  return { first: p.first || (p.company ? "there" : "there"), name: nameOf(p), business: biz.name || "VITRA Window Washing", phone: biz.phone || "", ...extra };
+}
+const hm = (s) => { const m = String(s || "").match(/^(\d{1,2}):(\d{2})/); return m ? +m[1] * 60 + +m[2] : 0; };
+/** Is `nowHM` ("HH:MM") inside the hours messages may go out? */
+const canSendNow = (auto, nowHM) => hm(nowHM) >= hm(auto.quiet.from) && hm(nowHM) < hm(auto.quiet.to);
+/** Every message the switched-on rules call for right now: [{ref_key, rule, person, ref, channel, to_addr, subject, body, attach, approve}]. */
+function autoCandidates(D, I, autoSaved, today, nowHM, onlyRule = null) {
+  const auto = normalizeAuto(autoSaved), out = [];
+  const R = auto.rules, ok = (k) => (onlyRule ? onlyRule === k : R[k].on && R[k].since);
+  const live = (p) => p && p.status === "active" && !p.no_auto;
+  const make = (rule, p, ref, key, tplText, tplEmail, subject, vars, preferEmail = false) => {
+    const r = autoRoute(p, auto, preferEmail); if (!r) return;
+    const v = autoVars(D, p, vars);
+    out.push({ ref_key: key, rule, person: p.id, ref, channel: r.channel, to_addr: r.to, subject: r.channel === "email" ? fillTemplate(subject, v) : null,
+      body: fillTemplate(r.channel === "email" ? tplEmail : tplText, v), attach: rule === "est_delivery" && r.channel === "email", approve: !!R[rule].approve });
+  };
+  const estVars = (e) => ({ services: serviceNames(e.lines).slice(0, 3).join(", ").toLowerCase() || "the work", total: usd(estimateValue(e).value, false) + (e.options ? " (options)" : ""), estimate: e.number, date: niceDate(e.date, { weekday: false }), time: "" });
+  if (ok("est_follow")) {
+    const since = onlyRule ? "0000" : R.est_follow.since;
+    for (const e of D.estimates) {
+      if (e.status !== "open" || !e.date || e.date < since) continue;
+      const p = I.people.get(e.person); if (!live(p)) continue;
+      const base = e.sent && e.sent > e.date ? e.sent : e.date, age = daysBetween(base, today);
+      R.est_follow.days.forEach((d, k) => { if (age >= d && age < d + 3) make("est_follow", p, e.id, `est_follow:${e.id}:${d}`, k ? R.est_follow.text2 : R.est_follow.text1, k ? R.est_follow.email2 : R.est_follow.email1, R.est_follow.subject, estVars(e)); });
+    }
+  }
+  if (ok("job_reminder") && (onlyRule || hm(nowHM) >= hm(R.job_reminder.at))) {
+    const tm = addDays(today, 1);
+    for (const j of D.jobs) {
+      if (j.status !== "scheduled" || j.date !== tm) continue;
+      const p = I.people.get(j.person); if (!live(p)) continue;
+      make("job_reminder", p, j.id, `job_reminder:${j.id}:${j.date}`, R.job_reminder.text, R.job_reminder.email, R.job_reminder.subject,
+        { date: niceDate(j.date, { weekday: true }).replace(",", ""), time: j.time ? ` around ${j.time}` : "", services: serviceNames(j.lines).join(", ").toLowerCase() || "your service", total: usd(jobTotal(j)) });
+    }
+  }
+  if (ok("checkin")) {
+    for (const p of D.people) {
+      if (!live(p) || !p.follow_up || p.follow_up !== today || (!onlyRule && p.follow_up < R.checkin.since)) continue;
+      make("checkin", p, p.id, `checkin:${p.id}:${p.follow_up}`, R.checkin.text, R.checkin.email, R.checkin.subject, {});
+    }
+  }
+  if (ok("est_delivery")) {
+    const since = onlyRule ? addDays(today, -14) : R.est_delivery.since;
+    for (const e of D.estimates) {
+      if (e.status !== "open" || e.sent || !e.date || e.date < since) continue;
+      const p = I.people.get(e.person); if (!live(p)) continue;
+      make("est_delivery", p, e.id, `est_delivery:${e.id}`, R.est_delivery.text, R.est_delivery.email, R.est_delivery.subject, estVars(e), true);
+    }
+  }
+  return out;
+}
+
 // ------------------------------------------------------------------ door knocking (2026-11-21)
 const KNOCK = {
   not_home: { label: "Not home", color: "#94a3b8", talked: false },
@@ -1586,7 +1709,7 @@ function metres(a, b) {
 }
 function trackLength(points) { let m = 0; for (let i = 1; i < points.length; i++) m += metres(points[i - 1], points[i]); return m; }
 
-return { TABLES, COLUMNS, PERMISSIONS, PERM_KEYS, DEFAULT_ROLES, normalizeRoles, effectivePerms, empName, PAY_TYPES, payText, DEFAULT_TRAININGS, METHODS, HORIZON_DAYS, round2, usd, usdShort, localDay, addDays, addMonths, daysBetween, weekday, niceDate, uuid, nameOf, addressOf, lineTotal, linesTotal, estimateValue, jobTotal, serviceNames, freqText, FREQS, index, paidOf, balanceOf, jobDays, jobsBetween, moneyBetween, nextJob, lastJob, activePlan, servicesFor, nextOpenDay, dashboard, occurrences, regenPlan, topUp, freqFromGap, search, nextNumber, fixMojibake, htmlText, fromDump, LOST_REASONS, SOURCES, NUDGE_DAYS, STALE_DAYS, sourceOf, pipeline, followUps, winRate, sourceStats, KNOCK, knockStats, areaFreshness, inPolygon, metres, trackLength };
+return { TABLES, COLUMNS, PERMISSIONS, PERM_KEYS, DEFAULT_ROLES, normalizeRoles, effectivePerms, empName, PAY_TYPES, payText, DEFAULT_TRAININGS, METHODS, HORIZON_DAYS, round2, usd, usdShort, localDay, addDays, addMonths, daysBetween, weekday, niceDate, uuid, nameOf, addressOf, lineTotal, linesTotal, estimateValue, jobTotal, serviceNames, freqText, FREQS, index, paidOf, balanceOf, jobDays, jobsBetween, moneyBetween, nextJob, lastJob, activePlan, servicesFor, nextOpenDay, dashboard, occurrences, regenPlan, topUp, freqFromGap, search, nextNumber, fixMojibake, htmlText, fromDump, LOST_REASONS, SOURCES, NUDGE_DAYS, STALE_DAYS, sourceOf, pipeline, followUps, winRate, sourceStats, AUTO_RULES, AUTO_FIELDS, AUTO_DEFAULT, normalizeAuto, fillTemplate, autoRoute, autoVars, canSendNow, autoCandidates, KNOCK, knockStats, areaFreshness, inPolygon, metres, trackLength };
  })();
 const TCF = (() => { // The Customer Factor (Ben's CRM) inside Jarvis (2026-11-19). Ben exports a full backup from The
 // Customer Factor (a MySQL dump, .sql) about once a month and uploads it on the Customers screen.
@@ -2253,7 +2376,10 @@ async function load() {
   if (d.today) TODAY = d.today;
   if (d.me) { ME = d.me; HIDE_PRICES = !can("see_prices"); applyMe(); }
   reindex();
+  if (ME.owner) await loadMsgs().catch((e) => console.warn("messages", e));
 }
+let MSGS = [];   // automatic texts & emails (owner only; Messages page)
+async function loadMsgs() { MSGS = (await api("messages", {})).messages || []; }
 let toastT = 0;
 function toast(msg, err = false) {
   const t = $("#toast"); t.innerHTML = ic(err ? "x" : "check") + `<span>${esc(msg)}</span>`; t.className = "on" + (err ? " err" : "");
@@ -2271,11 +2397,11 @@ const NAV = [
   ["dashboard", "Dashboard", "home"], ["calendar", "Calendar", "cal"], ["prospects", "Pipeline", "target"],
   ["customers", "Customers", "users"], ["estimates", "Estimates", "file"], ["invoices", "Invoices", "receipt"],
   ["employees", "Employees", "team"], ["permissions", "Permissions", "shield"],
-  ["knock", "Door knocking", "map"],
+  ["knock", "Door knocking", "map"], ["messages", "Messages", "mail"],
   ["books", "Transactions", "bank"], ["reports", "Reports", "chart"], ["banking", "Bank & uploads", "upload"],
 ];
 const BOTTOM = ["dashboard", "calendar", "prospects", "customers"];   // + the New button in the middle; Invoices is in the menu
-const SECTIONS = [["Overview", ["dashboard", "calendar"]], ["Sales", ["knock", "prospects", "estimates"]], ["Customers", ["customers", "invoices"]], ["Books", ["books", "reports", "banking"]], ["Team", ["employees", "permissions"]]];
+const SECTIONS = [["Overview", ["dashboard", "calendar"]], ["Sales", ["knock", "prospects", "estimates", "messages"]], ["Customers", ["customers", "invoices"]], ["Books", ["books", "reports", "banking"]], ["Team", ["employees", "permissions"]]];
 const NEW_ITEMS = [
   ["estimate", "file", "New estimate", "Price a job for someone"],
   ["job", "cal", "Book a job", "One-time or recurring"],
@@ -2295,7 +2421,7 @@ function buildNav() {
 }
 // What each screen needs (Ben, as owner, has everything). The server checks again on every request.
 const NEEDS = { prospects: "create_estimates", estimates: "create_estimates", customers: "view_customers", invoices: "view_invoices",
-  books: "see_reports", reports: "see_reports", banking: "see_reports", employees: "manage_employees", permissions: "manage_permissions", knock: "knock_doors", settings: "edit_settings" };
+  books: "see_reports", reports: "see_reports", banking: "see_reports", employees: "manage_employees", permissions: "manage_permissions", knock: "knock_doors", settings: "edit_settings", messages: "manage_permissions" };
 const NEW_NEEDS = { estimate: "create_estimates", job: "schedule_jobs", customer: "edit_customers", invoice: "create_invoices" };
 function applyMe() {
   for (const a of $$("[data-nav]")) { const need = NEEDS[a.dataset.nav]; a.hidden = !!need && !can(need); }
@@ -2335,6 +2461,7 @@ function counts() {
   const due = X.pipeline(D, I, TODAY).followUp.length;   // follow-ups waiting on Ben, else how many estimates are out
   set("prospects", due || D.people.filter((p) => p.kind === "prospect" && p.status === "active" && (I.estimatesOf.get(p.id) || []).some((e) => e.status === "open")).length, due ? "warn" : "acc");
   set("invoices", D.invoices.filter((i) => X.balanceOf(I, i) > 0.005).length, "warn");
+  set("messages", MSGS.filter((m) => m.status === "ready").length, "acc");
   set("calendar", X.jobsBetween(D, I, TODAY, TODAY).length, "core");
 }
 const ROUTE_OF = { person: "customers", estimate: "estimates", invoice: "invoices", employee: "employees" };
@@ -2906,7 +3033,8 @@ function viewPerson(v, r) {
         <dt>address</dt><dd>${esc(X.addressOf(p) || "–")}</dd>
         ${p.source ? `<dt>found us</dt><dd>${esc(X.sourceOf(p))}</dd>` : ""}
         ${p.created ? `<dt>added</dt><dd>${X.niceDate(p.created, { year: true })}</dd>` : ""}
-        <dt>billed</dt><dd>${money(billed)}</dd></dl>${contactLinks(p)}</div>
+        <dt>billed</dt><dd>${money(billed)}</dd></dl>${contactLinks(p)}
+        ${ME.owner ? `<label class="check small" style="margin-top:12px"><input type="checkbox" id="autoOk" ${p.no_auto ? "" : "checked"}>Automatic texts &amp; emails</label>` : ""}</div>
       <div class="card"><h3>${ic("bell")}Follow-up</h3>${p.follow_up ? `<div class="row" style="gap:8px">${dueBadge(p.follow_up)}</div>${p.follow_note ? `<div class="small" style="margin-top:6px">${esc(p.follow_note)}</div>` : ""}` : '<div class="small muted">None set</div>'}
         <div class="row" style="margin-top:10px"><button class="btn sm" id="fu">${ic("bell")}${p.follow_up ? "Change or mark done" : "Set a follow-up"}</button></div>${p.lost_reason && p.status === "lost" ? `<div class="small muted" style="margin-top:8px">Lost: ${esc(p.lost_reason)}</div>` : ""}</div>
       <div class="card"><h3>Notes</h3><div class="pre small">${esc(p.notes || "") || '<span class="muted">No notes</span>'}</div></div>
@@ -2917,6 +3045,7 @@ function viewPerson(v, r) {
   $("#edit", v).onclick = () => personSheet(p);
   $("#inv", v).onclick = () => go("invoice/new?person=" + p.id);
   $("#fu", v).onclick = () => followUpSheet(p);
+  if ($("#autoOk", v)) $("#autoOk", v).onchange = (ev) => busy(null, async () => { await save("people", { ...p, no_auto: !ev.target.checked }); toast(ev.target.checked ? "Automatic messages on for them." : "They won't get automatic messages."); });
   if ($("#mkCust", v)) $("#mkCust", v).onclick = (e) => busy(e.target, async () => { await save("people", { ...p, kind: "customer" }); toast("Now a customer."); render(); });
   if ($("#mkLost", v)) $("#mkLost", v).onclick = (e) => busy(e.target, async () => { await save("people", { ...p, status: "lost", follow_up: null, follow_note: "" }); render(); });
   if ($("#reopen", v)) $("#reopen", v).onclick = (e) => busy(e.target, async () => { await save("people", { ...p, status: "active" }); render(); });
@@ -4768,7 +4897,112 @@ function demoBooks(route, b) {
   throw new Error("Not in the demo.");
 }
 
-const VIEWS = { knock: viewKnock, books: viewBooks, reports: viewReports, banking: viewBanking, employees: viewEmployees, employee: viewEmployee, permissions: viewPermissions, dashboard: viewDashboard, calendar: viewCalendar, prospects: viewProspects, customers: viewCustomers, person: viewPerson,
+// ------------------------------------------------------------------ automatic texts & emails (2026-11-22, Ben)
+// Messages page: Ready to send (estimate follow-ups, check-ins and estimate delivery wait for Ben's tap), Sent (the
+// log, incl. job reminders that went by themselves) and Settings (switches, timing, wording, preview). The cloud
+// makes and sends them (tools_crmauto.ts); rules and wording are shared (crmapp_calc.js AUTO_*).
+const RULE_LABEL = Object.fromEntries(X.AUTO_RULES.map(([k, l]) => [k, l]));
+const msgStatus = { ready: ["acc", "waiting"], queued: ["core", "scheduled"], sent: ["good", "sent"], skipped: ["", "skipped"], failed: ["bad", "failed"] };
+function viewMessages(v, r) {
+  setTitle("Messages");
+  const tab = ["ready", "sent", "settings"].includes(r.q.get("t")) ? r.q.get("t") : "ready";
+  const ready = MSGS.filter((m) => m.status === "ready" || m.status === "queued"), done = MSGS.filter((m) => !["ready", "queued"].includes(m.status));
+  v.innerHTML = `<div class="wrap">
+    <div class="pagehead"><div><h2>Messages</h2><div class="sub">Automatic texts and emails to customers: job reminders, estimate follow-ups, check-ins and estimates.</div></div><div class="spacer"></div>
+      ${tab === "ready" && ready.some((m) => m.status === "ready") ? `<button class="btn primary" id="sendAll">${ic("mail")}Send all ${ready.filter((m) => m.status === "ready").length}</button>` : ""}</div>
+    <div class="toolbar"><div class="chips">${[["ready", "Ready to send", ready.length], ["sent", "Sent", done.filter((m) => m.status === "sent").length], ["settings", "Settings", ""]].map(([k, l, n]) =>
+      `<button class="chip ${k === tab ? "on" : ""}" data-t="${k}">${l}${n !== "" ? ` <span class="n">${n}</span>` : ""}</button>`).join("")}</div></div>
+    <div id="mbody"></div></div>`;
+  v.addEventListener("click", (e) => { const c = e.target.closest("[data-t]"); if (c) go("messages?t=" + c.dataset.t); });
+  const body = $("#mbody", v);
+  if (tab === "settings") return msgSettings(body);
+  if (tab === "sent") {
+    body.innerHTML = `<div class="card">${done.length ? `<div class="tablewrap"><table class="t cards"><thead><tr><th>When</th><th>To</th><th>What</th><th>Message</th><th>Status</th></tr></thead><tbody>
+      ${done.map((m) => `<tr class="${m.person ? "click" : ""}" ${m.person ? `data-go="person/${m.person}"` : ""}><td class="t2">${esc(new Date(m.sent_at || m.created_at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }))}</td>
+        <td><div class="t1">${esc(name(m.person))}</div><div class="t2">${m.channel === "text" ? "Text" : "Email"} · ${esc(m.to_addr || "")}</div></td><td class="t2">${esc(RULE_LABEL[m.rule] || m.rule)}</td>
+        <td class="t2" style="max-width:420px">${esc(String(m.body).slice(0, 160))}${String(m.body).length > 160 ? "…" : ""}</td>
+        <td><span class="badge ${(msgStatus[m.status] || [""])[0]}">${(msgStatus[m.status] || ["", m.status])[1]}</span>${m.error ? `<div class="t2">${esc(m.error)}</div>` : ""}</td></tr>`).join("")}</tbody></table></div>`
+      : emptyBox("mail", "Nothing sent yet", "Messages that go out (or are skipped) are listed here.")}</div>`;
+    wire(v); return;
+  }
+  const on = Object.values((D.auto && D.auto.rules) || {}).some((x) => x.on);
+  body.innerHTML = ready.length ? `<div class="stack">${ready.map((m) => `<div class="card msgcard" data-m="${m.id}">
+      <div class="row" style="gap:8px"><span class="badge ${msgStatus[m.status][0]}">${esc(RULE_LABEL[m.rule] || m.rule)}</span>${m.status === "queued" ? '<span class="badge core">sends by itself in the allowed hours</span>' : ""}
+        <div class="spacer"></div><span class="small muted">${esc(ago(String(m.created_at).slice(0, 10)))}</span></div>
+      <div class="row" style="margin-top:8px;flex-wrap:nowrap"><div class="avatar" data-n="${esc(name(m.person))}">${esc(initials(I.people.get(m.person)))}</div>
+        <div style="min-width:0"><a class="t1" href="#/person/${m.person}">${esc(name(m.person))}</a><div class="t2">${ic(m.channel === "text" ? "msg" : "mail")} ${m.channel === "text" ? "Text to" : "Email to"} ${esc(m.to_addr || "")}${m.attach ? " · estimate PDF attached" : ""}</div></div></div>
+      ${m.channel === "email" ? `<label class="f" style="margin-top:10px">Subject<input class="inp" data-subj value="${esc(m.subject || "")}"></label>` : ""}
+      <label class="f" style="margin-top:8px"><textarea class="inp" data-body rows="${m.channel === "email" ? 7 : 3}">${esc(m.body)}</textarea></label>
+      <div class="row" style="margin-top:10px"><button class="btn sm" data-skip>Skip</button><div class="spacer"></div><button class="btn primary sm" data-send>${ic("mail")}Send now</button></div></div>`).join("")}</div>`
+    : `<div class="card">${emptyBox("mail", "Nothing waiting", on ? "New ones show up here when a rule calls for one." : "No automatic messages are switched on yet. Turn them on in Settings.", on ? "" : `<br><button class="btn primary" data-t="settings">${ic("gear")}Open settings</button>`)}</div>`;
+  const send = async (card) => {
+    const m = MSGS.find((x) => x.id === card.dataset.m);
+    const payload = { id: m.id, act: "send", body: $("[data-body]", card).value, subject: $("[data-subj]", card)?.value };
+    if (m.attach) {   // estimate delivery: the PDF is made here, like the Download PDF button
+      const e = I.estimates.get(m.ref); if (!e) throw new Error("That estimate isn't there any more.");
+      const pdf = await makePdf("estimate", e); payload.pdf = pdf.output("datauristring").split(",")[1]; payload.filename = pdfName("estimate", e);
+    }
+    const res = await api("message", payload);
+    Object.assign(m, res.message || { status: res.status });
+    if (m.rule === "est_delivery" && m.ref) { const e = D.estimates.find((x) => x.id === m.ref); if (e) { e.sent = TODAY; e.sent_to = m.to_addr; } }
+  };
+  body.onclick = (e) => {
+    const card = e.target.closest("[data-m]"); if (!card) return;
+    const s = e.target.closest("[data-send]"), k = e.target.closest("[data-skip]");
+    if (s) busy(s, async () => { await send(card); toast(DEMO ? "Demo: nothing was sent." : "Sent."); counts(); render(); });
+    if (k) busy(k, async () => { const m = MSGS.find((x) => x.id === card.dataset.m); await api("message", { id: m.id, act: "skip" }); m.status = "skipped"; counts(); render(); });
+  };
+  if ($("#sendAll", v)) $("#sendAll", v).onclick = (ev) => {
+    const cards = $$("[data-m]", v).filter((c) => (MSGS.find((x) => x.id === c.dataset.m) || {}).status === "ready");
+    if (!confirm(`Send ${cards.length} message${cards.length > 1 ? "s" : ""} now?`)) return;
+    busy(ev.currentTarget, async () => { let n = 0; for (const c of cards) { await send(c); n++; } toast(DEMO ? `Demo: nothing was sent (${n}).` : `${n} sent.`); counts(); render(); });
+  };
+  wire(v);
+}
+async function msgSettings(host) {
+  host.innerHTML = `<div class="card">${emptyBox("gear", "Loading…", "")}</div>`;
+  const r0 = await api("auto", { preview: true });
+  const A = r0.auto; D.auto = A;
+  const R = A.rules, tpl = (k, f, label, rows = 3) => `<label class="f">${label}<textarea class="inp" data-r="${k}" data-f="${f}" rows="${rows}">${esc(R[k][f] || "")}</textarea></label>`;
+  const prev = (k) => { const list = (r0.preview || {})[k] || []; return list.length ? `<details class="prev"><summary>${list.length} would go out if it ran today (preview, nothing is sent)</summary>${list.slice(0, 6).map((c) => `<div class="li"><div class="main"><div class="t">${esc(name(c.person))} · ${c.channel === "text" ? "text" : "email"}</div><div class="s pre">${esc(c.body)}</div></div></div>`).join("")}</details>` : `<div class="small muted" style="margin-top:8px">Nobody would get this one today.</div>`; };
+  host.innerHTML = `<div class="stack">
+    <div class="card"><h3>${ic("gear")}How they're sent</h3>
+      ${r0.sms ? "" : `<div class="note">${ic("lock")}<span>Texts aren't set up in the cloud (SMS Gateway codes), so only emails can go out.</span></div>`}
+      <div class="fgrid">
+        <label class="f">Send by<select id="ach">${[["text_else_email", "Text, or email if there's no mobile number"], ["text_only", "Texts only"], ["email_only", "Emails only"]].map(([k, l]) => `<option value="${k}" ${A.channel === k ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+        <label class="f">Only send between<input type="time" id="aq1" value="${esc(A.quiet.from)}"></label><label class="f">and<input type="time" id="aq2" value="${esc(A.quiet.to)}"></label>
+        <label class="f">At most per day<input id="acap" inputmode="numeric" value="${A.daily_cap}"></label></div>
+      <div class="small muted">Texts come from your own number (the SMS Gateway app on your phone); emails from your Gmail, so replies come back to you. Words in {braces} are filled in: ${X.AUTO_FIELDS.map((f) => `{${f}}`).join(" ")}.</div></div>
+    ${X.AUTO_RULES.map(([k, label, desc]) => `<div class="card autorule ${R[k].on ? "is-on" : ""}" data-rule="${k}"><div class="row"><div style="flex:1;min-width:200px"><h3 style="margin:0">${esc(label)}</h3><div class="small muted">${esc(desc)}</div></div>
+        <label class="check"><input type="checkbox" data-r="${k}" data-f="on" ${R[k].on ? "checked" : ""}>${R[k].on ? `On since ${X.niceDate(R[k].since, { weekday: false })}` : "Off"}</label></div>
+      <div class="fgrid" style="margin-top:12px">
+        ${k === "est_delivery" ? `<div class="small muted">Waits for your OK (the PDF is made on this page).</div>` : `<label class="f">When one is due<select data-r="${k}" data-f="approve"><option value="1" ${R[k].approve ? "selected" : ""}>Wait for my OK</option><option value="0" ${R[k].approve ? "" : "selected"}>Send by itself</option></select></label>`}
+        ${k === "est_follow" ? `<label class="f">First check-in, days after the estimate<input data-r="${k}" data-f="day1" inputmode="numeric" value="${R[k].days[0] ?? 2}"></label><label class="f">Second, days after<input data-r="${k}" data-f="day2" inputmode="numeric" value="${R[k].days[1] ?? ""}" placeholder="none"></label>` : ""}
+        ${k === "job_reminder" ? `<label class="f">Send the day before at<input type="time" data-r="${k}" data-f="at" value="${esc(R[k].at)}"></label>` : ""}</div>
+      ${k === "est_follow" ? tpl(k, "text1", "First text") + tpl(k, "text2", "Second text") : tpl(k, "text", "Text")}
+      <label class="f">Email subject<input class="inp" data-r="${k}" data-f="subject" value="${esc(R[k].subject || "")}"></label>
+      ${k === "est_follow" ? tpl(k, "email1", "First email", 6) + tpl(k, "email2", "Second email", 6) : tpl(k, "email", "Email", 6)}
+      ${prev(k)}</div>`).join("")}
+    <div class="row"><div class="spacer"></div><button class="btn primary" id="asave">${ic("check")}Save</button></div></div>`;
+  $("#asave", host).onclick = (ev) => busy(ev.currentTarget, async () => {
+    const rules = {};
+    for (const [k] of X.AUTO_RULES) {
+      const g = (f) => $(`[data-r="${k}"][data-f="${f}"]`, host);
+      const r = { on: g("on").checked };
+      if (g("approve")) r.approve = g("approve").value === "1";
+      if (g("at")) r.at = g("at").value || "16:00";
+      if (k === "est_follow") r.days = [+g("day1").value, +g("day2").value].filter((n) => n > 0);
+      for (const f of ["text", "text1", "text2", "subject", "email", "email1", "email2"]) if (g(f)) r[f] = g(f).value;
+      rules[k] = r;
+    }
+    const turningOn = X.AUTO_RULES.filter(([k]) => rules[k].on && !A.rules[k].on).map(([, l]) => l);
+    if (turningOn.length && !confirm(`Switch on: ${turningOn.join(", ")}? From now on these go to your customers (only for things from today on).`)) return;
+    const res = await api("auto", { settings: { channel: $("#ach", host).value, quiet: { from: $("#aq1", host).value, to: $("#aq2", host).value }, daily_cap: +$("#acap", host).value || 25, rules } });
+    D.auto = res.auto; toast("Saved."); render();
+  });
+}
+
+const VIEWS = { messages: viewMessages, knock: viewKnock, books: viewBooks, reports: viewReports, banking: viewBanking, employees: viewEmployees, employee: viewEmployee, permissions: viewPermissions, dashboard: viewDashboard, calendar: viewCalendar, prospects: viewProspects, customers: viewCustomers, person: viewPerson,
   estimates: viewEstimates, estimate: viewEstimate, invoices: viewInvoices, invoice: viewInvoice, search: viewSearch, settings: viewSettings };
 
 // ------------------------------------------------------------------ demo data (?demo=1): made-up people, nothing leaves the page
@@ -4844,6 +5078,30 @@ function demoApi(route, b) {
   }
   if (route === "settings") { if (b.settings) DB.settings = { ...DB.settings, ...b.settings }; return { settings: DB.settings }; }
   if (route === "track" || route === "geo" || route === "signout") return { ok: true };
+  if (route === "auto") {   // automatic messages in the demo: same rules, nothing leaves the page
+    let auto = X.normalizeAuto(DB.auto);
+    if (b.settings) {
+      const s = b.settings, next = { ...auto, ...s, rules: { ...auto.rules } };
+      for (const [k] of X.AUTO_RULES) { const r = { ...auto.rules[k], ...((s.rules || {})[k] || {}) }; if (r.on && !auto.rules[k].on) r.since = TODAY; if (!r.on) r.since = null; next.rules[k] = r; }
+      DB.auto = auto = X.normalizeAuto(next);
+    }
+    const out = { auto, sms: true };
+    if (b.preview) { const I2 = X.index(DB); out.preview = Object.fromEntries(X.AUTO_RULES.map(([k]) => [k, X.autoCandidates(DB, I2, auto, TODAY, "23:59", k)])); }
+    return out;
+  }
+  if (route === "messages") {
+    if (!DB.messages) {   // a few samples so the page has something to show
+      const I2 = X.index(DB), all = X.AUTO_RULES.flatMap(([k]) => X.autoCandidates(DB, I2, {}, TODAY, "23:59", k).slice(0, 1));
+      DB.messages = all.map((c, i) => ({ id: "d-msg" + i, ...c, status: c.rule === "job_reminder" ? "sent" : "ready", created_at: new Date().toISOString(), sent_at: c.rule === "job_reminder" ? new Date().toISOString() : null }));
+    }
+    return { messages: JSON.parse(JSON.stringify(DB.messages)) };
+  }
+  if (route === "message") {
+    const m = (DB.messages || []).find((x) => x.id === b.id); if (!m) throw new Error("That message isn't there any more.");
+    if (b.body) m.body = b.body; if (b.subject) m.subject = b.subject;
+    m.status = b.act === "skip" ? "skipped" : "sent"; if (m.status === "sent") m.sent_at = new Date().toISOString();
+    return { ok: true, status: m.status, message: JSON.parse(JSON.stringify(m)) };
+  }
   if (route === "email") { const row = DB[b.kind === "estimate" ? "estimates" : "invoices"].find((r) => r.id === b.id); if (row) { row.sent = TODAY; row.sent_to = b.to; } return { ok: true, sent: TODAY, demo: true }; }
   if (route === "sessions") return { sessions: [] };
   if (route === "roles") {
