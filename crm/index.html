@@ -488,13 +488,13 @@ table.t .t2 { color: var(--ink3); font-size: 12.5px; }
 .twocol { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
 .sticky { position: sticky; top: 0; }
 .lines-ed { display: flex; flex-direction: column; gap: 10px; }
-.lrow { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: rgba(0,0,0,.14); display: grid; grid-template-columns: minmax(0, 1fr) 112px 92px 112px 34px; gap: 9px; align-items: start; transition: border-color .15s; }
+.lrow { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: rgba(0,0,0,.14); display: grid; grid-template-columns: minmax(0, 1fr) 84px 120px 112px 34px; gap: 9px; align-items: start; transition: border-color .15s; }
 .lrow:focus-within { border-color: rgba(var(--acc-rgb), .4); }
 .lrow .desc { grid-column: 1 / 5; }
 .lrow .ltot { height: 38px; display: flex; align-items: center; justify-content: flex-end; font-weight: 700; font-variant-numeric: tabular-nums; padding-right: 4px; }
 .lrow .x { margin-top: 1px; }
 .lrow .unit { font-size: 11.5px; color: var(--ink3); margin-top: 2px; }
-.lhead { display: grid; grid-template-columns: minmax(0, 1fr) 112px 92px 112px 34px; gap: 9px; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink3); padding: 0 13px 8px; }
+.lhead { display: grid; grid-template-columns: minmax(0, 1fr) 84px 120px 112px 34px; gap: 9px; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink3); padding: 0 13px 8px; }
 .lhead .n { text-align: right; }
 #sheet .lhead { display: none; }
 #sheet .lrow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 34px; }
@@ -2782,45 +2782,64 @@ function personSheet(p) {
 }
 
 // ------------------------------------------------------------------ lines editor (estimates, invoices, jobs)
+// Each line: Service (a drop-down of Ben's presets, or "Other" to type one) | Qty x Price = Total (Ben, 2026-11-21).
+// Picking a service fills its price, unit and description; qty and price stay editable, and the total follows them.
 function linesEditor(host, lines, onChange) {
   const presets = presetOptions();
+  const presetOf = (l) => presets.find((s) => s.name.toLowerCase() === String(l.service || "").trim().toLowerCase());
+  const custom = new Set();   // lines Ben switched to "Other" (typed service name), by index
   const draw = () => {
-    host.innerHTML = `<div class="lhead"><span>Service</span><span class="n">Price per</span><span class="n">Amount</span><span class="n">Total</span><span></span></div>
-      <div class="lines-ed">${lines.map((l, i) => `<div class="lrow" data-i="${i}">
-        <label class="f svc"><span class="show-phone">Service</span><input class="inp" data-k="service" value="${esc(l.service)}" list="presetList" placeholder="What you'll do"></label>
-        <label class="f"><span class="show-phone">Price per</span><input class="inp" data-k="rate" value="${l.rate === "" || l.rate == null ? "" : +l.rate}" inputmode="decimal" style="text-align:right" placeholder="0.00"></label>
-        <label class="f"><span class="show-phone">Amount</span><input class="inp" data-k="qty" value="${l.qty === "" || l.qty == null ? "" : +l.qty}" inputmode="decimal" style="text-align:right" placeholder="1">${l.unit ? `<span class="unit">${esc(l.unit)}</span>` : ""}</label>
-        <div class="ltot">${money(X.lineTotal(l))}</div>
+    host.innerHTML = `<div class="lhead"><span>Service</span><span class="n">Qty</span><span class="n">× Price</span><span class="n">= Total</span><span></span></div>
+      <div class="lines-ed">${lines.map((l, i) => {
+        const p = presetOf(l), other = !p && (custom.has(i) || String(l.service || "").trim());
+        return `<div class="lrow" data-i="${i}">
+        <label class="f svc"><span class="show-phone">Service</span>
+          <select class="inp" data-pick><option value="">Choose a service…</option>${presets.map((s) => `<option value="${s.id}" ${p && p.id === s.id ? "selected" : ""}>${esc(s.name)}</option>`).join("")}
+            <option value="__other" ${other ? "selected" : ""}>Other (type it in)</option></select>
+          ${other ? `<input class="inp" data-k="service" value="${esc(l.service)}" placeholder="What you'll do" style="margin-top:6px">` : ""}</label>
+        <label class="f"><span class="show-phone">Qty</span><input class="inp" data-k="qty" value="${l.qty === "" || l.qty == null ? "" : +l.qty}" inputmode="decimal" style="text-align:right" placeholder="1"></label>
+        <label class="f"><span class="show-phone">× Price</span><input class="inp" data-k="rate" value="${l.rate === "" || l.rate == null ? "" : +l.rate}" inputmode="decimal" style="text-align:right" placeholder="0.00">${l.unit ? `<span class="unit">${esc(l.unit)}</span>` : ""}</label>
+        <div class="ltot"><span class="show-phone muted" style="font-weight:500;margin-right:6px">=</span>${money(X.lineTotal(l))}</div>
         <button type="button" class="iconbtn x" data-del="${i}" aria-label="Remove line">${ic("x")}</button>
-        <label class="f desc"><textarea class="inp" data-k="description" rows="${Math.min(8, Math.max(2, String(l.description || "").split("\n").length))}" placeholder="Description the customer sees">${esc(l.description)}</textarea></label></div>`).join("")}</div>
-      <datalist id="presetList">${presets.map((s) => `<option value="${esc(s.name)}">`).join("")}</datalist>
-      <div class="row" style="margin-top:10px"><button type="button" class="btn sm" data-addline>${ic("plus")}Blank line</button><span class="muted small">or add a preset:</span></div>
-      <div class="presets" style="margin-top:8px">${presets.map((s) => `<button type="button" class="chip" data-preset="${s.id}">${esc(s.name)}${s.rate ? ` <span class="n">${money(s.rate)}${s.unit ? " " + esc(s.unit) : ""}</span>` : ""}</button>`).join("")}</div>`;
+        <label class="f desc"><textarea class="inp" data-k="description" rows="${Math.min(8, Math.max(2, String(l.description || "").split("\n").length))}" placeholder="Description the customer sees">${esc(l.description)}</textarea></label></div>`; }).join("")}</div>
+      <div class="row" style="margin-top:10px"><button type="button" class="btn sm" data-addline>${ic("plus")}Add a service</button></div>`;
     paintIcons(host);
   };
-  const fixTotals = () => { for (const row of $$(".lrow", host)) { const l = lines[+row.dataset.i]; $(".ltot", row).textContent = money(X.lineTotal(l)); } };
+  const fixTotals = () => { for (const row of $$(".lrow", host)) { const l = lines[+row.dataset.i], t = $(".ltot", row); t.lastChild.textContent = money(X.lineTotal(l)); } };
   host.oninput = (e) => {
     const inp = e.target.closest("[data-k]"); if (!inp) return;
     const l = lines[+inp.closest(".lrow").dataset.i], k = inp.dataset.k;
     if (k === "rate" || k === "qty") l[k] = inp.value.replace(/[^0-9.\-]/g, "") === "" ? "" : parseFloat(inp.value.replace(/[^0-9.\-]/g, "")) || 0;
     else l[k] = inp.value;
-    delete l.total;   // the total follows price x amount once Ben edits a line
+    if (k === "rate" || k === "qty") delete l.total;   // the total follows qty x price once Ben changes either (not when he edits text)
     if (k === "description") inp.rows = Math.min(8, Math.max(2, inp.value.split("\n").length));
     fixTotals(); onChange();
   };
-  host.addEventListener("change", (e) => {   // picking a preset name in a blank line fills its description and price
-    const inp = e.target.closest('[data-k="service"]'); if (!inp) return;
-    const l = lines[+inp.closest(".lrow").dataset.i], s = presets.find((x) => x.name.toLowerCase() === inp.value.trim().toLowerCase());
-    if (s && !String(l.description || "").trim()) { l.description = s.description || ""; if (l.rate === "" || l.rate == null || +l.rate === 0) l.rate = +s.rate || 0; l.unit = s.unit || ""; draw(); onChange(); }
+  host.addEventListener("change", (e) => {   // a service picked from the drop-down: its price, unit and description
+    const sel = e.target.closest("[data-pick]"); if (!sel) return;
+    const i = +sel.closest(".lrow").dataset.i, l = lines[i], before = presetOf(l);
+    if (sel.value === "__other") {
+      custom.add(i); if (before) l.service = ""; l.unit = "";
+      draw(); onChange(); $(`.lrow[data-i="${i}"] [data-k="service"]`, host)?.focus(); return;
+    }
+    custom.delete(i);
+    const s = presets.find((x) => x.id === sel.value);
+    if (!s) { l.service = ""; draw(); onChange(); return; }
+    // keep a description Ben wrote himself; replace one that came from the previous preset (or none)
+    const desc = String(l.description || "").trim();
+    if (!desc || (before && desc === String(before.description || "").trim())) l.description = s.description || "";
+    l.service = s.name; l.rate = +s.rate || 0; l.unit = s.unit || "";
+    if (l.qty === "" || l.qty == null || +l.qty === 0) l.qty = 1;
+    delete l.total;
+    draw(); onChange();
+    const q = $(`.lrow[data-i="${i}"] [data-k="qty"]`, host); if (q) { q.focus(); q.select(); }
   });
   host.onclick = (e) => {
-    const d = e.target.closest("[data-del]"); if (d) { lines.splice(+d.dataset.del, 1); draw(); onChange(); return; }
-    if (e.target.closest("[data-addline]")) { lines.push({ service: "", description: "", rate: "", qty: 1 }); draw(); onChange(); $$(".lrow", host).pop()?.querySelector("input")?.focus(); return; }
-    const pr = e.target.closest("[data-preset]");
-    if (pr) { const s = I.services.get(pr.dataset.preset);
-      if (lines.length && !lines.some((l) => String(l.service || "").trim() || String(l.description || "").trim() || +l.rate)) lines.length = 0;   // replace the empty starter line
-      lines.push({ service: s.name, description: s.description || "", rate: +s.rate || 0, qty: 1, unit: s.unit || "" });
-      draw(); onChange(); const q = $$(".lrow", host).pop()?.querySelector('[data-k="qty"]'); if (q) { q.focus(); q.select(); } }
+    const d = e.target.closest("[data-del]");
+    if (d) { const k = +d.dataset.del; lines.splice(k, 1);
+      const moved = [...custom].map((j) => (j > k ? j - 1 : j)).filter((j) => j !== k); custom.clear(); moved.forEach((j) => custom.add(j));
+      draw(); onChange(); return; }
+    if (e.target.closest("[data-addline]")) { lines.push({ service: "", description: "", rate: "", qty: 1 }); draw(); onChange(); $$(".lrow", host).pop()?.querySelector("[data-pick]")?.focus(); return; }
   };
   draw();
   return { redraw: draw };
