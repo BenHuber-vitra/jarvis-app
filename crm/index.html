@@ -3707,7 +3707,13 @@ function viewKnock(v) {
     const map = E.create($("#kmap", v), saved ? saved.c : HOME, saved ? saved.z : 16);
     KN.E = E; KN.map = map;
     $("#kEngine", v).textContent = E.name === "google" ? "Map: Google Maps" : "Map: OpenStreetMap (free). Add a Google Maps key in Settings for satellite view.";
-    if (E.satellite) { const b = $("#kLayer", v); b.hidden = false; let sat = false; b.onclick = () => { sat = !sat; map.setLayer(sat ? "satellite" : "map"); b.querySelector("span").textContent = sat ? "Map" : "Satellite"; b.classList.toggle("on", sat); }; }
+    if (E.satellite) {   // Google's street map is very pale at house level, so satellite is the default; the choice is remembered
+      const b = $("#kLayer", v); b.hidden = false;
+      let sat = true; try { sat = localStorage.getItem("vitra.knockLayer") !== "map"; } catch {}
+      const show = () => { map.setLayer(sat ? "satellite" : "map"); b.querySelector("span").textContent = sat ? "Map" : "Satellite"; b.classList.toggle("on", sat); };
+      show();
+      b.onclick = () => { sat = !sat; try { localStorage.setItem("vitra.knockLayer", sat ? "satellite" : "map"); } catch {} show(); };
+    }
     map.onMove((c, z) => { try { localStorage.setItem(KV_KEY, JSON.stringify({ c, z })); } catch {} });
     map.onClick((p) => { if (KN.drawing) return addDrawPoint(p); newPinSheet(p); });
     drawAreas(); drawPins(); drawTrack(myTrack);
