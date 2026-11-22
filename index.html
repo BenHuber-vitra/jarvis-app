@@ -1429,9 +1429,12 @@
   #money .pcard.pvis.m-shiny::after { animation: pcsweeps 3.8s cubic-bezier(0.4,0,0.2,1) infinite !important; }
   @keyframes pcsweepf { 0% { transform: translateX(-130%); } 55%, 100% { transform: translateX(330%); } }
   @keyframes pcsweeps { 0%, 35% { transform: translateX(-130%); } 100% { transform: translateX(330%); } }
-  /* A game or pack opening (#playgame) is open: hide what's on the screen underneath (keeping its solid background), so the
-     phone's compositor has nothing to flash through on top of the game (Ben's second recording, 2026-11-21). play.js plCover. */
-  body.pgcover #money.on > *, body.pgcover #fitlive.on > * { visibility: hidden; }
+  /* Covered screens are hidden (menu.js "covered screens stay hidden"; Ben's recordings, 2026-11-21: the screen beneath kept
+     flashing through on top). cov-talk: a menu screen, live workout or game covers the talk screen. cov-money: a live
+     workout or game covers the menu screen, whose content goes (its solid background stays). Layers that sit on top
+     (sheets, tooltip, menu, overlays) are left alone. */
+  body.cov-talk > :not(#money):not(#msheet):not(#mtip):not(#drawer):not(#scrim):not(#fitlive):not(#playgame):not(#tapany):not(#unpaired):not(#signin):not(script):not(style) { visibility: hidden; }
+  body.cov-money #money.on > * { visibility: hidden; }
   /* ================================================================ the talk screen, premium (Ben, 2026-11-21)
      Shared by the phone app (index.template.html) and the laptop window (jarvis/ui/static/index.html): build.py puts it in
      the shared CSS. The shared CSS sits in the middle of each page's own styles, so these rules start with "body" to win.
@@ -1533,6 +1536,14 @@
   body aside #log { background: none; border: 0; border-radius: 0; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
   /* The talk screen stands still while a menu screen covers it (2026-11-21, phone performance). */
   body:has(#money.on) .brand, body:has(#money.on) #talk::before { animation-play-state: paused; }
+  /* Phones (touch, no mouse): no frosted blur anywhere. Android Chrome re-blurs whatever moves beneath it every frame, a
+     known cause of flicker and layers showing through (2026-11-21). Panels get a darker tint instead so text stays readable. */
+  @media (hover: none) and (pointer: coarse) {
+    body *, body *::before, body *::after { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+    body #log, body #unpaired .box, body #signin form { background: linear-gradient(180deg, rgba(255,255,255,0.05), transparent 30%), linear-gradient(rgba(var(--th-nav, 14,16,48),0.6), rgba(var(--th-nav, 14,16,48),0.6)), var(--panel); }
+    body #msheet { background: rgba(2,4,14,0.74); }
+    body #mtip { background: rgba(var(--th-nav, 14,16,48),0.97); }
+  }
 
   #stage { position: relative; flex: 0 0 42%; min-height: 220px; }
   #core { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -2192,6 +2203,26 @@
     if (open) for (const other of GROUPS) if (other !== name) subOpen(other, false);
     subOpen(name, open);
   };
+  // ------------------------------------------------------------------ covered screens stay hidden
+  // On the S24 whatever sat beneath a full screen kept flashing through on top of it: the talk screen under Workouts,
+  // Nutrition and the other menu screens, the Play screen under a game (Ben's recordings, 2026-11-21). So once a full
+  // screen has faded in, everything it covers is hidden (body.cov-talk / body.cov-money, money.css), and shown again
+  // the moment that screen starts to close. Watches class changes, so every screen, sheet and game is covered by it.
+  const COVER_MS = 320; let coverT = 0;
+  function coverWant() {
+    const on = (id) => { const e = document.getElementById(id); return !!(e && e.classList.contains("on")); };
+    const top = on("fitlive") || on("playgame");
+    return { "cov-talk": top || on("money"), "cov-money": top };
+  }
+  function coverCheck() {
+    const want = coverWant(), cl = document.body.classList; let later = false;
+    // uncover at once (only touch the class when it changes: even a no-op remove() counts as a change and would re-fire this)
+    for (const k in want) { const has = cl.contains(k); if (!want[k] && has) cl.remove(k); else if (want[k] && !has) later = true; }
+    if (later && !coverT) coverT = setTimeout(() => {   // cover once the new screen has faded in
+      coverT = 0; const w = coverWant(); for (const k in w) if (w[k] && !cl.contains(k)) cl.add(k); }, COVER_MS);
+  }
+  new MutationObserver(coverCheck).observe(document.body, { attributes: true, attributeFilter: ["class"], subtree: true });
+  coverCheck();
   // money.js wires the money screens.
   // "Jarvis" = the talk screen: close whatever screen is on top of it.
   $("navJarvis").onclick = (e) => { e.preventDefault(); nav.home(); };
@@ -6844,16 +6875,13 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
 
     // ---- opening packs: the pack wobbles, bursts, and the cards flip over one by one
     const plLayer = document.createElement("div"); plLayer.id = "playgame"; document.body.appendChild(plLayer);
-    // While a game or pack opening is open, the Play screen underneath is hidden (once the layer has faded in): on the
-    // S24 its animated tiles kept flashing through on top of the game (Ben's recording, 2026-11-21). money.css "pgcover".
-    let plCoverT = 0;
-    function plCover(on) { clearTimeout(plCoverT); if (on) plCoverT = setTimeout(() => document.body.classList.add("pgcover"), 320); else document.body.classList.remove("pgcover"); }
+    // While it's open, the Play screen underneath is hidden: menu.js "covered screens stay hidden".
     let plStep = null;
     function plShow(html) {
       if (!plLayer.classList.contains("on")) plStep = nav.push(plHide);
-      plLayer.innerHTML = html; requestAnimationFrame(() => plLayer.classList.add("on")); plCover(true);
+      plLayer.innerHTML = html; requestAnimationFrame(() => plLayer.classList.add("on"));
     }
-    function plHide() { plStop(); plCover(false); plLayer.classList.remove("on"); const id = plStep; plStep = null; if (id) nav.drop(id); setTimeout(() => { if (!plLayer.classList.contains("on")) plLayer.innerHTML = ""; }, 300); plRefresh(); }
+    function plHide() { plStop(); plLayer.classList.remove("on"); const id = plStep; plStep = null; if (id) nav.drop(id); setTimeout(() => { if (!plLayer.classList.contains("on")) plLayer.innerHTML = ""; }, 300); plRefresh(); }
     let plStop = () => {};
     // Pack opening, premium (Ben, 2026-11-20): a stage with slow light rays and drifting motes; tap = the pack charges up
     // (while the cloud rolls it), tears open along a jagged seam with a flash, a shockwave and sparks; the cards are dealt
