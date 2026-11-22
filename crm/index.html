@@ -501,6 +501,33 @@ table.t .t2 { color: var(--ink3); font-size: 12.5px; }
 #sheet .lrow .svc, #sheet .lrow .desc { grid-column: 1 / -1; }
 #sheet .lrow .ltot { justify-content: flex-start; }
 #sheet .lrow .show-phone { display: inline !important; }
+/* pipeline board (2026-11-22): five columns on a computer, one at a time (chips) on a phone */
+.board { display: grid; grid-template-columns: repeat(5, minmax(196px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 6px; align-items: start; }
+.bcol { background: rgba(0,0,0,.14); border: 1px solid var(--line); border-radius: var(--r); padding: 10px; min-width: 0; }
+.bhead { display: flex; align-items: center; gap: 8px; padding: 2px 4px 10px; font-size: 13.5px; }
+.bhead svg { width: 16px; height: 16px; color: var(--ink3); }
+.bhead .n { font-size: 12px; color: var(--ink3); background: rgba(255,255,255,.06); border-radius: 99px; padding: 1px 8px; }
+.c-followUp .bhead svg { color: var(--warn); } .c-won .bhead svg { color: var(--good); } .c-lost .bhead svg { color: var(--bad); }
+.bcards { display: flex; flex-direction: column; gap: 8px; max-height: 70vh; overflow-y: auto; }
+.bcard { background: var(--surf); border: 1px solid var(--line); border-radius: 12px; padding: 11px; cursor: pointer; transition: border-color .15s, transform .15s; min-width: 0; }
+.bcard:hover { border-color: rgba(var(--acc-rgb), .45); }
+.bcard .avatar { width: 30px; height: 30px; font-size: 11.5px; flex: none; }
+.bcard .amt { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.bcard .amt small { display: block; font-weight: 500; color: var(--ink3); font-size: 11px; }
+.bcard .badge svg { width: 12px; height: 12px; vertical-align: -2px; }
+.bnote { margin-top: 6px; overflow-wrap: anywhere; }
+.bact { margin-top: 9px; gap: 6px; flex-wrap: wrap; }
+.bact .iconbtn { width: 30px; height: 30px; }
+.bact .btn.sm { padding: 0 9px; }
+.bempty { color: var(--ink3); font-size: 12.5px; padding: 14px 6px; text-align: center; }
+#cols { display: none; margin-bottom: 12px; }
+@media (max-width: 900px) {
+  #cols { display: flex; flex-wrap: wrap; }
+  .board { display: block; }
+  .board .bcol { display: none; }
+  .board .bcol.on { display: block; }
+  .bcards { max-height: none; }
+}
 /* item / service box like The Customer Factor's (2026-11-21): searchable presets, or type a new item */
 .lrow .svc { display: flex; gap: 10px; align-items: center; min-width: 0; }
 .combo { position: relative; flex: 1; min-width: 0; }
@@ -908,9 +935,9 @@ const TABLES = { people: "crm_people", services: "crm_services", estimates: "crm
   jobs: "crm_jobs", invoices: "crm_invoices", payments: "crm_payments", employees: "crm_employees",
   pins: "knock_pins", areas: "knock_areas" };
 const COLUMNS = {
-  people: ["id", "kind", "type", "first", "last", "company", "phones", "emails", "address", "city", "state", "zip", "notes", "source", "status", "created", "tcf", "edited", "lat", "lng"],
+  people: ["id", "kind", "type", "first", "last", "company", "phones", "emails", "address", "city", "state", "zip", "notes", "source", "status", "created", "tcf", "edited", "lat", "lng", "follow_up", "follow_note", "lost_reason"],
   services: ["id", "name", "description", "rate", "unit", "position", "archived"],
-  estimates: ["id", "number", "person", "date", "status", "options", "lines", "notes", "decided", "tcf", "edited", "sent", "sent_to"],
+  estimates: ["id", "number", "person", "date", "status", "options", "lines", "notes", "decided", "tcf", "edited", "sent", "sent_to", "lost_reason"],
   plans: ["id", "person", "every", "unit", "start", "time", "lines", "active", "notes", "tcf", "assignee"],
   jobs: ["id", "person", "date", "days", "time", "lines", "status", "plan", "estimate", "invoice", "notes", "tcf", "edited", "assignee"],
   invoices: ["id", "number", "person", "date", "due", "lines", "total", "bad_debt", "job", "notes", "tcf", "edited", "sent", "sent_to"],
@@ -1432,6 +1459,90 @@ function fromDump(t, tz, today) {
   return { people, estimates, jobs, plans, invoices, payments, services };
 }
 
+// ------------------------------------------------------------------ pipeline + follow-ups (2026-11-22, Ben)
+// Stages are worked out from the data, not typed in: New lead (a prospect with no estimate), Estimate given (an open
+// estimate, its follow-up not due yet), Follow up (a follow-up date that has come, or an open estimate a week old with
+// no follow-up set), Won / Lost (estimates decided in the last 30 days). A follow-up = person.follow_up (date) +
+// follow_note. Open estimates older than STALE_DAYS are left off the board (counted as probably dead).
+const LOST_REASONS = ["Price too high", "Went with someone else", "Not right now", "No response", "Doing it themselves", "Other"];
+const SOURCES = ["Door knocking", "Referral", "Google", "Facebook", "Nextdoor", "Door hanger", "Yard sign", "Repeat customer", "Other"];
+const NUDGE_DAYS = 7;     // an open estimate this old with no follow-up set goes to "Follow up"
+const STALE_DAYS = 120;   // older open estimates are left off the board
+const sourceOf = (p) => {
+  const s = String((p && p.source) || "").trim(), l = s.toLowerCase();
+  if (!s || /^(unknown|unsure|n\/?a|none|-)$/.test(l)) return "Unknown";
+  const hit = SOURCES.find((x) => x.toLowerCase() === l);
+  if (hit) return hit;
+  // tidy the free-text sources that came over from The Customer Factor
+  if (/knock/.test(l)) return "Door knocking";
+  if (/hanger/.test(l)) return "Door hanger";
+  if (/\bsigns?\b|yard/.test(l)) return "Yard sign";
+  if (/refer|friend|neighbou?r/.test(l)) return "Referral";
+  if (/google|search|maps/.test(l)) return "Google";
+  if (/facebook|\bfb\b|instagram|social/.test(l)) return "Social media";
+  if (/nextdoor/.test(l)) return "Nextdoor";
+  if (/repeat|existing|past customer/.test(l)) return "Repeat customer";
+  return s.length <= 3 ? s.toUpperCase() : s.charAt(0).toUpperCase() + s.slice(1);
+};
+/** The pipeline board: { newLeads, estimate, followUp, won, lost, stale } of cards {p, e?, value, age, due?, nudge?}. */
+function pipeline(D, I, today) {
+  const out = { newLeads: [], estimate: [], followUp: [], won: [], lost: [], stale: [] };
+  const seen = new Set();
+  const card = (p, e) => ({ p, e: e || null, value: e ? estimateValue(e).value : 0, age: e && e.date ? daysBetween(e.date, today) : (p.created ? daysBetween(p.created, today) : 0),
+    due: p.follow_up || null, note: p.follow_note || "" });
+  const open = D.estimates.filter((e) => e.status === "open").sort((a, b) => ((a.date || "") < (b.date || "") ? 1 : -1));
+  for (const e of open) {
+    const p = I.people.get(e.person); if (!p || p.status === "archived" || seen.has(p.id)) continue;
+    seen.add(p.id);
+    const c = card(p, e);
+    if (p.follow_up && p.follow_up <= today) out.followUp.push(c);
+    else if (p.follow_up) out.estimate.push(c);
+    else if (c.age > STALE_DAYS) out.stale.push(c);
+    else if (c.age >= NUDGE_DAYS) out.followUp.push({ ...c, nudge: true });
+    else out.estimate.push(c);
+  }
+  for (const p of D.people) {
+    if (seen.has(p.id) || p.status !== "active") continue;
+    if (p.follow_up && p.follow_up <= today) { out.followUp.push(card(p)); seen.add(p.id); continue; }
+    if (p.kind === "prospect" && !(I.estimatesOf.get(p.id) || []).length) out.newLeads.push(card(p));
+  }
+  for (const e of D.estimates) {
+    if (!e.decided || daysBetween(e.decided, today) > 30) continue;
+    const p = I.people.get(e.person); if (!p) continue;
+    if (e.status === "accepted") out.won.push({ ...card(p, e), age: daysBetween(e.decided, today) });
+    if (e.status === "declined") out.lost.push({ ...card(p, e), age: daysBetween(e.decided, today), reason: e.lost_reason || p.lost_reason || "" });
+  }
+  out.followUp.sort((a, b) => ((a.due || "0") < (b.due || "0") ? -1 : (a.due || "0") > (b.due || "0") ? 1 : b.age - a.age));
+  out.newLeads.sort((a, b) => a.age - b.age);
+  out.won.sort((a, b) => a.age - b.age); out.lost.sort((a, b) => a.age - b.age);
+  return out;
+}
+/** Follow-ups: due (today or overdue) and coming up in the next `days`. */
+function followUps(D, today, days = 7) {
+  const until = addDays(today, days);
+  const all = D.people.filter((p) => p.follow_up && p.status !== "archived").sort((a, b) => (a.follow_up < b.follow_up ? -1 : 1));
+  return { due: all.filter((p) => p.follow_up <= today), soon: all.filter((p) => p.follow_up > today && p.follow_up <= until) };
+}
+/** Win rate over decided estimates in a window: won / (won + lost). */
+function winRate(D, today, days = 90) {
+  const ds = D.estimates.filter((e) => e.decided && daysBetween(e.decided, today) <= days && (e.status === "accepted" || e.status === "declined"));
+  const won = ds.filter((e) => e.status === "accepted").length;
+  return { won, lost: ds.length - won, rate: ds.length ? won / ds.length : null };
+}
+/** Results by lead source (people added from `from`, "" = all time): leads, estimates, won, lost, win rate, collected. */
+function sourceStats(D, I, from = "") {
+  const rows = new Map();
+  const row = (s) => rows.get(s) || rows.set(s, { source: s, leads: 0, customers: 0, estimates: 0, won: 0, lost: 0, collected: 0 }).get(s);
+  for (const p of D.people) {
+    if (p.status === "archived" || (from && (p.created || "") < from)) continue;
+    const r = row(sourceOf(p)); r.leads++; if (p.kind === "customer") r.customers++;
+    for (const e of I.estimatesOf.get(p.id) || []) { r.estimates++; if (e.status === "accepted") r.won++; if (e.status === "declined") r.lost++; }
+    for (const inv of I.invoicesOf.get(p.id) || []) for (const pay of I.paymentsOf.get(inv.id) || []) if (pay.method !== "credit") r.collected += +pay.amount || 0;
+  }
+  return [...rows.values()].map((r) => ({ ...r, collected: round2(r.collected), rate: r.won + r.lost ? r.won / (r.won + r.lost) : null }))
+    .sort((a, b) => b.collected - a.collected || b.leads - a.leads);
+}
+
 // ------------------------------------------------------------------ door knocking (2026-11-21)
 const KNOCK = {
   not_home: { label: "Not home", color: "#94a3b8", talked: false },
@@ -1475,7 +1586,7 @@ function metres(a, b) {
 }
 function trackLength(points) { let m = 0; for (let i = 1; i < points.length; i++) m += metres(points[i - 1], points[i]); return m; }
 
-return { TABLES, COLUMNS, PERMISSIONS, PERM_KEYS, DEFAULT_ROLES, normalizeRoles, effectivePerms, empName, PAY_TYPES, payText, DEFAULT_TRAININGS, METHODS, HORIZON_DAYS, round2, usd, usdShort, localDay, addDays, addMonths, daysBetween, weekday, niceDate, uuid, nameOf, addressOf, lineTotal, linesTotal, estimateValue, jobTotal, serviceNames, freqText, FREQS, index, paidOf, balanceOf, jobDays, jobsBetween, moneyBetween, nextJob, lastJob, activePlan, servicesFor, nextOpenDay, dashboard, occurrences, regenPlan, topUp, freqFromGap, search, nextNumber, fixMojibake, htmlText, fromDump, KNOCK, knockStats, areaFreshness, inPolygon, metres, trackLength };
+return { TABLES, COLUMNS, PERMISSIONS, PERM_KEYS, DEFAULT_ROLES, normalizeRoles, effectivePerms, empName, PAY_TYPES, payText, DEFAULT_TRAININGS, METHODS, HORIZON_DAYS, round2, usd, usdShort, localDay, addDays, addMonths, daysBetween, weekday, niceDate, uuid, nameOf, addressOf, lineTotal, linesTotal, estimateValue, jobTotal, serviceNames, freqText, FREQS, index, paidOf, balanceOf, jobDays, jobsBetween, moneyBetween, nextJob, lastJob, activePlan, servicesFor, nextOpenDay, dashboard, occurrences, regenPlan, topUp, freqFromGap, search, nextNumber, fixMojibake, htmlText, fromDump, LOST_REASONS, SOURCES, NUDGE_DAYS, STALE_DAYS, sourceOf, pipeline, followUps, winRate, sourceStats, KNOCK, knockStats, areaFreshness, inPolygon, metres, trackLength };
  })();
 const TCF = (() => { // The Customer Factor (Ben's CRM) inside Jarvis (2026-11-19). Ben exports a full backup from The
 // Customer Factor (a MySQL dump, .sql) about once a month and uploads it on the Customers screen.
@@ -2080,6 +2191,7 @@ const P = {
   shield: "M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6zM9 12l2 2 4-4",
   lock: "M6 11h12v10H6zM8.5 11V8a3.5 3.5 0 0 1 7 0v3",
   badge: "M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM8.5 14l-1.5 7 5-3 5 3-1.5-7",
+  bell: "M6 16V11a6 6 0 1 1 12 0v5l2 2H4zM10 21h4",
 };
 const icon = (n) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${P[n] || ""}"/></svg>`;
 const ic = (n) => `<i data-icon="${n}">${icon(n)}</i>`;
@@ -2156,7 +2268,7 @@ async function busy(btn, fn) {
 
 // ------------------------------------------------------------------ frame: menu, routes
 const NAV = [
-  ["dashboard", "Dashboard", "home"], ["calendar", "Calendar", "cal"], ["prospects", "Prospects", "target"],
+  ["dashboard", "Dashboard", "home"], ["calendar", "Calendar", "cal"], ["prospects", "Pipeline", "target"],
   ["customers", "Customers", "users"], ["estimates", "Estimates", "file"], ["invoices", "Invoices", "receipt"],
   ["employees", "Employees", "team"], ["permissions", "Permissions", "shield"],
   ["knock", "Door knocking", "map"],
@@ -2220,7 +2332,8 @@ document.addEventListener("keydown", (e) => {   // "/" jumps to search (not whil
 function counts() {
   if (!D) return;
   const set = (id, n, cls = "") => { const b = $(`[data-count="${id}"]`); if (!b) return; b.hidden = !n; b.textContent = n; b.className = "badge " + cls; };
-  set("prospects", D.people.filter((p) => p.kind === "prospect" && p.status === "active" && (I.estimatesOf.get(p.id) || []).some((e) => e.status === "open")).length, "acc");
+  const due = X.pipeline(D, I, TODAY).followUp.length;   // follow-ups waiting on Ben, else how many estimates are out
+  set("prospects", due || D.people.filter((p) => p.kind === "prospect" && p.status === "active" && (I.estimatesOf.get(p.id) || []).some((e) => e.status === "open")).length, due ? "warn" : "acc");
   set("invoices", D.invoices.filter((i) => X.balanceOf(I, i) > 0.005).length, "warn");
   set("calendar", X.jobsBetween(D, I, TODAY, TODAY).length, "core");
 }
@@ -2428,10 +2541,10 @@ function viewDashboard(v) {
   const unpaidRows = d.unpaid.length ? d.unpaid.slice(0, 6).map((x) => `<div class="li" data-go="invoice/${x.inv.id}"><div class="avatar" data-n="${esc(name(x.inv.person))}">${esc(initials(I.people.get(x.inv.person)))}</div><div class="main"><div class="t">${esc(name(x.inv.person))}</div>
       <div class="s">Invoice #${esc(x.inv.number)} · ${X.niceDate(x.inv.date, { year: true })}</div></div>${ageBadge(x.age)}<div class="amt">${money(x.bal)}</div></div>`).join("")
     : emptyBox("check", "Everyone has paid", "No unpaid invoices.");
-  const waiting = d.openEst.filter((x) => { const p = I.people.get(x.e.person); return p && p.kind === "prospect" && p.status === "active"; });
-  const estRows = waiting.length ? waiting.slice(0, 6).map((x) => { const p = I.people.get(x.e.person); return `<div class="li" data-go="estimate/${x.e.id}"><div class="avatar" data-n="${esc(X.nameOf(p))}">${esc(initials(p))}</div><div class="main"><div class="t">${esc(X.nameOf(p))}</div>
-      <div class="s">${esc(X.addressOf(p) || (p.phones[0] || {}).n || "")}</div></div>${ageBadge(x.age)}<div class="amt">${money(x.value)}${x.e.options ? "<small>options</small>" : ""}</div></div>`; }).join("")
-    : emptyBox("target", "No estimates waiting", "Time to knock some doors.");
+  const PB = X.pipeline(D, I, TODAY), fus = PB.followUp;
+  const estRows = fus.length ? fus.slice(0, 6).map((c) => `<div class="li" data-go="${c.e ? "estimate/" + c.e.id : "person/" + c.p.id}"><div class="avatar" data-n="${esc(X.nameOf(c.p))}">${esc(initials(c.p))}</div><div class="main"><div class="t">${esc(X.nameOf(c.p))}</div>
+      <div class="s">${esc(c.note || (c.e ? `Estimate #${c.e.number} · ${c.age} days, no follow-up set` : "Follow up"))}</div></div>${c.due ? dueBadge(c.due) : ageBadge(c.age)}${c.e ? `<div class="amt">${money(c.value)}</div>` : ""}</div>`).join("")
+    : emptyBox("bell", "No follow-ups due", PB.estimate.length ? `${PB.estimate.length} estimate${PB.estimate.length > 1 ? "s" : ""} out, none due yet.` : "Time to knock some doors.");
   const convertRows = d.convert.length ? d.convert.slice(0, 8).map((x) => `<div class="li" data-go="person/${x.c.id}"><div class="avatar ${x.c.type === "commercial" ? "com" : ""}" data-n="${esc(X.nameOf(x.c))}">${esc(initials(x.c))}</div>
       <div class="main"><div class="t">${esc(X.nameOf(x.c))}</div><div class="s">${x.last ? "Last job " + X.niceDate(x.last.date, { year: true }) : "No jobs yet"}${x.next ? " · next " + X.niceDate(x.next.date) : ""}</div></div>
       <span class="badge hide-phone">${x.c.type}</span><div class="amt">${money(x.billed)}<small>billed so far</small></div></div>`).join("") : emptyBox("repeat", "Every customer is recurring", "That's the goal.");
@@ -2472,7 +2585,7 @@ function viewDashboard(v) {
       <div class="card"><h3>${ic("cal")}Today <a class="right" href="#/calendar/day/${TODAY}">${money(d.today.total)} ›</a></h3><div class="list">${todayRows}</div></div>
       <div class="card"><h3>${ic("receipt")}Unpaid invoices <a class="right" href="#/invoices">${money(d.unpaidTotal)} ›</a></h3><div class="list">${unpaidRows}</div>
         ${d.unpaid.length ? `<div class="aging">${["0-30 days", "31-60", "61-90", "90+"].map((l, i) => `<div><small>${l}</small><b>${X.usdShort(d.aging[i])}</b></div>`).join("")}</div>` : ""}</div>
-      <div class="card"><h3>${ic("target")}Estimates waiting <a class="right" href="#/prospects">${waiting.length} · ${X.usdShort(waiting.reduce((s, x) => s + x.value, 0))} ›</a></h3><div class="list">${estRows}</div></div>
+      <div class="card"><h3>${ic("bell")}Follow-ups due <a class="right" href="#/prospects">Pipeline ›</a></h3><div class="list">${estRows}</div></div>
     </div>
     <div class="card"><h3>${ic("repeat")}One-time customers to put on a schedule <span class="right">biggest first</span></h3><div class="list">${convertRows}</div></div>
   </div>`;
@@ -2581,58 +2694,100 @@ function dayList(date) {
       <div class="amt">${x.first ? money(X.jobTotal(j)) : "project day"}</div></div>`; }).join("")}</div>`;
 }
 
-// ------------------------------------------------------------------ prospects
+// ------------------------------------------------------------------ pipeline (was "Prospects"; 2026-11-22, Ben)
+// From first knock to yes or no: New lead -> Estimate given -> Follow up -> Won / Lost (stages worked out in
+// crmapp_calc.js pipeline(), so Jarvis sees the same). Follow-ups are dated reminders on a person.
+const dueText = (d) => !d ? "" : d < TODAY ? `Overdue · ${X.niceDate(d, { weekday: false })}` : d === TODAY ? "Today" : d === X.addDays(TODAY, 1) ? "Tomorrow" : X.niceDate(d);
+const dueBadge = (d) => d ? `<span class="badge ${d <= TODAY ? "warn" : "core"}">${ic("bell")} ${esc(dueText(d))}</span>` : "";
+const PIPE_COLS = [["followUp", "Follow up", "bell"], ["newLeads", "New lead", "plus"], ["estimate", "Estimate given", "file"], ["won", "Won", "check"], ["lost", "Lost", "x"]];
 function viewProspects(v, r) {
-  setTitle("Prospects");
-  const f = r.q.get("f") || "waiting";
-  const prospects = D.people.filter((p) => p.kind === "prospect");
-  const openOf = (p) => (I.estimatesOf.get(p.id) || []).filter((e) => e.status === "open").sort((a, b) => (a.date < b.date ? 1 : -1));
-  const groups = {
-    waiting: prospects.filter((p) => p.status === "active" && openOf(p).length),
-    none: prospects.filter((p) => p.status === "active" && !(I.estimatesOf.get(p.id) || []).length),
-    lost: prospects.filter((p) => p.status === "lost"),
-    all: prospects.filter((p) => p.status !== "archived"),
-  };
-  const upsell = D.estimates.filter((e) => e.status === "open" && (I.people.get(e.person) || {}).kind === "customer");
-  const list = groups[f] || groups.waiting;
-  const won = D.estimates.filter((e) => e.status === "accepted" && e.decided && X.daysBetween(e.decided, TODAY) <= 180).length;
-  const pipeline = groups.waiting.reduce((s, p) => s + X.estimateValue(openOf(p)[0]).value, 0);
-  const q = (r.q.get("q") || "").toLowerCase();
-  const shown = list.filter((p) => !q || [X.nameOf(p), X.addressOf(p), ...(p.phones || []).map((x) => x.n)].join(" ").toLowerCase().includes(q))
-    .sort((a, b) => { const ea = openOf(a)[0], eb = openOf(b)[0]; return ((eb && eb.date) || b.created || "") < ((ea && ea.date) || a.created || "") ? -1 : 1; });
+  setTitle("Pipeline");
+  const B = X.pipeline(D, I, TODAY), wr = X.winRate(D, TODAY, 90);
+  const col = PIPE_COLS.some(([k]) => k === r.q.get("col")) ? r.q.get("col") : (B.followUp.length ? "followUp" : "estimate");
+  const sum = (cs) => cs.reduce((s, c) => s + c.value, 0);
+  const waiting = B.estimate.length + B.followUp.filter((c) => c.e).length;
+  const card = (c, k) => { const p = c.p, ph = (p.phones || [])[0];
+    return `<div class="bcard" data-go="${c.e ? "estimate/" + c.e.id : "person/" + p.id}">
+      <div class="row" style="flex-wrap:nowrap;gap:10px"><div class="avatar ${p.type === "commercial" ? "com" : ""}" data-n="${esc(X.nameOf(p))}">${esc(initials(p))}</div>
+        <div style="min-width:0;flex:1"><div class="t1 ell">${esc(X.nameOf(p))}</div><div class="t2 ell">${esc(c.e ? `#${c.e.number} · ${X.serviceNames(c.e.lines).slice(0, 2).join(", ")}` : (p.city || X.sourceOf(p)))}</div></div>
+        ${c.e ? `<div class="amt">${money(c.value)}${c.e.options ? "<small>options</small>" : ""}</div>` : ""}</div>
+      <div class="row small" style="gap:6px;margin-top:8px">${c.due ? dueBadge(c.due) : c.nudge ? `<span class="badge">No follow-up set</span>` : ""}
+        ${k === "won" ? `<span class="badge good">${c.age ? c.age + "d ago" : "today"}</span>` : k === "lost" ? `<span class="badge bad">${esc(c.reason || "lost")}</span>` : c.e ? ageBadge(c.age) : `<span class="badge">${esc(X.sourceOf(p))}</span>`}</div>
+      ${c.note ? `<div class="small muted bnote">${esc(c.note)}</div>` : ""}
+      ${k === "won" || k === "lost" ? "" : `<div class="row bact">${ph ? `<a class="iconbtn" href="${telHref(ph.n)}" title="Call">${ic("phone")}</a><a class="iconbtn" href="${smsHref(ph.n)}" title="Text">${ic("msg")}</a>` : ""}
+        <div class="spacer"></div><button class="btn sm" data-fu="${p.id}">${ic("bell")}${c.due ? "Follow-up" : "Follow up"}</button>
+        ${c.e ? `<button class="btn sm good" data-win="${c.e.id}" title="They said yes">${ic("check")}</button><button class="btn sm bad" data-lose="${c.e.id}" title="Turned down">${ic("x")}</button>`
+          : `<a class="btn sm" href="#/estimate/new?person=${p.id}" title="Give an estimate">${ic("file")}</a>`}</div>`}</div>`; };
+  const src = X.sourceStats(D, I, r.q.get("since") === "year" ? TODAY.slice(0, 4) + "-01-01" : "");
+  const pct = (x) => (x == null ? "–" : Math.round(x * 100) + "%");
   v.innerHTML = `<div class="wrap">
-    <div class="pagehead"><div><h2>Prospects</h2><div class="sub">People you've given an estimate who haven't said yes or no yet.</div></div><div class="spacer"></div>
-      <a class="btn primary" href="#/estimate/new">${ic("plus")}New estimate</a></div>
+    <div class="pagehead"><div><h2>Pipeline</h2><div class="sub">From first knock to yes or no. Follow-ups are reminders you set on a person.</div></div><div class="spacer"></div>
+      <button class="btn" id="newLead">${ic("plus")}New lead</button><a class="btn primary" href="#/estimate/new">${ic("file")}New estimate</a></div>
     <div class="totals">
-      <div class="tot main"><small>Waiting on an answer</small><b>${groups.waiting.length}</b></div>
-      <div class="tot"><small>Worth</small><b>${X.usdShort(pipeline)}</b></div>
-      <div class="tot"><small>Said yes (last 6 months)</small><b>${won}</b></div>
-      <div class="tot"><small>Customers with open estimates</small><b>${upsell.length}</b></div>
+      <div class="tot main"><small>Follow-ups due</small><b>${B.followUp.length}</b></div>
+      <div class="tot"><small>Estimates out</small><b>${waiting}</b></div>
+      <div class="tot"><small>Worth</small><b>${X.usdShort(sum(B.estimate) + sum(B.followUp))}</b></div>
+      <div class="tot"><small>Won, last 30 days</small><b>${B.won.length}${B.won.length ? ` · ${X.usdShort(sum(B.won))}` : ""}</b></div>
+      <div class="tot"><small>Win rate, 90 days</small><b>${pct(wr.rate)}</b></div>
     </div>
-    <div class="toolbar"><div class="chips">${[["waiting", "Waiting"], ["none", "No estimate yet"], ["lost", "Said no"], ["all", "All"]].map(([k, l]) =>
-      `<button class="chip ${k === f ? "on" : ""}" data-f="${k}">${l} <span class="n">${groups[k].length}</span></button>`).join("")}</div><div class="spacer"></div>
-      <input class="search2" id="pq" placeholder="Filter by name, street, phone" value="${esc(r.q.get("q") || "")}"></div>
-    <div class="card">${shown.length ? `<div class="tablewrap"><table class="t cards"><thead><tr><th>Prospect</th><th>Phone</th><th>Estimate</th><th class="n">Amount</th><th>Given</th><th></th></tr></thead><tbody>
-      ${shown.map((p) => { const e = openOf(p)[0], all = I.estimatesOf.get(p.id) || [], last = e || all.slice().sort((a, b) => (a.date < b.date ? 1 : -1))[0], ph = (p.phones || [])[0];
-        const val = last ? X.estimateValue(last) : null, age = last && last.date ? X.daysBetween(last.date, TODAY) : null;
-        return `<tr class="click" data-go="${last ? "estimate/" + last.id : "person/" + p.id}"><td><div class="t1">${esc(X.nameOf(p))} ${p.type === "commercial" ? '<span class="badge core">commercial</span>' : ""}</div><div class="t2">${esc(X.addressOf(p) || "No address")}</div></td>
-          <td>${ph ? `<a href="${telHref(ph.n)}" class="t1" style="white-space:nowrap">${esc(ph.n)}</a>` : '<span class="muted">–</span>'}</td>
-          <td>${last ? `#${esc(last.number)} · <span class="t2">${esc(X.serviceNames(last.lines).slice(0, 2).join(", "))}</span>` : '<span class="muted">none yet</span>'}</td>
-          <td class="n"><b>${val ? money(val.value) : "–"}</b>${val && val.options ? '<div class="t2">options</div>' : ""}</td>
-          <td>${age == null ? "" : ageBadge(age)}</td>
-          <td><div class="actions">${e ? `<button class="btn sm good" data-win="${e.id}">${ic("check")}Won</button><button class="btn sm bad" data-lose="${e.id}">Lost</button>` : ""}
-            ${ph ? `<a class="btn sm show-phone" href="${smsHref(ph.n)}">${ic("msg")}</a>` : ""}</div></td></tr>`; }).join("")}</tbody></table></div>`
-      : emptyBox("target", f === "waiting" ? "No one is waiting on an estimate" : "Nobody here", "Knock a door and give an estimate: they'll show up here.")}</div>
-    ${upsell.length && f === "waiting" ? `<div class="card" style="margin-top:16px"><h3>Customers with an open estimate</h3><div class="list">${upsell.map((e) => `<div class="li" data-go="estimate/${e.id}"><div class="main"><div class="t">${esc(name(e.person))}</div>
-      <div class="s">#${esc(e.number)} · ${esc(X.serviceNames(e.lines).slice(0, 3).join(", "))}</div></div>${e.date ? ageBadge(X.daysBetween(e.date, TODAY)) : ""}<div class="amt">${money(X.estimateValue(e).value)}</div></div>`).join("")}</div></div>` : ""}
+    <div class="chips show-phone-flex" id="cols">${PIPE_COLS.map(([k, l]) => `<button class="chip ${k === col ? "on" : ""}" data-col="${k}">${l} <span class="n">${B[k].length}</span></button>`).join("")}</div>
+    <div class="board">${PIPE_COLS.map(([k, l, icn]) => `<div class="bcol ${k === col ? "on" : ""} c-${k}"><div class="bhead">${ic(icn)}<b>${l}</b><span class="n">${B[k].length}</span><div class="spacer"></div><span class="small muted">${["estimate", "followUp", "won"].includes(k) && sum(B[k]) ? X.usdShort(sum(B[k])) : ""}</span></div>
+      <div class="bcards">${B[k].map((c) => card(c, k)).join("") || `<div class="bempty">${{ followUp: "Nothing to follow up. Nice.", newLeads: "No new leads.", estimate: "No estimates waiting.", won: "No wins in the last 30 days yet.", lost: "Nothing lost in the last 30 days." }[k]}</div>`}</div></div>`).join("")}</div>
+    ${B.stale.length ? `<div class="card" style="margin-top:16px"><div class="row"><div style="flex:1;min-width:220px"><b>${B.stale.length} estimates older than 4 months</b> are still marked open (worth up to ${X.usdShort(sum(B.stale))}). They're left off the board.</div>
+      <a class="btn sm" href="#/estimates">See them</a><button class="btn sm bad" id="closeOld">Mark them lost: no response</button></div></div>` : ""}
+    <div class="card" style="margin-top:16px"><h3>${ic("chart")}Where your work comes from <span class="right"><span class="seg sm">${[["", "All time"], ["year", TODAY.slice(0, 4)]].map(([k, l]) => `<button data-since="${k}" class="${(r.q.get("since") || "") === k ? "on" : ""}">${l}</button>`).join("")}</span></span></h3>
+      <div class="tablewrap"><table class="t"><thead><tr><th>Source</th><th class="n">People</th><th class="n">Customers</th><th class="n">Estimates</th><th class="n">Won</th><th class="n">Win rate</th><th class="n">Collected</th></tr></thead><tbody>
+      ${src.map((s) => `<tr><td class="t1">${esc(s.source)}</td><td class="n">${s.leads}</td><td class="n">${s.customers}</td><td class="n">${s.estimates}</td><td class="n">${s.won}</td><td class="n">${pct(s.rate)}</td><td class="n"><b>${money(s.collected)}</b></td></tr>`).join("")}</tbody></table></div>
+      <div class="small muted" style="margin-top:8px">Set "How they found you" on each person to fill this in. Win rate = won ÷ (won + lost).</div></div>
   </div>`;
   v.addEventListener("click", (ev) => {
-    const c = ev.target.closest("[data-f]"); if (c) return go("prospects?f=" + c.dataset.f);
+    const c = ev.target.closest("[data-col]"); if (c) { history.replaceState(null, "", "#/prospects?col=" + c.dataset.col); $$("[data-col]", v).forEach((x) => x.classList.toggle("on", x === c)); $$(".bcol", v).forEach((x) => x.classList.toggle("on", x.classList.contains("c-" + c.dataset.col))); return; }
+    const s = ev.target.closest("[data-since]"); if (s) return go("prospects" + (s.dataset.since ? "?since=" + s.dataset.since : ""));
+    const f = ev.target.closest("[data-fu]"); if (f) { ev.stopPropagation(); ev.preventDefault(); return followUpSheet(I.people.get(f.dataset.fu)); }
     const w = ev.target.closest("[data-win]"); if (w) { ev.stopPropagation(); return acceptEstimate(I.estimates.get(w.dataset.win), w); }
     const l = ev.target.closest("[data-lose]"); if (l) { ev.stopPropagation(); return declineEstimate(I.estimates.get(l.dataset.lose), l); }
+    if (ev.target.closest(".bact a")) ev.stopPropagation();
   }, true);
-  const pq = $("#pq", v); pq.oninput = () => { history.replaceState(null, "", `#/prospects?f=${f}&q=${encodeURIComponent(pq.value)}`); filterRows(v, pq.value); };
+  $("#newLead", v).onclick = () => personSheet({ kind: "prospect", type: "residential" });
+  if ($("#closeOld", v)) $("#closeOld", v).onclick = (ev) => {
+    if (!confirm(`Mark ${B.stale.length} estimates older than 4 months as lost (no response)? You can re-open any of them later.`)) return;
+    busy(ev.currentTarget, async () => {
+      for (const c of B.stale) {
+        await save("estimates", { ...c.e, status: "declined", decided: TODAY, lost_reason: "No response" });
+        const p = I.people.get(c.p.id);
+        if (p && p.kind === "prospect" && p.status === "active" && !(I.estimatesOf.get(p.id) || []).some((x) => x.status === "open" && x.id !== c.e.id)) await save("people", { ...p, status: "lost", lost_reason: "No response" });
+      }
+      toast(`${B.stale.length} old estimates marked lost.`); render();
+    });
+  };
   wire(v);
+}
+// Follow up with someone on a day, about something (a dated reminder on the person; Jarvis reads them too).
+function followUpSheet(p) {
+  if (!p) return;
+  const nextMon = X.addDays(TODAY, ((8 - X.weekday(TODAY)) % 7) || 7);
+  const opts = [["Tomorrow", X.addDays(TODAY, 1)], ["In 3 days", X.addDays(TODAY, 3)], ["Next Monday", nextMon], ["In 2 weeks", X.addDays(TODAY, 14)], ["In a month", X.addMonths(TODAY, 1)]];
+  openSheet(`Follow up with ${X.nameOf(p)}`, `
+    <div class="chips">${opts.map(([l, d]) => `<button type="button" class="chip ${p.follow_up === d ? "on" : ""}" data-d="${d}">${l} <span class="n">${X.niceDate(d)}</span></button>`).join("")}</div>
+    <label class="f">Day<input type="date" id="fud" value="${esc(p.follow_up || X.addDays(TODAY, 3))}"></label>
+    <label class="f">About what (optional)<input id="fun" value="${esc(p.follow_note || "")}" placeholder="Call back about the gutter quote"></label>
+    ${p.follow_up ? `<div class="small muted">Set for ${esc(dueText(p.follow_up))}. "Done" clears it and notes it on their page.</div>` : ""}
+    <div class="sheetfoot">${p.follow_up ? `<button class="btn good" id="fudone">${ic("check")}Done</button><button class="btn" id="fuclr">Clear</button>` : ""}<div class="spacer"></div><button class="btn" id="fuc">Cancel</button><button class="btn primary" id="fus">${ic("bell")}Save</button></div>`, (b) => {
+    for (const c of $$("[data-d]", b)) c.onclick = () => { $("#fud", b).value = c.dataset.d; $$("[data-d]", b).forEach((x) => x.classList.toggle("on", x === c)); };
+    $("#fuc", b).onclick = () => closeSheet();
+    const live = () => I.people.get(p.id) || p;
+    $("#fus", b).onclick = (ev) => busy(ev.currentTarget, async () => {
+      const d = $("#fud", b).value; if (!/^\d{4}-\d\d-\d\d$/.test(d)) throw new Error("Pick a day.");
+      await save("people", { ...live(), follow_up: d, follow_note: $("#fun", b).value.trim() });
+      toast(`Follow-up set for ${dueText(d).toLowerCase()}.`); closeSheet(); render();
+    });
+    if ($("#fudone", b)) $("#fudone", b).onclick = (ev) => busy(ev.currentTarget, async () => {
+      const cur = live(), note = $("#fun", b).value.trim();
+      await save("people", { ...cur, follow_up: null, follow_note: "", notes: [String(cur.notes || "").trim(), `${X.niceDate(TODAY, { year: true })}: Followed up${note ? ` (${note})` : ""}.`].filter(Boolean).join("\n") });
+      toast("Done. Noted on their page."); closeSheet(); render();
+    });
+    if ($("#fuclr", b)) $("#fuclr", b).onclick = (ev) => busy(ev.currentTarget, async () => { await save("people", { ...live(), follow_up: null, follow_note: "" }); toast("Follow-up cleared."); closeSheet(); render(); });
+  });
 }
 function filterRows(v, q) {
   q = q.toLowerCase();
@@ -2642,21 +2797,27 @@ async function acceptEstimate(e, btn) {
   await busy(btn, async () => {
     await save("estimates", { ...e, status: "accepted", decided: TODAY });
     const p = I.people.get(e.person);
-    if (p && (p.kind !== "customer" || p.status !== "active")) await save("people", { ...p, kind: "customer", status: "active" });
+    if (p && (p.kind !== "customer" || p.status !== "active" || p.follow_up)) await save("people", { ...p, kind: "customer", status: "active", follow_up: null, follow_note: "" });
     toast(`${X.nameOf(p)} said yes. Let's book it.`);
     const lines = e.options ? [] : e.lines;
     newJob({ person: e.person, date: X.nextOpenDay(D, I, X.addDays(TODAY, 1)), lines: lines.map((l) => ({ ...l })), estimate: e.id,
       note: e.options ? "This estimate has options: pick the one they chose." : "", optionsFrom: e.options ? e : null });
   });
 }
-async function declineEstimate(e, btn) {
-  if (!confirm(`Mark estimate #${e.number} for ${name(e.person)} as turned down?`)) return;
-  await busy(btn, async () => {
-    await save("estimates", { ...e, status: "declined", decided: TODAY });
-    const p = I.people.get(e.person);
-    if (p && p.kind === "prospect" && !(I.estimatesOf.get(p.id) || []).some((x) => x.status === "open")) await save("people", { ...p, status: "lost" });
-    toast("Marked as turned down.");
-    render();
+function declineEstimate(e) {   // turned down: ask why (Pipeline shows what loses jobs)
+  openSheet(`Estimate #${e.number} turned down`, `<div class="small muted">${esc(name(e.person))} · ${money(X.estimateValue(e).value)}</div>
+    <div class="lbl" style="margin-top:12px">Why? (optional)</div>
+    <div class="chips">${X.LOST_REASONS.map((r) => `<button type="button" class="chip" data-r="${esc(r)}">${esc(r)}</button>`).join("")}</div>
+    <div class="sheetfoot"><button class="btn" id="lc">Cancel</button><div class="spacer"></div><button class="btn bad" id="ls">Mark lost</button></div>`, (b) => {
+    let reason = "";
+    for (const c of $$("[data-r]", b)) c.onclick = () => { reason = reason === c.dataset.r ? "" : c.dataset.r; $$("[data-r]", b).forEach((x) => x.classList.toggle("on", x.dataset.r === reason)); };
+    $("#lc", b).onclick = () => closeSheet();
+    $("#ls", b).onclick = (ev) => busy(ev.currentTarget, async () => {
+      await save("estimates", { ...e, status: "declined", decided: TODAY, lost_reason: reason || null });
+      const p = I.people.get(e.person);
+      if (p && p.kind === "prospect" && !(I.estimatesOf.get(p.id) || []).some((x) => x.status === "open" && x.id !== e.id)) await save("people", { ...p, status: "lost", lost_reason: reason || null, follow_up: null, follow_note: "" });
+      toast("Marked as turned down."); closeSheet(); render();
+    });
   });
 }
 
@@ -2743,9 +2904,11 @@ function viewPerson(v, r) {
         ${(p.phones || []).map((x) => `<dt>${esc(x.label || "phone")}</dt><dd><a href="${telHref(x.n)}">${esc(x.n)}</a></dd>`).join("")}
         ${(p.emails || []).map((x) => `<dt>email</dt><dd><a href="mailto:${esc(x)}">${esc(x)}</a></dd>`).join("")}
         <dt>address</dt><dd>${esc(X.addressOf(p) || "–")}</dd>
-        ${p.source ? `<dt>found us</dt><dd>${esc(p.source)}</dd>` : ""}
+        ${p.source ? `<dt>found us</dt><dd>${esc(X.sourceOf(p))}</dd>` : ""}
         ${p.created ? `<dt>added</dt><dd>${X.niceDate(p.created, { year: true })}</dd>` : ""}
         <dt>billed</dt><dd>${money(billed)}</dd></dl>${contactLinks(p)}</div>
+      <div class="card"><h3>${ic("bell")}Follow-up</h3>${p.follow_up ? `<div class="row" style="gap:8px">${dueBadge(p.follow_up)}</div>${p.follow_note ? `<div class="small" style="margin-top:6px">${esc(p.follow_note)}</div>` : ""}` : '<div class="small muted">None set</div>'}
+        <div class="row" style="margin-top:10px"><button class="btn sm" id="fu">${ic("bell")}${p.follow_up ? "Change or mark done" : "Set a follow-up"}</button></div>${p.lost_reason && p.status === "lost" ? `<div class="small muted" style="margin-top:8px">Lost: ${esc(p.lost_reason)}</div>` : ""}</div>
       <div class="card"><h3>Notes</h3><div class="pre small">${esc(p.notes || "") || '<span class="muted">No notes</span>'}</div></div>
       ${p.kind === "prospect" && p.status === "active" ? `<div class="card"><h3>Prospect</h3><div class="row"><button class="btn good" id="mkCust">${ic("check")}Make a customer</button><button class="btn bad" id="mkLost">Said no</button></div></div>` : ""}
       ${p.status !== "active" ? `<div class="card"><button class="btn" id="reopen">Make active again</button></div>` : ""}
@@ -2753,8 +2916,9 @@ function viewPerson(v, r) {
     </div></div></div>`;
   $("#edit", v).onclick = () => personSheet(p);
   $("#inv", v).onclick = () => go("invoice/new?person=" + p.id);
+  $("#fu", v).onclick = () => followUpSheet(p);
   if ($("#mkCust", v)) $("#mkCust", v).onclick = (e) => busy(e.target, async () => { await save("people", { ...p, kind: "customer" }); toast("Now a customer."); render(); });
-  if ($("#mkLost", v)) $("#mkLost", v).onclick = (e) => busy(e.target, async () => { await save("people", { ...p, status: "lost" }); render(); });
+  if ($("#mkLost", v)) $("#mkLost", v).onclick = (e) => busy(e.target, async () => { await save("people", { ...p, status: "lost", follow_up: null, follow_note: "" }); render(); });
   if ($("#reopen", v)) $("#reopen", v).onclick = (e) => busy(e.target, async () => { await save("people", { ...p, status: "active" }); render(); });
   $("#del", v).onclick = (e) => {
     const n = ests.length + jobs.length + invs.length;
@@ -2773,7 +2937,7 @@ const statusBadge = (s) => `<span class="badge ${s === "accepted" ? "good" : s =
 
 function personFields(p, prefix = "") {
   const v = (k) => esc(p[k] ?? "");
-  const sources = [...new Set(D.people.map((x) => x.source).filter(Boolean).concat(["Door knocking", "Referral", "Google", "Facebook", "Nextdoor", "Door hanger", "Yard sign"]))];
+  const sources = [...new Set(X.SOURCES.concat(D.people.map((x) => x.source).filter(Boolean)))];
   return `<div class="fgrid">
     <div class="full"><div class="seg" data-ptype>${["residential", "commercial"].map((t) => `<button type="button" data-t="${t}" class="${(p.type || "residential") === t ? "on" : ""}">${t[0].toUpperCase() + t.slice(1)}</button>`).join("")}</div></div>
     <label class="f">First name<input name="${prefix}first" value="${v("first")}" autocomplete="off"></label>
@@ -3009,6 +3173,8 @@ function viewEstimate(v, r) {
       ${e.sent ? `<div class="small muted">Emailed ${X.niceDate(e.sent, { weekday: false })}${e.sent_to ? " to " + esc(e.sent_to) : ""}</div>` : ""}
       ${isNew ? "" : `<div class="row">${e.status !== "accepted" ? `<button class="btn good" id="won" style="flex:1">${ic("check")}They said yes</button>` : `<button class="btn" id="sched" style="flex:1">${ic("cal")}Schedule the job</button>`}
         ${e.status === "open" ? `<button class="btn bad" id="lost">Turned down</button>` : e.status !== "accepted" ? `<button class="btn" id="reopen">Re-open</button>` : ""}</div>
+        ${e.status === "open" && I.people.get(e.person) ? `<button class="btn" id="fu">${ic("bell")}${I.people.get(e.person).follow_up ? "Follow-up: " + esc(dueText(I.people.get(e.person).follow_up)) : "Set a follow-up"}</button>` : ""}
+        ${e.status === "declined" && e.lost_reason ? `<div class="small muted">Lost: ${esc(e.lost_reason)}</div>` : ""}
         <button class="btn ghost sm" id="del" style="align-self:flex-start;color:var(--bad)">${ic("trash")}Delete estimate</button>`}
     </div></div></div>`;
   const onChange = () => { changed = true; sum(); };
@@ -3037,7 +3203,8 @@ function viewEstimate(v, r) {
   $("#pdf", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = await ready(); const pdf = await makePdf("estimate", s); pdf.save(pdfName("estimate", s)); if (isNew) render(); });
   if ($("#mail", v)) $("#mail", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = await ready(); emailSheet("estimate", s); });
   if ($("#won", v)) $("#won", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = changed ? await doSave() : src; await acceptEstimate(I.estimates.get(s.id), null); });
-  if ($("#lost", v)) $("#lost", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = changed ? await doSave() : src; await declineEstimate(I.estimates.get(s.id), null); });
+  if ($("#lost", v)) $("#lost", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = changed ? await doSave() : src; declineEstimate(I.estimates.get(s.id)); });
+  if ($("#fu", v)) $("#fu", v).onclick = () => followUpSheet(I.people.get(e.person));
   if ($("#reopen", v)) $("#reopen", v).onclick = (ev) => busy(ev.currentTarget, async () => { await save("estimates", { ...src, status: "open", decided: null }); const p = I.people.get(src.person); if (p && p.status === "lost") await save("people", { ...p, status: "active" }); render(); });
   if ($("#sched", v)) $("#sched", v).onclick = () => newJob({ person: e.person, date: X.nextOpenDay(D, I, X.addDays(TODAY, 1)), lines: e.options ? [] : e.lines.map((l) => ({ ...l })), estimate: e.id, optionsFrom: e.options ? e : null });
   if ($("#del", v)) $("#del", v).onclick = (ev) => { if (!confirm(`Delete estimate #${e.number}? This can't be undone.`)) return; busy(ev.currentTarget, async () => { await remove("estimates", e.id); dirty = null; toast("Deleted."); go("estimates"); }); };
