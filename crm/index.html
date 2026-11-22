@@ -488,19 +488,36 @@ table.t .t2 { color: var(--ink3); font-size: 12.5px; }
 .twocol { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
 .sticky { position: sticky; top: 0; }
 .lines-ed { display: flex; flex-direction: column; gap: 10px; }
-.lrow { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: rgba(0,0,0,.14); display: grid; grid-template-columns: minmax(0, 1fr) 84px 120px 112px 34px; gap: 9px; align-items: start; transition: border-color .15s; }
+.lrow { border: 1px solid var(--line); border-radius: 12px; padding: 12px; background: rgba(0,0,0,.14); display: grid; grid-template-columns: minmax(0, 1fr) 84px 116px 116px 34px; gap: 9px; align-items: start; transition: border-color .15s; }
 .lrow:focus-within { border-color: rgba(var(--acc-rgb), .4); }
 .lrow .desc { grid-column: 1 / 5; }
 .lrow .ltot { height: 38px; display: flex; align-items: center; justify-content: flex-end; font-weight: 700; font-variant-numeric: tabular-nums; padding-right: 4px; }
 .lrow .x { margin-top: 1px; }
 .lrow .unit { font-size: 11.5px; color: var(--ink3); margin-top: 2px; }
-.lhead { display: grid; grid-template-columns: minmax(0, 1fr) 84px 120px 112px 34px; gap: 9px; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink3); padding: 0 13px 8px; }
+.lhead { display: grid; grid-template-columns: minmax(0, 1fr) 84px 116px 116px 34px; gap: 9px; font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ink3); padding: 0 13px 8px; }
 .lhead .n { text-align: right; }
 #sheet .lhead { display: none; }
 #sheet .lrow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) 34px; }
 #sheet .lrow .svc, #sheet .lrow .desc { grid-column: 1 / -1; }
 #sheet .lrow .ltot { justify-content: flex-start; }
 #sheet .lrow .show-phone { display: inline !important; }
+/* item / service box like The Customer Factor's (2026-11-21): searchable presets, or type a new item */
+.lrow .svc { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.combo { position: relative; flex: 1; min-width: 0; }
+.combo .inp { width: 100%; padding-right: 34px; }
+.combo .cbtn { position: absolute; right: 3px; top: 3px; width: 32px; height: 32px; display: grid; place-items: center; border: 0; background: none; color: var(--ink3); cursor: pointer; border-radius: 7px; }
+.combo .cbtn:hover { color: var(--ink); background: rgba(255,255,255,.06); }
+.combo .cbtn svg { width: 16px; height: 16px; }
+.clist { position: absolute; left: 0; right: 0; min-width: min(320px, 86vw); top: calc(100% + 4px); z-index: 40; max-height: 290px; overflow: auto; background: var(--solid); border: 1px solid var(--line2); border-radius: 11px; padding: 5px; box-shadow: 0 18px 40px rgba(0,0,0,.45); }
+.copt { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; width: 100%; text-align: left; padding: 8px 10px; border: 0; border-radius: 7px; background: none; color: var(--ink); cursor: pointer; font-size: 13.5px; }
+.copt small { color: var(--ink3); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.copt.on, .copt:hover { background: rgba(var(--acc-rgb), .16); }
+.cnew { padding: 8px 10px; font-size: 12.5px; color: var(--ink3); border-top: 1px solid var(--line); margin-top: 4px; }
+.cnew:first-child { border-top: 0; margin-top: 0; }
+.dlink { border: 0; background: none; color: var(--acc); font-weight: 650; font-size: 13px; white-space: nowrap; padding: 6px 2px; cursor: pointer; }
+.dlink.has::after { content: " \2022"; }
+.lrow .inp.num { text-align: right; font-variant-numeric: tabular-nums; }
+.lrow .ltot .show-phone { font-weight: 500; margin-right: 8px; }
 .presets { display: flex; gap: 6px; flex-wrap: wrap; }
 .presets .chip { height: 30px; font-size: 12.5px; background: rgba(255,255,255,.045); border-color: rgba(255,255,255,.14); color: var(--ink); }
 .presets .chip::before { content: "+"; color: var(--acc); font-weight: 700; margin-right: -1px; }
@@ -880,7 +897,7 @@ const X = (() => { // Ben's own CRM (2026-11-21; docs/crm-plan.md). Shared like 
 //   people    {id, kind customer|prospect, type residential|commercial, first, last, company, phones [{n,label}],
 //              emails [], address, city, state, zip, notes, source, status active|lost|archived, created}
 //   services  {id, name, description, rate, unit, position, archived}             presets
-//   estimates {id, number, person, date, status open|accepted|declined|closed, options, lines, notes, decided}
+//   estimates {id, number, person, date, status open|accepted|declined|closed, options, lines, notes, decided, sent, sent_to}
 //   plans     {id, person, every, unit week|month, start, time, lines, active, notes}   recurring schedules
 //   jobs      {id, person, date, days?, time, lines, status scheduled|done|skipped|cancelled, plan, estimate, invoice, notes}
 //   invoices  {id, number, person, date, due, lines, total, bad_debt, job, notes}
@@ -893,10 +910,10 @@ const TABLES = { people: "crm_people", services: "crm_services", estimates: "crm
 const COLUMNS = {
   people: ["id", "kind", "type", "first", "last", "company", "phones", "emails", "address", "city", "state", "zip", "notes", "source", "status", "created", "tcf", "edited", "lat", "lng"],
   services: ["id", "name", "description", "rate", "unit", "position", "archived"],
-  estimates: ["id", "number", "person", "date", "status", "options", "lines", "notes", "decided", "tcf", "edited"],
+  estimates: ["id", "number", "person", "date", "status", "options", "lines", "notes", "decided", "tcf", "edited", "sent", "sent_to"],
   plans: ["id", "person", "every", "unit", "start", "time", "lines", "active", "notes", "tcf", "assignee"],
   jobs: ["id", "person", "date", "days", "time", "lines", "status", "plan", "estimate", "invoice", "notes", "tcf", "edited", "assignee"],
-  invoices: ["id", "number", "person", "date", "due", "lines", "total", "bad_debt", "job", "notes", "tcf", "edited"],
+  invoices: ["id", "number", "person", "date", "due", "lines", "total", "bad_debt", "job", "notes", "tcf", "edited", "sent", "sent_to"],
   payments: ["id", "invoice", "amount", "date", "method", "note", "tcf"],
   pins: ["id", "lat", "lng", "address", "status", "note", "person", "come_back", "visits", "by"],
   areas: ["id", "name", "path", "status", "date", "assignee", "notes"],
@@ -2037,7 +2054,7 @@ const P = {
   edit: "M4 20h4L19 9l-4-4L4 16zM14 6l4 4",
   dollar: "M12 2v20M17 6.5C16 5 14.3 4.5 12 4.5c-3 0-5 1.4-5 3.6 0 5 10 2.6 10 7.6 0 2.3-2.2 3.8-5 3.8-2.6 0-4.4-.8-5.4-2.4",
   star: "M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z",
-  up: "M12 19V5M6 11l6-6 6 6", down: "M12 5v14M6 13l6 6 6-6",
+  up: "M12 19V5M6 11l6-6 6 6", down: "M12 5v14M6 13l6 6 6-6", chev: "M6 9l6 6 6-6",
   bank: "M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18",
   chart: "M4 20V10M10 20V4M16 20v-7M22 20H2",
   upload: "M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3",
@@ -2782,64 +2799,102 @@ function personSheet(p) {
 }
 
 // ------------------------------------------------------------------ lines editor (estimates, invoices, jobs)
-// Each line: Service (a drop-down of Ben's presets, or "Other" to type one) | Qty x Price = Total (Ben, 2026-11-21).
-// Picking a service fills its price, unit and description; qty and price stay editable, and the total follows them.
-function linesEditor(host, lines, onChange) {
+// Laid out like The Customer Factor's (Ben's screenshot, 2026-11-21): "Select or insert item/service" (a searchable
+// list of his presets; typing something new makes a new item) + Details (the description), Qty, Each, Amount, and
+// always a few blank rows plus "Add more items". Picking a preset fills its price, unit and description.
+function linesEditor(host, lines, onChange, minRows = 4) {
   const presets = presetOptions();
-  const presetOf = (l) => presets.find((s) => s.name.toLowerCase() === String(l.service || "").trim().toLowerCase());
-  const custom = new Set();   // lines Ben switched to "Other" (typed service name), by index
+  const presetOf = (name) => presets.find((s) => s.name.toLowerCase() === String(name || "").trim().toLowerCase());
+  const blank = () => ({ service: "", description: "", rate: "", qty: 1 });
+  const opened = new Set();      // rows whose Details (description) are showing
+  let list = null;               // the open item list: { i, hits, hi }
+  const num = (v) => (v === "" || v == null ? "" : +v);
+  for (const [i, l] of lines.entries()) if (String(l.description || "").trim() && !presetOf(l.service)) opened.add(i);   // their own wording shows
   const draw = () => {
-    host.innerHTML = `<div class="lhead"><span>Service</span><span class="n">Qty</span><span class="n">× Price</span><span class="n">= Total</span><span></span></div>
-      <div class="lines-ed">${lines.map((l, i) => {
-        const p = presetOf(l), other = !p && (custom.has(i) || String(l.service || "").trim());
-        return `<div class="lrow" data-i="${i}">
-        <label class="f svc"><span class="show-phone">Service</span>
-          <select class="inp" data-pick><option value="">Choose a service…</option>${presets.map((s) => `<option value="${s.id}" ${p && p.id === s.id ? "selected" : ""}>${esc(s.name)}</option>`).join("")}
-            <option value="__other" ${other ? "selected" : ""}>Other (type it in)</option></select>
-          ${other ? `<input class="inp" data-k="service" value="${esc(l.service)}" placeholder="What you'll do" style="margin-top:6px">` : ""}</label>
-        <label class="f"><span class="show-phone">Qty</span><input class="inp" data-k="qty" value="${l.qty === "" || l.qty == null ? "" : +l.qty}" inputmode="decimal" style="text-align:right" placeholder="1"></label>
-        <label class="f"><span class="show-phone">× Price</span><input class="inp" data-k="rate" value="${l.rate === "" || l.rate == null ? "" : +l.rate}" inputmode="decimal" style="text-align:right" placeholder="0.00">${l.unit ? `<span class="unit">${esc(l.unit)}</span>` : ""}</label>
-        <div class="ltot"><span class="show-phone muted" style="font-weight:500;margin-right:6px">=</span>${money(X.lineTotal(l))}</div>
+    while (lines.length < minRows) lines.push(blank());
+    list = null;
+    host.innerHTML = `<div class="lhead"><span>Item / service</span><span class="n">Qty</span><span class="n">Each</span><span class="n">Amount</span><span></span></div>
+      <div class="lines-ed">${lines.map((l, i) => `<div class="lrow" data-i="${i}">
+        <div class="svc"><div class="combo"><input class="inp" data-k="service" value="${esc(l.service)}" placeholder="Select or insert ${i ? "additional " : ""}item/service" autocomplete="off" spellcheck="false">
+            <button type="button" class="cbtn" data-open tabindex="-1" aria-label="Show services">${ic("chev")}</button></div>
+          <button type="button" class="dlink ${String(l.description || "").trim() ? "has" : ""}" data-details>${opened.has(i) ? "Hide details" : "Details"}</button></div>
+        <label class="f"><span class="show-phone">Qty</span><input class="inp num" data-k="qty" value="${num(l.qty)}" inputmode="decimal" placeholder="1"></label>
+        <label class="f"><span class="show-phone">Each</span><input class="inp num" data-k="rate" value="${num(l.rate)}" inputmode="decimal" placeholder="$0.00">${l.unit ? `<span class="unit">${esc(l.unit)}</span>` : ""}</label>
+        <div class="ltot"><span class="show-phone muted">Amount</span><b>${money(X.lineTotal(l))}</b></div>
         <button type="button" class="iconbtn x" data-del="${i}" aria-label="Remove line">${ic("x")}</button>
-        <label class="f desc"><textarea class="inp" data-k="description" rows="${Math.min(8, Math.max(2, String(l.description || "").split("\n").length))}" placeholder="Description the customer sees">${esc(l.description)}</textarea></label></div>`; }).join("")}</div>
-      <div class="row" style="margin-top:10px"><button type="button" class="btn sm" data-addline>${ic("plus")}Add a service</button></div>`;
+        ${opened.has(i) ? `<label class="f desc"><textarea class="inp" data-k="description" rows="${Math.min(8, Math.max(2, String(l.description || "").split("\n").length))}" placeholder="Details the customer sees">${esc(l.description)}</textarea></label>` : ""}</div>`).join("")}</div>
+      <div class="row" style="margin-top:12px"><button type="button" class="btn" data-addline>${ic("plus")}Add more items</button></div>`;
     paintIcons(host);
   };
-  const fixTotals = () => { for (const row of $$(".lrow", host)) { const l = lines[+row.dataset.i], t = $(".ltot", row); t.lastChild.textContent = money(X.lineTotal(l)); } };
-  host.oninput = (e) => {
-    const inp = e.target.closest("[data-k]"); if (!inp) return;
-    const l = lines[+inp.closest(".lrow").dataset.i], k = inp.dataset.k;
-    if (k === "rate" || k === "qty") l[k] = inp.value.replace(/[^0-9.\-]/g, "") === "" ? "" : parseFloat(inp.value.replace(/[^0-9.\-]/g, "")) || 0;
-    else l[k] = inp.value;
-    if (k === "rate" || k === "qty") delete l.total;   // the total follows qty x price once Ben changes either (not when he edits text)
-    if (k === "description") inp.rows = Math.min(8, Math.max(2, inp.value.split("\n").length));
-    fixTotals(); onChange();
+  const rowOf = (i) => $(`.lrow[data-i="${i}"]`, host);
+  const closeList = () => { list = null; $(".clist", host)?.remove(); };
+  const showList = (i, all = false) => {
+    $(".clist", host)?.remove();
+    const row = rowOf(i); if (!row) return;
+    const typed = String(lines[i].service || "").trim(), q = typed.toLowerCase(), exact = presetOf(typed);
+    const hits = presets.filter((s) => all || !q || exact || s.name.toLowerCase().includes(q));
+    list = { i, hits, hi: exact ? hits.findIndex((s) => s.id === exact.id) : (q && hits.length ? 0 : -1) };
+    const box = document.createElement("div");
+    box.className = "clist";
+    box.innerHTML = hits.map((s, k) => `<button type="button" class="copt ${k === list.hi ? "on" : ""}" data-opt="${s.id}"><span>${esc(s.name)}</span>${+s.rate ? `<small>${money(+s.rate)}${s.unit ? " " + esc(s.unit) : ""}</small>` : ""}</button>`).join("") +
+      (q && !exact ? `<div class="cnew">${hits.length ? "Or keep typing: " : ""}“${esc(typed)}” will be a new item</div>` : "") +
+      (!presets.length ? `<div class="cnew">No presets yet (Settings › presets). Type the item.</div>` : "");
+    $(".combo", row).appendChild(box);
   };
-  host.addEventListener("change", (e) => {   // a service picked from the drop-down: its price, unit and description
-    const sel = e.target.closest("[data-pick]"); if (!sel) return;
-    const i = +sel.closest(".lrow").dataset.i, l = lines[i], before = presetOf(l);
-    if (sel.value === "__other") {
-      custom.add(i); if (before) l.service = ""; l.unit = "";
-      draw(); onChange(); $(`.lrow[data-i="${i}"] [data-k="service"]`, host)?.focus(); return;
-    }
-    custom.delete(i);
-    const s = presets.find((x) => x.id === sel.value);
-    if (!s) { l.service = ""; draw(); onChange(); return; }
-    // keep a description Ben wrote himself; replace one that came from the previous preset (or none)
-    const desc = String(l.description || "").trim();
+  const moveHi = (d) => {
+    if (!list || !list.hits.length) return;
+    list.hi = (list.hi + d + list.hits.length) % list.hits.length;
+    const opts = $$(".copt", host); opts.forEach((o, k) => o.classList.toggle("on", k === list.hi)); opts[list.hi]?.scrollIntoView({ block: "nearest" });
+  };
+  const pick = (i, id) => {
+    const s = presets.find((x) => x.id === id); if (!s) return;
+    const l = lines[i], before = presetOf(l.service), desc = String(l.description || "").trim();
+    // keep details Ben wrote himself; replace ones that came from the previous preset (or none)
     if (!desc || (before && desc === String(before.description || "").trim())) l.description = s.description || "";
     l.service = s.name; l.rate = +s.rate || 0; l.unit = s.unit || "";
     if (l.qty === "" || l.qty == null || +l.qty === 0) l.qty = 1;
     delete l.total;
-    draw(); onChange();
-    const q = $(`.lrow[data-i="${i}"] [data-k="qty"]`, host); if (q) { q.focus(); q.select(); }
+    closeList(); draw(); onChange();
+    const q = $(`[data-k="qty"]`, rowOf(i)); if (q) { q.focus(); q.select(); }
+  };
+  const fixTotals = () => { for (const row of $$(".lrow", host)) $(".ltot b", row).textContent = money(X.lineTotal(lines[+row.dataset.i])); };
+  host.oninput = (e) => {
+    const inp = e.target.closest("[data-k]"); if (!inp) return;
+    const i = +inp.closest(".lrow").dataset.i, l = lines[i], k = inp.dataset.k;
+    if (k === "rate" || k === "qty") { const v = inp.value.replace(/[^0-9.\-]/g, ""); l[k] = v === "" ? "" : parseFloat(v) || 0; delete l.total; }
+    else l[k] = inp.value;
+    if (k === "service") { if (!presetOf(l.service)) l.unit = ""; showList(i); }
+    if (k === "description") { inp.rows = Math.min(8, Math.max(2, inp.value.split("\n").length)); $("[data-details]", rowOf(i))?.classList.toggle("has", !!inp.value.trim()); }
+    fixTotals(); onChange();
+  };
+  host.addEventListener("focusin", (e) => { const inp = e.target.closest('[data-k="service"]'); if (inp) showList(+inp.closest(".lrow").dataset.i); });
+  host.addEventListener("change", (e) => {   // leaving Qty / Each: show the number it was read as ("2o" -> 2)
+    const inp = e.target.closest('[data-k="qty"], [data-k="rate"]'); if (inp) inp.value = num(lines[+inp.closest(".lrow").dataset.i][inp.dataset.k]);
   });
+  host.addEventListener("focusout", (e) => { if (e.target.closest('[data-k="service"]')) setTimeout(() => { if (!host.contains(document.activeElement) || !document.activeElement.closest(".combo")) closeList(); }, 120); });
+  host.addEventListener("keydown", (e) => {
+    const inp = e.target.closest('[data-k="service"]'); if (!inp) return;
+    const i = +inp.closest(".lrow").dataset.i;
+    if (e.key === "ArrowDown") { e.preventDefault(); if (!list) showList(i, true); else moveHi(1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); moveHi(-1); }
+    else if (e.key === "Escape") closeList();
+    else if (e.key === "Enter") {
+      e.preventDefault();
+      if (list && list.hi >= 0 && list.hits[list.hi] && list.hits[list.hi].name.toLowerCase().includes(String(lines[i].service || "").trim().toLowerCase())) return pick(i, list.hits[list.hi].id);
+      closeList(); const q = $(`[data-k="qty"]`, rowOf(i)); if (q) { q.focus(); q.select(); }   // a new item: on to Qty
+    }
+  });
+  host.addEventListener("mousedown", (e) => { const o = e.target.closest("[data-opt]"); if (o && list) { e.preventDefault(); pick(list.i, o.dataset.opt); } });
   host.onclick = (e) => {
+    const o = e.target.closest("[data-open]");
+    if (o) { const i = +o.closest(".lrow").dataset.i; if (list && list.i === i) return closeList(); $('[data-k="service"]', rowOf(i)).focus(); showList(i, true); return; }
+    const dt = e.target.closest("[data-details]");
+    if (dt) { const i = +dt.closest(".lrow").dataset.i; opened.has(i) ? opened.delete(i) : opened.add(i); draw(); if (opened.has(i)) $("textarea", rowOf(i))?.focus(); return; }
     const d = e.target.closest("[data-del]");
     if (d) { const k = +d.dataset.del; lines.splice(k, 1);
-      const moved = [...custom].map((j) => (j > k ? j - 1 : j)).filter((j) => j !== k); custom.clear(); moved.forEach((j) => custom.add(j));
+      const keep = [...opened].filter((j) => j !== k).map((j) => (j > k ? j - 1 : j)); opened.clear(); keep.forEach((j) => opened.add(j));
       draw(); onChange(); return; }
-    if (e.target.closest("[data-addline]")) { lines.push({ service: "", description: "", rate: "", qty: 1 }); draw(); onChange(); $$(".lrow", host).pop()?.querySelector("[data-pick]")?.focus(); return; }
+    if (e.target.closest("[data-addline]")) { const n = lines.length; lines.push(blank(), blank()); draw(); onChange(); $('[data-k="service"]', rowOf(n))?.focus(); return; }
   };
   draw();
   return { redraw: draw };
@@ -2935,7 +2990,9 @@ function viewEstimate(v, r) {
       <div class="row"><b style="font-size:18px">Estimate #</b><input class="inp" id="num" value="${esc(e.number)}" style="width:110px"><div class="spacer"></div>${isNew ? "" : statusBadge(e.status)}</div>
       <label class="f">Date<input type="date" id="date" value="${esc(e.date || TODAY)}"></label>
       <div class="muted small" id="totLabel">Total</div><div class="big" id="tot"></div><div class="small muted" id="totSub"></div>
-      <div class="row"><button class="btn primary" id="save" style="flex:1">${ic("check")}Save estimate</button><button class="btn" id="prt" title="Print or save as PDF">${ic("print")}</button></div>
+      <div class="row"><button class="btn primary" id="save" style="flex:1">${ic("check")}Save estimate</button><button class="btn" id="prt" title="Print">${ic("print")}</button></div>
+      <div class="row"><button class="btn" id="pdf" style="flex:1">${ic("file")}Download PDF</button>${ME.owner ? `<button class="btn" id="mail" style="flex:1">${ic("mail")}Email</button>` : ""}</div>
+      ${e.sent ? `<div class="small muted">Emailed ${X.niceDate(e.sent, { weekday: false })}${e.sent_to ? " to " + esc(e.sent_to) : ""}</div>` : ""}
       ${isNew ? "" : `<div class="row">${e.status !== "accepted" ? `<button class="btn good" id="won" style="flex:1">${ic("check")}They said yes</button>` : `<button class="btn" id="sched" style="flex:1">${ic("cal")}Schedule the job</button>`}
         ${e.status === "open" ? `<button class="btn bad" id="lost">Turned down</button>` : e.status !== "accepted" ? `<button class="btn" id="reopen">Re-open</button>` : ""}</div>
         <button class="btn ghost sm" id="del" style="align-self:flex-start;color:var(--bad)">${ic("trash")}Delete estimate</button>`}
@@ -2961,6 +3018,10 @@ function viewEstimate(v, r) {
   const doSave = async () => { const row = await collect(); const saved = await save("estimates", row); changed = false; dirty = null; return saved; };
   $("#save", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = await doSave(); toast(`Estimate #${s.number} saved.`); if (isNew) { history.replaceState(null, "", "#/estimate/" + s.id); render(); } });
   $("#prt", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = changed || isNew ? await doSave() : e; printDoc("estimate", s); if (isNew) { history.replaceState(null, "", "#/estimate/" + s.id); render(); } });
+  // the finished estimate as a PDF file, or emailed to the customer with the PDF attached (saved first)
+  const ready = async () => { const s = changed || isNew ? await doSave() : e; if (isNew) history.replaceState(null, "", "#/estimate/" + s.id); return I.estimates.get(s.id) || s; };
+  $("#pdf", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = await ready(); const pdf = await makePdf("estimate", s); pdf.save(pdfName("estimate", s)); if (isNew) render(); });
+  if ($("#mail", v)) $("#mail", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = await ready(); emailSheet("estimate", s); });
   if ($("#won", v)) $("#won", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = changed ? await doSave() : src; await acceptEstimate(I.estimates.get(s.id), null); });
   if ($("#lost", v)) $("#lost", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = changed ? await doSave() : src; await declineEstimate(I.estimates.get(s.id), null); });
   if ($("#reopen", v)) $("#reopen", v).onclick = (ev) => busy(ev.currentTarget, async () => { await save("estimates", { ...src, status: "open", decided: null }); const p = I.people.get(src.person); if (p && p.status === "lost") await save("people", { ...p, status: "active" }); render(); });
@@ -3005,7 +3066,7 @@ function jobSheet(job, isNew = false, optionsFrom = null) {
       <div class="spacer"></div><button class="btn primary" id="jsave">${ic("check")}${isNew ? "Book job" : "Save"}</button></div>`, (b) => {
     const picker = personPicker($("#jwho", b), state, () => {}, "customer");
     const tot = () => { $("#jtot", b).textContent = money(X.linesTotal(cleanLines(j.lines))); };
-    const ed = linesEditor($("#jlines", b), j.lines, tot); tot();
+    const ed = linesEditor($("#jlines", b), j.lines, tot, 2); tot();
     if (!can("schedule_jobs")) {   // crew without "book and move jobs": read the job, mark it done, write notes
       for (const el of $$("input, select, textarea", b)) if (el.id !== "jnotes") el.disabled = true;
       for (const el of $$("#jwho, #jlines", b)) el.classList.add("ro");
@@ -3147,7 +3208,9 @@ function viewInvoice(v, r) {
       <div class="muted small">Total</div><div class="big" id="tot"></div>
       ${isNew ? "" : `<div class="row small"><span class="muted">Paid</span><div class="spacer"></div><b>${money(X.paidOf(I, src))}</b></div>
         <div class="row"><span class="muted">Balance</span><div class="spacer"></div><b style="font-size:18px;color:${X.balanceOf(I, src) > 0.005 ? "var(--warn)" : "var(--good)"}">${money(X.balanceOf(I, src))}</b></div>`}
-      <div class="row"><button class="btn primary" id="save" style="flex:1">${ic("check")}Save invoice</button><button class="btn" id="prt" title="Print or save as PDF">${ic("print")}</button></div>
+      <div class="row"><button class="btn primary" id="save" style="flex:1">${ic("check")}Save invoice</button><button class="btn" id="prt" title="Print">${ic("print")}</button></div>
+      <div class="row"><button class="btn" id="pdf" style="flex:1">${ic("file")}Download PDF</button>${ME.owner ? `<button class="btn" id="mail" style="flex:1">${ic("mail")}Email</button>` : ""}</div>
+      ${inv.sent ? `<div class="small muted">Emailed ${X.niceDate(inv.sent, { weekday: false })}${inv.sent_to ? " to " + esc(inv.sent_to) : ""}</div>` : ""}
       ${isNew ? "" : `<button class="btn good" id="pay">${ic("dollar")}Record a payment</button>
         <label class="check small"><input type="checkbox" id="bad" ${inv.bad_debt ? "checked" : ""}>Bad debt (won't be paid)</label>
         <button class="btn ghost sm" id="del" style="align-self:flex-start;color:var(--bad)">${ic("trash")}Delete invoice</button>`}
@@ -3173,6 +3236,9 @@ function viewInvoice(v, r) {
   };
   $("#save", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = await doSave(); toast(`Invoice #${s.number} saved.`); history.replaceState(null, "", "#/invoice/" + s.id); render(); });
   $("#prt", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = changed || isNew ? await doSave() : src; printDoc("invoice", s); history.replaceState(null, "", "#/invoice/" + s.id); render(); });
+  const ready = async () => { const s = changed || isNew ? await doSave() : src; history.replaceState(null, "", "#/invoice/" + s.id); return I.invoices.get(s.id) || s; };
+  $("#pdf", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = await ready(); const pdf = await makePdf("invoice", s); pdf.save(pdfName("invoice", s)); if (isNew) render(); });
+  if ($("#mail", v)) $("#mail", v).onclick = (ev) => busy(ev.currentTarget, async () => { const s = await ready(); emailSheet("invoice", s); });
   if ($("#pay", v)) $("#pay", v).onclick = () => paymentSheet(I.invoices.get(inv.id));
   if ($("#bad", v)) $("#bad", v).onchange = (ev) => busy(null, async () => { await save("invoices", { ...src, bad_debt: ev.target.checked }); render(); });
   if ($("#del", v)) $("#del", v).onclick = (ev) => { if (!confirm(`Delete invoice #${inv.number} and its payments? This can't be undone.`)) return; busy(ev.currentTarget, async () => { await remove("invoices", inv.id); dirty = null; toast("Deleted."); go("invoices"); }); };
@@ -3305,6 +3371,133 @@ function printDoc(kind, doc) {
   setTimeout(() => window.print(), 50);
 }
 
+
+// ------------------------------------------------------------------ PDF file + email (2026-11-21, Ben)
+// A real PDF (text, not a picture): jsPDF + AutoTable from cdnjs, loaded the first time. The logo's mask layers are
+// painted onto a canvas in the theme colours (PDF makers can't do CSS masks). Email goes out from Ben's Gmail via
+// cloud Jarvis (/crmapp/email), with this PDF attached; the estimate / invoice remembers when and to whom.
+const PDF_LIBS = ["https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js", "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"];
+async function pdfLib() { for (const s of PDF_LIBS) await scriptOnce(s); if (!window.jspdf) throw new Error("Couldn't load the PDF maker. Check the connection."); return window.jspdf.jsPDF; }
+let LOGO_PNG = null;
+async function logoPng() {
+  if (!LOGO) return null;
+  if (LOGO_PNG) return LOGO_PNG;
+  const cs = getComputedStyle(document.documentElement);
+  const col = { frame: cs.getPropertyValue("--core").trim() || "#22d3ee", letters: cs.getPropertyValue("--acc").trim() || "#ff4fb8" };
+  const W = LOGO.w, H = LOGO.h, out = document.createElement("canvas");   // 420 x 333: sharp at the 74 pt it's printed
+  out.width = W; out.height = H;
+  const bg = out.getContext("2d"); bg.fillStyle = "#fff"; bg.fillRect(0, 0, W, H);   // white paper, so a small JPEG works
+  for (const k of ["frame", "letters"]) {   // the white outline layer is left out: white on white paper
+    const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = LOGO[k]; });
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
+    const g = c.getContext("2d"); g.drawImage(img, 0, 0, W, H); g.globalCompositeOperation = "source-in"; g.fillStyle = col[k]; g.fillRect(0, 0, W, H);
+    out.getContext("2d").drawImage(c, 0, 0);
+  }
+  return (LOGO_PNG = out.toDataURL("image/jpeg", 0.92));   // a PNG made the PDF over 2 MB
+}
+// the PDF's built-in font only knows Western characters: keep those, swap a few, drop the rest (emoji)
+const pdfText = (s) => String(s ?? "").replace(/[\u2713\u2714]/g, "v").replace(/[\u2212]/g, "-").replace(/[^\x09\x0a\x0d\x20-\x7e\u00a0-\u00ff\u2013\u2014\u2018\u2019\u201c\u201d\u2022\u2026\u20ac]/g, "");
+const pdfName = (kind, doc) => `${kind === "estimate" ? "Estimate" : "Invoice"}-${doc.number}-${X.nameOf(I.people.get(doc.person)).replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "customer"}.pdf`;
+async function makePdf(kind, doc) {
+  const JsPDF = await pdfLib();
+  const pdf = new JsPDF({ unit: "pt", format: "letter" });
+  const W = pdf.internal.pageSize.getWidth(), H = pdf.internal.pageSize.getHeight(), M = 48;
+  const p = I.people.get(doc.person) || {}, biz = (D.settings && D.settings.business) || {};
+  const lines = (doc.lines || []).filter((l) => String(l.service || "").trim() || String(l.description || "").trim() || +l.rate);
+  const ink = [17, 17, 17], grey = [105, 105, 105];
+  let y = M, x = M;
+  const logo = await logoPng().catch(() => null);
+  if (logo) { pdf.addImage(logo, "JPEG", M, y - 4, 74, 74 * LOGO.h / LOGO.w); x = M + 88; }
+  pdf.setTextColor(...ink); pdf.setFont("helvetica", "bold"); pdf.setFontSize(17); pdf.text(pdfText(biz.name || "VITRA Window Washing"), x, y + 14);
+  pdf.setFont("helvetica", "normal"); pdf.setFontSize(9.5); pdf.setTextColor(...grey);
+  [[biz.phone, biz.email].filter(Boolean).join("   ·   "), biz.website, biz.address].filter(Boolean).forEach((s, k) => pdf.text(pdfText(s), x, y + 30 + k * 12.5));
+  pdf.setTextColor(...ink); pdf.setFont("helvetica", "bold"); pdf.setFontSize(19); pdf.text(kind === "estimate" ? "ESTIMATE" : "INVOICE", W - M, y + 14, { align: "right" });
+  pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);
+  const meta = [`#${doc.number}`, X.niceDate(doc.date, { year: true, weekday: false })];
+  if (kind === "invoice" && doc.due) meta.push("Due " + X.niceDate(doc.due, { year: true, weekday: false }));
+  meta.forEach((s, k) => pdf.text(pdfText(s), W - M, y + 30 + k * 13, { align: "right" }));
+  y += 76;
+  pdf.setDrawColor(...ink); pdf.setLineWidth(1.4); pdf.line(M, y, W - M, y); y += 22;
+  pdf.setFontSize(8); pdf.setTextColor(...grey); pdf.text(kind === "estimate" ? "PREPARED FOR" : "BILL TO", M, y); y += 14;
+  pdf.setTextColor(...ink); pdf.setFont("helvetica", "bold"); pdf.setFontSize(11.5); pdf.text(pdfText(X.nameOf(p)), M, y); y += 14;
+  pdf.setFont("helvetica", "normal"); pdf.setFontSize(10);
+  for (const s of [X.addressOf(p), (p.phones || [])[0] && p.phones[0].n, (p.emails || [])[0]].filter(Boolean)) { pdf.text(pdfText(s), M, y); y += 13; }
+  y += 10;
+  if (kind === "estimate" && doc.options) { pdf.setFont("helvetica", "bold"); pdf.text("Choose one of these options:", M, y); pdf.setFont("helvetica", "normal"); y += 8; }
+  const body = [];
+  for (const l of lines) {
+    const d = pdfText(String(l.description || "").trim()), unit = l.unit ? " " + String(l.unit).replace(/^per /, "") : "";
+    const line = { lineWidth: { bottom: d ? 0 : 0.5 }, lineColor: [225, 225, 225] };
+    body.push([{ content: pdfText(l.service || ""), styles: { fontStyle: "bold", ...line } },
+      { content: pdfText(String(+l.qty === 1 && !unit ? 1 : +l.qty || 1) + unit), styles: line }, { content: money(+l.rate || 0), styles: line }, { content: money(X.lineTotal(l)), styles: line }]);
+    if (d) body.push([{ content: d, colSpan: 4, styles: { fontSize: 9, textColor: [80, 80, 80], cellPadding: { top: 0, right: 6, bottom: 9, left: 6 }, lineWidth: { bottom: 0.5 }, lineColor: [225, 225, 225] } }]);
+  }
+  pdf.autoTable({
+    startY: y, margin: { left: M, right: M }, theme: "plain", head: [["Service", "Qty", "Each", "Amount"]], body,
+    styles: { font: "helvetica", fontSize: 10, textColor: ink, cellPadding: { top: 7, right: 6, bottom: 6, left: 6 }, overflow: "linebreak" },
+    headStyles: { fontSize: 8, fontStyle: "bold", textColor: [70, 70, 70], lineWidth: { bottom: 1.2 }, lineColor: ink },
+    columnStyles: { 1: { halign: "right", cellWidth: 70 }, 2: { halign: "right", cellWidth: 78 }, 3: { halign: "right", cellWidth: 84 } },
+    didParseCell: (h) => { if (h.section === "head" && h.column.index > 0) h.cell.styles.halign = "right"; },
+  });
+  y = pdf.lastAutoTable.finalY + 18;
+  const need = (n) => { if (y + n > H - M) { pdf.addPage(); y = M; } };
+  const row = (label, value, big = false) => {
+    need(20); pdf.setFont("helvetica", big ? "bold" : "normal"); pdf.setFontSize(big ? 14 : 10.5);
+    pdf.text(label, W - M - 220, y); pdf.text(value, W - M, y, { align: "right" }); y += big ? 22 : 15;
+  };
+  const val = kind === "estimate" ? X.estimateValue({ ...doc, lines }) : { value: +doc.total || X.linesTotal(lines) };
+  need(30); pdf.setDrawColor(...ink); pdf.setLineWidth(1.4); pdf.line(W - M - 220, y - 12, W - M, y - 12); y += 4;
+  if (kind === "estimate" && doc.options) row("Options from", `${money(val.low)} - ${money(val.value)}`, true);
+  else row("Total", money(val.value), true);
+  if (kind === "invoice") { row("Paid", money(X.paidOf(I, doc))); row("Balance due", money(X.balanceOf(I, doc)), true); }
+  const para = (text, size = 9.5) => {
+    if (!String(text || "").trim()) return;
+    pdf.setFont("helvetica", "normal"); pdf.setFontSize(size); pdf.setTextColor(60, 60, 60);
+    for (const ln of pdf.splitTextToSize(pdfText(text), W - 2 * M)) { need(13); pdf.text(ln, M, y); y += 12.5; }
+    y += 8; pdf.setTextColor(...ink);
+  };
+  y += 10;
+  para(doc.notes, 10);
+  if (kind === "estimate") para(D.settings && D.settings.terms, 8.5);
+  if (kind === "estimate") {
+    need(60); y += 34; pdf.setDrawColor(...ink); pdf.setLineWidth(0.8);
+    pdf.line(M, y, M + 250, y); pdf.line(W - M - 160, y, W - M, y);
+    pdf.setFontSize(8.5); pdf.setTextColor(...grey); pdf.text("Customer signature", M, y + 12); pdf.text("Date", W - M - 160, y + 12);
+  }
+  const pages = pdf.getNumberOfPages();
+  if (pages > 1) for (let k = 1; k <= pages; k++) { pdf.setPage(k); pdf.setFontSize(8); pdf.setTextColor(...grey); pdf.text(`Page ${k} of ${pages}`, W - M, H - 24, { align: "right" }); }
+  return pdf;
+}
+function emailSheet(kind, doc) {
+  const p = I.people.get(doc.person) || {}, biz = (D.settings && D.settings.business) || {};
+  const name = biz.name || "VITRA Window Washing", word = kind === "estimate" ? "estimate" : "invoice";
+  const hi = p.first ? `Hi ${p.first},` : "Hi,";
+  const sign = ["Thank you,", "Ben Huber", name, biz.phone].filter(Boolean).join("\n");
+  const msg = kind === "estimate"
+    ? `${hi}\n\nThanks for having us out. Your estimate is attached. Just reply to this email if you have any questions, or when you'd like to get on the schedule.\n\n${sign}`
+    : `${hi}\n\nYour invoice #${doc.number} for ${money(X.balanceOf(I, doc) || +doc.total || 0)} is attached. Thank you for your business!\n\n${sign}`;
+  const file = pdfName(kind, doc);
+  openSheet(`Email ${word} #${doc.number}`, `
+    <label class="f">To<input id="mto" type="email" value="${esc((p.emails || [])[0] || "")}" placeholder="customer@example.com" autocomplete="off"></label>
+    <label class="f">Subject<input id="msub" value="${esc(`${word[0].toUpperCase() + word.slice(1)} #${doc.number} from ${name}`)}"></label>
+    <label class="f">Message<textarea id="mmsg" rows="9">${esc(msg)}</textarea></label>
+    <div class="row small muted">${ic("file")}<span>Attached: <b>${esc(file)}</b></span></div>
+    <div class="small muted">It goes out from your Gmail, so replies come back to you.${doc.sent ? ` Already emailed ${X.niceDate(doc.sent, { weekday: false })}${doc.sent_to ? " to " + esc(doc.sent_to) : ""}.` : ""}</div>
+    <div class="sheetfoot"><button class="btn" id="mc">Cancel</button><div class="spacer"></div><button class="btn primary" id="ms">${ic("mail")}Send</button></div>`, (b) => {
+    $("#mc", b).onclick = () => closeSheet();
+    $("#ms", b).onclick = (ev) => busy(ev.currentTarget, async () => {
+      const to = $("#mto", b).value.trim(), subject = $("#msub", b).value.trim(), message = $("#mmsg", b).value.trim();
+      if (!/^[^\s@,;]+@[^\s@,;]+\.[a-z]{2,}$/i.test(to)) throw new Error("That email address doesn't look right.");
+      if (!subject) throw new Error("Give it a subject.");
+      const pdf = await makePdf(kind, doc);
+      const r = await api("email", { kind, id: doc.id, to, subject, message, filename: file, pdf: pdf.output("datauristring").split(",")[1] });
+      const table = kind === "estimate" ? "estimates" : "invoices", row = D[table].find((x) => x.id === doc.id);
+      if (row) { row.sent = r.sent; row.sent_to = to; }
+      toast(DEMO ? "Demo: nothing was sent." : `Sent to ${to}.`);
+      closeSheet(); render();
+    });
+  });
+}
 
 // ------------------------------------------------------------------ team: employees and permissions (2026-11-21)
 // Logins come later (Ben's order): the switches are saved now and will apply once employees can sign in.
@@ -4470,6 +4663,7 @@ function demoApi(route, b) {
   }
   if (route === "settings") { if (b.settings) DB.settings = { ...DB.settings, ...b.settings }; return { settings: DB.settings }; }
   if (route === "track" || route === "geo" || route === "signout") return { ok: true };
+  if (route === "email") { const row = DB[b.kind === "estimate" ? "estimates" : "invoices"].find((r) => r.id === b.id); if (row) { row.sent = TODAY; row.sent_to = b.to; } return { ok: true, sent: TODAY, demo: true }; }
   if (route === "sessions") return { sessions: [] };
   if (route === "roles") {
     const roles = X.normalizeRoles(b.roles);
