@@ -1624,6 +1624,27 @@
   /* amounts inside the steps */
   .cin b { color: var(--th-pale, #fff); font-weight: 700; }
   #cookmode .cin b { color: var(--th-soft, #fff); }
+
+  /* ---------------------------------------------------------- Truck checklist (2026-11-23) */
+  #money .kstat { text-align: left; }
+  #money .kcount { font-size: 18px; color: var(--ink); } #money .kcount b { font-size: 30px; color: var(--th-pale, #fff); margin-right: 4px; }
+  #money .kbar { height: 8px; border-radius: 4px; background: rgba(0,0,0,0.3); overflow: hidden; margin: 8px 0 6px; }
+  #money .kbar i { display: block; height: 100%; background: linear-gradient(90deg, var(--th-a2-hex, var(--th-a-hex)), var(--th-a-hex)); transform-origin: left; transition: transform 0.3s ease; }
+  #money .kstart { width: 100%; padding: 15px; font-size: 17px; display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0 6px; }
+  #money .kstart .cico { width: 22px; height: 22px; }
+  #money .label.kl { display: flex; justify-content: space-between; align-items: center; }
+  #money .krow input, #money .kitem input { width: 100%; box-sizing: border-box; font: inherit; font-size: 15px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line); background: rgba(var(--th-input, 2,10,20),0.7); color: var(--text, #fff); margin-bottom: 6px; }
+  #money .kitem { display: flex; align-items: center; gap: 8px; border-top: 1px solid var(--grid); min-height: 50px; }
+  #money .kitem:first-of-type { border-top: 0; }
+  #money .kbtn { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 12px 2px; background: none; border: 0; color: var(--ink); font: inherit; font-size: 17px; text-align: left; cursor: pointer; }
+  #money .kbtn:disabled { cursor: default; }
+  #money .kbtn small { color: var(--ink3); font-size: 13px; margin-left: auto; }
+  #money .kbox { width: 26px; height: 26px; flex: none; border-radius: 50%; border: 2px solid rgba(var(--th-a),0.7); transition: background 0.15s; }
+  #money .kitem.got .kbox { background: var(--th-a-hex); box-shadow: inset 0 0 0 4px rgba(0,0,0,0.3); }
+  #money .kitem.got .ktext { opacity: 0.55; text-decoration: line-through; }
+  #money .kitem.skip .kbox { border-style: dashed; opacity: 0.5; } #money .kitem.skip .ktext { opacity: 0.5; }
+  #money .kitem .ktext { flex: 1; min-width: 0; }
+  #money .kskip { flex: none; font-size: 13px !important; color: var(--ink3) !important; }
   /* ================================================================ the talk screen, premium (Ben, 2026-11-21)
      Shared by the phone app (index.template.html) and the laptop window (jarvis/ui/static/index.html): build.py puts it in
      the shared CSS. The shared CSS sits in the middle of each page's own styles, so these rules start with "body" to win.
@@ -1810,11 +1831,12 @@
   <div id="dmain">
   <div class="dsect">Screens</div>
   <a href="#" id="navJarvis" class="ditem"><span>Jarvis<small>Talk to Jarvis</small></span><em>›</em></a>
-  <a href="#" id="navMoney" class="ditem" aria-expanded="false"><span>Money<small>Business, personal and customers</small></span><em class="dchev">▸</em></a>
+  <a href="#" id="navMoney" class="ditem" aria-expanded="false"><span>Money<small>Business, personal, customers, truck</small></span><em class="dchev">▸</em></a>
   <div id="moneySub" class="dsub">
     <a href="#" id="moneyBiz" class="ditem"><span>Business<small>Accounts, spending, invoices</small></span><em>›</em></a>
     <a href="#" id="moneyPers" class="ditem"><span>Personal<small>Your own accounts, spending</small></span><em>›</em></a>
     <a href="crm/" id="navCrmApp" class="ditem"><span>VITRA CRM<small>Dashboard, calendar, prospects, estimates, invoices</small></span><em>›</em></a>
+    <a href="#" id="navChk" class="ditem"><span>Truck checklist<small>Load the truck by voice: "got the squeegees"</small></span><em>›</em></a>
     <a href="#" id="navCrm" class="ditem"><span>Customers (old backup)<small>The Customer Factor reports</small></span><em>›</em></a>
   </div>
   <a href="#" id="navHealth" class="ditem" aria-expanded="false"><span>Health<small>Workouts, nutrition, cookbook, bad habits</small></span><em class="dchev">▸</em></a>
@@ -2364,9 +2386,9 @@
     menuBtn.setAttribute("aria-expanded", open); drawer.setAttribute("aria-hidden", !open);
     if (open && !was) {   // show which screen you're on
       const m = $("money").classList.contains("on") && $("mtitle").textContent;
-      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["navLook", m === "COLOURS"], ["navAlerts", m === "ALERTS"], ["navRules", m === "ASK FIRST"], ["navMemory", m === "MEMORY"], ["navVoice", m === "VOICE"], ["navCalls", m === "CALLS"], ["navFit", m === "WORKOUTS"], ["navFood", m === "NUTRITION"], ["navCook", m === "COOKBOOK"], ["navDope", m === "DOPAMINE HOLE"], ["navPlay", m === "PLAY"], ["navFeedback", m === "FEEDBACK"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || / BINGO$/.test(m)]]) $(id).classList.toggle("cur", on);
+      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["navLook", m === "COLOURS"], ["navAlerts", m === "ALERTS"], ["navRules", m === "ASK FIRST"], ["navMemory", m === "MEMORY"], ["navVoice", m === "VOICE"], ["navCalls", m === "CALLS"], ["navFit", m === "WORKOUTS"], ["navFood", m === "NUTRITION"], ["navCook", m === "COOKBOOK"], ["navChk", m === "CHECKLISTS"], ["navDope", m === "DOPAMINE HOLE"], ["navPlay", m === "PLAY"], ["navFeedback", m === "FEEDBACK"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || / BINGO$/.test(m)]]) $(id).classList.toggle("cur", on);
       showSettings(["JARVIS COSTS", "PERSONALITY", "COLOURS", "ALERTS", "ASK FIRST", "MEMORY", "VOICE"].includes(m));   // the cog's page holds Jarvis costs, so open there from it
-      subOpen("Money", m === "BUSINESS" || m === "PERSONAL" || m === "CUSTOMERS");   // on one of their screens, show the group open
+      subOpen("Money", m === "BUSINESS" || m === "PERSONAL" || m === "CUSTOMERS" || m === "CHECKLISTS");   // on one of their screens, show the group open
       subOpen("Health", m === "WORKOUTS" || m === "NUTRITION" || m === "COOKBOOK" || m === "DOPAMINE HOLE");
       subOpen("Behave", ["PERSONALITY", "ALERTS", "ASK FIRST", "MEMORY", "VOICE"].includes(m));
       subOpen("Goals", m === "BUSINESS GOALS" || m === "PERSONAL GOALS" || / BINGO$/.test(m));
@@ -2808,6 +2830,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       if (M.book === "dope") return loadDope();
       if (M.book === "fb") return loadFb();
       if (M.book === "cook") return loadCook();
+      if (M.book === "chk") return loadChk();
       if (M.book === "play") return loadPlay();
       if (M.book === "look") { M.data = { look: true }; return render(); }
       if (["alerts", "memory", "rules", "voice"].includes(M.book)) return loadSetPage(M.book);
@@ -2836,8 +2859,8 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       if (!tabs.some(([k]) => k === tab) && !(M.book === "fit" && (tab === "fset" || tab === "ranks")) && !(M.book === "food" && tab === "calc") && !(M.book === "cook" && tab === "crecipe")) tab = tabs[0][0];   // Workouts' Settings: reached from Home
       el.querySelectorAll("nav button").forEach((b, i) => { b.style.display = tabs[i] ? "" : "none"; if (tabs[i]) { b.dataset.tab = tabs[i][0]; b.textContent = tabs[i][1]; } });   // screens with fewer than 4 tabs hide the rest
       M.tab = tab;
-      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY", calls: "CALLS", fit: "WORKOUTS", food: "NUTRITION", dope: "DOPAMINE HOLE", fb: "FEEDBACK", cook: "COOKBOOK", play: "PLAY", look: "COLOURS", alerts: "ALERTS", rules: "ASK FIRST", memory: "MEMORY", voice: "VOICE" }[M.book];
-      el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book] || M.book === "bingo" || M.book === "persona" || M.book === "calls" || M.book === "look" || ["alerts", "memory", "rules", "voice"].includes(M.book));   // no Dashboard/Spending/... tabs there
+      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY", calls: "CALLS", fit: "WORKOUTS", food: "NUTRITION", dope: "DOPAMINE HOLE", fb: "FEEDBACK", cook: "COOKBOOK", chk: "CHECKLISTS", play: "PLAY", look: "COLOURS", alerts: "ALERTS", rules: "ASK FIRST", memory: "MEMORY", voice: "VOICE" }[M.book];
+      el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book] || M.book === "bingo" || M.book === "persona" || M.book === "calls" || M.book === "chk" || M.book === "look" || ["alerts", "memory", "rules", "voice"].includes(M.book));   // no Dashboard/Spending/... tabs there
       el.classList.toggle("look", M.book === "look");   // the Colours page lays out its own two halves
       el.classList.toggle("fit", M.book === "fit"); document.body.classList.toggle("fitui", M.book === "fit");   // Workouts' brighter, pinker look
       body.scrollTop = 0; hideTip(); el.classList.add("on");
@@ -2867,6 +2890,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     $("navFood").onclick = (e) => { e.preventDefault(); goBook("food"); };
     $("navDope").onclick = (e) => { e.preventDefault(); goBook("dope"); };
     $("navPlay").onclick = (e) => { e.preventDefault(); goBook("play"); };
+    $("navChk").onclick = (e) => { e.preventDefault(); goBook("chk"); };
     $("navCook").onclick = (e) => { e.preventDefault(); goBook("cook"); };
     $("navFeedback").onclick = (e) => { e.preventDefault(); if (M.book !== "fb" || !el.classList.contains("on")) FBS.from = window.jarvisPage(); FBS.sent = null; goBook("fb"); };   // remember where he was
     $("navLook").onclick = (e) => { e.preventDefault(); goBook("look"); };
@@ -6805,7 +6829,7 @@ function changelog(items, tz) {
 
 return { TYPES, PRIORITIES, STATUSES, ACTIVE, fbId, scrub, scrubDeep, normalizeError, autoTitle, looksLikeFailure, sortItems, byPriority, changelog };
  })();
-    const APP_VERSION = "phone 6cccea7+changes \u00b7 built 2026-11-22 19:53";
+    const APP_VERSION = "phone 91d15cb+changes \u00b7 built 2026-11-23 06:48";
     window.JARVIS_VERSION = APP_VERSION;
     const FB_DEVICE = /\/cloud$/.test(FN) ? "laptop" : "phone";
     const FBS = { items: null, typeF: "all", statusF: "active", from: "Talk", sent: null, showDismissed: false,
@@ -7665,6 +7689,103 @@ return { UNITS, normUnit, DENSITY, gramsPerCup, unitsFor, convert, parseQty, fmt
         if (p.clear) D.session = null;
         if (p.set) D.session = { ...(D.session || { timers: [] }), id: p.set.id, step: p.set.step, by: "app", updated_at: new Date().toISOString() };
         return ok({ session: D.session || null });
+      }
+      return ok({});
+    }
+
+    // -------------------------------------------------------------- Truck checklist (2026-11-23, Ben: FB-0003)
+    // "I say my list, then as I load the truck I say I got the squeegees, the razors, the hoses, and after I'm done he asks:
+    // did you get this? did you get that?". Mostly voice (tool `checklist`, tools_check.ts); this screen shows the load
+    // ticking live and lets him tap or edit. A "book" of the money screen called chk (no tabs). Inserted into money.js by build.py.
+    const KL = { lists: null, run: null, sel: null, edit: false, err: "" };
+    async function chkCall(action, payload) {
+      if (DEMO) return chkDemo(action, payload || {});
+      const auth = await authHeaders();
+      if (!auth) { showSignin(true); throw new Error("This phone isn't paired."); }
+      const r = await fetch(FN + "/checklist/" + action, { method: "POST",
+        headers: { ...auth, apikey: PUBLISHABLE_KEY, "content-type": "application/json" }, body: JSON.stringify(payload || {}) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || `Checklist error (${r.status})`);
+      return j;
+    }
+    async function loadChk(quiet) {
+      if (!quiet) { M.busy = KL.lists ? "" : "Loading…"; M.error = ""; if (!M.data) M.data = { chk: true }; render(); }
+      try { const j = await chkCall("data"); KL.lists = j.lists; KL.run = j.run; }
+      catch (e) { if (!quiet && M.book === "chk") M.error = e.message; }
+      M.busy = ""; if (M.book === "chk" && el.classList.contains("on") && !(quiet && KL.edit)) render();
+    }
+    window.addEventListener("jarvis:reply", () => { if (M.book === "chk" && el.classList.contains("on")) setTimeout(() => loadChk(true), 500); });
+    setInterval(() => { if (M.book === "chk" && el.classList.contains("on") && !document.hidden && KL.run && !KL.run.finished_at && !KL.edit) loadChk(true); }, 3000);   // ticks said to the other device
+
+    function renderChk() {
+      const lists = KL.lists || [];
+      if (!KL.sel || !lists.some((l) => l.id === KL.sel)) KL.sel = (KL.run && KL.run.list_id) || (lists.find((l) => /truck/i.test(l.name)) || lists[0] || {}).id;
+      const L = lists.find((l) => l.id === KL.sel);
+      const run = KL.run && L && KL.run.list_id === L.id ? KL.run : null, live = run && !run.finished_at;
+      if (!lists.length) {
+        body.innerHTML = status() + `<div class="card cempty">${chkIcon()}<b>Make your truck list</b><div class="meta">Tell Jarvis: <i>"My truck list is squeegees, razors, hoses, ladder, buckets…"</i> or type the items here.</div>
+          <div class="search"><input id="kfirst" placeholder="Squeegees, razors, hoses, ladder…"><button class="btn" id="kgo" style="flex:none;min-width:0">Save</button></div></div>`;
+        const go = () => { const items = $("kfirst").value.split(/[,\n]+/).map((x) => x.trim()).filter(Boolean); if (items.length) chkSave([{ id: "", name: "Truck", items: items.map((t) => ({ id: "", text: t[0].toUpperCase() + t.slice(1) })) }]); };
+        $("kgo").onclick = go; $("kfirst").onkeydown = (e) => { if (e.key === "Enter") go(); };
+        return;
+      }
+      const got = run ? run.got : [], skip = run ? run.skipped : [];
+      const n = L.items.length, done = L.items.filter((i) => got.includes(i.id)).length, skipped = L.items.filter((i) => skip.includes(i.id)).length;
+      body.innerHTML = status() + `
+        ${lists.length > 1 || KL.edit ? `<div class="fbchips">${lists.map((l) => `<button class="fbchip${l.id === KL.sel ? " on" : ""}" data-kl="${esc(l.id)}">${esc(l.name)}</button>`).join("")}${KL.edit ? `<button class="fbchip" id="knew">+ New list</button>` : ""}</div>` : ""}
+        <div class="card kstat">
+          ${live ? `<div class="kcount"><b>${done}</b> of ${n} loaded${skipped ? ` · ${skipped} not needed` : ""}</div><div class="kbar"><i style="transform:scaleX(${n ? (done + skipped) / n : 0})"></i></div>
+            <div class="meta cwrap">Say <i>"got the squeegees and the hoses"</i>. When you're done, say <i>"I'm done"</i> and Jarvis asks about anything missing.</div>
+            <div class="btns"><button class="btn quiet small" id="kfin">Finish loading</button><button class="btn quiet small" id="kre">Start over</button></div>`
+          : `${run && run.finished_at ? `<div class="meta">Last load: ${done} of ${n} loaded ${esc(new Date(run.finished_at).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" }))}.</div>` : ""}
+            <button class="btn kstart" id="kstart">${chkIcon()} Start loading the ${esc(L.name.toLowerCase())}</button>
+            <div class="meta cwrap">Or say <i>"Jarvis, let's load the truck"</i>.</div>`}</div>
+        <div class="card"><div class="label kl">${esc(L.name)} · ${n} item${n === 1 ? "" : "s"}<button class="linkish" id="kedit">${KL.edit ? "Done editing" : "Edit list"}</button></div>
+          ${KL.edit ? `<div class="krow"><input id="kname" value="${esc(L.name)}" maxlength="40" aria-label="List name"></div>` : ""}
+          ${L.items.map((i) => { const g = got.includes(i.id), s = skip.includes(i.id);
+            return `<div class="kitem${g ? " got" : ""}${s ? " skip" : ""}">${KL.edit ? `<span class="ktext">${esc(i.text)}</span><button class="linkish fdel" data-kx="${esc(i.id)}" aria-label="Remove">✕</button>`
+              : `<button class="kbtn" data-kt="${esc(i.id)}"${live ? "" : " disabled"}><span class="kbox"></span><span class="ktext">${esc(i.text)}</span>${s ? `<small>not needed</small>` : ""}</button>${live && !g ? `<button class="linkish kskip" data-ks="${esc(i.id)}">${s ? "Need it" : "Not today"}</button>` : ""}`}</div>`; }).join("")}
+          ${KL.edit ? `<div class="search"><input id="kadd" placeholder="Add items: towels, screen brush…"><button class="btn" id="kaddgo" style="flex:none;min-width:0">Add</button></div>
+            <div class="btns">${lists.length > 1 ? `<button class="btn danger small" id="kdel">Delete this list</button>` : ""}</div>` : ""}</div>
+        ${KL.err ? `<div class="note err">${esc(KL.err)}</div>` : ""}`;
+      body.querySelectorAll("[data-kl]").forEach((b) => (b.onclick = () => { KL.sel = b.dataset.kl; renderChk(); }));
+      $("kedit").onclick = () => { if (KL.edit) { const nm = $("kname") && $("kname").value.trim(); if (nm && nm !== L.name) { L.name = nm; chkSave(lists); } } KL.edit = !KL.edit; renderChk(); };
+      const st = $("kstart"); if (st) st.onclick = () => chkRun({ start: L.id });
+      const re = $("kre"); if (re) re.onclick = () => chkRun({ start: L.id });
+      const fi = $("kfin"); if (fi) fi.onclick = () => chkRun({ finish: true });
+      body.querySelectorAll("[data-kt]").forEach((b) => (b.onclick = () => chkRun({ toggle: b.dataset.kt })));
+      body.querySelectorAll("[data-ks]").forEach((b) => (b.onclick = () => chkRun({ skip: b.dataset.ks })));
+      body.querySelectorAll("[data-kx]").forEach((b) => (b.onclick = () => { L.items = L.items.filter((i) => i.id !== b.dataset.kx); chkSave(lists); }));
+      const add = () => { const v = $("kadd").value.split(/[,\n]+/).map((x) => x.trim()).filter(Boolean); if (!v.length) return; L.items.push(...v.map((t) => ({ id: "", text: t[0].toUpperCase() + t.slice(1) }))); chkSave(lists).then(() => { const a = $("kadd"); if (a) a.focus(); }); };
+      const ag = $("kaddgo"); if (ag) { ag.onclick = add; $("kadd").onkeydown = (e) => { if (e.key === "Enter") add(); }; }
+      const nw = $("knew"); if (nw) nw.onclick = () => { const id = "new-" + Date.now(); lists.push({ id, name: "New list", items: [] }); KL.sel = id; chkSave(lists); };
+      const dl = $("kdel"); if (dl) dl.onclick = () => { if (!confirm(`Delete the ${L.name} list?`)) return; KL.sel = null; chkSave(lists.filter((l) => l.id !== L.id)); };
+    }
+    async function chkSave(lists) {
+      KL.err = "";
+      try { const j = await chkCall("save", { lists }); KL.lists = j.lists; if (KL.sel && KL.sel.startsWith("new-")) KL.sel = j.lists[j.lists.length - 1].id; }
+      catch (e) { KL.err = e.message; }
+      if (M.book === "chk") renderChk();
+    }
+    async function chkRun(p) {
+      KL.err = "";
+      try { KL.run = (await chkCall("run", p)).run; try { navigator.vibrate && navigator.vibrate(15); } catch {} } catch (e) { KL.err = e.message; }
+      if (M.book === "chk") renderChk();
+    }
+    const chkIcon = () => `<svg viewBox="0 0 24 24" class="cico"><path d="M2 7h11v9H2zM13 10h4l3 3v3h-7M5.5 18.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM16.5 18.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5 11.5l1.5 1.5 3-3"/></svg>`;
+
+    // ---- #money-demo: a sample list, nothing leaves the page
+    function chkDemo(action, p) {
+      const D = KL.demo || (KL.demo = { lists: [{ id: "t", name: "Truck", items: ["Squeegees", "Razors", "Hose", "Ladder", "Extension pole", "Buckets", "Towels", "Screen brush"].map((t, i) => ({ id: "i" + i, text: t })) }], run: null });
+      const ok = (x) => Promise.resolve(JSON.parse(JSON.stringify(x)));
+      if (action === "data") return ok({ lists: D.lists, run: D.run });
+      if (action === "save") { D.lists = p.lists.map((l, k) => ({ ...l, id: l.id || "l" + k, items: l.items.map((i, j) => ({ ...i, id: i.id || "n" + Date.now() + j })) })); return ok({ lists: D.lists }); }
+      if (action === "run") {
+        if (p.start) D.run = { list_id: p.start, name: D.lists.find((l) => l.id === p.start).name, started_at: new Date().toISOString(), got: [], skipped: [], finished_at: null };
+        if (p.toggle) D.run.got = D.run.got.includes(p.toggle) ? D.run.got.filter((x) => x !== p.toggle) : [...D.run.got, p.toggle];
+        if (p.skip) D.run.skipped = D.run.skipped.includes(p.skip) ? D.run.skipped.filter((x) => x !== p.skip) : [...D.run.skipped, p.skip];
+        if (p.finish) D.run.finished_at = new Date().toISOString();
+        return ok({ run: D.run });
       }
       return ok({});
     }
@@ -9023,6 +9144,7 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
         else if (M.book === "dope") renderDope();
         else if (M.book === "fb") renderFb();
         else if (M.book === "cook") renderCook();
+        else if (M.book === "chk") renderChk();
         else if (M.book === "play") renderPlay();
         else if (M.book === "look") renderLook();
         else if (["alerts", "memory", "rules", "voice"].includes(M.book)) renderSetPage();
