@@ -6805,7 +6805,7 @@ function changelog(items, tz) {
 
 return { TYPES, PRIORITIES, STATUSES, ACTIVE, fbId, scrub, scrubDeep, normalizeError, autoTitle, looksLikeFailure, sortItems, byPriority, changelog };
  })();
-    const APP_VERSION = "phone decb6e9+changes \u00b7 built 2026-11-22 19:42";
+    const APP_VERSION = "phone 6cccea7+changes \u00b7 built 2026-11-22 19:53";
     window.JARVIS_VERSION = APP_VERSION;
     const FB_DEVICE = /\/cloud$/.test(FN) ? "laptop" : "phone";
     const FBS = { items: null, typeF: "all", statusF: "active", from: "Talk", sent: null, showDismissed: false,
@@ -7554,10 +7554,11 @@ return { UNITS, normUnit, DENSITY, gramsPerCup, unitsFor, convert, parseQty, fmt
         if (!on && wake) { await wake.release(); wake = null; } } catch {}
     }
     document.addEventListener("visibilitychange", () => { if (CM && !document.hidden) keepAwake(true); });
-    function cookMode(r) {
+    function cookMode(r, atStep, fromVoice) {
       if (!cmLayer) { cmLayer = document.createElement("div"); cmLayer.id = "cookmode"; document.body.appendChild(cmLayer); }
       let saved = {}; try { saved = JSON.parse(localStorage.getItem("jarvis.cook." + r.id) || "{}"); } catch {}
-      CM = { r, k: kOf(r), step: Math.min(saved.step || 0, Math.max(0, (r.steps || []).length - 1)), ticks: saved.ticks || {}, ing: false };
+      CM = { r, k: kOf(r), step: Math.min(atStep != null ? atStep : saved.step || 0, Math.max(0, (r.steps || []).length - 1)), ticks: saved.ticks || {}, ing: false };
+      if (!fromVoice) pushSession();
       cmLayer.classList.add("on"); keepAwake(true);
       cmStep = nav.push(closeCook);
       drawCook(); clearInterval(cmTick); cmTick = setInterval(drawCookTimers, 500);
@@ -7580,17 +7581,39 @@ return { UNITS, normUnit, DENSITY, gramsPerCup, unitsFor, convert, parseQty, fmt
       cmLayer.querySelector("#cming").onclick = () => { CM.ing = !CM.ing; drawCook(); };
       cmLayer.querySelectorAll("[data-ti]").forEach((b) => (b.onclick = () => { CM.ticks[b.dataset.ti] = !CM.ticks[b.dataset.ti]; keepCook(); b.classList.toggle("done", !!CM.ticks[b.dataset.ti]); }));
       cmLayer.querySelectorAll(".cmtimer").forEach((b) => (b.onclick = () => startCookTimer(r, s.timers[+b.dataset.tj], b)));
-      const go = (d) => { CM.step = Math.max(0, Math.min(steps.length - 1, CM.step + d)); CM.ing = false; keepCook(); drawCook(); };
+      const go = (d) => { CM.step = Math.max(0, Math.min(steps.length - 1, CM.step + d)); CM.ing = false; keepCook(); drawCook(); pushSession(); };
       cmLayer.querySelector("#cmprev").onclick = () => go(-1);
       const nx = cmLayer.querySelector("#cmnext"); if (nx) nx.onclick = () => go(1);
       const dn = cmLayer.querySelector("#cmdone"); if (dn) dn.onclick = async () => {
         try { const j = await cookCall("cooked", { id: r.id }); CK.full[r.id] = { ...CK.full[r.id], cooked_count: j.recipe.cooked_count, last_cooked: j.recipe.last_cooked }; } catch {}
         try { localStorage.removeItem("jarvis.cook." + r.id); } catch {}
+        cookCall("session", { clear: true }).catch(() => {});
         closeCook(true); toastCook("Enjoy your meal."); if (M.book === "cook" && M.tab === "crecipe") cookRecipe(); };
       const bd = cmLayer.querySelector("#cmbody");   // swipe left / right between steps
       if (bd) { let x0 = null; bd.ontouchstart = (e) => (x0 = e.touches[0].clientX); bd.ontouchend = (e) => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(dx) > 60) go(dx < 0 ? 1 : -1); }; }
       drawCookTimers();
     }
+    // ---- hands-free: Jarvis moves the cooking session by voice ("next step", "start the timer"); cook mode follows it,
+    // and taps here move it (by "app") so voice carries on from where the screen is. tools_cookbook.ts cook_session.
+    let pushT = 0;
+    function pushSession() {
+      if (!CM) return;
+      clearTimeout(pushT); const id = CM.r.id, step = CM.step;
+      pushT = setTimeout(async () => { try { const j = await cookCall("session", { set: { id, step } }); if (j.session) CK.sessSeen = j.session.updated_at; } catch {} }, 500);
+    }
+    async function checkCookSession() {
+      let s = null; try { s = (await cookCall("session")).session; } catch { return; }
+      if (!s || s.by !== "voice" || s.updated_at === CK.sessSeen) return;
+      CK.sessSeen = s.updated_at;
+      for (const t of s.timers || []) if (!cookTimers.some((x) => x.label === t.label && Math.abs(Date.parse(x.due) - Date.parse(t.due)) < 5000)) cookTimers.push({ ...t, recipe: s.id });
+      keepTimers();
+      let r; try { r = await cookGet(s.id); } catch { return; }
+      if (CM && CM.r.id === s.id) { if (CM.step !== s.step) { CM.step = s.step; CM.ing = false; keepCook(); } drawCook(); }
+      else cookMode(r, s.step, true);
+    }
+    window.addEventListener("jarvis:reply", () => setTimeout(checkCookSession, 400));   // he spoke to Jarvis (this device)
+    setInterval(() => { if (CM && !document.hidden) checkCookSession(); }, 4000);       // or to the other device
+    setTimeout(checkCookSession, 2500);                                                  // a session still going when the app opens
     function drawCookTimers() {
       const host = cmLayer && cmLayer.querySelector("#cmtimers"); if (!host) return;
       const now = Date.now();
@@ -7623,6 +7646,10 @@ return { UNITS, normUnit, DENSITY, gramsPerCup, unitsFor, convert, parseQty, fmt
           { q: 1, unit: "tbsp", item: "olive oil", note: "", grams: 13.5, kcal: 120, protein: 0, carbs: 0, fat: 13.5 }, { q: null, unit: "", item: "fresh basil", note: "to finish", grams: 5, kcal: 1, protein: 0, carbs: 0, fat: 0 }],
         steps: [{ text: "Heat the oven with a pizza stone to 500°F for 45 minutes.", timers: [{ seconds: 2700, label: "Heat the stone" }] }, { text: "Stretch the dough to 14 inches, spread the sauce, add the mozzarella.", timers: [] },
           { text: "Bake 10-12 minutes until the crust is browned. Drizzle with olive oil and add basil.", timers: [{ seconds: 720, label: "Bake the pizza" }] }] });
+      if (DEMO && !window.jarvisDemoVoice) window.jarvisDemoVoice = (id, step, timer) => {   // test hook: what Jarvis does when Ben speaks
+        CK.demo.session = { id, step, by: "voice", updated_at: new Date().toISOString(), timers: timer ? [{ label: timer, due: new Date(Date.now() + 300000).toISOString(), total: 300 }] : [] };
+        window.dispatchEvent(new Event("jarvis:reply"));
+      };
       if (!CK.demo) CK.demo = { list: [R(), PZ()], settings: { split: { mode: "people", people: [{ name: "Ben", size: 4 }, { name: "Amber", size: 3 }] } } };
       const D = CK.demo, ok = (x) => Promise.resolve(JSON.parse(JSON.stringify(x)));
       if (action === "list") return ok({ recipes: D.list, settings: D.settings });
@@ -7634,6 +7661,11 @@ return { UNITS, normUnit, DENSITY, gramsPerCup, unitsFor, convert, parseQty, fmt
       if (action === "timer") return ok({ text: "demo timer", due: new Date(Date.now() + p.seconds * 1000).toISOString() });
       if (action === "cooked") { const r = D.list.find((x) => x.id === p.id); r.cooked_count++; r.last_cooked = new Date().toISOString(); return ok({ recipe: r }); }
       if (action === "settings") { if (p.settings) D.settings = p.settings; return ok({ settings: D.settings }); }
+      if (action === "session") {   // demo: a session the page itself can move "by voice" (window.jarvisDemoVoice)
+        if (p.clear) D.session = null;
+        if (p.set) D.session = { ...(D.session || { timers: [] }), id: p.set.id, step: p.set.step, by: "app", updated_at: new Date().toISOString() };
+        return ok({ session: D.session || null });
+      }
       return ok({});
     }
 
