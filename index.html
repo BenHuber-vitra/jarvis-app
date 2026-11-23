@@ -1621,6 +1621,9 @@
   @media (prefers-reduced-motion: reduce) { #cookmode { transition: none !important; transform: none !important; } #cookmode .cmt.done { animation: none; } }
   .cstep.wide b { min-width: 9em; }
   #msheet .cyield { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 8px; }
+  /* amounts inside the steps */
+  .cin b { color: var(--th-pale, #fff); font-weight: 700; }
+  #cookmode .cin b { color: var(--th-soft, #fff); }
   /* ================================================================ the talk screen, premium (Ben, 2026-11-21)
      Shared by the phone app (index.template.html) and the laptop window (jarvis/ui/static/index.html): build.py puts it in
      the shared CSS. The shared CSS sits in the middle of each page's own styles, so these rules start with "body" to win.
@@ -6802,7 +6805,7 @@ function changelog(items, tz) {
 
 return { TYPES, PRIORITIES, STATUSES, ACTIVE, fbId, scrub, scrubDeep, normalizeError, autoTitle, looksLikeFailure, sortItems, byPriority, changelog };
  })();
-    const APP_VERSION = "phone a86fc0d+changes \u00b7 built 2026-11-22 19:34";
+    const APP_VERSION = "phone decb6e9+changes \u00b7 built 2026-11-22 19:42";
     window.JARVIS_VERSION = APP_VERSION;
     const FB_DEVICE = /\/cloud$/.test(FN) ? "laptop" : "phone";
     const FBS = { items: null, typeF: "all", statusF: "active", from: "Talk", sent: null, showDismissed: false,
@@ -7274,7 +7277,24 @@ function rawWeight(ingredients, k = 1) {
   return Math.round((ingredients || []).reduce((a, i) => a + (+i.grams || 0), 0) * k);
 }
 
-return { UNITS, normUnit, DENSITY, gramsPerCup, unitsFor, convert, parseQty, fmtQty, unitLabel, showIngredient, plates, batchNutrition, plateNutrition, findTimers, fmtDuration, clock, rawWeight };
+/** A step with its ingredient tokens ([[n]] or [[n:0.5]] for part of it) turned into parts: plain text, or an ingredient
+ * with its amount, scaled by k and in the unit Ben picked ("Add 1 cup flour"). Steps without tokens: one text part. */
+function stepParts(step, ingredients, k = 1) {
+  const ref = step && step.ref, out = [];
+  if (!ref) return [{ text: step ? step.text : "" }];
+  const re = /\[\[(\d+)(?::([\d.]+))?\]\]/g;
+  let last = 0, m;
+  while ((m = re.exec(ref))) {
+    if (m.index > last) out.push({ text: ref.slice(last, m.index) });
+    const ing = (ingredients || [])[+m[1]], part = m[2] ? +m[2] : 1;
+    if (ing) { const s = showIngredient(ing, k * part); out.push({ ing: +m[1], amount: s.amount, unit: s.unit, item: s.item, part }); }
+    last = re.lastIndex;
+  }
+  if (last < ref.length) out.push({ text: ref.slice(last) });
+  return out;
+}
+
+return { UNITS, normUnit, DENSITY, gramsPerCup, unitsFor, convert, parseQty, fmtQty, unitLabel, showIngredient, plates, batchNutrition, plateNutrition, findTimers, fmtDuration, clock, rawWeight, stepParts };
  })();
     const CK = { list: null, settings: null, full: {}, cur: null, q: "", tag: "", open: -1, reading: false, err: "", draft: "", from: "crecipes" };
     try { CK.draft = localStorage.getItem("jarvis.cookDraft") || ""; } catch {}
@@ -7393,9 +7413,22 @@ return { UNITS, normUnit, DENSITY, gramsPerCup, unitsFor, convert, parseQty, fmt
     const yieldText = (r, n) => `${CB.fmtQty(n, "")} × ${r.yield.unit}`;
     const kOf = (r) => hasYield(r) ? makeOf(r) / +r.yield.count   // how much he's making vs the recipe as written
       : (r.split && +r.split.servings > 0 ? +r.split.servings : +r.servings) / (+r.servings || 1);
+    // A step with its amounts inside ("Add 1 cup flour, 1 cup water"), scaled and in the unit he picked.
+    const stepHtml = (s, r, k) => CB.stepParts(s, r.ingredients, k).map((p) => p.text != null ? esc(p.text)
+      : `<span class="cin">${p.amount ? `<b>${esc(p.amount)}${p.unit ? " " + esc(p.unit) : ""}</b> ` : ""}${esc(p.item)}</span>`).join("");
+    // Recipes saved before steps carried ingredient tokens get them once, in the background (cloud route relink).
+    const relinked = {};
+    function maybeRelink(r) {
+      if (DEMO || relinked[r.id] || !(r.steps || []).length || !(r.ingredients || []).length || r.steps.some((x) => x.ref)) return;
+      relinked[r.id] = true;
+      cookCall("relink", { id: r.id }).then((j) => { if (!j.recipe || !(j.recipe.steps || []).some((x) => x.ref)) return;
+        CK.full[r.id] = { ...CK.full[r.id], steps: j.recipe.steps };
+        if (M.book === "cook" && M.tab === "crecipe" && CK.cur === r.id) cookRecipe(); if (CM && CM.r.id === r.id) { CM.r = CK.full[r.id]; drawCook(); } }).catch(() => {});
+    }
     function cookRecipe() {
       const r = CK.full[CK.cur];
       if (!r) { body.innerHTML = status() || `<div class="note">Loading the recipe…</div>`; return; }
+      maybeRelink(r);
       const k = kOf(r), Y = hasYield(r), make = makeOf(r);
       const mode = r.split && ["none", "equal", "people"].includes(r.split.mode) ? r.split.mode : Y ? "none" : "equal";
       const split = { ...(r.split || {}), mode };
@@ -7433,7 +7466,7 @@ return { UNITS, normUnit, DENSITY, gramsPerCup, unitsFor, convert, parseQty, fmt
           ${groups.map((G) => `${G.g ? `<div class="cgroup">${esc(G.g)}</div>` : ""}${G.list.map(([i, ing]) => { const s = CB.showIngredient(ing, k);
             const units = CB.unitsFor(ing); return `<div class="cing${CK.open === i ? " open" : ""}"><button class="camt" data-u="${i}"${units.length > 1 ? "" : " disabled"}>${esc(s.amount)} ${esc(s.unit)}</button><span class="citem">${esc(s.item)}${s.note ? `<small>${esc(s.note)}</small>` : ""}</span>
             ${CK.open === i ? `<div class="cunits">${units.map((u) => `<button data-to="${esc(u)}" class="${u === (ing.show_unit || CB.normUnit(ing.unit)) ? "on" : ""}">${esc(u || "as written")}</button>`).join("")}</div>` : ""}</div>`; }).join("")}`).join("")}</div>
-        <div class="card"><div class="label">Steps</div>${(r.steps || []).map((s, i) => `<div class="cstepline"><span class="cnum">${i + 1}</span><div>${esc(s.text)}${(s.timers || []).length ? `<div class="ctimers">${s.timers.map((t, j) => `<button class="ctimer" data-ts="${i}" data-tj="${j}">${cIco("timer")}${esc(CB.fmtDuration(t.seconds))}<small>${esc(t.label)}</small></button>`).join("")}</div>` : ""}</div></div>`).join("")}</div>
+        <div class="card"><div class="label">Steps</div>${(r.steps || []).map((s, i) => `<div class="cstepline"><span class="cnum">${i + 1}</span><div>${stepHtml(s, r, k)}${(s.timers || []).length ? `<div class="ctimers">${s.timers.map((t, j) => `<button class="ctimer" data-ts="${i}" data-tj="${j}">${cIco("timer")}${esc(CB.fmtDuration(t.seconds))}<small>${esc(t.label)}</small></button>`).join("")}</div>` : ""}</div></div>`).join("")}</div>
         ${r.notes ? `<div class="card"><div class="label">Notes</div><div class="cwrap cnotes">${esc(r.notes)}</div></div>` : ""}
         <div class="btns cfoot"><button class="btn quiet" id="cpic">Change picture</button><button class="btn quiet" id="cedit">Edit</button><button class="btn danger" id="cdel">Delete</button></div>
         <details class="fbdet"><summary>What came in</summary><pre class="fbpre">${esc(r.source_text || "")}</pre></details>`;
@@ -7540,7 +7573,7 @@ return { UNITS, normUnit, DENSITY, gramsPerCup, unitsFor, convert, parseQty, fmt
       cmLayer.innerHTML = `<div class="cmhead"><button class="cmx" id="cmx" aria-label="Close">✕</button><div class="cmtitle">${esc(r.title)}</div><button class="cmingb${CM.ing ? " on" : ""}" id="cming">Ingredients</button></div>
         <div id="cmtimers" class="cmtimers"></div>
         ${CM.ing ? `<div class="cmings">${(r.ingredients || []).map((ing, i) => { const x = CB.showIngredient(ing, k); return `<button class="cmi${CM.ticks[i] ? " done" : ""}" data-ti="${i}"><span class="cmbox"></span><b>${esc(x.amount)} ${esc(x.unit)}</b> ${esc(x.item)}${x.note ? `<small>${esc(x.note)}</small>` : ""}</button>`; }).join("")}</div>`
-        : `<div class="cmbody" id="cmbody"><div class="cmcount">Step ${CM.step + 1} of ${Math.max(1, steps.length)}</div><div class="cmtext">${esc(s.text)}</div>
+        : `<div class="cmbody" id="cmbody"><div class="cmcount">Step ${CM.step + 1} of ${Math.max(1, steps.length)}</div><div class="cmtext">${stepHtml(s, r, k)}</div>
           ${(s.timers || []).map((t, j) => `<button class="cmtimer" data-tj="${j}">${cIco("timer")} Start ${esc(CB.clock(t.seconds))} timer<small>${esc(t.label)}</small></button>`).join("")}</div>`}
         <div class="cmnav"><button class="btn quiet" id="cmprev"${CM.step === 0 ? " disabled" : ""}>‹ Back</button>${last ? `<button class="btn" id="cmdone">Done cooking</button>` : `<button class="btn" id="cmnext">Next ›</button>`}</div>`;
       cmLayer.querySelector("#cmx").onclick = () => closeCook(true);
@@ -7579,9 +7612,9 @@ return { UNITS, normUnit, DENSITY, gramsPerCup, unitsFor, convert, parseQty, fmt
           { q: 1, unit: "cup", item: "heavy cream", note: "", grams: 238, kcal: 809, protein: 5, carbs: 7, fat: 86 }, { q: 0.5, unit: "cup", item: "parmesan cheese", note: "grated", grams: 50, kcal: 216, protein: 19, carbs: 2, fat: 14 },
           { q: 2, unit: "cup", item: "fresh spinach", note: "", grams: 60, kcal: 14, protein: 1.7, carbs: 2, fat: 0 }, { q: 12, unit: "oz", item: "penne pasta", note: "", grams: 340, kcal: 1261, protein: 44, carbs: 254, fat: 5 },
           { q: null, unit: "", item: "salt and pepper", note: "to taste", grams: 0, kcal: 0, protein: 0, carbs: 0, fat: 0 }, { q: 1, unit: "cup", item: "chicken broth", note: "", group: "Sauce", grams: 240, kcal: 17, protein: 2, carbs: 1, fat: 0.5 }],
-        steps: [{ text: "Cook the pasta in salted boiling water for 10-12 minutes, then drain.", timers: [{ seconds: 720, label: "Cook the pasta" }] },
-          { text: "Season the chicken and sear in olive oil over medium-high heat for 6-8 minutes until cooked through. Set aside.", timers: [{ seconds: 480, label: "Sear the chicken" }] },
-          { text: "Saute the garlic for 1 minute, then add broth, cream and parmesan. Simmer 5 minutes until it thickens.", timers: [{ seconds: 60, label: "Saute the garlic" }, { seconds: 300, label: "Simmer the sauce" }] },
+        steps: [{ text: "Cook the pasta in salted boiling water for 10-12 minutes, then drain.", ref: "Cook [[6]] in salted boiling water for 10-12 minutes, then drain.", timers: [{ seconds: 720, label: "Cook the pasta" }] },
+          { text: "Season the chicken and sear in olive oil over medium-high heat for 6-8 minutes until cooked through. Set aside.", ref: "Season [[0]] and sear in [[1]] over medium-high heat for 6-8 minutes until cooked through. Set aside.", timers: [{ seconds: 480, label: "Sear the chicken" }] },
+          { text: "Saute the garlic for 1 minute, then add broth, cream and parmesan. Simmer 5 minutes until it thickens.", ref: "Saute [[2]] for 1 minute, then add [[8]], [[3]] and [[4]]. Simmer 5 minutes until it thickens.", timers: [{ seconds: 60, label: "Saute the garlic" }, { seconds: 300, label: "Simmer the sauce" }] },
           { text: "Stir in sun-dried tomatoes and spinach until wilted, add chicken and pasta back and toss.", timers: [] }] });
       const PZ = () => ({ ...R(), id: "demo-pizza", title: "Margherita Pizza", description: "Thin crust, tomato, fresh mozzarella and basil.", servings: 3, prep_min: 20, cook_min: 12, total_min: 32,
         tags: ["italian", "pizza", "dinner"], favorite: false, cooked_count: 0, yield: { count: 1, unit: "14-inch pizza" }, split: { mode: "none" }, cooked_grams: null, notes: "",
