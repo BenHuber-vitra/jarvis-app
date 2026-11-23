@@ -1619,6 +1619,8 @@
   #cookmode .btn.quiet { background: rgba(0,0,0,0.25); border-color: var(--line); }
   #cookmode .btn:disabled { opacity: 0.35; }
   @media (prefers-reduced-motion: reduce) { #cookmode { transition: none !important; transform: none !important; } #cookmode .cmt.done { animation: none; } }
+  .cstep.wide b { min-width: 9em; }
+  #msheet .cyield { display: grid; grid-template-columns: 5.5em minmax(0, 1fr); gap: 8px; }
   /* ================================================================ the talk screen, premium (Ben, 2026-11-21)
      Shared by the phone app (index.template.html) and the laptop window (jarvis/ui/static/index.html): build.py puts it in
      the shared CSS. The shared CSS sits in the middle of each page's own styles, so these rules start with "body" to win.
@@ -6800,7 +6802,7 @@ function changelog(items, tz) {
 
 return { TYPES, PRIORITIES, STATUSES, ACTIVE, fbId, scrub, scrubDeep, normalizeError, autoTitle, looksLikeFailure, sortItems, byPriority, changelog };
  })();
-    const APP_VERSION = "phone 6eb344f+changes \u00b7 built 2026-11-22 19:18";
+    const APP_VERSION = "phone a86fc0d+changes \u00b7 built 2026-11-22 19:34";
     window.JARVIS_VERSION = APP_VERSION;
     const FB_DEVICE = /\/cloud$/.test(FN) ? "laptop" : "phone";
     const FBS = { items: null, typeF: "all", statusF: "active", from: "Talk", sent: null, showDismissed: false,
@@ -7337,7 +7339,7 @@ return { UNITS, normUnit, DENSITY, gramsPerCup, unitsFor, convert, parseQty, fmt
         <div class="search"><input id="cq" placeholder="Search your recipes" value="${esc(CK.q)}"></div>
         ${tags.length ? `<div class="fbchips"><button class="fbchip${!CK.tag ? " on" : ""}" data-tag="">All</button>${tags.map((t) => `<button class="fbchip${CK.tag === t ? " on" : ""}" data-tag="${esc(t)}">${esc(t)}</button>`).join("")}</div>` : ""}
         <div class="cgrid">${shown.map((r) => `<button class="ccard" data-r="${esc(r.id)}">${picHtml(r.image, "cthumb")}${r.favorite ? `<span class="cfav">${cIco("star")}</span>` : ""}
-          <span class="cname">${esc(r.title)}</span><span class="cmeta">${r.total_min ? cIco("clock") + cookMins(r.total_min) + " · " : ""}${+r.servings} servings</span></button>`).join("") || `<div class="empty">No recipe matches.</div>`}</div>`
+          <span class="cname">${esc(r.title)}</span><span class="cmeta">${r.total_min ? cIco("clock") + cookMins(r.total_min) + " · " : ""}${r.yield && r.yield.unit ? esc(CB.fmtQty(+r.yield.count, "") + " × " + r.yield.unit) : +r.servings + " servings"}</span></button>`).join("") || `<div class="empty">No recipe matches.</div>`}</div>`
         : `<div class="card cempty">${cIco("pot")}<b>Your cookbook is empty</b><div class="meta">Ask Claude for a recipe, then in the Claude app press and hold the answer, tap Share and pick Jarvis. Or copy it and paste it on the Add tab.</div><button class="btn" id="cgoadd">Add a recipe</button></div>`);
       const qi = $("cq"); if (qi) qi.oninput = (e) => { CK.q = e.target.value; const pos = e.target.selectionStart; cookList(); const n = $("cq"); n.focus(); n.setSelectionRange(pos, pos); };
       body.querySelectorAll("[data-tag]").forEach((b) => (b.onclick = () => { CK.tag = b.dataset.tag; cookList(); }));
@@ -7385,13 +7387,22 @@ return { UNITS, normUnit, DENSITY, gramsPerCup, unitsFor, convert, parseQty, fmt
     })();
 
     // ---- one recipe
-    const kOf = (r) => (r.split && +r.split.servings > 0 ? +r.split.servings : +r.servings) / (+r.servings || 1);   // how much he's making vs the recipe as written
+    // What a recipe makes: servings (meal prep), or things when it has a yield ("1 × 14-inch pizza", "24 × cookies").
+    const hasYield = (r) => !!(r.yield && +r.yield.count > 0 && r.yield.unit);
+    const makeOf = (r) => (hasYield(r) ? (r.split && +r.split.make > 0 ? +r.split.make : +r.yield.count) : null);
+    const yieldText = (r, n) => `${CB.fmtQty(n, "")} × ${r.yield.unit}`;
+    const kOf = (r) => hasYield(r) ? makeOf(r) / +r.yield.count   // how much he's making vs the recipe as written
+      : (r.split && +r.split.servings > 0 ? +r.split.servings : +r.servings) / (+r.servings || 1);
     function cookRecipe() {
       const r = CK.full[CK.cur];
       if (!r) { body.innerHTML = status() || `<div class="note">Loading the recipe…</div>`; return; }
-      const k = kOf(r), servings = Math.round((+r.servings || 1) * k * 100) / 100;
-      const split = r.split && r.split.mode === "people" ? r.split : { mode: "equal" };
-      const plates = CB.plates(split, servings), batch = CB.batchNutrition(r.ingredients, k);
+      const k = kOf(r), Y = hasYield(r), make = makeOf(r);
+      const mode = r.split && ["none", "equal", "people"].includes(r.split.mode) ? r.split.mode : Y ? "none" : "equal";
+      const split = { ...(r.split || {}), mode };
+      // servings: scales the batch for meal prep; with a yield it's only how many equal portions to cut it into
+      const servings = Y ? Math.max(1, Math.round(+split.servings > 0 ? +split.servings : (+r.servings || 1) * k)) : Math.round((+r.servings || 1) * k * 100) / 100;
+      const batch = CB.batchNutrition(r.ingredients, k);
+      const plates = mode === "none" ? (Y ? [{ name: "Per " + r.yield.unit, count: make, share: 1 / make, per: true }] : []) : CB.plates(split, servings);
       const cooked = +r.cooked_grams > 0 ? +r.cooked_grams : null, rough = CB.rawWeight(r.ingredients, k);
       const groups = []; for (const [i, ing] of (r.ingredients || []).entries()) { const g = ing.group || ""; let G = groups.find((x) => x.g === g); if (!G) groups.push(G = { g, list: [] }); G.list.push([i, ing]); }
       const macro = (n) => `<b>${n.kcal}</b> kcal · ${n.protein}g P · ${n.carbs}g C · ${n.fat}g F`;
@@ -7402,18 +7413,20 @@ return { UNITS, normUnit, DENSITY, gramsPerCup, unitsFor, convert, parseQty, fmt
         <div class="cchips">${r.prep_min ? `<span>${cIco("clock")}Prep ${cookMins(r.prep_min)}</span>` : ""}${r.cook_min ? `<span>${cIco("pot")}Cook ${cookMins(r.cook_min)}</span>` : ""}${r.total_min ? `<span>${cIco("timer")}Total ${cookMins(r.total_min)}</span>` : ""}${r.cooked_count ? `<span>Cooked ${r.cooked_count}×</span>` : ""}</div>
         <button class="btn ccook" id="ccook">${cIco("pot")} Start cooking</button>
         <div class="card"><div class="label">How much</div>
-          <div class="crow"><span>Makes</span><div class="cstep"><button data-sv="-1" aria-label="Fewer">−</button><b>${CB.fmtQty(servings, "")} servings</b><button data-sv="1" aria-label="More">+</button></div></div>
-          ${k !== 1 ? `<div class="meta">Amounts scaled ×${Math.round(k * 100) / 100} from the recipe's ${+r.servings}. <button class="linkish" id="creset">Back to ${+r.servings}</button></div>` : ""}
-          <div class="seg" id="csplit"><button data-m="equal" class="${split.mode === "equal" ? "on" : ""}">Equal servings</button><button data-m="people" class="${split.mode === "people" ? "on" : ""}">Plates per person</button></div>
-          ${split.mode === "people" ? `<div class="cpeople">${split.people.map((p, i) => `<div class="cperson"><input data-pn="${i}" value="${esc(p.name)}" maxlength="30" aria-label="Name">
+          ${Y ? `<div class="crow"><span>Makes</span><div class="cstep wide"><button data-mk="-1" aria-label="Fewer">−</button><b>${esc(yieldText(r, make))}</b><button data-mk="1" aria-label="More">+</button></div></div>`
+            : `<div class="crow"><span>Makes</span><div class="cstep"><button data-sv="-1" aria-label="Fewer">−</button><b>${CB.fmtQty(servings, "")} servings</b><button data-sv="1" aria-label="More">+</button></div></div>`}
+          ${k !== 1 ? `<div class="meta">Amounts scaled ×${Math.round(k * 100) / 100} from the recipe's ${Y ? esc(yieldText(r, +r.yield.count)) : +r.servings}. <button class="linkish" id="creset">Back to ${Y ? esc(CB.fmtQty(+r.yield.count, "")) : +r.servings}</button></div>` : ""}
+          <div class="seg" id="csplit"><button data-m="none" class="${mode === "none" ? "on" : ""}">No split</button><button data-m="equal" class="${mode === "equal" ? "on" : ""}">Equal servings</button><button data-m="people" class="${mode === "people" ? "on" : ""}">Plates per person</button></div>
+          ${Y && mode === "equal" ? `<div class="crow"><span>Cut into</span><div class="cstep"><button data-es="-1" aria-label="Fewer">−</button><b>${servings} servings</b><button data-es="1" aria-label="More">+</button></div></div>` : ""}
+          ${mode === "people" ? `<div class="cpeople">${split.people.map((p, i) => `<div class="cperson"><input data-pn="${i}" value="${esc(p.name)}" maxlength="30" aria-label="Name">
               <label>Plates<div class="cstep sm"><button data-pc="${i}" data-d="-1">−</button><b>${p.count}</b><button data-pc="${i}" data-d="1">+</button></div></label>
               <label>Plate size<input data-ps="${i}" type="number" inputmode="decimal" min="0.1" step="0.5" value="${p.size}"></label>
               ${split.people.length > 1 ? `<button class="linkish cx" data-px="${i}" aria-label="Remove">✕</button>` : ""}</div>`).join("")}
             <div class="meta cwrap">Plate size is a ratio: 4 and 3 means your plate is a third bigger than hers.</div>
             <div class="btns"><button class="btn quiet small" id="caddp">+ Person</button><button class="btn quiet small" id="cusual">Make this my usual split</button></div></div>` : ""}
           <div class="crow"><span>Cooked batch weight</span><div class="cgrams"><input id="cgrams" type="number" inputmode="numeric" min="0" placeholder="${rough ? "~" + rough : "grams"}" value="${cooked || ""}"><span>g</span></div></div>
-          <div class="meta cwrap">${cooked ? "Grams per plate use the weight you entered." : "Weigh the finished food (without the pot) for exact grams per plate."}</div>
-          <div class="cplates">${plates.map((p) => { const n = CB.plateNutrition(batch, p.share, cooked); return `<div class="cplate"><div class="cpname">${esc(p.name)}<span>${p.count} plate${p.count === 1 ? "" : "s"}${n.grams ? ` · <b>${n.grams} g</b> each` : ""}</span></div><div class="cpmac">${macro(n)}</div></div>`; }).join("")}</div>
+          <div class="meta cwrap">${cooked ? `Grams per ${mode === "none" && Y ? esc(r.yield.unit) : "plate"} use the weight you entered.` : `Weigh the finished food (without the ${Y ? "pan" : "pot"}) for exact grams per ${mode === "none" && Y ? esc(r.yield.unit) : "plate"}.`}</div>
+          <div class="cplates">${plates.map((p) => { const n = CB.plateNutrition(batch, p.share, cooked); return `<div class="cplate"><div class="cpname">${esc(p.name)}<span>${p.per ? (n.grams ? `<b>${n.grams} g</b>` : "") : `${p.count} plate${p.count === 1 ? "" : "s"}${n.grams ? ` · <b>${n.grams} g</b> each` : ""}`}</span></div><div class="cpmac">${macro(n)}</div></div>`; }).join("")}</div>
           ${batch.missing ? `<div class="meta">${batch.missing} ingredient${batch.missing === 1 ? " has" : "s have"} no estimate.</div>` : ""}
           <div class="meta cwrap">Whole batch: ${macro({ kcal: Math.round(batch.kcal), protein: Math.round(batch.protein), carbs: Math.round(batch.carbs), fat: Math.round(batch.fat) })}. Estimates from the ingredients.</div></div>
         <div class="card"><div class="label">Ingredients</div><div class="meta">Tap an amount to switch its unit.</div>
@@ -7426,12 +7439,17 @@ return { UNITS, normUnit, DENSITY, gramsPerCup, unitsFor, convert, parseQty, fmt
         <details class="fbdet"><summary>What came in</summary><pre class="fbpre">${esc(r.source_text || "")}</pre></details>`;
       $("cfav").onclick = () => { r.favorite = !r.favorite; cookSave(r, true); cookRecipe(); };
       $("ccook").onclick = () => cookMode(r);
-      body.querySelectorAll("[data-sv]").forEach((b) => (b.onclick = () => { const n = Math.max(1, Math.round(servings + +b.dataset.sv)); r.split = { ...split, servings: n }; if (split.mode === "people") r.split.people = split.people; cookSave(r); cookRecipe(); }));
-      const rs = $("creset"); if (rs) rs.onclick = () => { r.split = { ...split, servings: +r.servings }; cookSave(r); cookRecipe(); };
+      body.querySelectorAll("[data-sv]").forEach((b) => (b.onclick = () => { const n = Math.max(1, Math.round(servings + +b.dataset.sv)); r.split = { ...split, servings: n }; cookSave(r); cookRecipe(); }));
+      body.querySelectorAll("[data-es]").forEach((b) => (b.onclick = () => { r.split = { ...split, servings: Math.max(1, servings + +b.dataset.es) }; cookSave(r); cookRecipe(); }));
+      // pizzas / loaves: one at a time; things that come by the dozen (24 cookies) in half batches
+      const mkStep = Y ? (+r.yield.count >= 4 ? +r.yield.count / 2 : 1) : 1;
+      body.querySelectorAll("[data-mk]").forEach((b) => (b.onclick = () => { r.split = { ...split, make: Math.max(mkStep, make + mkStep * +b.dataset.mk) }; cookSave(r); cookRecipe(); }));
+      const rs = $("creset"); if (rs) rs.onclick = () => { r.split = Y ? { ...split, make: +r.yield.count } : { ...split, servings: +r.servings }; cookSave(r); cookRecipe(); };
       body.querySelectorAll("#csplit button").forEach((b) => (b.onclick = () => {
-        if (b.dataset.m === "equal") r.split = { mode: "equal", servings };
+        const m = b.dataset.m;
+        if (m === "none" || m === "equal") r.split = { ...split, mode: m, servings };
         else { const base = (CK.settings && CK.settings.split && CK.settings.split.people) || [{ name: "Ben", size: 4 }, { name: "Amber", size: 3 }];
-          const per = Math.max(1, Math.round(servings / base.length)); r.split = { mode: "people", servings, people: (split.people && split.people.length ? split.people : base.map((p) => ({ name: p.name, size: p.size, count: per }))) }; }
+          const per = Math.max(1, Math.round(servings / base.length)); r.split = { ...split, mode: "people", servings, people: (split.people && split.people.length ? split.people : base.map((p) => ({ name: p.name, size: p.size, count: per }))) }; }
         cookSave(r); cookRecipe(); }));
       const people = () => r.split.people;
       body.querySelectorAll("[data-pn]").forEach((x) => (x.onchange = () => { people()[+x.dataset.pn].name = x.value.trim() || "Someone"; cookSave(r); cookRecipe(); }));
@@ -7466,12 +7484,17 @@ return { UNITS, normUnit, DENSITY, gramsPerCup, unitsFor, convert, parseQty, fmt
     }
     function cookEditSheet(r) {
       openSheet(`<h2>Edit recipe</h2><label>Name</label><input id="cet" maxlength="120" value="${esc(r.title)}">
-        <label>The recipe as written makes (servings)</label><input id="ces" type="number" inputmode="decimal" min="1" value="${+r.servings}">
+        <label>Makes (optional): how many, and what</label><div class="cyield"><input id="cyc" type="number" inputmode="decimal" min="0" step="0.5" placeholder="1" value="${r.yield ? +r.yield.count : ""}"><input id="cyu" maxlength="40" placeholder="14-inch pizza, loaf, cookies…" value="${esc(r.yield ? r.yield.unit : "")}"></div>
+        <div class="meta cwrap">Leave it empty for meal prep: then it's counted in servings.</div>
+        <label>Servings (how many people the recipe as written feeds)</label><input id="ces" type="number" inputmode="decimal" min="1" value="${+r.servings}">
         <label>Notes</label><textarea id="cen" rows="4">${esc(r.notes || "")}</textarea>
         <div class="meta cwrap">To change ingredients or steps, fix the text and add it again on the Add tab.</div>
         <div class="err"></div><div class="btns"><button class="btn" id="ceok">Save</button><button class="btn quiet" id="cex">Cancel</button></div>`, (box) => {
         box.querySelector("#cex").onclick = closeSheet;
         box.querySelector("#ceok").onclick = () => { const t = box.querySelector("#cet").value.trim(); if (!t) return sheetErr("Give it a name.");
+          const yu = box.querySelector("#cyu").value.trim(), yc = +box.querySelector("#cyc").value || 1;
+          const had = !!r.yield; r.yield = yu ? { count: yc, unit: yu } : null;
+          if (!!r.yield !== had || (r.yield && r.split && r.split.make)) r.split = { ...(r.split || {}), mode: r.yield ? "none" : (r.split && r.split.mode === "none" ? "equal" : (r.split || {}).mode || "equal"), make: undefined, servings: undefined };
           r.title = t; r.servings = Math.max(1, +box.querySelector("#ces").value || r.servings); r.notes = box.querySelector("#cen").value; cookSave(r, true); closeSheet(); cookRecipe(); };
       });
     }
@@ -7560,7 +7583,14 @@ return { UNITS, normUnit, DENSITY, gramsPerCup, unitsFor, convert, parseQty, fmt
           { text: "Season the chicken and sear in olive oil over medium-high heat for 6-8 minutes until cooked through. Set aside.", timers: [{ seconds: 480, label: "Sear the chicken" }] },
           { text: "Saute the garlic for 1 minute, then add broth, cream and parmesan. Simmer 5 minutes until it thickens.", timers: [{ seconds: 60, label: "Saute the garlic" }, { seconds: 300, label: "Simmer the sauce" }] },
           { text: "Stir in sun-dried tomatoes and spinach until wilted, add chicken and pasta back and toss.", timers: [] }] });
-      if (!CK.demo) CK.demo = { list: [R()], settings: { split: { mode: "people", people: [{ name: "Ben", size: 4 }, { name: "Amber", size: 3 }] } } };
+      const PZ = () => ({ ...R(), id: "demo-pizza", title: "Margherita Pizza", description: "Thin crust, tomato, fresh mozzarella and basil.", servings: 3, prep_min: 20, cook_min: 12, total_min: 32,
+        tags: ["italian", "pizza", "dinner"], favorite: false, cooked_count: 0, yield: { count: 1, unit: "14-inch pizza" }, split: { mode: "none" }, cooked_grams: null, notes: "",
+        ingredients: [{ q: 1, unit: "", item: "pizza dough ball (about 1 lb)", note: "", grams: 454, kcal: 1150, protein: 36, carbs: 230, fat: 9 },
+          { q: 0.5, unit: "cup", item: "pizza sauce", note: "", grams: 125, kcal: 60, protein: 2, carbs: 12, fat: 1 }, { q: 8, unit: "oz", item: "fresh mozzarella", note: "torn", grams: 227, kcal: 640, protein: 50, carbs: 6, fat: 46 },
+          { q: 1, unit: "tbsp", item: "olive oil", note: "", grams: 13.5, kcal: 120, protein: 0, carbs: 0, fat: 13.5 }, { q: null, unit: "", item: "fresh basil", note: "to finish", grams: 5, kcal: 1, protein: 0, carbs: 0, fat: 0 }],
+        steps: [{ text: "Heat the oven with a pizza stone to 500°F for 45 minutes.", timers: [{ seconds: 2700, label: "Heat the stone" }] }, { text: "Stretch the dough to 14 inches, spread the sauce, add the mozzarella.", timers: [] },
+          { text: "Bake 10-12 minutes until the crust is browned. Drizzle with olive oil and add basil.", timers: [{ seconds: 720, label: "Bake the pizza" }] }] });
+      if (!CK.demo) CK.demo = { list: [R(), PZ()], settings: { split: { mode: "people", people: [{ name: "Ben", size: 4 }, { name: "Amber", size: 3 }] } } };
       const D = CK.demo, ok = (x) => Promise.resolve(JSON.parse(JSON.stringify(x)));
       if (action === "list") return ok({ recipes: D.list, settings: D.settings });
       if (action === "get") return ok({ recipe: D.list.find((x) => x.id === p.id) });
