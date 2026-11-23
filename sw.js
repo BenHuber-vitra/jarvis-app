@@ -1,5 +1,5 @@
 // Caches only the app shell (so it opens instantly); answers and data always come from the network.
-const CACHE = "jarvis-shell-20115246";
+const CACHE = "jarvis-shell-65823532";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png"];
 self.addEventListener("install", (e) => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL))); });
 self.addEventListener("activate", (e) => e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())));
@@ -25,6 +25,17 @@ self.addEventListener("notificationclick", (e) => {
 });
 self.addEventListener("fetch", (e) => {
   const u = new URL(e.request.url);
+  // Something shared to Jarvis from another app (Cookbook): keep the text for the page, then open the app on ?share=1.
+  if (e.request.method === "POST" && u.origin === location.origin && u.pathname.endsWith("/share-target")) {
+    e.respondWith((async () => {
+      let text = "";
+      try { const f = await e.request.formData(); text = ["title", "text", "url"].map((k) => f.get(k)).filter((v) => typeof v === "string" && v.trim()).join(String.fromCharCode(10, 10)); } catch {}
+      const c = await caches.open("jarvis-share");
+      await c.put(new URL("share", self.registration.scope).href, new Response(JSON.stringify({ text, at: Date.now() }), { headers: { "content-type": "application/json" } }));
+      return Response.redirect(new URL("./?share=1", self.registration.scope).href, 303);
+    })());
+    return;
+  }
   if (e.request.method !== "GET" || u.origin !== location.origin) return;   // never touch API calls
   // Always ask the network for the newest copy (cache: "no-cache" revalidates past GitHub Pages'
   // 10-minute caching), and fall back to the saved copy only when offline. Before this, phones kept

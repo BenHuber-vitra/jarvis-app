@@ -1433,7 +1433,7 @@
      flashing through on top). cov-talk: a menu screen, live workout or game covers the talk screen. cov-money: a live
      workout or game covers the menu screen, whose content goes (its solid background stays). Layers that sit on top
      (sheets, tooltip, menu, overlays) are left alone. */
-  body.cov-talk > :not(#money):not(#msheet):not(#mtip):not(#drawer):not(#scrim):not(#fitlive):not(#playgame):not(#tapany):not(#unpaired):not(#signin):not(script):not(style) { visibility: hidden; }
+  body.cov-talk > :not(#money):not(#msheet):not(#mtip):not(#drawer):not(#scrim):not(#fitlive):not(#playgame):not(#cookmode):not(.rtoast):not(#tapany):not(#unpaired):not(#signin):not(script):not(style) { visibility: hidden; }
   body.cov-money #money.on > * { visibility: hidden; }
 
   /* ---------------------------------------------------------- Feedback & Bugs (2026-11-22): theme colours only */
@@ -1506,6 +1506,119 @@
   .fberrl { padding: 5px 0; border-top: 1px solid var(--grid, rgba(255,255,255,0.06)); font-size: 13px; word-break: break-word; }
   .fberrl .meta { display: block; margin: 0 !important; font-size: 12px !important; }
   .fbpre { white-space: pre-wrap; word-break: break-all; font-size: 12px; max-height: 200px; overflow: auto; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px; margin: 4px 0; }
+
+  /* ---------------------------------------------------------- Cookbook (2026-11-22): theme colours only */
+  .cico, #money svg.cico, #msheet svg.cico { display: inline-block; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; flex: none; }
+  #money .cwrap { white-space: normal; }
+  #money .cgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
+  #money .ccard { position: relative; display: flex; flex-direction: column; text-align: left; padding: 0 0 10px; border-radius: 14px; overflow: hidden; cursor: pointer; font: inherit; color: var(--ink);
+    background: linear-gradient(155deg, rgba(var(--th-c1),0.70), rgba(var(--th-c2),0.72)); border: 1px solid var(--line); }
+  #money .ccard:active { transform: scale(0.98); }
+  #money .cthumb { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; background: rgba(0,0,0,0.25); }
+  .cnopic { display: flex !important; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 40%, rgba(var(--th-a),0.25), rgba(0,0,0,0.25)) !important; color: var(--th-pale, #fff); }
+  #money .cnopic .cico { width: 40%; height: 40%; max-width: 64px; max-height: 64px; stroke-width: 1.2; opacity: 0.8; }
+  #money .cfav { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.55); color: #ffcc4d; }
+  #money .cfav .cico { fill: #ffcc4d; stroke: #ffcc4d; }
+  #money .cname { padding: 8px 10px 2px; font-size: 15px; line-height: 1.25; font-weight: 600; }
+  #money .cmeta { padding: 0 10px; font-size: 12.5px; color: var(--ink3); display: flex; align-items: center; gap: 3px; flex-wrap: wrap; }
+  #money .cmeta .cico { width: 13px; height: 13px; margin-right: 3px; }
+  #money .cempty { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 26px 18px; }
+  #money .cempty > .cico { width: 44px; height: 44px; color: var(--th-pale, #fff); stroke-width: 1.3; }
+  #money .cempty .meta { white-space: normal; max-width: 34em; }
+  #money textarea#ctext { width: 100%; box-sizing: border-box; font: inherit; font-size: 15px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: rgba(var(--th-input, 2,10,20),0.7); color: var(--text, #fff); resize: vertical; margin: 10px 0; }
+  #money .csend { width: 100%; padding: 13px; font-size: 16px; }
+  #money .chead { position: relative; margin: -2px 0 6px; border-radius: 16px; overflow: hidden; border: 1px solid var(--line); }
+  #money .chero { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block; background: rgba(0,0,0,0.25); }
+  #money .cstar { position: absolute; top: 10px; right: 10px; width: 40px; height: 40px; border-radius: 50%; border: 0; background: rgba(0,0,0,0.55); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  #money .cstar .cico { width: 22px; height: 22px; }
+  #money .cstar.on { color: #ffcc4d; } #money .cstar.on .cico { fill: #ffcc4d; }
+  .ccredit { font-size: 11.5px; color: var(--ink3, #8aa); margin: 0 2px 10px; line-height: 1.35; }
+  .ccredit a { color: inherit; text-decoration: underline; text-decoration-color: rgba(255,255,255,0.25); }
+  #money .ctitle { font-size: 24px; line-height: 1.2; margin: 4px 0 4px; color: var(--ink); }
+  #money .cchips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 12px; }
+  #money .cchips span { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; padding: 4px 10px; border-radius: 14px; background: rgba(var(--th-a),0.12); border: 1px solid rgba(var(--th-a),0.3); color: var(--th-pale, #fff); }
+  #money .ccook { width: 100%; padding: 14px; font-size: 17px; margin-bottom: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  #money .ccook .cico { width: 20px; height: 20px; }
+  #money .crow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; }
+  .cstep { display: inline-flex; align-items: center; gap: 10px; }
+  .cstep button { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: rgba(var(--th-a),0.12); color: var(--th-pale, #fff); font-size: 20px; line-height: 1; cursor: pointer; }
+  .cstep b { min-width: 6.5em; text-align: center; font-variant-numeric: tabular-nums; }
+  .cstep.sm button { width: 30px; height: 30px; font-size: 17px; } .cstep.sm b { min-width: 1.8em; }
+  #money .cpeople { margin: 4px 0 6px; }
+  #money .cperson { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 8px; align-items: end; padding: 8px 0; border-top: 1px solid var(--grid); }
+  #money .cperson:first-child { border-top: 0; }
+  #money .cperson label { display: flex; flex-direction: column; gap: 3px; font-size: 11.5px; color: var(--ink3); letter-spacing: 0.04em; }
+  #money .cperson input { min-width: 0; font: inherit; font-size: 15px; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--line); background: rgba(var(--th-input, 2,10,20),0.7); color: var(--text, #fff); }
+  #money .cperson input[type=number] { width: 4.2em; }
+  #money .cperson .cx { padding: 6px; align-self: center; }
+  #money .cgrams { display: inline-flex; align-items: center; gap: 6px; }
+  #money .cgrams input { width: 6.5em; font: inherit; font-size: 15px; padding: 7px 9px; border-radius: 8px; border: 1px solid var(--line); background: rgba(var(--th-input, 2,10,20),0.7); color: var(--text, #fff); text-align: right; }
+  #money .cplates { display: grid; gap: 8px; margin: 8px 0 6px; }
+  #money .cplate { padding: 10px 12px; border-radius: 12px; background: rgba(var(--th-a),0.10); border: 1px solid rgba(var(--th-a),0.32); }
+  #money .cpname { display: flex; justify-content: space-between; gap: 10px; font-weight: 600; color: var(--th-pale, #fff); }
+  #money .cpname span { font-weight: 400; color: var(--ink2); font-size: 14px; }
+  #money .cpmac { font-size: 14px; color: var(--ink2); margin-top: 3px; }
+  #money .cpmac b { color: var(--ink); font-size: 16px; }
+  #money .cgroup { margin: 12px 0 2px; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--th-label, var(--ink3)); }
+  #money .cing { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; padding: 8px 0; border-top: 1px solid var(--grid); }
+  #money .camt { flex: none; min-width: 5.5em; text-align: left; font: inherit; font-weight: 700; color: var(--th-pale, #fff); background: none; border: 0; border-bottom: 1px dashed rgba(var(--th-a),0.55); padding: 2px 0; cursor: pointer; }
+  #money .camt:disabled { border-bottom-color: transparent; cursor: default; }
+  #money .citem { flex: 1; min-width: 0; color: var(--ink); }
+  #money .citem small { display: block; color: var(--ink3); font-size: 13px; }
+  #money .cunits { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px; }
+  #money .cunits button { font: inherit; font-size: 13.5px; padding: 5px 11px; border-radius: 14px; border: 1px solid var(--line); background: rgba(0,0,0,0.2); color: var(--ink2); cursor: pointer; }
+  #money .cunits button.on { background: var(--th-a-hex); border-color: var(--th-a-hex); color: var(--th-on, #02060d); font-weight: 600; }
+  #money .cstepline { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--grid); line-height: 1.45; }
+  #money .cstepline:first-of-type { border-top: 0; }
+  .cnum { flex: none; width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700;
+    background: rgba(var(--th-a),0.18); border: 1px solid rgba(var(--th-a),0.45); color: var(--th-pale, #fff); }
+  .ctimers { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .ctimer { display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 13.5px; font-weight: 600; padding: 6px 12px; border-radius: 16px; cursor: pointer;
+    border: 1px solid rgba(var(--th-a),0.55); background: rgba(var(--th-a),0.16); color: var(--th-pale, #fff); }
+  .ctimer small { font-weight: 400; color: var(--ink2, #cde); }
+  #money .cnotes { line-height: 1.5; color: var(--ink2); }
+  #money .cfoot { margin: 6px 0 12px; }
+  #msheet .cpics { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin: 10px 0; }
+  #msheet .cpics button { padding: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; cursor: pointer; background: rgba(0,0,0,0.3); aspect-ratio: 1; }
+  #msheet .cpics img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* cook mode: one step at a time, big text (a full-screen layer, like the live workout) */
+  #cookmode { position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column; color: #fff; --ink: #fff; --ink2: var(--th-ink2, #cde); --ink3: var(--th-ink3, #9ab); --line: rgba(var(--th-line, 255,140,215),0.26);
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    background: radial-gradient(110% 55% at 50% 0%, rgba(var(--th-a),0.22), transparent 60%), linear-gradient(180deg, var(--th-bgA, #171a46), var(--th-bgB, #101636));
+    opacity: 0; visibility: hidden; transform: translateY(14px); pointer-events: none; transition: opacity 0.26s ease, transform 0.3s ease, visibility 0s linear 0.3s; }
+  #cookmode.on { opacity: 1; visibility: visible; transform: none; pointer-events: auto; transition: opacity 0.26s ease, transform 0.3s ease, visibility 0s; }
+  #cookmode .cmhead { display: flex; align-items: center; gap: 10px; padding: 10px 14px; }
+  #cookmode .cmx { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: rgba(0,0,0,0.25); color: #fff; font-size: 17px; cursor: pointer; flex: none; }
+  #cookmode .cmtitle { flex: 1; min-width: 0; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--th-pale, #fff); }
+  #cookmode .cmingb { flex: none; font: inherit; font-size: 14px; padding: 8px 14px; border-radius: 18px; border: 1px solid var(--line); background: rgba(0,0,0,0.25); color: #fff; cursor: pointer; }
+  #cookmode .cmingb.on { background: var(--th-a-hex); border-color: var(--th-a-hex); color: var(--th-on, #02060d); font-weight: 600; }
+  #cookmode .cmtimers { display: flex; flex-direction: column; gap: 6px; padding: 0 14px; }
+  #cookmode .cmt { position: relative; overflow: hidden; display: flex; justify-content: space-between; align-items: center; padding: 9px 14px; border-radius: 12px;
+    background: rgba(var(--th-a),0.14); border: 1px solid rgba(var(--th-a),0.45); font-size: 15px; }
+  #cookmode .cmt b { font-size: 20px; font-variant-numeric: tabular-nums; }
+  #cookmode .cmt i { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: var(--th-a-hex); transform-origin: left; }
+  #cookmode .cmt.done { background: rgba(255,190,70,0.22); border-color: rgba(255,190,70,0.8); animation: cmpulse 1s ease-in-out infinite; }
+  @keyframes cmpulse { 50% { opacity: 0.65; } }
+  #cookmode .cmbody { flex: 1; overflow-y: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+  #cookmode .cmcount { font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--th-label, #aab); }
+  #cookmode .cmtext { font-size: clamp(22px, 6.2vw, 34px); line-height: 1.35; }
+  #cookmode .cmtimer { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 18px; font-weight: 600; padding: 12px 18px; border-radius: 22px; cursor: pointer;
+    border: 1px solid rgba(var(--th-a),0.7); background: rgba(var(--th-a),0.2); color: #fff; }
+  #cookmode .cmtimer small { font-weight: 400; color: var(--ink2); font-size: 14px; }
+  #cookmode .cmtimer .cico { width: 22px; height: 22px; }
+  #cookmode .cmings { flex: 1; overflow-y: auto; padding: 10px 14px; display: flex; flex-direction: column; gap: 4px; }
+  #cookmode .cmi { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; text-align: left; font: inherit; font-size: 18px; color: #fff; padding: 11px 6px; background: none; border: 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+  #cookmode .cmi small { flex-basis: 100%; padding-left: 34px; font-size: 14px; color: var(--ink3); }
+  #cookmode .cmbox { width: 22px; height: 22px; flex: none; border-radius: 6px; border: 2px solid rgba(var(--th-a),0.8); align-self: center; }
+  #cookmode .cmi.done { opacity: 0.45; text-decoration: line-through; }
+  #cookmode .cmi.done .cmbox { background: var(--th-a-hex); box-shadow: inset 0 0 0 3px rgba(0,0,0,0.35); }
+  #cookmode .cmnav { display: flex; gap: 10px; padding: 12px 14px calc(12px + env(safe-area-inset-bottom)); }
+  #cookmode .cmnav .btn { flex: 1; padding: 16px; font-size: 18px; border-radius: 14px; }
+  #cookmode .btn { border: 1px solid rgba(var(--th-a),0.55); color: #fff; background: linear-gradient(90deg, rgba(var(--th-g2),0.3), rgba(var(--th-a),0.45)); font: inherit; cursor: pointer; }
+  #cookmode .btn.quiet { background: rgba(0,0,0,0.25); border-color: var(--line); }
+  #cookmode .btn:disabled { opacity: 0.35; }
+  @media (prefers-reduced-motion: reduce) { #cookmode { transition: none !important; transform: none !important; } #cookmode .cmt.done { animation: none; } }
   /* ================================================================ the talk screen, premium (Ben, 2026-11-21)
      Shared by the phone app (index.template.html) and the laptop window (jarvis/ui/static/index.html): build.py puts it in
      the shared CSS. The shared CSS sits in the middle of each page's own styles, so these rules start with "body" to win.
@@ -1699,10 +1812,11 @@
     <a href="crm/" id="navCrmApp" class="ditem"><span>VITRA CRM<small>Dashboard, calendar, prospects, estimates, invoices</small></span><em>›</em></a>
     <a href="#" id="navCrm" class="ditem"><span>Customers (old backup)<small>The Customer Factor reports</small></span><em>›</em></a>
   </div>
-  <a href="#" id="navHealth" class="ditem" aria-expanded="false"><span>Health<small>Workouts, nutrition, bad habits</small></span><em class="dchev">▸</em></a>
+  <a href="#" id="navHealth" class="ditem" aria-expanded="false"><span>Health<small>Workouts, nutrition, cookbook, bad habits</small></span><em class="dchev">▸</em></a>
   <div id="healthSub" class="dsub">
     <a href="#" id="navFit" class="ditem"><span>Workouts<small>Routines, live logging, history</small></span><em>›</em></a>
     <a href="#" id="navFood" class="ditem"><span>Nutrition<small>Calories, protein, carbs and fat</small></span><em>›</em></a>
+    <a href="#" id="navCook" class="ditem"><span>Cookbook<small>Recipes from Claude, cook mode with timers</small></span><em>›</em></a>
     <a href="#" id="navDope" class="ditem"><span>Dopamine hole<small>Bad habits, slips and clean streaks</small></span><em>›</em></a>
   </div>
   <a href="#" id="navGoals" class="ditem" aria-expanded="false"><span>Goals<small>Business and personal goals</small></span><em class="dchev">▸</em></a>
@@ -2245,10 +2359,10 @@
     menuBtn.setAttribute("aria-expanded", open); drawer.setAttribute("aria-hidden", !open);
     if (open && !was) {   // show which screen you're on
       const m = $("money").classList.contains("on") && $("mtitle").textContent;
-      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["navLook", m === "COLOURS"], ["navAlerts", m === "ALERTS"], ["navRules", m === "ASK FIRST"], ["navMemory", m === "MEMORY"], ["navVoice", m === "VOICE"], ["navCalls", m === "CALLS"], ["navFit", m === "WORKOUTS"], ["navFood", m === "NUTRITION"], ["navDope", m === "DOPAMINE HOLE"], ["navPlay", m === "PLAY"], ["navFeedback", m === "FEEDBACK"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || / BINGO$/.test(m)]]) $(id).classList.toggle("cur", on);
+      for (const [id, on] of [["navJarvis", !m], ["moneyBiz", m === "BUSINESS"], ["moneyPers", m === "PERSONAL"], ["navCrm", m === "CUSTOMERS"], ["navCosts", m === "JARVIS COSTS"], ["navPersona", m === "PERSONALITY"], ["navLook", m === "COLOURS"], ["navAlerts", m === "ALERTS"], ["navRules", m === "ASK FIRST"], ["navMemory", m === "MEMORY"], ["navVoice", m === "VOICE"], ["navCalls", m === "CALLS"], ["navFit", m === "WORKOUTS"], ["navFood", m === "NUTRITION"], ["navCook", m === "COOKBOOK"], ["navDope", m === "DOPAMINE HOLE"], ["navPlay", m === "PLAY"], ["navFeedback", m === "FEEDBACK"], ["goalsBiz", m === "BUSINESS GOALS"], ["goalsPers", m === "PERSONAL GOALS" || / BINGO$/.test(m)]]) $(id).classList.toggle("cur", on);
       showSettings(["JARVIS COSTS", "PERSONALITY", "COLOURS", "ALERTS", "ASK FIRST", "MEMORY", "VOICE"].includes(m));   // the cog's page holds Jarvis costs, so open there from it
       subOpen("Money", m === "BUSINESS" || m === "PERSONAL" || m === "CUSTOMERS");   // on one of their screens, show the group open
-      subOpen("Health", m === "WORKOUTS" || m === "NUTRITION" || m === "DOPAMINE HOLE");
+      subOpen("Health", m === "WORKOUTS" || m === "NUTRITION" || m === "COOKBOOK" || m === "DOPAMINE HOLE");
       subOpen("Behave", ["PERSONALITY", "ALERTS", "ASK FIRST", "MEMORY", "VOICE"].includes(m));
       subOpen("Goals", m === "BUSINESS GOALS" || m === "PERSONAL GOALS" || / BINGO$/.test(m));
       menuStep = nav.push(() => setMenu(false));
@@ -2283,7 +2397,7 @@
   const COVER_MS = 320; let coverT = 0;
   function coverWant() {
     const on = (id) => { const e = document.getElementById(id); return !!(e && e.classList.contains("on")); };
-    const top = on("fitlive") || on("playgame");
+    const top = on("fitlive") || on("playgame") || on("cookmode");
     return { "cov-talk": top || on("money"), "cov-money": top };
   }
   function coverCheck() {
@@ -2688,6 +2802,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
       if (M.book === "food") return loadFood();
       if (M.book === "dope") return loadDope();
       if (M.book === "fb") return loadFb();
+      if (M.book === "cook") return loadCook();
       if (M.book === "play") return loadPlay();
       if (M.book === "look") { M.data = { look: true }; return render(); }
       if (["alerts", "memory", "rules", "voice"].includes(M.book)) return loadSetPage(M.book);
@@ -2712,11 +2827,11 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
         M.book = book; M.data = M.cache[book] || null; M.open = {}; M.q = ""; M.cat = ""; M.error = "";
         try { localStorage.setItem("jarvis.moneyBook", book); } catch {}
       }
-      const tabs = M.book === "crm" ? CRM_TABS : M.book === "fit" ? FIT_TABS : M.book === "food" ? FOOD_TABS : M.book === "dope" ? DOPE_TABS : M.book === "fb" ? FB_TABS : M.book === "play" ? PLAY_TABS : MONEY_TABS;   // the Customers screen has its own four tabs
-      if (!tabs.some(([k]) => k === tab) && !(M.book === "fit" && (tab === "fset" || tab === "ranks")) && !(M.book === "food" && tab === "calc")) tab = tabs[0][0];   // Workouts' Settings: reached from Home
+      const tabs = M.book === "crm" ? CRM_TABS : M.book === "fit" ? FIT_TABS : M.book === "food" ? FOOD_TABS : M.book === "dope" ? DOPE_TABS : M.book === "fb" ? FB_TABS : M.book === "cook" ? COOK_TABS : M.book === "play" ? PLAY_TABS : MONEY_TABS;   // the Customers screen has its own four tabs
+      if (!tabs.some(([k]) => k === tab) && !(M.book === "fit" && (tab === "fset" || tab === "ranks")) && !(M.book === "food" && tab === "calc") && !(M.book === "cook" && tab === "crecipe")) tab = tabs[0][0];   // Workouts' Settings: reached from Home
       el.querySelectorAll("nav button").forEach((b, i) => { b.style.display = tabs[i] ? "" : "none"; if (tabs[i]) { b.dataset.tab = tabs[i][0]; b.textContent = tabs[i][1]; } });   // screens with fewer than 4 tabs hide the rest
       M.tab = tab;
-      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY", calls: "CALLS", fit: "WORKOUTS", food: "NUTRITION", dope: "DOPAMINE HOLE", fb: "FEEDBACK", play: "PLAY", look: "COLOURS", alerts: "ALERTS", rules: "ASK FIRST", memory: "MEMORY", voice: "VOICE" }[M.book];
+      $("mtitle").textContent = { business: "BUSINESS", personal: "PERSONAL", costs: "JARVIS COSTS", crm: "CUSTOMERS", goalsBiz: "BUSINESS GOALS", goalsPers: "PERSONAL GOALS", bingo: "BINGO", persona: "PERSONALITY", calls: "CALLS", fit: "WORKOUTS", food: "NUTRITION", dope: "DOPAMINE HOLE", fb: "FEEDBACK", cook: "COOKBOOK", play: "PLAY", look: "COLOURS", alerts: "ALERTS", rules: "ASK FIRST", memory: "MEMORY", voice: "VOICE" }[M.book];
       el.classList.toggle("costs", M.book === "costs" || !!GOALS[M.book] || M.book === "bingo" || M.book === "persona" || M.book === "calls" || M.book === "look" || ["alerts", "memory", "rules", "voice"].includes(M.book));   // no Dashboard/Spending/... tabs there
       el.classList.toggle("look", M.book === "look");   // the Colours page lays out its own two halves
       el.classList.toggle("fit", M.book === "fit"); document.body.classList.toggle("fitui", M.book === "fit");   // Workouts' brighter, pinker look
@@ -2747,6 +2862,7 @@ return { CATEGORIES, NOT_SPEND, BILLS, fromPlaid, merchantKey, merchantName, cat
     $("navFood").onclick = (e) => { e.preventDefault(); goBook("food"); };
     $("navDope").onclick = (e) => { e.preventDefault(); goBook("dope"); };
     $("navPlay").onclick = (e) => { e.preventDefault(); goBook("play"); };
+    $("navCook").onclick = (e) => { e.preventDefault(); goBook("cook"); };
     $("navFeedback").onclick = (e) => { e.preventDefault(); if (M.book !== "fb" || !el.classList.contains("on")) FBS.from = window.jarvisPage(); FBS.sent = null; goBook("fb"); };   // remember where he was
     $("navLook").onclick = (e) => { e.preventDefault(); goBook("look"); };
     for (const b of ["alerts", "rules", "memory", "voice"]) $("nav" + b[0].toUpperCase() + b.slice(1)).onclick = (e) => { e.preventDefault(); goBook(b); };
@@ -6684,7 +6800,7 @@ function changelog(items, tz) {
 
 return { TYPES, PRIORITIES, STATUSES, ACTIVE, fbId, scrub, scrubDeep, normalizeError, autoTitle, looksLikeFailure, sortItems, byPriority, changelog };
  })();
-    const APP_VERSION = "phone 0034359+changes \u00b7 built 2026-11-22 10:30";
+    const APP_VERSION = "phone 6eb344f+changes \u00b7 built 2026-11-22 19:18";
     window.JARVIS_VERSION = APP_VERSION;
     const FB_DEVICE = /\/cloud$/.test(FN) ? "laptop" : "phone";
     const FBS = { items: null, typeF: "all", statusF: "active", from: "Talk", sent: null, showDismissed: false,
@@ -6965,6 +7081,496 @@ return { TYPES, PRIORITIES, STATUSES, ACTIVE, fbId, scrub, scrubDeep, normalizeE
       if (action === "auto") { const fp = FBC.normalizeError(p.where, p.message), x = D.items.find((y) => y.fp === fp && y.status !== "fixed");
         if (x) { x.count++; x.last_seen = t(0); } else D.items.unshift({ num: ++D.n, fp, type: "bug", title: FBC.autoTitle(p.where, p.message), description: p.message, priority: "normal", status: "draft", source: "auto", auto: true, count: 1, where: p.where, first_seen: t(0), last_seen: t(0), created_at: t(0), updated_at: t(0), shots: 0, notes: [], history: [], context: { page: p.page, stack: p.stack } });
         if (FBS.items) FBS.items = D.items.map(view); return ok({}); }
+      return ok({});
+    }
+
+    // -------------------------------------------------------------- Cookbook (2026-11-22, Ben: FB-0001)
+    // Recipes Ben gets from Claude land here: Share from the Claude app (Jarvis is an Android share target, sw.js keeps
+    // the text and opens ?share=1), or paste them on the Add tab. Cloud Jarvis tidies them into ingredients + steps and
+    // finds a freely licensed photo (credit shown). A "book" of the money screen called cook (title COOKBOOK), tabs
+    // Recipes / Add, plus a hidden tab crecipe for one recipe. Cook mode is its own full-screen layer (#cookmode).
+    // Maths shared with the cloud: cookbook_calc.js (inlined at COOK_CALC). Inserted into money.js by app/build.py.
+    const COOK_TABS = [["crecipes", "Recipes"], ["cadd", "Add"]];
+    const CB = (() => { // Cookbook (2026-11-22, Ben): recipe maths shared by cloud Jarvis (tools_cookbook.ts) and the app (app/cookbook.js,
+// inlined by app/build.py): units and conversions, amounts as kitchen fractions, scaling, the servings split
+// (equal, or people with their own number of plates and plate size, e.g. Ben 4 x 400 g and Amber 4 x 300 g),
+// nutrition per plate, and timers found in a step's text.
+
+// ---- units. Volume in ml, weight in g; count units (cloves, eggs, cans) never convert.
+const UNITS = {
+  tsp: { kind: "vol", ml: 4.929, names: ["tsp", "teaspoon", "teaspoons", "t"] },
+  tbsp: { kind: "vol", ml: 14.787, names: ["tbsp", "tablespoon", "tablespoons", "tbs", "tbl", "T"] },
+  "fl oz": { kind: "vol", ml: 29.574, names: ["fl oz", "fluid ounce", "fluid ounces", "fl. oz"] },
+  cup: { kind: "vol", ml: 236.588, names: ["cup", "cups", "c"] },
+  pint: { kind: "vol", ml: 473.176, names: ["pint", "pints", "pt"] },
+  quart: { kind: "vol", ml: 946.353, names: ["quart", "quarts", "qt"] },
+  gallon: { kind: "vol", ml: 3785.41, names: ["gallon", "gallons", "gal"] },
+  ml: { kind: "vol", ml: 1, names: ["ml", "milliliter", "milliliters", "millilitre", "millilitres"] },
+  l: { kind: "vol", ml: 1000, names: ["l", "liter", "liters", "litre", "litres"] },
+  g: { kind: "wt", g: 1, names: ["g", "gram", "grams", "gr"] },
+  kg: { kind: "wt", g: 1000, names: ["kg", "kilogram", "kilograms"] },
+  oz: { kind: "wt", g: 28.3495, names: ["oz", "ounce", "ounces"] },
+  lb: { kind: "wt", g: 453.592, names: ["lb", "lbs", "pound", "pounds"] },
+};
+const UNIT_OF = {};
+for (const [k, u] of Object.entries(UNITS)) for (const n of u.names) UNIT_OF[n.toLowerCase()] = k;
+UNIT_OF["T"] = "tbsp";
+/** "Tablespoons" -> "tbsp"; unknown units (clove, can, pinch) come back as they are, trimmed. */
+function normUnit(u) {
+  const s = String(u ?? "").trim();
+  if (!s) return "";
+  if (s === "T") return "tbsp";
+  return UNIT_OF[s.toLowerCase().replace(/\.$/, "")] || s;
+}
+
+// Grams in one US cup, for switching an ingredient between volume and weight. Matched on words in the item.
+// Rough kitchen values; anything not listed only switches within volume or within weight.
+const DENSITY = [
+  [/powdered sugar|icing sugar|confectioner/, 120], [/brown sugar/, 213], [/sugar/, 200],
+  [/almond flour|almond meal/, 96], [/bread flour/, 127], [/whole wheat flour/, 120], [/flour/, 120], [/cornstarch|corn starch/, 128],
+  [/cocoa/, 85], [/baking soda|baking powder/, 230], [/kosher salt/, 135], [/salt/, 288],
+  [/butter|margarine|shortening/, 227], [/olive oil|vegetable oil|canola oil|coconut oil|avocado oil|\boil\b/, 218],
+  [/honey|maple syrup|molasses|corn syrup|syrup/, 320], [/peanut butter|nut butter/, 258],
+  [/heavy cream|whipping cream|half and half|half-and-half/, 238], [/sour cream/, 230], [/greek yogurt|yogurt/, 245],
+  [/milk|buttermilk/, 245], [/water|broth|stock|juice|wine|vinegar/, 237], [/soy sauce/, 255],
+  [/ketchup|tomato sauce|marinara|salsa/, 250], [/mayonnaise|mayo/, 220],
+  [/rolled oats|oats|oatmeal/, 90], [/quinoa/, 170], [/rice/, 185], [/lentil/, 192], [/(dry|uncooked) pasta|macaroni|penne|rotini/, 100],
+  [/parmesan|pecorino/, 100], [/shredded .*cheese|cheese.*shredded|cheddar|mozzarella|monterey|colby|cheese/, 113], [/cream cheese/, 232],
+  [/chocolate chip/, 170], [/raisin/, 150], [/walnut|pecan/, 100], [/almond|cashew|peanut/, 140], [/breadcrumb|bread crumb|panko/, 108],
+  [/frozen peas|peas|corn kernels|\bcorn\b/, 145], [/diced onion|chopped onion|onion/, 160], [/spinach/, 30], [/blueberr|raspberr|strawberr/, 148],
+  [/ground beef|ground turkey|ground chicken|ground pork|shredded chicken|cooked chicken|diced chicken/, 225],
+];
+function gramsPerCup(item) {
+  const s = String(item ?? "").toLowerCase();
+  for (const [re, g] of DENSITY) if (re.test(s)) return g;
+  return null;
+}
+
+/** The units an ingredient can be shown in (its own first). */
+function unitsFor(ing) {
+  const u = normUnit(ing.unit), U = UNITS[u];
+  if (!U) return u ? [u] : [""];
+  const vol = ["tsp", "tbsp", "cup", "fl oz", "ml", "l"], wt = ["g", "oz", "lb", "kg"];
+  const dense = gramsPerCup(ing.item);
+  const list = U.kind === "vol" ? [...vol, ...(dense ? wt : [])] : [...wt, ...(dense ? vol : [])];
+  return [u, ...list.filter((x) => x !== u)];
+}
+/** Convert an amount between units (null when it can't be done). */
+function convert(q, from, to, item) {
+  from = normUnit(from); to = normUnit(to);
+  if (q == null || !isFinite(q)) return null;
+  if (from === to) return q;
+  const A = UNITS[from], B = UNITS[to];
+  if (!A || !B) return null;
+  if (A.kind === B.kind) return A.kind === "vol" ? (q * A.ml) / B.ml : (q * A.g) / B.g;
+  const gpc = gramsPerCup(item); if (!gpc) return null;
+  const gPerMl = gpc / UNITS.cup.ml;
+  return A.kind === "vol" ? (q * A.ml * gPerMl) / B.g : (q * A.g) / gPerMl / B.ml;
+}
+
+// ---- amounts
+const VULGAR = { "¼": 0.25, "½": 0.5, "¾": 0.75, "⅓": 1 / 3, "⅔": 2 / 3, "⅛": 0.125, "⅜": 0.375, "⅝": 0.625, "⅞": 0.875, "⅕": 0.2, "⅙": 1 / 6 };
+/** "1 1/2", "1½", "0.75", "2-3" -> number (a range gives its first number). */
+function parseQty(s) {
+  if (typeof s === "number") return isFinite(s) ? s : null;
+  let t = String(s ?? "").trim();
+  if (!t) return null;
+  for (const [k, v] of Object.entries(VULGAR)) t = t.replace(k, " " + v);
+  t = t.split(/\s*(?:-|–|to)\s*/)[0].trim();
+  let n = 0, any = false;
+  for (const part of t.split(/\s+/)) {
+    if (/^\d+\/\d+$/.test(part)) { const [a, b] = part.split("/").map(Number); if (b) { n += a / b; any = true; } }
+    else if (/^\d*\.?\d+$/.test(part)) { n += Number(part); any = true; }
+  }
+  return any ? n : null;
+}
+const FRACS = [[0, ""], [0.125, "⅛"], [0.25, "¼"], [1 / 3, "⅓"], [0.375, "⅜"], [0.5, "½"], [0.625, "⅝"], [2 / 3, "⅔"], [0.75, "¾"], [0.875, "⅞"], [1, ""]];
+/** Kitchen-friendly amount: fractions for spoons and cups, whole numbers for grams and ml. */
+function fmtQty(q, unit) {
+  if (q == null || !isFinite(q)) return "";
+  const u = normUnit(unit);
+  if (["g", "ml"].includes(u)) return q >= 10 ? String(Math.round(q / (q >= 100 ? 5 : 1)) * (q >= 100 ? 5 : 1)) : String(Math.round(q * 10) / 10);
+  if (["kg", "l"].includes(u)) return String(Math.round(q * 100) / 100);
+  if (q >= 20) return String(Math.round(q));
+  let whole = Math.floor(q), rest = q - whole, best = FRACS[0];
+  for (const f of FRACS) if (Math.abs(rest - f[0]) < Math.abs(rest - best[0])) best = f;
+  if (best[0] === 1) { whole += 1; best = FRACS[0]; }
+  if (Math.abs(rest - best[0]) > 0.07 && q < 3) return String(Math.round(q * 100) / 100);   // not near a kitchen fraction
+  return (whole ? String(whole) : "") + best[1] || "0";
+}
+const PLURAL = { cup: "cups", pint: "pints", quart: "quarts", gallon: "gallons", lb: "lb", oz: "oz" };
+function unitLabel(unit, q) {
+  const u = normUnit(unit);
+  return q != null && q > 1 && PLURAL[u] ? PLURAL[u] : u;
+}
+
+/** One ingredient line as shown: amount (scaled by `k`), in the unit Ben picked if it converts. */
+function showIngredient(ing, k = 1, unit) {
+  const base = parseQty(ing.q), q = base == null ? null : base * k;
+  const to = unit || ing.show_unit || normUnit(ing.unit);
+  let v = q, u = normUnit(ing.unit);
+  if (q != null && to && to !== u) { const c = convert(q, u, to, ing.item); if (c != null) { v = c; u = to; } }
+  if (v != null && !UNITS[u] && k !== 1) v = v < 2 ? Math.max(0.5, Math.round(v * 2) / 2) : Math.round(v);   // cloves, eggs, cans: whole or half
+  const q2 = ing.q2 != null ? parseQty(ing.q2) : null;
+  const amount = v == null ? "" : fmtQty(v, u) + (q2 != null && base ? "–" + fmtQty((q2 / base) * v, u) : "");
+  return { amount, unit: unitLabel(u, v), item: ing.item || "", note: ing.note || "" };
+}
+
+// ---- servings, split and nutrition
+/** Each plate's share of the batch. split = {mode: "equal"} or {mode: "people", people: [{name, count, size}]}.
+ * people: Ben 4 plates of size 4 + Amber 4 plates of size 3 = 28 parts; one of Ben's plates = 4/28 of the batch. */
+function plates(split, servings) {
+  const n = Math.max(1, Math.round(+servings || 1));
+  if (!split || split.mode !== "people" || !Array.isArray(split.people) || !split.people.length) return [{ name: "Each serving", count: n, share: 1 / n }];
+  const people = split.people.filter((p) => +p.count > 0 && +p.size > 0);
+  const parts = people.reduce((a, p) => a + p.count * p.size, 0) || 1;
+  return people.map((p) => ({ name: p.name || "Someone", count: +p.count, size: +p.size, share: p.size / parts }));
+}
+/** Whole-batch nutrition from the ingredients' own estimates (already for the recipe's own amounts), times k. */
+function batchNutrition(ingredients, k = 1) {
+  const t = { kcal: 0, protein: 0, carbs: 0, fat: 0, grams: 0, missing: 0 };
+  for (const i of ingredients || []) {
+    if (i.kcal == null) { t.missing++; continue; }
+    t.kcal += (+i.kcal || 0) * k; t.protein += (+i.protein || 0) * k; t.carbs += (+i.carbs || 0) * k; t.fat += (+i.fat || 0) * k;
+    t.grams += (+i.grams || 0) * k;
+  }
+  return t;
+}
+/** Nutrition for one plate with this share of the batch; grams from the cooked weight Ben weighed, if he did. */
+function plateNutrition(batch, share, cookedGrams) {
+  const r = (x) => Math.round(x * share);
+  return { kcal: r(batch.kcal), protein: r(batch.protein), carbs: r(batch.carbs), fat: r(batch.fat),
+    grams: cookedGrams ? Math.round(cookedGrams * share) : null };
+}
+
+// ---- timers in a step: "simmer 10 minutes", "bake for 25-30 min", "1 hour 15 minutes", "rest 5 min"
+function findTimers(text) {
+  const out = [], s = String(text ?? "");
+  const re = /(\d+(?:\.\d+)?)(?:\s*(?:-|–|to)\s*(\d+(?:\.\d+)?))?\s*(hours?|hrs?|h\b|minutes?|mins?|m\b|seconds?|secs?)(?:\s*(?:and\s*)?(\d+)\s*(minutes?|mins?))?/gi;
+  let m;
+  while ((m = re.exec(s))) {
+    const unit = m[3].toLowerCase(), mult = unit.startsWith("h") ? 3600 : unit.startsWith("s") ? 1 : 60;
+    let sec = Math.round(Number(m[2] || m[1]) * mult);   // a range: the longer end, so it's done when it rings
+    if (m[4]) sec += Number(m[4]) * 60;
+    if (sec >= 30 && sec <= 86400) out.push({ seconds: sec, text: m[0].trim() });
+  }
+  return out;
+}
+function fmtDuration(sec) {
+  sec = Math.round(sec);
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return h ? `${h} h${m ? ` ${m} min` : ""}` : m ? `${m} min${s ? ` ${s} s` : ""}` : `${s} s`;
+}
+function clock(sec) {
+  sec = Math.max(0, Math.ceil(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return (h ? h + ":" + String(m).padStart(2, "0") : String(m)) + ":" + String(s).padStart(2, "0");
+}
+
+/** Cooked weight estimate when Ben hasn't weighed it: sum of the ingredients' grams (raw, so it's rough). */
+function rawWeight(ingredients, k = 1) {
+  return Math.round((ingredients || []).reduce((a, i) => a + (+i.grams || 0), 0) * k);
+}
+
+return { UNITS, normUnit, DENSITY, gramsPerCup, unitsFor, convert, parseQty, fmtQty, unitLabel, showIngredient, plates, batchNutrition, plateNutrition, findTimers, fmtDuration, clock, rawWeight };
+ })();
+    const CK = { list: null, settings: null, full: {}, cur: null, q: "", tag: "", open: -1, reading: false, err: "", draft: "", from: "crecipes" };
+    try { CK.draft = localStorage.getItem("jarvis.cookDraft") || ""; } catch {}
+
+    async function cookCall(action, payload) {
+      if (DEMO) return cookDemo(action, payload || {});
+      const auth = await authHeaders();
+      if (!auth) { showSignin(true); throw new Error("This phone isn't paired."); }
+      const r = await fetch(FN + "/cookbook/" + action, { method: "POST",
+        headers: { ...auth, apikey: PUBLISHABLE_KEY, "content-type": "application/json" }, body: JSON.stringify({ tz: TZ, ...(payload || {}) }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || `Cookbook error (${r.status})`);
+      return j;
+    }
+    async function loadCook() {
+      M.busy = CK.list ? "" : "Loading…"; M.error = ""; if (!M.data) M.data = { cook: true }; render();
+      try { const j = await cookCall("list"); CK.list = j.recipes; CK.settings = j.settings; }
+      catch (e) { if (M.book === "cook") M.error = e.message; }
+      M.busy = ""; if (M.book === "cook") render();
+    }
+    async function cookGet(id) {
+      if (!CK.full[id]) CK.full[id] = (await cookCall("get", { id })).recipe;
+      return CK.full[id];
+    }
+    let saveT = 0;
+    function cookSave(r, now) {   // Ben's changes (servings, split, units, favourite...), saved a moment after the last tap
+      CK.full[r.id] = r;
+      const i = (CK.list || []).findIndex((x) => x.id === r.id); if (i >= 0) CK.list[i] = { ...CK.list[i], title: r.title, favorite: r.favorite, image: r.image, servings: r.servings };
+      clearTimeout(saveT);
+      const go = async () => { try { const j = await cookCall("save", { recipe: r }); CK.full[r.id] = { ...j.recipe, _k: r._k }; } catch (e) { M.error = e.message; if (M.book === "cook") render(); } };
+      if (now) go(); else saveT = setTimeout(go, 900);
+    }
+
+    // ---- icons (own line drawings)
+    const CICON = { clock: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2", people: "M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20c.8-3.4 3.4-5.5 6.5-5.5s5.7 2.1 6.5 5.5M16.5 4.5a3.2 3.2 0 0 1 0 6.2M18 14.8c1.9.7 3.2 2.5 3.6 5.2",
+      star: "M12 3.5l2.6 5.5 6 .7-4.4 4.1 1.2 5.9L12 16.8 6.6 19.7l1.2-5.9L3.4 9.7l6-.7z", timer: "M12 21a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM12 9v4.5M9.5 2.5h5M18.5 6l1.5-1.5",
+      pot: "M4 10h16v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4zM2 10h20M8 6c0-1.2 1-1.2 1-2.4M12 6c0-1.2 1-1.2 1-2.4M16 6c0-1.2 1-1.2 1-2.4",
+      fork: "M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 21V3c-2 1.5-3 4-3 7s1 4 3 4" };
+    const cIco = (k) => `<svg viewBox="0 0 24 24" class="cico"><path d="${CICON[k]}"/></svg>`;
+    const cookMins = (m) => (m == null ? "" : m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}` : `${m} min`);
+    const picHtml = (img, cls) => img && img.url ? `<img class="${cls}" src="${esc(cls === "chero" ? img.url : img.thumb || img.url)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
+      : `<div class="${cls} cnopic">${cIco("fork")}</div>`;
+    function credit(img) {   // CC licences ask for the title, creator, licence and a link
+      if (!img || !img.url) return "";
+      return `<div class="ccredit">Photo: ${img.landing ? `<a href="${esc(img.landing)}" target="_blank" rel="noopener">${esc(img.title || "untitled")}</a>` : esc(img.title || "untitled")}${img.creator ? ` by ${esc(img.creator)}` : ""}, ${img.license_url ? `<a href="${esc(img.license_url)}" target="_blank" rel="noopener">${esc(img.license)}</a>` : esc(img.license || "")} (Openverse)</div>`;
+    }
+
+    function renderCook() {
+      if (M.tab === "crecipe") return cookRecipe();
+      if (M.tab === "cadd") return cookAdd();
+      return cookList();
+    }
+
+    // ---- Recipes: search, tags, cards
+    function cookList() {
+      const all = CK.list || [];
+      const tags = [...new Set(all.flatMap((r) => r.tags || []))].sort();
+      const q = CK.q.trim().toLowerCase();
+      const shown = all.filter((r) => (!CK.tag || (r.tags || []).includes(CK.tag)) && (!q || (r.title + " " + (r.tags || []).join(" ") + " " + (r.description || "")).toLowerCase().includes(q)))
+        .sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0) || String(b.last_cooked || b.created_at).localeCompare(String(a.last_cooked || a.created_at)));
+      body.innerHTML = status() + (all.length ? `
+        <div class="search"><input id="cq" placeholder="Search your recipes" value="${esc(CK.q)}"></div>
+        ${tags.length ? `<div class="fbchips"><button class="fbchip${!CK.tag ? " on" : ""}" data-tag="">All</button>${tags.map((t) => `<button class="fbchip${CK.tag === t ? " on" : ""}" data-tag="${esc(t)}">${esc(t)}</button>`).join("")}</div>` : ""}
+        <div class="cgrid">${shown.map((r) => `<button class="ccard" data-r="${esc(r.id)}">${picHtml(r.image, "cthumb")}${r.favorite ? `<span class="cfav">${cIco("star")}</span>` : ""}
+          <span class="cname">${esc(r.title)}</span><span class="cmeta">${r.total_min ? cIco("clock") + cookMins(r.total_min) + " · " : ""}${+r.servings} servings</span></button>`).join("") || `<div class="empty">No recipe matches.</div>`}</div>`
+        : `<div class="card cempty">${cIco("pot")}<b>Your cookbook is empty</b><div class="meta">Ask Claude for a recipe, then in the Claude app press and hold the answer, tap Share and pick Jarvis. Or copy it and paste it on the Add tab.</div><button class="btn" id="cgoadd">Add a recipe</button></div>`);
+      const qi = $("cq"); if (qi) qi.oninput = (e) => { CK.q = e.target.value; const pos = e.target.selectionStart; cookList(); const n = $("cq"); n.focus(); n.setSelectionRange(pos, pos); };
+      body.querySelectorAll("[data-tag]").forEach((b) => (b.onclick = () => { CK.tag = b.dataset.tag; cookList(); }));
+      body.querySelectorAll("[data-r]").forEach((b) => (b.onclick = () => openRecipe(b.dataset.r)));
+      const ga = $("cgoadd"); if (ga) ga.onclick = () => cookTab("cadd");
+    }
+    function cookTab(tab) { const from = { book: M.book, tab: M.tab }; nav.push(() => show(from.book, from.tab)); show("cook", tab); }
+    async function openRecipe(id) {
+      CK.from = M.tab === "crecipe" ? CK.from : M.tab; CK.cur = id; CK.open = -1;
+      cookTab("crecipe");
+      if (!CK.full[id]) { try { await cookGet(id); } catch (e) { M.error = e.message; } if (M.book === "cook" && M.tab === "crecipe" && CK.cur === id) render(); }
+    }
+
+    // ---- Add: paste box (shares from the Claude app arrive here too)
+    function cookAdd() {
+      body.innerHTML = status() + `<div class="card"><div class="label">Add a recipe</div>
+        <div class="meta cwrap">Paste a recipe from Claude, a website or a message. Jarvis reads it, tidies it into ingredients and steps, works out calories and macros, and finds a photo.</div>
+        <textarea id="ctext" rows="9" placeholder="Paste the whole recipe here: ingredients and steps.">${esc(CK.draft)}</textarea>
+        ${CK.err ? `<div class="note err">${esc(CK.err)}</div>` : ""}
+        <button class="btn csend" id="cread"${CK.reading ? " disabled" : ""}>${CK.reading ? "Jarvis is reading it… (about 15 seconds)" : "Add to cookbook"}</button></div>
+        <div class="card"><div class="label">From the Claude app</div><div class="meta cwrap">Press and hold the recipe answer, tap <b>Share</b> and pick <b>Jarvis</b>: it lands here by itself. If Jarvis isn't in the share list, tap <b>Copy</b> instead and paste it above.</div></div>`;
+      const t = $("ctext"); t.oninput = () => { CK.draft = t.value; try { localStorage.setItem("jarvis.cookDraft", CK.draft); } catch {} };
+      $("cread").onclick = () => cookImport(t.value, "paste");
+    }
+    async function cookImport(text, source) {
+      if (CK.reading) return;
+      CK.draft = text; CK.err = ""; CK.reading = true; if (M.book === "cook") render();
+      try {
+        const { recipes } = await cookCall("import", { text, source });
+        CK.draft = ""; try { localStorage.removeItem("jarvis.cookDraft"); } catch {}
+        for (const r of recipes) { CK.full[r.id] = r; (CK.list = CK.list || []).unshift(r); }
+        CK.reading = false;
+        if (M.book === "cook") { CK.cur = recipes[0].id; CK.from = "crecipes"; M.tab = "crecipes"; cookTab("crecipe"); }
+      } catch (e) { CK.reading = false; CK.err = e.message; if (M.book === "cook") render(); }
+    }
+    // A share from the Claude app: sw.js kept the text and opened ?share=1.
+    (async () => {
+      if (!/[?&]share=1/.test(location.search)) return;
+      history.replaceState(history.state, "", location.pathname + location.hash);
+      let text = "";
+      try { const c = await caches.open("jarvis-share"); const r = await c.match("share"); if (r) { text = (await r.json()).text || ""; await c.delete("share"); } } catch {}
+      if (!el.classList.contains("on")) nav.push(hideMoney);
+      show("cook", "cadd");
+      if (text.trim()) cookImport(text, "share"); else { CK.err = "Nothing came through from the share. Copy the recipe and paste it here."; render(); }
+    })();
+
+    // ---- one recipe
+    const kOf = (r) => (r.split && +r.split.servings > 0 ? +r.split.servings : +r.servings) / (+r.servings || 1);   // how much he's making vs the recipe as written
+    function cookRecipe() {
+      const r = CK.full[CK.cur];
+      if (!r) { body.innerHTML = status() || `<div class="note">Loading the recipe…</div>`; return; }
+      const k = kOf(r), servings = Math.round((+r.servings || 1) * k * 100) / 100;
+      const split = r.split && r.split.mode === "people" ? r.split : { mode: "equal" };
+      const plates = CB.plates(split, servings), batch = CB.batchNutrition(r.ingredients, k);
+      const cooked = +r.cooked_grams > 0 ? +r.cooked_grams : null, rough = CB.rawWeight(r.ingredients, k);
+      const groups = []; for (const [i, ing] of (r.ingredients || []).entries()) { const g = ing.group || ""; let G = groups.find((x) => x.g === g); if (!G) groups.push(G = { g, list: [] }); G.list.push([i, ing]); }
+      const macro = (n) => `<b>${n.kcal}</b> kcal · ${n.protein}g P · ${n.carbs}g C · ${n.fat}g F`;
+      body.innerHTML = status() + `
+        <div class="chead">${picHtml(r.image, "chero")}<button class="cstar${r.favorite ? " on" : ""}" id="cfav" aria-label="Favourite">${cIco("star")}</button></div>
+        ${credit(r.image)}
+        <h2 class="ctitle">${esc(r.title)}</h2>${r.description ? `<div class="meta cwrap">${esc(r.description)}</div>` : ""}
+        <div class="cchips">${r.prep_min ? `<span>${cIco("clock")}Prep ${cookMins(r.prep_min)}</span>` : ""}${r.cook_min ? `<span>${cIco("pot")}Cook ${cookMins(r.cook_min)}</span>` : ""}${r.total_min ? `<span>${cIco("timer")}Total ${cookMins(r.total_min)}</span>` : ""}${r.cooked_count ? `<span>Cooked ${r.cooked_count}×</span>` : ""}</div>
+        <button class="btn ccook" id="ccook">${cIco("pot")} Start cooking</button>
+        <div class="card"><div class="label">How much</div>
+          <div class="crow"><span>Makes</span><div class="cstep"><button data-sv="-1" aria-label="Fewer">−</button><b>${CB.fmtQty(servings, "")} servings</b><button data-sv="1" aria-label="More">+</button></div></div>
+          ${k !== 1 ? `<div class="meta">Amounts scaled ×${Math.round(k * 100) / 100} from the recipe's ${+r.servings}. <button class="linkish" id="creset">Back to ${+r.servings}</button></div>` : ""}
+          <div class="seg" id="csplit"><button data-m="equal" class="${split.mode === "equal" ? "on" : ""}">Equal servings</button><button data-m="people" class="${split.mode === "people" ? "on" : ""}">Plates per person</button></div>
+          ${split.mode === "people" ? `<div class="cpeople">${split.people.map((p, i) => `<div class="cperson"><input data-pn="${i}" value="${esc(p.name)}" maxlength="30" aria-label="Name">
+              <label>Plates<div class="cstep sm"><button data-pc="${i}" data-d="-1">−</button><b>${p.count}</b><button data-pc="${i}" data-d="1">+</button></div></label>
+              <label>Plate size<input data-ps="${i}" type="number" inputmode="decimal" min="0.1" step="0.5" value="${p.size}"></label>
+              ${split.people.length > 1 ? `<button class="linkish cx" data-px="${i}" aria-label="Remove">✕</button>` : ""}</div>`).join("")}
+            <div class="meta cwrap">Plate size is a ratio: 4 and 3 means your plate is a third bigger than hers.</div>
+            <div class="btns"><button class="btn quiet small" id="caddp">+ Person</button><button class="btn quiet small" id="cusual">Make this my usual split</button></div></div>` : ""}
+          <div class="crow"><span>Cooked batch weight</span><div class="cgrams"><input id="cgrams" type="number" inputmode="numeric" min="0" placeholder="${rough ? "~" + rough : "grams"}" value="${cooked || ""}"><span>g</span></div></div>
+          <div class="meta cwrap">${cooked ? "Grams per plate use the weight you entered." : "Weigh the finished food (without the pot) for exact grams per plate."}</div>
+          <div class="cplates">${plates.map((p) => { const n = CB.plateNutrition(batch, p.share, cooked); return `<div class="cplate"><div class="cpname">${esc(p.name)}<span>${p.count} plate${p.count === 1 ? "" : "s"}${n.grams ? ` · <b>${n.grams} g</b> each` : ""}</span></div><div class="cpmac">${macro(n)}</div></div>`; }).join("")}</div>
+          ${batch.missing ? `<div class="meta">${batch.missing} ingredient${batch.missing === 1 ? " has" : "s have"} no estimate.</div>` : ""}
+          <div class="meta cwrap">Whole batch: ${macro({ kcal: Math.round(batch.kcal), protein: Math.round(batch.protein), carbs: Math.round(batch.carbs), fat: Math.round(batch.fat) })}. Estimates from the ingredients.</div></div>
+        <div class="card"><div class="label">Ingredients</div><div class="meta">Tap an amount to switch its unit.</div>
+          ${groups.map((G) => `${G.g ? `<div class="cgroup">${esc(G.g)}</div>` : ""}${G.list.map(([i, ing]) => { const s = CB.showIngredient(ing, k);
+            const units = CB.unitsFor(ing); return `<div class="cing${CK.open === i ? " open" : ""}"><button class="camt" data-u="${i}"${units.length > 1 ? "" : " disabled"}>${esc(s.amount)} ${esc(s.unit)}</button><span class="citem">${esc(s.item)}${s.note ? `<small>${esc(s.note)}</small>` : ""}</span>
+            ${CK.open === i ? `<div class="cunits">${units.map((u) => `<button data-to="${esc(u)}" class="${u === (ing.show_unit || CB.normUnit(ing.unit)) ? "on" : ""}">${esc(u || "as written")}</button>`).join("")}</div>` : ""}</div>`; }).join("")}`).join("")}</div>
+        <div class="card"><div class="label">Steps</div>${(r.steps || []).map((s, i) => `<div class="cstepline"><span class="cnum">${i + 1}</span><div>${esc(s.text)}${(s.timers || []).length ? `<div class="ctimers">${s.timers.map((t, j) => `<button class="ctimer" data-ts="${i}" data-tj="${j}">${cIco("timer")}${esc(CB.fmtDuration(t.seconds))}<small>${esc(t.label)}</small></button>`).join("")}</div>` : ""}</div></div>`).join("")}</div>
+        ${r.notes ? `<div class="card"><div class="label">Notes</div><div class="cwrap cnotes">${esc(r.notes)}</div></div>` : ""}
+        <div class="btns cfoot"><button class="btn quiet" id="cpic">Change picture</button><button class="btn quiet" id="cedit">Edit</button><button class="btn danger" id="cdel">Delete</button></div>
+        <details class="fbdet"><summary>What came in</summary><pre class="fbpre">${esc(r.source_text || "")}</pre></details>`;
+      $("cfav").onclick = () => { r.favorite = !r.favorite; cookSave(r, true); cookRecipe(); };
+      $("ccook").onclick = () => cookMode(r);
+      body.querySelectorAll("[data-sv]").forEach((b) => (b.onclick = () => { const n = Math.max(1, Math.round(servings + +b.dataset.sv)); r.split = { ...split, servings: n }; if (split.mode === "people") r.split.people = split.people; cookSave(r); cookRecipe(); }));
+      const rs = $("creset"); if (rs) rs.onclick = () => { r.split = { ...split, servings: +r.servings }; cookSave(r); cookRecipe(); };
+      body.querySelectorAll("#csplit button").forEach((b) => (b.onclick = () => {
+        if (b.dataset.m === "equal") r.split = { mode: "equal", servings };
+        else { const base = (CK.settings && CK.settings.split && CK.settings.split.people) || [{ name: "Ben", size: 4 }, { name: "Amber", size: 3 }];
+          const per = Math.max(1, Math.round(servings / base.length)); r.split = { mode: "people", servings, people: (split.people && split.people.length ? split.people : base.map((p) => ({ name: p.name, size: p.size, count: per }))) }; }
+        cookSave(r); cookRecipe(); }));
+      const people = () => r.split.people;
+      body.querySelectorAll("[data-pn]").forEach((x) => (x.onchange = () => { people()[+x.dataset.pn].name = x.value.trim() || "Someone"; cookSave(r); cookRecipe(); }));
+      body.querySelectorAll("[data-ps]").forEach((x) => (x.onchange = () => { people()[+x.dataset.ps].size = Math.max(0.1, +x.value || 1); cookSave(r); cookRecipe(); }));
+      body.querySelectorAll("[data-pc]").forEach((b) => (b.onclick = () => { const p = people()[+b.dataset.pc]; p.count = Math.max(0, p.count + +b.dataset.d); cookSave(r); cookRecipe(); }));
+      body.querySelectorAll("[data-px]").forEach((b) => (b.onclick = () => { people().splice(+b.dataset.px, 1); cookSave(r); cookRecipe(); }));
+      const ap = $("caddp"); if (ap) ap.onclick = () => { people().push({ name: "Guest", count: 1, size: 3 }); cookSave(r); cookRecipe(); };
+      const us = $("cusual"); if (us) us.onclick = async () => { try { CK.settings = (await cookCall("settings", { settings: { split: { mode: "people", people: people().map((p) => ({ name: p.name, size: p.size })) } } })).settings; us.textContent = "Saved as your usual"; } catch (e) { us.textContent = e.message; } };
+      $("cgrams").onchange = (e) => { r.cooked_grams = +e.target.value > 0 ? +e.target.value : null; cookSave(r); cookRecipe(); };
+      body.querySelectorAll("[data-u]").forEach((b) => (b.onclick = () => { CK.open = CK.open === +b.dataset.u ? -1 : +b.dataset.u; cookRecipe(); }));
+      body.querySelectorAll("[data-to]").forEach((b) => (b.onclick = () => { const ing = r.ingredients[CK.open]; const u = b.dataset.to; if (u === CB.normUnit(ing.unit)) delete ing.show_unit; else ing.show_unit = u; CK.open = -1; cookSave(r); cookRecipe(); }));
+      body.querySelectorAll("[data-ts]").forEach((b) => (b.onclick = () => { const t = r.steps[+b.dataset.ts].timers[+b.dataset.tj]; startCookTimer(r, t, b); }));
+      $("cpic").onclick = () => pictureSheet(r);
+      $("cedit").onclick = () => cookEditSheet(r);
+      $("cdel").onclick = () => openSheet(`<h2>Delete ${esc(r.title)}?</h2><div class="meta">It leaves your cookbook for good.</div><div class="err"></div><div class="btns"><button class="btn danger" id="cdy">Delete</button><button class="btn quiet" id="cdn">Keep it</button></div>`, (box) => {
+        box.querySelector("#cdn").onclick = closeSheet;
+        box.querySelector("#cdy").onclick = async () => { try { await cookCall("delete", { id: r.id }); CK.list = CK.list.filter((x) => x.id !== r.id); delete CK.full[r.id]; closeSheet(); setTimeout(() => history.back(), 350); } catch (e) { sheetErr(e.message); } };
+      });
+    }
+    function pictureSheet(r) {
+      openSheet(`<h2>Pick a picture</h2><div class="search"><input id="cpq" value="${esc(r.title)}"><button class="btn" id="cpgo" style="flex:none;min-width:0">Search</button></div><div id="cpics" class="cpics"><div class="meta">Searching…</div></div><div class="meta cwrap">Freely licensed photos from Openverse; the credit shows under the picture.</div><div class="err"></div><div class="btns">${r.image ? `<button class="btn quiet" id="cpnone">No picture</button>` : ""}<button class="btn quiet" id="cpx">Close</button></div>`, (box) => {
+        const go = async () => { const host = box.querySelector("#cpics"); host.innerHTML = `<div class="meta">Searching…</div>`;
+          try { const { pictures } = await cookCall("pictures", { query: box.querySelector("#cpq").value });
+            host.innerHTML = pictures.length ? pictures.map((p, i) => `<button data-p="${i}"><img src="${esc(p.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer"></button>`).join("") : `<div class="meta">No pictures found. Try other words.</div>`;
+            host.querySelectorAll("[data-p]").forEach((b) => (b.onclick = () => { r.image = pictures[+b.dataset.p]; cookSave(r, true); closeSheet(); cookRecipe(); }));
+          } catch (e) { host.innerHTML = `<div class="note err">${esc(e.message)}</div>`; } };
+        box.querySelector("#cpgo").onclick = go; box.querySelector("#cpq").onkeydown = (e) => { if (e.key === "Enter") go(); };
+        box.querySelector("#cpx").onclick = closeSheet;
+        const no = box.querySelector("#cpnone"); if (no) no.onclick = () => { r.image = null; cookSave(r, true); closeSheet(); cookRecipe(); };
+        go();
+      });
+    }
+    function cookEditSheet(r) {
+      openSheet(`<h2>Edit recipe</h2><label>Name</label><input id="cet" maxlength="120" value="${esc(r.title)}">
+        <label>The recipe as written makes (servings)</label><input id="ces" type="number" inputmode="decimal" min="1" value="${+r.servings}">
+        <label>Notes</label><textarea id="cen" rows="4">${esc(r.notes || "")}</textarea>
+        <div class="meta cwrap">To change ingredients or steps, fix the text and add it again on the Add tab.</div>
+        <div class="err"></div><div class="btns"><button class="btn" id="ceok">Save</button><button class="btn quiet" id="cex">Cancel</button></div>`, (box) => {
+        box.querySelector("#cex").onclick = closeSheet;
+        box.querySelector("#ceok").onclick = () => { const t = box.querySelector("#cet").value.trim(); if (!t) return sheetErr("Give it a name.");
+          r.title = t; r.servings = Math.max(1, +box.querySelector("#ces").value || r.servings); r.notes = box.querySelector("#cen").value; cookSave(r, true); closeSheet(); cookRecipe(); };
+      });
+    }
+
+    // ---- timers: a real Jarvis timer (phone alert, laptop card + voice) plus a countdown on this screen
+    let cookTimers = []; try { cookTimers = JSON.parse(localStorage.getItem("jarvis.cookTimers") || "[]").filter((t) => Date.parse(t.due) > Date.now() - 60000); } catch {}
+    const keepTimers = () => { try { localStorage.setItem("jarvis.cookTimers", JSON.stringify(cookTimers)); } catch {} };
+    async function startCookTimer(r, t, btn) {
+      const label = `${r.title}: ${t.label || CB.fmtDuration(t.seconds)}`.slice(0, 60);
+      if (btn) { btn.disabled = true; }
+      try {
+        const j = await cookCall("timer", { label, seconds: t.seconds });
+        cookTimers.push({ label: t.label || CB.fmtDuration(t.seconds), due: j.due || new Date(Date.now() + t.seconds * 1000).toISOString(), recipe: r.id, total: t.seconds });
+        keepTimers(); toastCook(`Timer set: ${CB.fmtDuration(t.seconds)}. Jarvis will tell you.`); drawCookTimers();
+      } catch (e) { toastCook(e.message); }
+      if (btn) btn.disabled = false;
+    }
+    function toastCook(msg) { const t = document.createElement("div"); t.className = "rtoast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
+
+    // ---- cook mode: one step at a time, big text, screen kept on
+    let CM = null, cmLayer = null, cmTick = 0, wake = null, cmStep = null;
+    async function keepAwake(on) {
+      try { if (on && "wakeLock" in navigator && !wake) { wake = await navigator.wakeLock.request("screen"); wake.addEventListener("release", () => (wake = null)); }
+        if (!on && wake) { await wake.release(); wake = null; } } catch {}
+    }
+    document.addEventListener("visibilitychange", () => { if (CM && !document.hidden) keepAwake(true); });
+    function cookMode(r) {
+      if (!cmLayer) { cmLayer = document.createElement("div"); cmLayer.id = "cookmode"; document.body.appendChild(cmLayer); }
+      let saved = {}; try { saved = JSON.parse(localStorage.getItem("jarvis.cook." + r.id) || "{}"); } catch {}
+      CM = { r, k: kOf(r), step: Math.min(saved.step || 0, Math.max(0, (r.steps || []).length - 1)), ticks: saved.ticks || {}, ing: false };
+      cmLayer.classList.add("on"); keepAwake(true);
+      cmStep = nav.push(closeCook);
+      drawCook(); clearInterval(cmTick); cmTick = setInterval(drawCookTimers, 500);
+    }
+    function closeCook(byTap) {
+      if (!CM) return;
+      cmLayer.classList.remove("on"); keepAwake(false); clearInterval(cmTick); CM = null;
+      if (byTap) { const id = cmStep; cmStep = null; nav.drop(id); }
+    }
+    const keepCook = () => { try { localStorage.setItem("jarvis.cook." + CM.r.id, JSON.stringify({ step: CM.step, ticks: CM.ticks })); } catch {} };
+    function drawCook() {
+      const { r, k } = CM, steps = r.steps || [], s = steps[CM.step] || { text: "This recipe has no steps.", timers: [] }, last = CM.step >= steps.length - 1;
+      cmLayer.innerHTML = `<div class="cmhead"><button class="cmx" id="cmx" aria-label="Close">✕</button><div class="cmtitle">${esc(r.title)}</div><button class="cmingb${CM.ing ? " on" : ""}" id="cming">Ingredients</button></div>
+        <div id="cmtimers" class="cmtimers"></div>
+        ${CM.ing ? `<div class="cmings">${(r.ingredients || []).map((ing, i) => { const x = CB.showIngredient(ing, k); return `<button class="cmi${CM.ticks[i] ? " done" : ""}" data-ti="${i}"><span class="cmbox"></span><b>${esc(x.amount)} ${esc(x.unit)}</b> ${esc(x.item)}${x.note ? `<small>${esc(x.note)}</small>` : ""}</button>`; }).join("")}</div>`
+        : `<div class="cmbody" id="cmbody"><div class="cmcount">Step ${CM.step + 1} of ${Math.max(1, steps.length)}</div><div class="cmtext">${esc(s.text)}</div>
+          ${(s.timers || []).map((t, j) => `<button class="cmtimer" data-tj="${j}">${cIco("timer")} Start ${esc(CB.clock(t.seconds))} timer<small>${esc(t.label)}</small></button>`).join("")}</div>`}
+        <div class="cmnav"><button class="btn quiet" id="cmprev"${CM.step === 0 ? " disabled" : ""}>‹ Back</button>${last ? `<button class="btn" id="cmdone">Done cooking</button>` : `<button class="btn" id="cmnext">Next ›</button>`}</div>`;
+      cmLayer.querySelector("#cmx").onclick = () => closeCook(true);
+      cmLayer.querySelector("#cming").onclick = () => { CM.ing = !CM.ing; drawCook(); };
+      cmLayer.querySelectorAll("[data-ti]").forEach((b) => (b.onclick = () => { CM.ticks[b.dataset.ti] = !CM.ticks[b.dataset.ti]; keepCook(); b.classList.toggle("done", !!CM.ticks[b.dataset.ti]); }));
+      cmLayer.querySelectorAll(".cmtimer").forEach((b) => (b.onclick = () => startCookTimer(r, s.timers[+b.dataset.tj], b)));
+      const go = (d) => { CM.step = Math.max(0, Math.min(steps.length - 1, CM.step + d)); CM.ing = false; keepCook(); drawCook(); };
+      cmLayer.querySelector("#cmprev").onclick = () => go(-1);
+      const nx = cmLayer.querySelector("#cmnext"); if (nx) nx.onclick = () => go(1);
+      const dn = cmLayer.querySelector("#cmdone"); if (dn) dn.onclick = async () => {
+        try { const j = await cookCall("cooked", { id: r.id }); CK.full[r.id] = { ...CK.full[r.id], cooked_count: j.recipe.cooked_count, last_cooked: j.recipe.last_cooked }; } catch {}
+        try { localStorage.removeItem("jarvis.cook." + r.id); } catch {}
+        closeCook(true); toastCook("Enjoy your meal."); if (M.book === "cook" && M.tab === "crecipe") cookRecipe(); };
+      const bd = cmLayer.querySelector("#cmbody");   // swipe left / right between steps
+      if (bd) { let x0 = null; bd.ontouchstart = (e) => (x0 = e.touches[0].clientX); bd.ontouchend = (e) => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null; if (Math.abs(dx) > 60) go(dx < 0 ? 1 : -1); }; }
+      drawCookTimers();
+    }
+    function drawCookTimers() {
+      const host = cmLayer && cmLayer.querySelector("#cmtimers"); if (!host) return;
+      const now = Date.now();
+      for (const t of cookTimers) if (!t.rang && Date.parse(t.due) <= now) { t.rang = true; keepTimers(); try { navigator.vibrate && navigator.vibrate([300, 150, 300, 150, 500]); } catch {} beepCook(); }
+      cookTimers = cookTimers.filter((t) => Date.parse(t.due) > now - 60000);
+      host.innerHTML = cookTimers.map((t) => { const left = (Date.parse(t.due) - now) / 1000, done = left <= 0;
+        return `<div class="cmt${done ? " done" : ""}"><span>${esc(t.label)}</span><b>${done ? "Done" : CB.clock(left)}</b><i style="transform:scaleX(${Math.max(0, Math.min(1, left / (t.total || 1)))})"></i></div>`; }).join("");
+    }
+    function beepCook() { try { const a = new (window.AudioContext || window.webkitAudioContext)(), o = a.createOscillator(), g = a.createGain();
+      o.frequency.value = 880; g.gain.value = 0.15; o.connect(g); g.connect(a.destination); o.start(); setTimeout(() => { o.stop(); a.close(); }, 600); } catch {} }
+
+    // ---- #money-demo: a sample recipe, nothing leaves the page
+    function cookDemo(action, p) {
+      const R = () => ({ id: "demo-tuscan", title: "Creamy Tuscan Chicken Pasta", description: "Chicken, spinach and sun-dried tomatoes in a parmesan cream sauce.", servings: 6, prep_min: 10, cook_min: 25, total_min: 35,
+        tags: ["italian", "dinner", "chicken", "pasta"], favorite: true, cooked_count: 2, image: null, notes: "Leftovers keep 3 days in the fridge.", source: "share", source_text: "(demo)",
+        split: { mode: "people", servings: 8, people: [{ name: "Ben", count: 4, size: 4 }, { name: "Amber", count: 4, size: 3 }] }, cooked_grams: 2800, created_at: new Date().toISOString(),
+        ingredients: [{ q: 1.5, unit: "lb", item: "boneless skinless chicken breasts", note: "bite-size pieces", grams: 680, kcal: 816, protein: 153, carbs: 0, fat: 18 },
+          { q: 2, unit: "tbsp", item: "olive oil", note: "", grams: 27, kcal: 240, protein: 0, carbs: 0, fat: 27 }, { q: 4, unit: "cloves", item: "garlic", note: "minced", grams: 12, kcal: 18, protein: 0.8, carbs: 4, fat: 0 },
+          { q: 1, unit: "cup", item: "heavy cream", note: "", grams: 238, kcal: 809, protein: 5, carbs: 7, fat: 86 }, { q: 0.5, unit: "cup", item: "parmesan cheese", note: "grated", grams: 50, kcal: 216, protein: 19, carbs: 2, fat: 14 },
+          { q: 2, unit: "cup", item: "fresh spinach", note: "", grams: 60, kcal: 14, protein: 1.7, carbs: 2, fat: 0 }, { q: 12, unit: "oz", item: "penne pasta", note: "", grams: 340, kcal: 1261, protein: 44, carbs: 254, fat: 5 },
+          { q: null, unit: "", item: "salt and pepper", note: "to taste", grams: 0, kcal: 0, protein: 0, carbs: 0, fat: 0 }, { q: 1, unit: "cup", item: "chicken broth", note: "", group: "Sauce", grams: 240, kcal: 17, protein: 2, carbs: 1, fat: 0.5 }],
+        steps: [{ text: "Cook the pasta in salted boiling water for 10-12 minutes, then drain.", timers: [{ seconds: 720, label: "Cook the pasta" }] },
+          { text: "Season the chicken and sear in olive oil over medium-high heat for 6-8 minutes until cooked through. Set aside.", timers: [{ seconds: 480, label: "Sear the chicken" }] },
+          { text: "Saute the garlic for 1 minute, then add broth, cream and parmesan. Simmer 5 minutes until it thickens.", timers: [{ seconds: 60, label: "Saute the garlic" }, { seconds: 300, label: "Simmer the sauce" }] },
+          { text: "Stir in sun-dried tomatoes and spinach until wilted, add chicken and pasta back and toss.", timers: [] }] });
+      if (!CK.demo) CK.demo = { list: [R()], settings: { split: { mode: "people", people: [{ name: "Ben", size: 4 }, { name: "Amber", size: 3 }] } } };
+      const D = CK.demo, ok = (x) => Promise.resolve(JSON.parse(JSON.stringify(x)));
+      if (action === "list") return ok({ recipes: D.list, settings: D.settings });
+      if (action === "get") return ok({ recipe: D.list.find((x) => x.id === p.id) });
+      if (action === "import") return new Promise((res) => setTimeout(() => { const r = { ...R(), id: "demo-" + Date.now(), title: (p.text.split("\n")[0] || "Pasted recipe").slice(0, 60), favorite: false, cooked_count: 0, split: { mode: "equal" }, cooked_grams: null, source_text: p.text }; D.list.unshift(r); res(JSON.parse(JSON.stringify({ recipes: [r] }))); }, 900));
+      if (action === "save") { const i = D.list.findIndex((x) => x.id === p.recipe.id); D.list[i] = { ...D.list[i], ...p.recipe }; return ok({ recipe: D.list[i] }); }
+      if (action === "delete") { D.list = D.list.filter((x) => x.id !== p.id); return ok({ ok: true }); }
+      if (action === "pictures") return ok({ pictures: [] });
+      if (action === "timer") return ok({ text: "demo timer", due: new Date(Date.now() + p.seconds * 1000).toISOString() });
+      if (action === "cooked") { const r = D.list.find((x) => x.id === p.id); r.cooked_count++; r.last_cooked = new Date().toISOString(); return ok({ recipe: r }); }
+      if (action === "settings") { if (p.settings) D.settings = p.settings; return ok({ settings: D.settings }); }
       return ok({});
     }
 
@@ -8321,6 +8927,7 @@ return { RARITIES, MODS, PACKS, CARDS, rollPack, daySeed, seeded, dailyEquation,
         else if (M.book === "food") renderFood();
         else if (M.book === "dope") renderDope();
         else if (M.book === "fb") renderFb();
+        else if (M.book === "cook") renderCook();
         else if (M.book === "play") renderPlay();
         else if (M.book === "look") renderLook();
         else if (["alerts", "memory", "rules", "voice"].includes(M.book)) renderSetPage();
