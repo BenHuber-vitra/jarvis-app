@@ -1645,6 +1645,17 @@
   #money .kitem.skip .kbox { border-style: dashed; opacity: 0.5; } #money .kitem.skip .ktext { opacity: 0.5; }
   #money .kitem .ktext { flex: 1; min-width: 0; }
   #money .kskip { flex: none; font-size: 13px !important; color: var(--ink3) !important; }
+  /* Nutrition amounts (FB-0005): quick amount chips under the amount box, the Describe it button, a "label" tag */
+  #msheet .npchips { display: flex; gap: 6px; flex-wrap: wrap; margin: -2px 0 10px; }
+  #msheet .npchips button { flex: 1 0 auto; min-width: 48px; padding: 8px 10px; border-radius: 10px; font: inherit; font-size: 14px; color: var(--th-pale, #fff);
+    background: rgba(var(--th-input, 14,16,48),0.6); border: 1px solid var(--line); }
+  #msheet .npchips button.on { color: var(--th-on, #fff); background: linear-gradient(180deg, rgba(var(--th-a),0.55), rgba(var(--th-a),0.3)); border-color: rgba(var(--th-a),0.8); }
+  #money .ndesc { width: 100%; margin: 0 0 12px; text-align: center; } #money .ndesc b { color: var(--th-soft); }
+  #msheet textarea { width: 100%; box-sizing: border-box; font: inherit; font-size: 16px; color: var(--text, #fff); background: rgba(var(--th-input, 14,16,48),0.6);
+    border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; resize: vertical; margin: 8px 0 4px; }
+  #msheet .nlbl { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; padding: 1px 6px; border-radius: 6px; vertical-align: 2px;
+    color: var(--th-on, #fff); background: rgba(var(--th-a),0.5); }
+  #msheet .btn.sm { flex: none; padding: 6px 10px; min-width: 0; }
   /* ================================================================ the talk screen, premium (Ben, 2026-11-21)
      Shared by the phone app (index.template.html) and the laptop window (jarvis/ui/static/index.html): build.py puts it in
      the shared CSS. The shared CSS sits in the middle of each page's own styles, so these rules start with "body" to win.
@@ -6222,7 +6233,7 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
     function mealSeg() { return `<div class="seg">${Object.entries(MEAL_NAMES).map(([k, v]) => `<button data-nm="${k}" class="${N.meal === k ? "on" : ""}">${v}</button>`).join("")}</div>`; }
     function wireMealSeg() { body.querySelectorAll("[data-nm]").forEach((b) => (b.onclick = () => { N.meal = b.dataset.nm; body.querySelectorAll("[data-nm]").forEach((x) => x.classList.toggle("on", x === b)); })); }
     function foodRow(f, i, kind) {
-      const s = f.serving, p = f.per100;
+      const s = (f.portions && f.portions[0]) || f.serving, p = f.per100;
       const info = s ? `${r0(s.kcal)} kcal per ${esc(s.label)}` : p ? `${r0(p.kcal)} kcal per 100 g` : "";
       return `<div class="row click" data-${kind}="${i}"><div class="grow"><div class="name">${esc(f.name)}</div><div class="meta">${f.brand ? esc(f.brand) + " · " : ""}${info}${f.source ? " · " + esc(f.source) : ""}</div></div><span class="chev">+</span></div>`;
     }
@@ -6230,7 +6241,8 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
       const recent = (N.data && N.data.recent) || [];
       let h = `<div class="note" style="margin-top:0">Adding to ${esc(dayLabel(N.day).toLowerCase())}</div>${mealSeg()}
         <div class="search"><input id="nq" placeholder="Search foods (chicken breast, Fairlife...)" value="${esc(N.q)}" enterkeyhint="search"><button class="btn" id="ngo" style="flex:none;min-width:0">Search</button></div>
-        <div class="btns" style="margin:0 0 10px"><button class="btn" id="nscan">📷 Scan a barcode</button><button class="btn quiet" id="nquick">Quick add</button></div>`;
+        <div class="btns" style="margin:0 0 10px"><button class="btn" id="nscan">📷 Scan a barcode</button><button class="btn quiet" id="nquick">Quick add</button></div>
+        <button class="btn quiet ndesc" id="ndesc">🤔 Don't know the weight? <b>Describe it</b></button>`;
       if (N.searching) h += `<div class="note">Searching…</div>`;
       if (N.err) h += `<div class="note err">${esc(N.err)}</div>`;
       if (N.results) h += `<div class="sect"><span class="label">${N.results.length} found</span></div>` + (N.results.length ? `<div class="card">${N.results.map((f, i) => foodRow(f, i, "res")).join("")}</div>` : `<div class="empty">Nothing found. Try fewer words, or Quick add.</div>`);
@@ -6241,36 +6253,106 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
       const go = async () => { N.q = $("nq").value.trim(); if (!N.q) return; N.searching = true; N.err = ""; renderAdd();
         try { N.results = (await ncall("search", { q: N.q })).results; } catch (e) { N.err = e.message; } N.searching = false; if (M.tab === "add") renderAdd(); };
       $("ngo").onclick = go; $("nq").onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); go(); } };
-      $("nscan").onclick = scanSheet; $("nquick").onclick = quickSheet;
+      $("nscan").onclick = scanSheet; $("nquick").onclick = quickSheet; $("ndesc").onclick = describeSheet;
       body.querySelectorAll("[data-res]").forEach((r) => (r.onclick = () => portionSheet(N.results[+r.dataset.res])));
       body.querySelectorAll("[data-rec]").forEach((r) => (r.onclick = () => { const x = recent[+r.dataset.rec];
         portionSheet({ name: x.name, brand: x.brand, ref: x.ref, source: "recent", unitPer: { unit: x.unit, per: x.per || Object.fromEntries(MKEYS.map((k) => [k, (+x[k] || 0) / (+x.qty || 1)])), qty: +x.qty || 1 } }); }));
     }
-    // Pick an amount. Units: the food's serving, grams (from per-100 g values), or a recent entry's own unit.
-    function portionSheet(f) {
+    // Pick an amount (FB-0005, Ben: "if it's packaged, the package details instead of per 100 g, but an option for weight").
+    // Units, in order: a recent entry's own unit, the food's portions (label serving, household measures like "1 medium",
+    // the whole package), then grams and ounces. A plain USDA food fetches its household measures when it's opened.
+    const OZ = 28.3495;
+    const unitName = (label) => String(label).replace(/\s*\([^)]*\)\s*$/, "").replace(/^(1|one|a)\s+/i, "").trim().slice(0, 30) || "serving";
+    function portionUnits(f) {
       const units = [];
       if (f.unitPer) units.push({ key: "u", label: f.unitPer.unit, per: f.unitPer.per, def: f.unitPer.qty });
-      if (f.serving) units.push({ key: "s", label: "serving (" + f.serving.label + ")", unit: "serving", per: f.serving, def: 1 });
-      if (f.per100) units.push({ key: "g", label: "grams", unit: "g", per: Object.fromEntries(MKEYS.map((k) => [k, f.per100[k] / 100])), def: f.serving && f.serving.g ? f.serving.g : 100 });
+      const ps = f.portions && f.portions.length ? f.portions : f.serving ? [f.serving] : [];
+      ps.forEach((x, i) => { const one = /^\d|^one\b|^a\b/i.test(x.label) ? x.label : "1 serving (" + x.label + ")";
+        units.push({ key: "p" + i, label: one, unit: unitName(one), per: Object.fromEntries(MKEYS.map((k) => [k, +x[k] || 0])), def: 1, count: true }); });
+      if (f.per100) {
+        units.push({ key: "g", label: "grams", unit: "g", per: Object.fromEntries(MKEYS.map((k) => [k, f.per100[k] / 100])), def: ps[0] && ps[0].g ? Math.round(ps[0].g) : 100, grams: true });
+        units.push({ key: "oz", label: "ounces", unit: "oz", per: Object.fromEntries(MKEYS.map((k) => [k, f.per100[k] * OZ / 100])), def: ps[0] && ps[0].g ? Math.round(ps[0].g / OZ * 10) / 10 : 4, grams: true });
+      }
+      return units;
+    }
+    const AMOUNTS = { count: [[0.5, "½"], [1, "1"], [1.5, "1½"], [2, "2"], [3, "3"]], g: [[50, "50"], [100, "100"], [150, "150"], [200, "200"], [300, "300"]], oz: [[2, "2"], [4, "4"], [6, "6"], [8, "8"], [12, "12"]] };
+    function portionSheet(f) {
+      let units = portionUnits(f);
       if (!units.length) return;
-      let u = units[0];
+      let u = units[0], touched = false;
       openSheet(`<h2>${esc(f.name)}</h2><div class="meta">${esc(f.brand || "")}${f.brand ? " · " : ""}${esc(f.source || "")}</div>
-        <div class="search"><input id="pq" inputmode="decimal" value="${u.def}"><select id="pu">${units.map((x) => `<option value="${x.key}">${esc(x.label)}</option>`).join("")}</select></div>
+        <div class="search"><input id="pq" inputmode="decimal" value="${u.def}"><select id="pu"></select></div>
+        <div class="npchips" id="pchips"></div><div class="note" id="pmore" style="margin:2px 0 8px" hidden></div>
         <div class="card nport" id="pm"></div>
         <label>Meal</label><select id="pmeal">${Object.entries(MEAL_NAMES).map(([k, v]) => `<option value="${k}" ${k === N.meal ? "selected" : ""}>${v}</option>`).join("")}</select>
         <div class="btns"><button class="btn" id="padd">Add</button><button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div>`, (box) => {
         const q = () => +box.querySelector("#pq").value || 0;
         const calc = () => Object.fromEntries(MKEYS.map((k) => [k, (+u.per[k] || 0) * q()]));
-        const draw = () => { const c = calc(); box.querySelector("#pm").innerHTML = `<b>${r0(c.kcal)} kcal</b> · Protein ${r0(c.protein)} g · Carbs ${r0(c.carbs)} g · Fat ${r0(c.fat)} g`; };
-        box.querySelector("#pq").oninput = draw;
-        box.querySelector("#pu").onchange = (e) => { u = units.find((x) => x.key === e.target.value); box.querySelector("#pq").value = u.def; draw(); };
-        draw();
+        const draw = () => { const c = calc(); box.querySelector("#pm").innerHTML = `<b>${r0(c.kcal)} kcal</b> · Protein ${r0(c.protein)} g · Carbs ${r0(c.carbs)} g · Fat ${r0(c.fat)} g`;
+          box.querySelectorAll("[data-amt]").forEach((b) => b.classList.toggle("on", +b.dataset.amt === q())); };
+        const fill = () => {
+          box.querySelector("#pu").innerHTML = units.map((x) => `<option value="${x.key}" ${x === u ? "selected" : ""}>${esc(x.label)}</option>`).join("");
+          const set = u.key === "oz" ? AMOUNTS.oz : u.grams ? AMOUNTS.g : AMOUNTS.count;
+          box.querySelector("#pchips").innerHTML = set.map(([v, t]) => `<button data-amt="${v}">${t}${u.grams ? " " + u.unit : ""}</button>`).join("");
+          box.querySelectorAll("[data-amt]").forEach((b) => (b.onclick = () => { touched = true; box.querySelector("#pq").value = b.dataset.amt; draw(); }));
+          draw();
+        };
+        box.querySelector("#pq").oninput = () => { touched = true; draw(); };
+        box.querySelector("#pu").onchange = (e) => { touched = true; u = units.find((x) => x.key === e.target.value); box.querySelector("#pq").value = u.def; fill(); };
+        fill();
+        // a plain USDA food: fetch its household measures ("1 medium", "1 cup, sliced") and lead with them
+        if (f.detail && f.ref && f.ref.startsWith("usda:") && !(f.portions && f.portions.length)) {
+          const more = box.querySelector("#pmore"); more.hidden = false; more.textContent = "Looking up common portions…";
+          ncall("portions", { ref: f.ref }).then((r) => {
+            if (!document.body.contains(more)) return;
+            if (!r.portions || !r.portions.length) { more.hidden = true; return; }
+            f.portions = r.portions; const was = u; units = portionUnits(f);
+            if (!touched) { u = units[0]; box.querySelector("#pq").value = u.def; } else u = units.find((x) => x.key === was.key) || units[0];
+            more.hidden = true; fill();
+          }).catch(() => { more.hidden = true; });
+        }
         box.querySelector("#sx").onclick = closeSheet;
         box.querySelector("#padd").onclick = async () => { if (!(q() > 0)) return sheetErr("How much?");
           const c = calc(), unit = u.unit || u.label;
           try { await ncall("log", { entries: [{ day: N.day, meal: box.querySelector("#pmeal").value, name: f.name, brand: f.brand, qty: q(), unit, ...c,
             per: Object.fromEntries(MKEYS.map((k) => [k, +u.per[k] || 0])), source: f.source === "recent" ? "recent" : f.ref && f.ref.startsWith("off:") && f.scanned ? "barcode" : "search", ref: f.ref }] });
             closeSheet(); N.meal = box.querySelector("#pmeal").value; await refreshDay(); goTab("today"); } catch (x) { sheetErr(x.message); } };
+      });
+    }
+    // "Don't know the weight? Describe it" (FB-0005): Jarvis works out amounts and numbers; packaged things use their label.
+    function describeSheet() {
+      openSheet(`<h2>Describe it</h2><div class="meta">Say it the way you'd tell a friend: "a big bowl of chili", "2 slices of Costco pizza", "a Fairlife Core Power". Jarvis works out the numbers; packaged things use their label.</div>
+        <textarea id="dt" rows="3" placeholder="What did you eat?"></textarea>
+        <div class="btns"><button class="btn" id="dgo">Work it out</button><button class="btn quiet" id="sx">Cancel</button></div><div class="err"></div><div id="dres"></div>`, (box) => {
+        const ta = box.querySelector("#dt"); setTimeout(() => ta.focus(), 250);
+        box.querySelector("#sx").onclick = closeSheet;
+        let items = [];
+        const show = (note) => {
+          const t = Object.fromEntries(MKEYS.map((k) => [k, items.reduce((a, x) => a + (+x[k] || 0), 0)]));
+          box.querySelector("#dres").innerHTML = !items.length ? `<div class="empty">${esc(note || "Nothing to add.")}</div>` :
+            `<div class="card">${items.map((x, i) => `<div class="row"><div class="grow"><div class="name">${esc(x.name)}${x.from_label ? ' <span class="nlbl">label</span>' : ""}</div>
+              <div class="meta">${esc(r1n(x.qty) + " " + x.unit)}${x.brand ? " · " + esc(x.brand) : ""}${x.grams ? " · about " + r0(x.grams) + " g" : ""}</div>
+              <div class="meta">${r0(x.kcal)} kcal · P ${r0(x.protein)} · C ${r0(x.carbs)} · F ${r0(x.fat)}</div></div><button class="btn quiet sm" data-drop="${i}" aria-label="Remove">✕</button></div>`).join("")}</div>
+            <div class="card nport"><b>${r0(t.kcal)} kcal</b> · Protein ${r0(t.protein)} g · Carbs ${r0(t.carbs)} g · Fat ${r0(t.fat)} g</div>
+            ${note ? `<div class="note">${esc(note)}</div>` : ""}
+            <label>Meal</label><select id="dmeal">${Object.entries(MEAL_NAMES).map(([k, v]) => `<option value="${k}" ${k === N.meal ? "selected" : ""}>${v}</option>`).join("")}</select>
+            <div class="btns"><button class="btn" id="dadd">Add ${items.length === 1 ? "it" : "all " + items.length}</button></div>
+            <div class="note">These are estimates. Tap an entry on Today afterwards to change the amount.</div>`;
+          box.querySelectorAll("[data-drop]").forEach((b) => (b.onclick = () => { items.splice(+b.dataset.drop, 1); show(note); }));
+          const add = box.querySelector("#dadd");
+          if (add) add.onclick = async () => { const meal = box.querySelector("#dmeal").value;
+            try { await ncall("log", { entries: items.map((x) => { const q = +x.qty > 0 ? +x.qty : 1;
+                return { day: N.day, meal, name: x.name, brand: x.brand, qty: q, unit: x.unit || "serving", kcal: x.kcal, protein: x.protein, carbs: x.carbs, fat: x.fat,
+                  per: Object.fromEntries(MKEYS.map((k) => [k, (+x[k] || 0) / q])), source: "jarvis", ref: x.ref }; }) });
+              closeSheet(); N.meal = meal; await refreshDay(); goTab("today"); } catch (e) { sheetErr(e.message); } };
+        };
+        const go = async () => { const text = ta.value.trim(); if (!text) return sheetErr("What did you eat?");
+          const b = box.querySelector("#dgo"); b.disabled = true; b.textContent = "Working it out…"; sheetErr("");
+          try { const r = await ncall("estimate", { text }); items = r.items || []; show(r.note); }
+          catch (e) { sheetErr(e.message); }
+          b.disabled = false; b.textContent = "Work it out again"; };
+        box.querySelector("#dgo").onclick = go;
+        ta.onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); go(); } };
       });
     }
     function quickSheet() {
@@ -6357,8 +6439,14 @@ return { LB_PER_KG, e1rm, shown, toLbs, fmtW, prevSets, history, bestE1rm, recen
       if (action === "entry") { const e = D.log.find((x) => x.id === p.id); if (p.delete) D.log = D.log.filter((x) => x !== e); else { if (p.meal) e.meal = p.meal; if (p.qty) { MKEYS.forEach((k) => (e[k] = e.per[k] * p.qty)); e.qty = p.qty; } } return ok({ ok: true }); }
       if (action === "settings") { MKEYS.forEach((k) => { if (p[k] !== undefined) D.targets[k] = p[k]; }); return ok({ targets: D.targets }); }
       if (action === "meals") { if (p.save) D.meals.push({ id: "m" + D.meals.length, name: p.save.name, items: p.save.items }); if (p.delete) D.meals = D.meals.filter((m) => m.id !== p.delete); return ok({ meals: D.meals }); }
-      if (action === "search") return ok({ results: [{ name: "Chicken breast, roasted", brand: null, ref: "usda:1", source: "USDA", per100: { kcal: 165, protein: 31, carbs: 0, fat: 3.6 }, serving: null },
-        { name: "Core Power 26g", brand: "fairlife", ref: "off:1", source: "Open Food Facts", per100: null, serving: { label: "1 bottle (414 ml)", g: 414, kcal: 170, protein: 26, carbs: 6, fat: 4.5 } }] });
+      if (action === "search") return ok({ results: [{ name: "Bananas, raw", brand: null, ref: "usda:173944", source: "USDA", per100: { kcal: 89, protein: 1.1, carbs: 22.8, fat: 0.3 }, serving: null, portions: [], detail: true },
+        { name: "Core Power 26g", brand: "fairlife", ref: "off:1", source: "Open Food Facts", per100: { kcal: 41, protein: 6.3, carbs: 1.4, fat: 1.1 }, serving: { label: "1 bottle (414 ml)", g: 414, kcal: 170, protein: 26, carbs: 6, fat: 4.5 },
+          portions: [{ label: "1 bottle (414 ml)", g: 414, kcal: 170, protein: 26, carbs: 6, fat: 4.5 }] },
+        { name: "Protein Chips, Nacho Cheese", brand: "Quest", ref: "usda:2", source: "USDA", per100: { kcal: 437, protein: 59, carbs: 15.6, fat: 15.6 }, serving: null,
+          portions: [{ label: "1 bag (32 g)", g: 32, kcal: 140, protein: 19, carbs: 5, fat: 5 }] }] });
+      if (action === "portions") return ok({ portions: [{ label: "1 medium (118 g)", g: 118, kcal: 105, protein: 1.3, carbs: 27, fat: 0.4 }, { label: "1 large (136 g)", g: 136, kcal: 121, protein: 1.5, carbs: 31, fat: 0.4 }, { label: "1 cup, sliced (150 g)", g: 150, kcal: 134, protein: 1.6, carbs: 34.3, fat: 0.5 }] });
+      if (action === "estimate") return new Promise((res) => setTimeout(() => res({ items: [{ name: "Beef chili", brand: null, packaged: false, qty: 1, unit: "big bowl", grams: 450, kcal: 520, protein: 36, carbs: 40, fat: 22 },
+        { name: "Core Power 26g", brand: "fairlife", packaged: true, qty: 1, unit: "bottle", grams: 414, kcal: 170, protein: 26, carbs: 6, fat: 4.5, from_label: true }], note: "I took a big bowl as about 2 cups." }), 600));
       if (action === "barcode") return ok({ result: { name: "Diet Coke", brand: "Coca-Cola", ref: "off:" + p.code, source: "Open Food Facts", per100: { kcal: 0, protein: 0, carbs: 0, fat: 0 }, serving: { label: "1 can", g: 355, kcal: 0, protein: 0, carbs: 0, fat: 0 } } });
       if (action === "history") { const days = Array.from({ length: 14 }, (_, i) => { const d = addDays(localToday(), i - 13); const t = dayOf(d).totals; return { day: d, ...t, n: dayOf(d).entries.length || (i % 3 ? 4 : 0), kcal: t.kcal || (i % 3 ? 2400 + i * 37 : 0), protein: t.protein || (i % 3 ? 170 : 0) }; }); return ok({ days, targets: D.targets }); }
       return ok({});
@@ -6829,7 +6917,7 @@ function changelog(items, tz) {
 
 return { TYPES, PRIORITIES, STATUSES, ACTIVE, fbId, scrub, scrubDeep, normalizeError, autoTitle, looksLikeFailure, sortItems, byPriority, changelog };
  })();
-    const APP_VERSION = "phone 7eb46f5+changes \u00b7 built 2026-11-23 16:12";
+    const APP_VERSION = "phone 72d472f \u00b7 built 2026-11-25 17:49";
     window.JARVIS_VERSION = APP_VERSION;
     const FB_DEVICE = /\/cloud$/.test(FN) ? "laptop" : "phone";
     const FBS = { items: null, typeF: "all", statusF: "active", from: "Talk", sent: null, showDismissed: false,
